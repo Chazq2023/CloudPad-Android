@@ -731,7 +731,7 @@ void PSGaikaiStreaming::step8a_GetGkAuthCode()
     
     url.setQuery(query);
 
-    performOAuthNative(url.toString(), "Step 8a: GetGkAuthCode",
+    performOAuthNative(url.toString(QUrl::FullyEncoded), "Step 8a: GetGkAuthCode",
         [this](QString code) {
             gkCloudAuthCode = code;
             qInfo() << "Gaikai Step 8a complete - Got gkCloudAuthCode:" << gkCloudAuthCode.left(20) << "...";
@@ -797,7 +797,7 @@ void PSGaikaiStreaming::step8b_GetPs3AuthCode()
     
     url.setQuery(query);
 
-    performOAuthNative(url.toString(), "Step 8b: GetServerAuthCode",
+    performOAuthNative(url.toString(QUrl::FullyEncoded), "Step 8b: GetServerAuthCode",
         [this](QString code) {
             if (serviceType == "pscloud") {
                 streamServerAuthCode = code;

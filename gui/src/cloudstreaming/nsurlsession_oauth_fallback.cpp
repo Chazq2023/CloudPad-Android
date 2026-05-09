@@ -7,6 +7,7 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QUrl>
+#include <QSslConfiguration>
 
 void performNativeOAuthGet(
     const QString &urlString,
@@ -22,6 +23,14 @@ void performNativeOAuthGet(
     req.setRawHeader("Cookie", QString("npsso=%1").arg(npsso).toUtf8());
     req.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                      QNetworkRequest::ManualRedirectPolicy);
+
+    // Newer TLS stacks cause connection instability against this endpoint;
+    // pin to the classic curve set.
+    QSslConfiguration sslCfg = req.sslConfiguration();
+    QMap<QByteArray, QVariant> backend = sslCfg.backendConfiguration();
+    backend["Curves"] = QByteArray("X25519:P-256:P-384");
+    sslCfg.setBackendConfiguration(backend);
+    req.setSslConfiguration(sslCfg);
 
     QNetworkReply *reply = manager->get(req);
 
