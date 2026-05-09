@@ -21,7 +21,12 @@
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/ForWard-Technologies-LLC/Pylux/master/assets/screenshots/android-phones/01.png</image>
+      <caption>Browse your game catalog for internet play streaming</caption>
+      <image type="source">https://raw.githubusercontent.com/ForWard-Technologies-LLC/Pylux/master/gui/screenshots/01-cloud-play.jpg</image>
+    </screenshot>
+    <screenshot>
+      <caption>Auto-discover and connect to your PlayStation console</caption>
+      <image type="source">https://raw.githubusercontent.com/ForWard-Technologies-LLC/Pylux/master/gui/screenshots/02-remote-play.jpg</image>
     </screenshot>
   </screenshots>
   <content_rating type="oars-1.1" />
