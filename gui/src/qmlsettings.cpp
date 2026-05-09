@@ -2024,7 +2024,7 @@ void QmlSettings::exportSettings()
     if(profile.isEmpty())
         profile = "Default";
     QString fileName = QFileDialog::getSaveFileName(QApplication::focusWidget(), tr("Export %1 Profile To File").arg(profile),
-                                                    QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + "/pylux-" + profile,
+                                                    QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/pylux-" + profile,
                                                     tr("Settings files (*.ini)"),
                                                     nullptr,
                                                     QFileDialog::DontUseNativeDialog | QFileDialog::DontConfirmOverwrite);
@@ -2058,7 +2058,7 @@ QString QmlSettings::chooseSteamBasePath()
 void QmlSettings::exportPlaceboSettings()
 {
     QString fileName = QFileDialog::getSaveFileName(QApplication::focusWidget(), tr("Export Placebo Renderer Settings To File"),
-                                                    QStandardPaths::writableLocation(QStandardPaths::DesktopLocation) + "/pylux-placebo",
+                                                    QStandardPaths::writableLocation(QStandardPaths::DownloadLocation) + "/pylux-placebo",
                                                     tr("Settings files (*.ini)"),
                                                     nullptr,
                                                     QFileDialog::DontUseNativeDialog | QFileDialog::DontConfirmOverwrite);
