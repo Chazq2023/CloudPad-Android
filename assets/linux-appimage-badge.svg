@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="195" height="50" viewBox="0 0 195 50">
+  <rect x="0.75" y="0.75" width="193.5" height="48.5" rx="6.5" fill="black" stroke="white" stroke-width="0.8"/>
+  <text x="12" y="36" font-family="monospace,Courier" font-size="22" font-weight="bold" fill="white">&gt;_</text>
+  <text x="48" y="19" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">Download</text>
+  <text x="48" y="37" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="18" font-weight="600" fill="white">AppImage</text>
+</svg>

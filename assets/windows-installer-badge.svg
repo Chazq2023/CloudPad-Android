@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="195" height="50" viewBox="0 0 195 50">
+  <rect x="0.75" y="0.75" width="193.5" height="48.5" rx="6.5" fill="black" stroke="white" stroke-width="0.8"/>
+  <g transform="translate(14,13) scale(1.0)">
+    <path d="M0 3.449L9.75 2.1v9.451H0M10.949.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" fill="white"/>
+  </g>
+  <text x="48" y="19" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="9" fill="rgba(255,255,255,0.8)">Download for</text>
+  <text x="48" y="37" font-family="-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif" font-size="18" font-weight="600" fill="white">Windows</text>
+</svg>

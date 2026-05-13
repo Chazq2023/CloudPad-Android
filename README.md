@@ -3,7 +3,20 @@
 
 # Pylux
 
-Pylux is a free, community-built, open source hobby project for PlayStation 4 and PlayStation 5 Remote Play. It focuses on maintaining internet remote play while keeping the app simple to install from major app stores.
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
+[![Platforms](https://img.shields.io/badge/platforms-Android%20%7C%20iOS%20%7C%20macOS%20%7C%20Windows%20%7C%20Linux-brightgreen)](https://github.com/ForWard-Technologies-LLC/Pylux/releases)
+
+**Pylux is a free, open-source PS4 and PS5 Remote Play client for Android, Android TV, iOS, macOS, Windows, Linux, and Steam Deck.** It focuses on app-store installs, Internet Play (streaming the game catalog or your owned games), automatic console discovery, and a touch-friendly mobile UI — all from one community-maintained codebase.
+
+## Download
+
+<a href="https://play.google.com/store/apps/details?id=com.pylux.stream"><img src="assets/google-play-badge.svg" height="50" alt="Get it on Google Play"></a>&nbsp;<a href="https://www.dropbox.com/scl/fi/wf9cr349acdwkih0syrva/pylux-windows-installer-latest.exe?rlkey=m2egtuj8z7f5se6405gg09wct&dl=1"><img src="assets/windows-installer-badge.svg" height="50" alt="Download for Windows"></a>
+
+<a href="https://apps.apple.com/us/app/pylux-remote-play/id6761292658"><img src="assets/app-store-badge.svg" height="50" alt="Download on the App Store"></a>&nbsp;<a href="https://apps.apple.com/us/app/pylux-remote-play/id6761292658"><img src="assets/mac-app-store-badge.svg" height="50" alt="Download on the Mac App Store"></a>
+
+<a href="https://flathub.org/apps/io.github.ForWard_Technologies_LLC.Pylux"><img src="assets/flathub-badge.svg" height="50" alt="Get it on Flathub"></a>&nbsp;<a href="https://www.dropbox.com/scl/fi/wi8bjilwiklv7fde0b4ea/pylux-latest.AppImage?rlkey=3xne4ltuiq54ogfmng4gq24mp&dl=1"><img src="assets/linux-appimage-badge.svg" height="50" alt="Download AppImage"></a>
+
+For full release notes and all downloads see the [Releases page](https://github.com/ForWard-Technologies-LLC/Pylux/releases).
 
 ## Screenshots
 
@@ -16,11 +29,16 @@ Pylux is a free, community-built, open source hobby project for PlayStation 4 an
 
 ## Features
 
-- Internet Play
-- Remote play
-- Cross-platform builds for straightforward deployment
-- Modern UI with touch-friendly controls where it matters
-- Automatic console discovery and registration
+- **Internet Play** — stream games from the game catalog or your owned game library
+- **Remote Play** — low-latency streaming of your PlayStation console to any supported device
+- **Cross-platform** — Android, Android TV, iOS, iPadOS, macOS, Windows, Linux, Steam Deck
+- **App-store installs** — available on Google Play, App Store, and Mac App Store
+- **Automatic console discovery and registration**
+- **Touch-friendly controls** — mobile-optimized UI for phones and tablets
+
+## Documentation
+
+Full setup guides, configuration, and controller options at **[forward-technologies-llc.github.io/Pylux](https://forward-technologies-llc.github.io/Pylux/)**.
 
 ## Contributing
 
@@ -51,4 +69,4 @@ For questions about this project or responsible use, contact [forward.technologi
 
 ## Credits
 
-Special thanks to the original Chiaki development team for their excellent work on what became the backbone of this project. This fork builds on their incredible work, aiming to bring internet play to more people through straightforward installs across platforms.
+Pylux is built on top of [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki) and [chiaki-ng](https://github.com/streetpea/chiaki-ng). Special thanks to the original Chiaki development team and the chiaki-ng maintainers for their excellent foundational work. Pylux extends that work with a focus on app-store distribution, mobile and Android TV support, and Internet Play.
