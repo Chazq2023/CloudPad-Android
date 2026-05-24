@@ -35,6 +35,12 @@ jobs:
       - name: Install CMake 3.30.4
         run: sdkmanager "cmake;3.30.4"
 
+      - name: Install protoc and Python grpc tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y protobuf-compiler
+          python3 -m pip install grpcio-tools
+
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug
