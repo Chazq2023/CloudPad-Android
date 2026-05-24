@@ -19,7 +19,7 @@ class CloudGameAdapter(
 	private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>()
 {
-	init { setHasStableIds(true) }
+	init { setHasStableIds(false) }
 
 	var games: List<CloudGame> = emptyList()
 		set(value)
@@ -37,7 +37,9 @@ class CloudGameAdapter(
 
 	var isScrollingFast = false
 
-	override fun getItemId(position: Int): Long = games[position].productId.hashCode().toLong()
+	override fun getItemId(position: Int): Long {
+		return RecyclerView.NO_ID
+	}
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CloudGameViewHolder
 	{

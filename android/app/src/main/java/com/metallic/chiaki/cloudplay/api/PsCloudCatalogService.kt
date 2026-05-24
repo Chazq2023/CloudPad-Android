@@ -213,7 +213,7 @@ class PsCloudCatalogService
 		
 		// Step 1: Get OAuth token for entitlements API (Qt lines 1008-1009)
 		val oauthToken = fetchOwnedGamesOAuthToken(npssoToken)
-		
+
 		// Step 2: Fetch entitlements (Qt lines 1099-1156)
 		val entitlements = fetchEntitlements(oauthToken)
 		
@@ -224,8 +224,9 @@ class PsCloudCatalogService
 		val ownedGames = crossReferenceOwnedGames(entitlements, publicCatalog)
 		
 		Log.i(TAG, "  Owned streaming games: ${ownedGames.size}")
-		
+
 		return ownedGames
+			.distinctBy { "${it.productId.lowercase()}|${it.name.lowercase()}" }
 	}
 	
 	/**
@@ -298,7 +299,49 @@ class PsCloudCatalogService
 	 * Fetch entitlements using OAuth token
 	 * Mirrors: CloudCatalogBackend::fetchOwnedGamesPage() (Qt lines 1192-1216)
 	 */
-	private suspend fun fetchEntitlements(oauthToken: String): List<String>
+
+	private data class EntitlementRecord(
+		val launchId: String,
+		val ids: Set<String>
+	)
+
+	private fun extractAllStringValues(obj: JSONObject, ids: MutableSet<String>) {
+		fun addString(value: String) {
+			val normalized = value.trim().lowercase()
+			if (normalized.isNotEmpty()) {
+				ids.add(normalized)
+
+				val conceptRegex = Regex("""concept[/=]([0-9A-Za-z_-]+)""")
+				conceptRegex.find(normalized)?.let {
+					ids.add(it.groupValues[1])
+				}
+			}
+		}
+
+		val keys = obj.keys()
+
+		while (keys.hasNext()) {
+			val key = keys.next()
+			val value = obj.opt(key)
+
+			when (value) {
+				is JSONObject -> extractAllStringValues(value, ids)
+
+				is JSONArray -> {
+					for (i in 0 until value.length()) {
+						when (val item = value.opt(i)) {
+							is JSONObject -> extractAllStringValues(item, ids)
+							is String -> addString(item)
+						}
+					}
+				}
+
+				is String -> addString(value)
+			}
+		}
+	}
+
+	private suspend fun fetchEntitlements(oauthToken: String): List<EntitlementRecord>
 	{
 		Log.i(TAG, "=== Fetching entitlements ===")
 		
@@ -324,30 +367,118 @@ class PsCloudCatalogService
 		
 		val jsonObj = JSONObject(response.body)
 		val entitlementsArray = jsonObj.optJSONArray("entitlements") ?: JSONArray()
-		
-		val productIds = mutableListOf<String>()
+
+		val entitlements = mutableListOf<EntitlementRecord>()
 		
 		for (i in 0 until entitlementsArray.length())
 		{
-			val entitlement = entitlementsArray.getJSONObject(i)
-			val productId = entitlement.optString("id", "")
-			
-			if (productId.isNotEmpty())
-			{
-				productIds.add(productId)
+			val entitlement = entitlementsArray.optJSONObject(i) ?: continue
+			val ids = mutableSetOf<String>()
+
+			fun addIdentifier(value: String?) {
+				val normalized = value?.trim()?.lowercase().orEmpty()
+				if (normalized.isNotEmpty()) {
+					ids.add(normalized)
+				}
+			}
+
+			val launchId = entitlement.optString("id", "").trim()
+			val gameMeta = entitlement.optJSONObject("game_meta")
+
+			val concept = entitlement.optJSONObject("concept")
+			if (concept != null) {
+				addIdentifier(concept.optString("id", ""))
+				addIdentifier(concept.optString("conceptId", ""))
+				addIdentifier(concept.optString("productId", ""))
+				addIdentifier(concept.optString("product_id", ""))
+			}
+
+			addIdentifier(entitlement.optString("id", ""))
+			addIdentifier(entitlement.optString("product_id", ""))
+			addIdentifier(entitlement.optString("concept_id", ""))
+			addIdentifier(entitlement.optString("sku_id", ""))
+
+			if (gameMeta != null) {
+				addIdentifier(gameMeta.optString("id", ""))
+				addIdentifier(gameMeta.optString("product_id", ""))
+				addIdentifier(gameMeta.optString("productId", ""))
+				addIdentifier(gameMeta.optString("concept_id", ""))
+				addIdentifier(gameMeta.optString("conceptId", ""))
+				addIdentifier(gameMeta.optString("sku_id", ""))
+				addIdentifier(gameMeta.optString("skuId", ""))
+			}
+
+			extractAllStringValues(entitlement, ids)
+
+			val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
+
+			ids.toList().forEach { id ->
+				titleIdRegex.find(id)?.let {
+					ids.add(it.groupValues[1].lowercase())
+				}
+			}
+
+			if (launchId.isNotEmpty()) {
+				entitlements.add(
+					EntitlementRecord(
+						launchId = launchId,
+						ids = ids
+					)
+				)
 			}
 		}
-		
-		Log.i(TAG, "  Entitlements count: ${productIds.size}")
-		
-		return productIds
+
+		Log.i(TAG, "  Entitlements count: ${entitlements.size}")
+		return entitlements
 	}
 	
 	/**
 	 * Cross-reference owned entitlements with public catalog
 	 * Mirrors: CloudCatalogBackend::processCrossReferenceComplete() (Qt lines 1289-1384)
 	 */
-	private fun crossReferenceOwnedGames(entitlements: List<String>, publicCatalog: List<CloudGame>): List<CloudGame>
+
+	private fun catalogIdentifiersFor(game: CloudGame): Set<String> {
+		val ids = mutableSetOf<String>()
+
+		fun add(value: String?) {
+			val normalized = value?.trim()?.lowercase().orEmpty()
+			if (normalized.isNotEmpty()) ids.add(normalized)
+		}
+
+		add(game.productId)
+
+		val conceptRegex = Regex("""/concept/([0-9A-Za-z_-]+)""")
+		conceptRegex.find(game.conceptUrl)?.let {
+			add(it.groupValues[1])
+		}
+
+		val productRegex = Regex("""([A-Z]{2}\d{4}-[A-Z0-9]+_\d{2}-[A-Z0-9]+)""")
+		productRegex.find(game.conceptUrl)?.let {
+			add(it.groupValues[1])
+		}
+
+		val conceptLooseRegex = Regex("""concept[/=]([0-9A-Za-z_-]+)""")
+		conceptLooseRegex.find(game.conceptUrl)?.let {
+			add(it.groupValues[1])
+		}
+
+		val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
+
+		titleIdRegex.find(game.productId)?.let {
+			add(it.groupValues[1])
+		}
+
+		titleIdRegex.find(game.conceptUrl)?.let {
+			add(it.groupValues[1])
+		}
+
+		return ids
+	}
+
+	private fun crossReferenceOwnedGames(
+		entitlements: List<EntitlementRecord>,
+		publicCatalog: List<CloudGame>
+	): List<CloudGame>
 	{
 		Log.i(TAG, "=== Cross-referencing owned games with catalog ===")
 		
@@ -355,11 +486,88 @@ class PsCloudCatalogService
 		
 		for (game in publicCatalog)
 		{
-			// Check if user owns this game (Qt lines 1312-1320)
-			if (entitlements.contains(game.productId))
-			{
-				// Mark as owned
-				ownedGames.add(game.copy(isOwned = true))
+			val catalogIds = catalogIdentifiersFor(game)
+
+			if (
+				game.name.contains("rebirth", ignoreCase = true) ||
+				game.name.contains("grand theft", ignoreCase = true) ||
+				game.name.contains("gta", ignoreCase = true)
+			) {
+				Log.i(TAG, "=== DEBUG UNMATCHED GAME ===")
+				Log.i(TAG, "Game: ${game.name}")
+				Log.i(TAG, "Catalog productId: ${game.productId}")
+				Log.i(TAG, "Catalog conceptUrl: ${game.conceptUrl}")
+				Log.i(TAG, "Catalog IDs: $catalogIds")
+
+				entitlements
+					.filter {
+						it.launchId.contains("rebirth", ignoreCase = true) ||
+								it.launchId.contains("gta", ignoreCase = true) ||
+								it.launchId.contains("grand", ignoreCase = true) ||
+								it.launchId.contains("final", ignoreCase = true) ||
+								it.ids.any { id ->
+									id.contains("rebirth", ignoreCase = true) ||
+											id.contains("gta", ignoreCase = true) ||
+											id.contains("grand", ignoreCase = true) ||
+											id.contains("final", ignoreCase = true)
+								}
+					}
+					.forEach {
+						Log.i(TAG, "Possible entitlement launchId=${it.launchId}")
+						Log.i(TAG, "Possible entitlement ids=${it.ids}")
+					}
+			}
+
+			val matchedEntitlement = entitlements
+				.filter { entitlement ->
+					catalogIds.any { it in entitlement.ids }
+				}
+				.filterNot { entitlement ->
+					val combined = (listOf(entitlement.launchId) + entitlement.ids).joinToString(" ").lowercase()
+
+					combined.contains("demo") ||
+							combined.contains("trial") ||
+							combined.contains("pstrack") ||
+							combined.contains("pre-order") ||
+							combined.contains("preorder") ||
+							combined.contains("soundtrack") ||
+							combined.contains("artbook") ||
+							combined.contains("avatar") ||
+							combined.contains("theme")
+				}
+				.maxByOrNull { entitlement ->
+					val combined = (listOf(entitlement.launchId) + entitlement.ids).joinToString(" ").lowercase()
+
+					var score = 0
+
+					// Prefer exact full product/catalog matches
+					if (game.productId.trim().lowercase() in entitlement.ids) score += 100
+
+					// Prefer same platform/full game records
+					if (combined.contains("ps5")) score += 20
+					if (combined.contains("psgd")) score += 20
+
+					if (entitlement.launchId.lowercase().contains("europe0000000000")) score += 80
+					if (entitlement.launchId.lowercase().contains("gp000000")) score -= 80
+					if (entitlement.launchId.lowercase().contains("epre")) score -= 80
+
+					// Prefer title/name match
+					game.name.lowercase().split(" ").forEach { token ->
+						if (token.length > 3 && combined.contains(token)) {
+							score += 5
+						}
+					}
+
+					score
+				}
+
+			if (matchedEntitlement != null) {
+				ownedGames.add(
+					game.copy(
+						productId = matchedEntitlement.launchId,
+						isOwned = true
+					)
+				)
 			}
 		}
 		
