@@ -66,11 +66,17 @@ jobs:
             ## Pylux Android Cloud Release
 
             ### Fixes
-            - Fixed Horizon Zero Dawn Remastered entitlement, game now appears if owned/not owned
+            - Ghost of Tsushima now appears as it should
+            - In game menu now auto-hides after a set period of time instead of sticking forever
+            - Resolution settings for Catalogue and Library now persist
+            - Further improved PS5 owned game catalogue search engine, more games now appear.
+
+            ### CI Improvements
+            - Added a git actions workflow, meaning each successful merge to master will now build and publish a new release with apk
 
             ### Outstanding Issues
-            - Horizon zero down remastered image is a landscape image so doesn't fit properly, will look to resolve this in a new release
-            - In game menu doesn't disappear, so will look into fixing this too
+            - Need to better optimise the refresh rate, as well as clean up the code
+            - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
 
             ### APK
             Attached release asset:

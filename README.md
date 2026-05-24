@@ -8,28 +8,11 @@
 
 **Pylux is a free, open-source PS4 and PS5 Remote Play client for Android, Android TV, iOS, macOS, Windows, Linux, and Steam Deck.** It focuses on app-store installs, Internet Play (streaming the game catalog or your owned games), automatic console discovery, and a touch-friendly mobile UI — all from one community-maintained codebase.
 
-## Download
+This is a fork of the original application. I am making updates to fix up the android version. Please see the releases link for the latest apk
 
-<a href="https://play.google.com/store/apps/details?id=com.pylux.stream"><img src="assets/google-play-badge.svg" height="50" alt="Get it on Google Play"></a>&nbsp;<a href="https://www.dropbox.com/scl/fi/wf9cr349acdwkih0syrva/pylux-windows-installer-latest.exe?rlkey=m2egtuj8z7f5se6405gg09wct&dl=1"><img src="assets/windows-installer-badge.svg" height="50" alt="Download for Windows"></a>
-
-<a href="https://apps.apple.com/us/app/pylux-remote-play/id6761292658"><img src="assets/app-store-badge.svg" height="50" alt="Download on the App Store"></a>&nbsp;<a href="https://apps.apple.com/us/app/pylux-remote-play/id6761292658"><img src="assets/mac-app-store-badge.svg" height="50" alt="Download on the Mac App Store"></a>
-
-<a href="https://flathub.org/apps/io.github.ForWard_Technologies_LLC.Pylux"><img src="assets/flathub-badge.svg" height="50" alt="Get it on Flathub"></a>&nbsp;<a href="https://www.dropbox.com/scl/fi/wi8bjilwiklv7fde0b4ea/pylux-latest.AppImage?rlkey=3xne4ltuiq54ogfmng4gq24mp&dl=1"><img src="assets/linux-appimage-badge.svg" height="50" alt="Download AppImage"></a>
-
-**Steam Deck / Flathub Note**:
-
-Pylux is not available in the Steam Deck Discover store yet. Flathub’s review process is slow, so until the listing is approved you need to install it manually using the commands below. I will remove this section once Pylux is available on Flathub.
-
-Install:
-```
-curl -fsSL -o pylux-latest.flatpak "https://www.dropbox.com/scl/fi/zho2yrnso8u28rbx0jkwt/pylux-latest.flatpak?rlkey=kjftxhac24g43li6vpouqding&dl=1" && flatpak install --user -y pylux-latest.flatpak
-```
-Run:
-```
-flatpak run io.github.ForWard_Technologies_LLC.Pylux
 ```
 
-For full release notes and all downloads see the [Releases page](https://github.com/ForWard-Technologies-LLC/Pylux/releases).
+For full release notes and all downloads see the [Releases page](https://github.com/Chazq2023/Pylux-Cloud-Android/releases).
 
 ## Screenshots
 
@@ -58,15 +41,6 @@ Full setup guides, configuration, and controller options at **[forward-technolog
 Fork the repo, create a branch, and open a pull request targeting `release/beta`. When merged, CI automatically builds and deploys to all platforms (Google Play, TestFlight, App Store Connect, Dropbox).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and local development setup.
-
-## What needs work
-
-- **iOS** needs the most work — cleanup, hardening, and refactors are all in scope.
-- **Android** is more stable but still benefits from fixes and polish.
-- **Desktop (Qt)** is where merge pain with [upstream Chiaki](https://github.com/streetpea/chiaki-ng) shows up most. Prefer adding new code in new files when practical and skip sweeping rewrites that block pulling upstream fixes.
-- **Cherry-picks from upstream** are welcome. If you spot something upstream has that Pylux is missing, open an issue or try adding it yourself.
-
-AI-assisted contributions are welcome — just follow good coding standards and fully test your changes before submitting.
 
 ## Why Pylux?
 
