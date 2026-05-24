@@ -62,4 +62,31 @@ jobs:
         with:
           tag_name: ${{ env.TAG }}
           name: Pylux Android Cloud ${{ env.TAG }}
+          body: |
+            ## Pylux Android Cloud Release
+
+            ### Improvements
+            - Added improved PS Plus entitlement matching
+            - Added PPSA/CUSA fallback ownership detection
+            - Improved cloud catalogue compatibility
+            - Improved FF7 Rebirth ownership handling
+            - Improved GTA V ownership detection
+
+            ### Fixes
+            - Fixed FF7 Rebirth launching demo instead of full game
+            - Fixed multiple entitlement matching edge cases
+            - Fixed RecyclerView stable ID crash while scrolling
+            - Fixed GitHub Actions APK build pipeline
+            - Fixed Android CI dependency installation issues
+
+            ### CI/CD
+            - Automatic APK generation on merge to master
+            - Automatic GitHub release creation
+            - Automatic release tagging
+            - APK attached directly to releases
+
+            ### APK
+            Attached release asset:
+            `pylux-android-cloud.apk`
+
           files: release/pylux-android-cloud.apk
