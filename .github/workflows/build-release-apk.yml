@@ -68,9 +68,9 @@ jobs:
             ### Fixes
             - Fixed Horizon Zero Dawn Remastered entitlement, game now appears if owned/not owned
 
-	    ### Outstanding issues
-	    - Horizon zero down remastered image is a landscape image so doesn't fit properly, will look to resolve this in a new release
-	    - In game menu doesn't disappear, so will look into fixing this too
+            ### Outstanding Issues
+            - Horizon zero down remastered image is a landscape image so doesn't fit properly, will look to resolve this in a new release
+            - In game menu doesn't disappear, so will look into fixing this too
 
             ### APK
             Attached release asset:
