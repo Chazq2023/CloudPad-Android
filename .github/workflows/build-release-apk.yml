@@ -23,15 +23,17 @@ jobs:
           java-version: 21
 
       - name: Make Gradle executable
+        working-directory: android
         run: chmod +x ./gradlew
 
       - name: Build APK
+        working-directory: android
         run: ./gradlew assembleDebug
 
       - name: Prepare APK
         run: |
           mkdir -p release
-          cp app/build/outputs/apk/debug/app-debug.apk release/pylux-android-cloud.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release/pylux-android-cloud.apk
 
       - name: Create tag
         run: |
