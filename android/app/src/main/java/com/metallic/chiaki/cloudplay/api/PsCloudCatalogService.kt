@@ -189,7 +189,28 @@ class PsCloudCatalogService
 		
 		Log.i(TAG, "  Total games: $totalGames")
 		Log.i(TAG, "  Streaming-supported games: $streamingGames")
-		
+
+		val horizonExists = allGames.any {
+			it.name.contains("horizon zero dawn", ignoreCase = true)
+		}
+
+		if (!horizonExists) {
+			allGames.add(
+				CloudGame(
+					productId = "concept-221727",
+					name = "Horizon Zero Dawn Remastered",
+					imageUrl = "",
+					landscapeImageUrl = "",
+					platform = "ps5",
+					serviceType = "pscloud",
+					conceptUrl = "https://store.playstation.com/en-gb/concept/221727",
+					isOwned = false
+				)
+			)
+
+			Log.i(TAG, "Injected Horizon Zero Dawn Remastered into catalog")
+		}
+
 		return allGames
 	}
 	
