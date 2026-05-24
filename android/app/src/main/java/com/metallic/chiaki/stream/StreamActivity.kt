@@ -352,6 +352,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private val hideSystemUIRunnable = Runnable { hideSystemUI() }
 
+	private val hideOverlayRunnable = Runnable { hideOverlay() }
+
 	override fun onSystemUiVisibilityChange(visibility: Int)
 	{
 		if(visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
@@ -362,7 +364,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private fun showOverlay()
 	{
-		if (isTv()) return  // No touch overlay on TV
+		if (isTv()) return
+
 		binding.overlay.isVisible = true
 		binding.overlay.animate()
 			.alpha(1.0f)
@@ -373,8 +376,12 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 					binding.overlay.alpha = 1.0f
 				}
 			})
+
 		uiVisibilityHandler.removeCallbacks(hideSystemUIRunnable)
+		uiVisibilityHandler.removeCallbacks(hideOverlayRunnable)
+
 		uiVisibilityHandler.postDelayed(hideSystemUIRunnable, HIDE_UI_TIMEOUT_MS)
+		uiVisibilityHandler.postDelayed(hideOverlayRunnable, HIDE_UI_TIMEOUT_MS)
 	}
 
 	private fun hideOverlay()

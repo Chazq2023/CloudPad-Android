@@ -199,8 +199,8 @@ class PsCloudCatalogService
 				CloudGame(
 					productId = "EP9000-PPSA13427_00-HORIZONREMASTER1",
 					name = "Horizon Zero Dawn Remastered",
-					imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202409/2716/7e28e0e7be91ad15ccac327e137831d5067c084c6cb5b6f1.jpg",
-					landscapeImageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202409/2716/7e28e0e7be91ad15ccac327e137831d5067c084c6cb5b6f1.jpg",
+					imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202409/2716/b23608e3b46e3b1f6aebb78a4aa9b1bf4f72a1d99f42ed01.jpg",
+					landscapeImageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202409/2716/b23608e3b46e3b1f6aebb78a4aa9b1bf4f72a1d99f42ed01.jpg",
 					platform = "ps5",
 					serviceType = "pscloud",
 					conceptUrl = "https://store.playstation.com/en-gb/concept/221727?titleId=PPSA13427",
@@ -461,7 +461,18 @@ class PsCloudCatalogService
 	 */
 
 	private fun catalogIdentifiersFor(game: CloudGame): Set<String> {
+
 		val ids = mutableSetOf<String>()
+
+		Regex("""ppsa\d{5}""", RegexOption.IGNORE_CASE)
+			.findAll(game.name)
+			.map { it.value.lowercase() }
+			.forEach { ids.add(it) }
+
+		Regex("""ppsa\d{5}""", RegexOption.IGNORE_CASE)
+			.findAll(game.conceptUrl ?: "")
+			.map { it.value.lowercase() }
+			.forEach { ids.add(it) }
 
 		fun add(value: String?) {
 			val normalized = value?.trim()?.lowercase().orEmpty()
@@ -511,49 +522,55 @@ class PsCloudCatalogService
 		{
 			val catalogIds = catalogIdentifiersFor(game)
 
-			if (game.name.contains("horizon", ignoreCase = true)) {
-				Log.i(TAG, "=== HORIZON DEBUG ===")
-				Log.i(TAG, "Game Name: ${game.name}")
-				Log.i(TAG, "Catalog Product ID: ${game.productId}")
-				Log.i(TAG, "Catalog Concept URL: ${game.conceptUrl}")
-				Log.i(TAG, "Catalog IDs: $catalogIds")
-			}
+//			if (game.name.contains("horizon", ignoreCase = true)) {
+//				Log.i(TAG, "=== HORIZON DEBUG ===")
+//				Log.i(TAG, "Game Name: ${game.name}")
+//				Log.i(TAG, "Catalog Product ID: ${game.productId}")
+//				Log.i(TAG, "Catalog Concept URL: ${game.conceptUrl}")
+//				Log.i(TAG, "Catalog IDs: $catalogIds")
+//			}
 
-			if (
-				game.name.contains("horizon", ignoreCase = true) ||
-				game.name.contains("rebirth", ignoreCase = true) ||
-				game.name.contains("grand theft", ignoreCase = true) ||
-				game.name.contains("gta", ignoreCase = true)
-			) {
-				Log.i(TAG, "=== DEBUG UNMATCHED GAME ===")
-				Log.i(TAG, "Game: ${game.name}")
-				Log.i(TAG, "Catalog productId: ${game.productId}")
-				Log.i(TAG, "Catalog conceptUrl: ${game.conceptUrl}")
-				Log.i(TAG, "Catalog IDs: $catalogIds")
+//			if (
+//				game.name.contains("ghost", ignoreCase = true) ||
+//				game.name.contains("tsushima", ignoreCase = true) ||
+//				game.name.contains("horizon", ignoreCase = true) ||
+//				game.name.contains("rebirth", ignoreCase = true) ||
+//				game.name.contains("grand theft", ignoreCase = true) ||
+//				game.name.contains("gta", ignoreCase = true)
+//			) {
+//				Log.i(TAG, "=== DEBUG UNMATCHED GAME ===")
+//				Log.i(TAG, "Game: ${game.name}")
+//				Log.i(TAG, "Catalog productId: ${game.productId}")
+//				Log.i(TAG, "Catalog conceptUrl: ${game.conceptUrl}")
+//				Log.i(TAG, "Catalog IDs: $catalogIds")
+//
+//				entitlements
+//					.filter {
+//						it.launchId.contains("rebirth", ignoreCase = true) ||
+//								it.launchId.contains("horizon", ignoreCase = true) ||
+//								it.launchId.contains("gta", ignoreCase = true) ||
+//								it.launchId.contains("grand", ignoreCase = true) ||
+//								it.launchId.contains("final", ignoreCase = true) ||
+//								it.launchId.contains("ghost", ignoreCase = true) ||
+//								it.launchId.contains("tsushima", ignoreCase = true) ||
+//								it.ids.any { id ->
+//									id.contains("rebirth", ignoreCase = true) ||
+//											id.contains("horizon", ignoreCase = true) ||
+//											id.contains("zero dawn", ignoreCase = true) ||
+//											id.contains("221727", ignoreCase = true) ||
+//											id.contains("gta", ignoreCase = true) ||
+//											id.contains("ghost", ignoreCase = true) ||
+//											id.contains("tsushima", ignoreCase = true) ||
+//											id.contains("final", ignoreCase = true)
+//								}
+//					}
+//					.forEach {
+//						Log.i(TAG, "Possible entitlement launchId=${it.launchId}")
+//						Log.i(TAG, "Possible entitlement ids=${it.ids}")
+//					}
+//			}
 
-				entitlements
-					.filter {
-						it.launchId.contains("rebirth", ignoreCase = true) ||
-								it.launchId.contains("horizon", ignoreCase = true) ||
-								it.launchId.contains("gta", ignoreCase = true) ||
-								it.launchId.contains("grand", ignoreCase = true) ||
-								it.launchId.contains("final", ignoreCase = true) ||
-								it.ids.any { id ->
-									id.contains("rebirth", ignoreCase = true) ||
-											id.contains("horizon", ignoreCase = true) ||
-											id.contains("zero dawn", ignoreCase = true) ||
-											id.contains("221727", ignoreCase = true) ||
-											id.contains("gta", ignoreCase = true) ||
-											id.contains("final", ignoreCase = true)
-								}
-					}
-					.forEach {
-						Log.i(TAG, "Possible entitlement launchId=${it.launchId}")
-						Log.i(TAG, "Possible entitlement ids=${it.ids}")
-					}
-			}
-
-			val matchedEntitlement = entitlements
+			var matchedEntitlement = entitlements
 				.filter { entitlement ->
 					catalogIds.any { it in entitlement.ids }
 				}
@@ -574,37 +591,103 @@ class PsCloudCatalogService
 					val combined = (listOf(entitlement.launchId) + entitlement.ids).joinToString(" ").lowercase()
 
 					var score = 0
-
-					// Prefer exact full product/catalog matches
 					if (game.productId.trim().lowercase() in entitlement.ids) score += 100
-
-					// Prefer same platform/full game records
 					if (combined.contains("ps5")) score += 20
 					if (combined.contains("psgd")) score += 20
-
 					if (entitlement.launchId.lowercase().contains("europe0000000000")) score += 80
 					if (entitlement.launchId.lowercase().contains("gp000000")) score -= 80
 					if (entitlement.launchId.lowercase().contains("epre")) score -= 80
 
-					// Prefer title/name match
 					game.name.lowercase().split(" ").forEach { token ->
-						if (token.length > 3 && combined.contains(token)) {
-							score += 5
-						}
+						if (token.length > 3 && combined.contains(token)) score += 5
 					}
 
 					score
 				}
 
-			if (game.name.contains("horizon", ignoreCase = true)) {
-				if (matchedEntitlement != null) {
-					Log.i(TAG, "HORIZON MATCHED!")
-					Log.i(TAG, "Matched launchId: ${matchedEntitlement.launchId}")
-					Log.i(TAG, "Matched ids: ${matchedEntitlement.ids}")
-				} else {
-					Log.i(TAG, "HORIZON DID NOT MATCH ANY ENTITLEMENT")
-				}
+			if (matchedEntitlement == null) {
+				val gameName = game.name
+					.lowercase()
+					.replace("director's cut", "")
+					.replace("directors cut", "")
+					.replace("™", "")
+					.replace("®", "")
+					.trim()
+
+//				val titleTokens = gameName
+//					.split(" ")
+//					.map { it.trim() }
+//					.filter { it.length > 4 }
+//					.filterNot {
+//						it in setOf(
+//							"edition",
+//							"digital",
+//							"deluxe",
+//							"standard",
+//							"ultimate"
+//						)
+//					}
+
+				matchedEntitlement = entitlements
+					.filter { entitlement ->
+
+						val combined = (listOf(entitlement.launchId) + entitlement.ids)
+							.joinToString(" ")
+							.lowercase()
+
+						val isGhostOfTsushimaCatalog =
+							gameName.contains("ghost") &&
+									gameName.contains("tsushima")
+
+						isGhostOfTsushimaCatalog &&
+								combined.contains("ghost of tsushima") &&
+								combined.contains("ps5") &&
+								combined.contains("psgd")
+					}
+					.filterNot { entitlement ->
+						val combined = (listOf(entitlement.launchId) + entitlement.ids).joinToString(" ").lowercase()
+
+						combined.contains("demo") ||
+								combined.contains("trial") ||
+								combined.contains("pstrack") ||
+								combined.contains("pre-order") ||
+								combined.contains("preorder") ||
+								combined.contains("soundtrack") ||
+								combined.contains("artbook") ||
+								combined.contains("avatar") ||
+								combined.contains("theme")
+					}
+					.maxByOrNull { entitlement ->
+						val combined = (listOf(entitlement.launchId) + entitlement.ids).joinToString(" ").lowercase()
+						var score = 0
+						if (combined.contains("ps5")) score += 20
+						if (combined.contains("psgd")) score += 20
+//						titleTokens.forEach { token ->
+//								if (combined.contains(token)) score += 10
+//							}
+						score
+					}
 			}
+
+//			if (game.name.contains("ghost", ignoreCase = true) || game.name.contains("tsushima", ignoreCase = true)) {
+//				if (matchedEntitlement != null) {
+//					Log.i(TAG, "GHOST MATCHED!")
+//					Log.i(TAG, "Matched launchId: ${matchedEntitlement.launchId}")
+//					Log.i(TAG, "Matched ids: ${matchedEntitlement.ids}")
+//				} else {
+//					Log.i(TAG, "GHOST DID NOT MATCH ANY ENTITLEMENT")
+//				}
+//			}
+
+//			if (game.name.contains("horizon", ignoreCase = true)) {
+//				if (matchedEntitlement != null) {
+//					Log.i(TAG, "HORIZON MATCHED!")
+//					Log.i(TAG, "Matched launchId: ${matchedEntitlement.launchId}")
+//					Log.i(TAG, "Matched ids: ${matchedEntitlement.ids}")
+//				} else {
+//					Log.i(TAG, "HORIZON DID NOT MATCH ANY ENTITLEMENT")
+//				}
+//			}
 
 			if (matchedEntitlement != null) {
 				ownedGames.add(
