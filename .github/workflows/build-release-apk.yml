@@ -65,25 +65,12 @@ jobs:
           body: |
             ## Pylux Android Cloud Release
 
-            ### Improvements
-            - Added improved PS Plus entitlement matching
-            - Added PPSA/CUSA fallback ownership detection
-            - Improved cloud catalogue compatibility
-            - Improved FF7 Rebirth ownership handling
-            - Improved GTA V ownership detection
-
             ### Fixes
-            - Fixed FF7 Rebirth launching demo instead of full game
-            - Fixed multiple entitlement matching edge cases
-            - Fixed RecyclerView stable ID crash while scrolling
-            - Fixed GitHub Actions APK build pipeline
-            - Fixed Android CI dependency installation issues
+            - Fixed Horizon Zero Dawn Remastered entitlement, game now appears if owned/not owned
 
-            ### CI/CD
-            - Automatic APK generation on merge to master
-            - Automatic GitHub release creation
-            - Automatic release tagging
-            - APK attached directly to releases
+	    ### Outstanding issues
+	    - Horizon zero down remastered image is a landscape image so doesn't fit properly, will look to resolve this in a new release
+	    - In game menu doesn't disappear, so will look into fixing this too
 
             ### APK
             Attached release asset:
