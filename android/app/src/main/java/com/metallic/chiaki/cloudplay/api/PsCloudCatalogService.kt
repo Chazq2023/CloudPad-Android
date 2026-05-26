@@ -32,7 +32,10 @@ class PsCloudCatalogService
 	 * @param locale Language locale (e.g., "en-us", "ja-jp")
 	 * @return List of CloudGame objects
 	 */
-	suspend fun fetchPs5CloudCatalog(locale: String): List<CloudGame>
+	suspend fun fetchPs5CloudCatalog(
+		locale: String,
+		entitlements: List<EntitlementRecord> = emptyList()
+	): List<CloudGame>
 	{
 		Log.i(TAG, "=== Fetching PS5 Game Catalog ===")
 		Log.i(TAG, "  Locale: $locale")
@@ -63,6 +66,15 @@ class PsCloudCatalogService
 		var totalGames = 0
 		var streamingGames = 0
 
+		val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
+
+		val ownedTitleIds = entitlements
+			.flatMap { it.ids }
+			.mapNotNull { id ->
+				titleIdRegex.find(id)?.value?.lowercase()
+			}
+			.toSet()
+
 		for (i in 0 until jsonArray.length())
 		{
 			val category = jsonArray.getJSONObject(i)
@@ -74,14 +86,23 @@ class PsCloudCatalogService
 			{
 				val gameObj = games.getJSONObject(j)
 
-				// Filter for streamingSupported: true (Qt lines 923)
-				if (gameObj.optBoolean("streamingSupported", false))
-				{
-				streamingGames++
-
 				val productId = gameObj.optString("productId", "")
-				val gameName = gameObj.optString("name", "Unknown")  // PS5 catalog uses "name", not "title"
-				var imageUrl = gameObj.optString("imageUrl", "")
+				val gameName = gameObj.optString("name", "Unknown")
+
+				val titleId = titleIdRegex
+					.find(productId)
+					?.value
+					?.lowercase()
+
+				val isOwnedFalseNegative =
+					titleId != null && ownedTitleIds.contains(titleId)
+
+// Include normal streamable games, plus owned games Sony incorrectly marks as not streamable
+				if (gameObj.optBoolean("streamingSupported", false) || isOwnedFalseNegative)
+				{
+					streamingGames++
+
+					var imageUrl = gameObj.optString("imageUrl", "")
 
 				// Extract conceptUrl (for adding game to library)
 				// Try multiple possible field names
@@ -190,45 +211,45 @@ class PsCloudCatalogService
 		Log.i(TAG, "  Total games: $totalGames")
 		Log.i(TAG, "  Streaming-supported games: $streamingGames")
 
-		val horizonExists = allGames.any {
-			it.name.contains("horizon zero dawn", ignoreCase = true)
-		}
-
-		if (!horizonExists) {
-			allGames.add(
-				CloudGame(
-					productId = "EP9000-PPSA13427_00-HORIZONREMASTER1",
-					name = "Horizon Zero Dawn Remastered",
-					imageUrl = "file:///android_asset/portraits/Horizon Zero Dawn.jpg",
-					landscapeImageUrl = "file:///android_asset/landscapes/Horizon Zero Dawn LS.jpg",					platform = "ps5",
-					serviceType = "pscloud",
-					conceptUrl = "https://store.playstation.com/en-gb/concept/221727?titleId=PPSA13427",
-					isOwned = false
-				)
-			)
-
-			Log.i(TAG, "Injected Horizon Zero Dawn Remastered into catalog")
-		}
-
-		val deathStrandingExists = allGames.any {
-			it.productId.contains("PPSA01968", ignoreCase = true)
-		}
-
-		if (!deathStrandingExists) {
-			allGames.add(
-				CloudGame(
-					productId = "EP9000-PPSA01968_00-DEATHSTRANDINGEU",
-					name = "DEATH STRANDING DIRECTOR'S CUT",
-					imageUrl = "file:///android_asset/portraits/Death Stranding.jpg",
-					landscapeImageUrl = "file:///android_asset/landscapes/Death Stranding LS.jpg",					platform = "ps5",
-					serviceType = "pscloud",
-					conceptUrl = "https://store.playstation.com/en-gb/product/EP9000-PPSA01968_00-DEATHSTRANDINGEU?titleId=PPSA01968",
-					isOwned = false
-				)
-			)
-
-			Log.i(TAG, "Injected Death Stranding Director's Cut into catalog")
-		}
+//		val horizonExists = allGames.any {
+//			it.name.contains("horizon zero dawn", ignoreCase = true)
+//		}
+//
+//		if (!horizonExists) {
+//			allGames.add(
+//				CloudGame(
+//					productId = "EP9000-PPSA13427_00-HORIZONREMASTER1",
+//					name = "Horizon Zero Dawn Remastered",
+//					imageUrl = "file:///android_asset/portraits/Horizon Zero Dawn.jpg",
+//					landscapeImageUrl = "file:///android_asset/landscapes/Horizon Zero Dawn LS.jpg",					platform = "ps5",
+//					serviceType = "pscloud",
+//					conceptUrl = "https://store.playstation.com/en-gb/concept/221727?titleId=PPSA13427",
+//					isOwned = false
+//				)
+//			)
+//
+//			Log.i(TAG, "Injected Horizon Zero Dawn Remastered into catalog")
+//		}
+//
+//		val deathStrandingExists = allGames.any {
+//			it.productId.contains("PPSA01968", ignoreCase = true)
+//		}
+//
+//		if (!deathStrandingExists) {
+//			allGames.add(
+//				CloudGame(
+//					productId = "EP9000-PPSA01968_00-DEATHSTRANDINGEU",
+//					name = "DEATH STRANDING DIRECTOR'S CUT",
+//					imageUrl = "file:///android_asset/portraits/Death Stranding.jpg",
+//					landscapeImageUrl = "file:///android_asset/landscapes/Death Stranding LS.jpg",					platform = "ps5",
+//					serviceType = "pscloud",
+//					conceptUrl = "https://store.playstation.com/en-gb/product/EP9000-PPSA01968_00-DEATHSTRANDINGEU?titleId=PPSA01968",
+//					isOwned = false
+//				)
+//			)
+//
+//			Log.i(TAG, "Injected Death Stranding Director's Cut into catalog")
+//		}
 
 		return allGames
 	}
@@ -258,7 +279,7 @@ class PsCloudCatalogService
 		val entitlements = fetchEntitlements(oauthToken)
 
 		// Step 3: Fetch public PS5 catalog for cross-reference (Qt lines 1157-1288)
-		val publicCatalog = fetchPs5CloudCatalog(locale)
+		val publicCatalog = fetchPs5CloudCatalog(locale, entitlements)
 
 		// Step 4: Cross-reference owned games with catalog (Qt lines 1289-1384)
 		val ownedGames = crossReferenceOwnedGames(entitlements, publicCatalog)
@@ -342,7 +363,7 @@ class PsCloudCatalogService
 	 * Mirrors: CloudCatalogBackend::fetchOwnedGamesPage() (Qt lines 1192-1216)
 	 */
 
-	private data class EntitlementRecord(
+	data class EntitlementRecord(
 		val launchId: String,
 		val ids: Set<String>
 	)
