@@ -133,12 +133,16 @@ class CloudGameRepository(
 			val locale = localeSetting.lowercase()
 			
 			// Fetch owned games
-			val ownedGames = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale)
-			val ownedProductIds = ownedGames.map { it.productId }.toSet()
-			
-			// Mark ownership status
+			val ownedGames = pscloudCatalogService.crossReferenceOwnedGamesForCatalog(
+				npssoToken = npssoToken,
+				locale = locale,
+				publicCatalog = publicCatalog
+			)
+
+			val ownedProductIds = ownedGames.map { it.productId.lowercase() }.toSet()
+
 			return publicCatalog.map { game ->
-				game.copy(isOwned = ownedProductIds.contains(game.productId))
+				game.copy(isOwned = ownedProductIds.contains(game.productId.lowercase()))
 			}
 		}
 		catch (e: Exception)
