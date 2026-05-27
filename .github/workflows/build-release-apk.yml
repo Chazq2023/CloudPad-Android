@@ -66,10 +66,9 @@ jobs:
             ## Pylux Android Cloud Release
 
             ### Fixes
-            - Death Stranding and Horizon Zero Dawn are no longer manally injected
+            - Refresh is much quicker and performance in general has been optimised
 
             ### Outstanding Issues
-            - Need to better optimise the refresh rate, as well as clean up the code
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
             - Demon Souls is missing, will look into this
             - Bloodbourne is not working currently, will look into this
