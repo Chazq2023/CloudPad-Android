@@ -10,7 +10,17 @@
 
 #include <string.h>
 
+#include <time.h>
+#include <inttypes.h>
+
 #define INPUT_BUFFER_TIMEOUT_MS 10
+
+static int64_t now_ms()
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ((int64_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
+}
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
 
@@ -143,10 +153,17 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 {
 	bool r = true;
 	AndroidChiakiVideoDecoder *decoder = user;
+	static int64_t last_log_ms = 0;
+	static int64_t samples_in = 0;
+	static int64_t samples_dropped = 0;
+	static int64_t input_retries = 0;
+	static int64_t bytes_in = 0;
 	// Ignore frames_lost and frame_recovered parameters for now - Android decoder handles frame loss internally
 	(void)frames_lost;
 	(void)frame_recovered;
 	chiaki_mutex_lock(&decoder->codec_mutex);
+	samples_in++;
+	bytes_in += buf_size;
 
 	if(!decoder->codec)
 	{
@@ -156,14 +173,27 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 
 	while(buf_size > 0)
 	{
-		ssize_t codec_buf_index = AMediaCodec_dequeueInputBuffer(decoder->codec, INPUT_BUFFER_TIMEOUT_MS * 1000);
-		if(codec_buf_index < 0)
+		ssize_t codec_buf_index = -1;
+
+		for(int retry = 0; retry < 3; retry++)
 		{
-			CHIAKI_LOGE(decoder->log, "Failed to get input buffer");
-			r = false;
-			goto beach;
+		    codec_buf_index = AMediaCodec_dequeueInputBuffer(
+		        decoder->codec,
+		        INPUT_BUFFER_TIMEOUT_MS * 1000
+		    );
+
+		    if(codec_buf_index >= 0)
+		        break;
+
+		    input_retries++;
 		}
 
+		if(codec_buf_index < 0)
+		{
+		    samples_dropped++;
+		    r = false;
+		    goto beach;
+		}
 		size_t codec_buf_size;
 		uint8_t *codec_buf = AMediaCodec_getInputBuffer(decoder->codec, (size_t)codec_buf_index, &codec_buf_size);
 		size_t codec_sample_size = buf_size;
@@ -173,20 +203,45 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 			codec_sample_size = codec_buf_size;
 		}
 		memcpy(codec_buf, buf, codec_sample_size);
-		media_status_t r = AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, codec_sample_size, decoder->timestamp_cur++, 0); // timestamp just raised by 1 for maximum realtime
-		if(r != AMEDIA_OK)
-		{
-			CHIAKI_LOGE(decoder->log, "AMediaCodec_queueInputBuffer() failed: %d", (int)r);
-		}
+		media_status_t r = AMediaCodec_queueInputBuffer(
+    		decoder->codec,
+    		(size_t)codec_buf_index,
+    		0,
+    		codec_sample_size,
+    		decoder->timestamp_cur++,
+    		0
+		);
+		// timestamp just raised by 1 for maximum realtime
 		buf += codec_sample_size;
 		buf_size -= codec_sample_size;
+		}
 
+		int64_t now = now_ms();
+		if(last_log_ms == 0)
+			last_log_ms = now;
+
+		if(now - last_log_ms >= 1000)
+		{
+			CHIAKI_LOGI(
+				decoder->log,
+				"VIDEO_DIAG in=%" PRId64 " dropped=%" PRId64 " retries=%" PRId64 " bytes=%" PRId64,
+				samples_in,
+				samples_dropped,
+				input_retries,
+				bytes_in
+			);
+
+			samples_in = 0;
+			samples_dropped = 0;
+			input_retries = 0;
+			bytes_in = 0;
+			last_log_ms = now;
+		}
+
+	beach:
+		chiaki_mutex_unlock(&decoder->codec_mutex);
+		return r;
 	}
-
-beach:
-	chiaki_mutex_unlock(&decoder->codec_mutex);
-	return r;
-}
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user)
 {
@@ -196,14 +251,25 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	{
 		AMediaCodecBufferInfo info;
 		ssize_t status = AMediaCodec_dequeueOutputBuffer(decoder->codec, &info, -1);
-		if(status >= 0)
-		{
-			AMediaCodec_releaseOutputBuffer(decoder->codec, (size_t)status, info.size != 0);
-			if(info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM)
-			{
-				CHIAKI_LOGI(decoder->log, "AMediaCodec reported EOS");
-				break;
-			}
+		if(status >= 0) {
+    		if(info.size != 0) {
+    			AMediaCodec_releaseOutputBuffer(
+        			decoder->codec,
+        			(size_t)status,
+        			true
+    			);
+			} else {
+        		AMediaCodec_releaseOutputBuffer(
+            		decoder->codec,
+            		(size_t)status,
+            		false
+        		);
+    		}
+
+    		if(info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM) {
+        		CHIAKI_LOGI(decoder->log, "AMediaCodec reported EOS");
+        		break;
+    		}
 		}
 		else
 		{
