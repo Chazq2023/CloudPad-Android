@@ -1358,3 +1358,19 @@ CHIAKI_EXPORT ChiakiErrorCode stream_connection_send_corrupt_frame(ChiakiStreamC
 	CHIAKI_LOGD(stream_connection->log, "StreamConnection reporting corrupt frame(s) from %u to %u", (unsigned int)start, (unsigned int)end);
 	return chiaki_takion_send_message_data(&stream_connection->takion, 1, 2, buf, stream.bytes_written, NULL);
 }
+
+CHIAKI_EXPORT ChiakiErrorCode stream_connection_send_idr_request(ChiakiStreamConnection *stream_connection)
+{
+    CHIAKI_LOGI(stream_connection->log, "StreamConnection requesting IDR via corrupt frame report");
+
+    /*
+     * Cloud Play/Remote Play does not use a raw 8-byte IDR command here.
+     * The safest recovery request is to use the existing CORRUPTFRAME
+     * protobuf path, because that is already understood by the stream server.
+     */
+    return stream_connection_send_corrupt_frame(
+        stream_connection,
+        0xffff,
+        0xffff
+    );
+}

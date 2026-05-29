@@ -150,8 +150,8 @@ CHIAKI_EXPORT void chiaki_video_receiver_av_packet(ChiakiVideoReceiver *video_re
 	if(video_receiver->frame_index_cur != video_receiver->frame_index_prev)
 	{
 		// if we already have enough for the whole frame, flush it already
-		if(chiaki_frame_processor_flush_possible(&video_receiver->frame_processor) || packet->unit_index == packet->units_in_frame_total - 1)
-			err = chiaki_video_receiver_flush_frame(video_receiver);
+		if(chiaki_frame_processor_flush_possible(&video_receiver->frame_processor))
+		    err = chiaki_video_receiver_flush_frame(video_receiver);
 		if(err != CHIAKI_ERR_SUCCESS)
 			CHIAKI_LOGW(video_receiver->log, "Video receiver could not flush frame.");
 	}
@@ -168,11 +168,30 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 	{
 		if (flush_result == CHIAKI_FRAME_PROCESSOR_FLUSH_RESULT_FEC_FAILED)
 		{
-			ChiakiSeqNum16 next_frame_expected = (ChiakiSeqNum16)(video_receiver->frame_index_prev_complete + 1);
-			stream_connection_send_corrupt_frame(&video_receiver->session->stream_connection, next_frame_expected, video_receiver->frame_index_cur);
+		    ChiakiSeqNum16 next_frame_expected = (ChiakiSeqNum16)(video_receiver->frame_index_prev_complete + 1);
+
+		    stream_connection_send_corrupt_frame(
+		        &video_receiver->session->stream_connection,
+		        next_frame_expected,
+		        video_receiver->frame_index_cur
+		    );
+
+			// Do not enter waiting_for_idr here.
+			// Cloud server does not appear to honour our IDR request,
+			// and waiting forever causes the stream to freeze.
+			CHIAKI_LOGW(
+			    video_receiver->log,
+			    "FEC failed for frame %d, reporting corrupt frame and continuing",
+			    (int)video_receiver->frame_index_cur
+			);
+
 			video_receiver->frames_lost += video_receiver->frame_index_cur - next_frame_expected + 1;
 			video_receiver->frame_index_prev = video_receiver->frame_index_cur;
+			video_receiver->frame_index_prev_complete = video_receiver->frame_index_cur;
+
+			return CHIAKI_ERR_SUCCESS;
 		}
+
 		CHIAKI_LOGW(video_receiver->log, "Failed to complete frame %d", (int)video_receiver->frame_index_cur);
 		return CHIAKI_ERR_UNKNOWN;
 	}
@@ -183,7 +202,8 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 	ChiakiBitstreamSlice slice;
 	if(chiaki_bitstream_slice(&video_receiver->bitstream, frame, frame_size, &slice))
 	{
-		if(slice.slice_type == CHIAKI_BITSTREAM_SLICE_P)
+
+	    if(slice.slice_type == CHIAKI_BITSTREAM_SLICE_P)
 		{
 			ChiakiSeqNum16 ref_frame_index = video_receiver->frame_index_cur - slice.reference_frame - 1;
 			if(slice.reference_frame != 0xff && !have_ref_frame(video_receiver, ref_frame_index))
@@ -203,9 +223,24 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 				}
 				if(!recovered)
 				{
-					succ = false;
-					video_receiver->frames_lost++;
-					CHIAKI_LOGW(video_receiver->log, "Missing reference frame %d for decoding frame %d", (int)ref_frame_index, (int)video_receiver->frame_index_cur);
+				    succ = false;
+				    video_receiver->frames_lost++;
+
+				    CHIAKI_LOGW(
+				        video_receiver->log,
+				        "Missing reference frame %d for decoding frame %d — dropping dependent frame",
+				        (int)ref_frame_index,
+				        (int)video_receiver->frame_index_cur
+				    );
+
+				    /*
+				     * Do NOT allow this frame to become part of the future
+				     * reference chain, otherwise corruption cascades forever.
+				     */
+					video_receiver->frame_index_prev = video_receiver->frame_index_cur;
+					video_receiver->frame_index_prev_complete = video_receiver->frame_index_cur;
+
+					return CHIAKI_ERR_SUCCESS;
 				}
 			}
 		}

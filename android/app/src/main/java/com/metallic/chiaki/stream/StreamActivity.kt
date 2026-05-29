@@ -191,14 +191,12 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		}
 	}
 
-	override fun onResume()
-	{
+	override fun onResume() {
 		super.onResume()
 		activityStopped = false
 		Log.i("StreamActivity", "onResume: pip=$isInPictureInPictureMode session=${viewModel.session.session != null}")
 		hideSystemUI()
-		// resume() is safe to call even if session is already running -
-		// it returns immediately when session != null
+
 		viewModel.session.resume()
 	}
 

@@ -1531,7 +1531,7 @@ class CloudPlayFragment : Fragment()
 				width = 1280,
 				height = 720,
 				maxFPS = 60,
-				bitrate = 20000,  // 20 Mbps for 720p
+				bitrate = 15000,  // 20 Mbps for 720p
 				codec = codec
 			)
 			1080 -> com.metallic.chiaki.lib.ConnectVideoProfile(
