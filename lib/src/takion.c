@@ -36,11 +36,11 @@
 
 // VERY similar to SCTP, see RFC 4960
 
-#define TAKION_A_RWND 0x19000
+#define TAKION_A_RWND 0x80000
 #define TAKION_OUTBOUND_STREAMS 0x64
 #define TAKION_INBOUND_STREAMS 0x64
 
-#define TAKION_REORDER_QUEUE_SIZE_EXP 4 // => 16 entries
+#define TAKION_REORDER_QUEUE_SIZE_EXP 6 // => 64 entries
 #define TAKION_SEND_BUFFER_SIZE 16
 
 #define TAKION_POSTPONE_PACKETS_SIZE 32
@@ -1120,8 +1120,8 @@ static void *takion_thread_func(void *user)
 		uint8_t *resized_buf = realloc(buf, received_size);
 		if(!resized_buf)
 		{
-			free(buf);
-			continue;
+		    free(buf);
+		    continue;
 		}
 		takion_handle_packet(takion, resized_buf, received_size);
 	}
