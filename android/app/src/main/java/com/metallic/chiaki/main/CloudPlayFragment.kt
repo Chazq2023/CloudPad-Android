@@ -998,6 +998,15 @@ class CloudPlayFragment : Fragment()
 				2 -> filteredGames.sortedByDescending { it.name.lowercase() } // Z->A
 				else -> filteredGames
 			}
+			sortedGames
+				.filter { it.name.contains("Demon", ignoreCase = true) || it.productId.contains("PPSA01341", ignoreCase = true) }
+				.forEach {
+					Log.i(
+						"DEMON DEBUG UI",
+						"name=${it.name}, productId=${it.productId}, platform=${it.platform}, serviceType=${it.serviceType}, isOwned=${it.isOwned}, conceptUrl=${it.conceptUrl}"
+					)
+				}
+
 			adapter.games = sortedGames
 			
 			updateEmptyState(sortedGames.isEmpty())

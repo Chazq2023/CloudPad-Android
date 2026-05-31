@@ -139,10 +139,44 @@ class CloudGameRepository(
 				publicCatalog = publicCatalog
 			)
 
-			val ownedProductIds = ownedGames.map { it.productId.lowercase() }.toSet()
+			val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
+
+			fun ownershipIds(game: CloudGame): Set<String> {
+				val ids = mutableSetOf<String>()
+
+				fun add(value: String?) {
+					val normalized = value?.trim()?.lowercase().orEmpty()
+					if(normalized.isNotEmpty()) {
+						ids.add(normalized)
+						titleIdRegex.find(normalized)?.let {
+							ids.add(it.value.lowercase())
+						}
+					}
+				}
+
+				add(game.productId)
+				add(game.conceptUrl)
+				add(game.name)
+
+				return ids
+			}
+
+			ownedGames
+				.filter { it.name.contains("Demon", ignoreCase = true) || it.productId.contains("PPSA01341", ignoreCase = true) }
+				.forEach {
+					Log.i(
+						"DEMON DEBUG OWNED",
+						"ownedGame name=${it.name}, productId=${it.productId}, platform=${it.platform}, serviceType=${it.serviceType}, isOwned=${it.isOwned}"
+					)
+				}
+
+			val ownedIds = ownedGames
+				.flatMap { ownershipIds(it) }
+				.toSet()
 
 			return publicCatalog.map { game ->
-				game.copy(isOwned = ownedProductIds.contains(game.productId.lowercase()))
+				val gameIds = ownershipIds(game)
+				game.copy(isOwned = gameIds.any { it in ownedIds })
 			}
 		}
 		catch (e: Exception)

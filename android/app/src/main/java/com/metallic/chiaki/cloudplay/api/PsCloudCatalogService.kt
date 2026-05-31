@@ -557,6 +557,25 @@ class PsCloudCatalogService
 		return ids
 	}
 
+	private fun isExcludedEntitlement(combined: String): Boolean
+	{
+		fun hasToken(token: String): Boolean
+		{
+			return Regex("""(^|[^a-z0-9])${Regex.escape(token)}([^a-z0-9]|$)""")
+				.containsMatchIn(combined)
+		}
+
+		return hasToken("demo") ||
+				hasToken("trial") ||
+				combined.contains("pstrack") ||
+				combined.contains("pre-order") ||
+				combined.contains("preorder") ||
+				combined.contains("soundtrack") ||
+				combined.contains("artbook") ||
+				combined.contains("avatar") ||
+				combined.contains("theme")
+	}
+
 	private fun crossReferenceOwnedGames(
 		entitlements: List<EntitlementRecord>,
 		publicCatalog: List<CloudGame>
@@ -589,17 +608,7 @@ class PsCloudCatalogService
 					catalogIds.any { it in prepared.entitlement.ids }
 				}
 				.filterNot { prepared ->
-					val combined = prepared.combinedIds
-
-					combined.contains("demo") ||
-							combined.contains("trial") ||
-							combined.contains("pstrack") ||
-							combined.contains("pre-order") ||
-							combined.contains("preorder") ||
-							combined.contains("soundtrack") ||
-							combined.contains("artbook") ||
-							combined.contains("avatar") ||
-							combined.contains("theme")
+					isExcludedEntitlement(prepared.combinedIds)
 				}
 				.maxByOrNull { prepared ->
 					val combined = prepared.combinedIds
@@ -644,17 +653,7 @@ class PsCloudCatalogService
 								combined.contains("psgd")
 					}
 					.filterNot { prepared ->
-						val combined = prepared.combinedIds
-
-						combined.contains("demo") ||
-								combined.contains("trial") ||
-								combined.contains("pstrack") ||
-								combined.contains("pre-order") ||
-								combined.contains("preorder") ||
-								combined.contains("soundtrack") ||
-								combined.contains("artbook") ||
-								combined.contains("avatar") ||
-								combined.contains("theme")
+						isExcludedEntitlement(prepared.combinedIds)
 					}
 					.maxByOrNull { prepared ->
 						val combined = prepared.combinedIds
@@ -669,7 +668,6 @@ class PsCloudCatalogService
 			if (matchedEntitlement != null) {
 				ownedGames.add(
 					game.copy(
-						productId = matchedEntitlement.launchId,
 						isOwned = true
 					)
 				)
