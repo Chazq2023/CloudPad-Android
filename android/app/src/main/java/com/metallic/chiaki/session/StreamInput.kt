@@ -275,10 +275,11 @@ class StreamInput(
 						selectHeld = true
 						selectUsedForSwipe = false
 						suppressNextSelectReleasePress = false
-						pendingSelectPress = false
+						pendingSelectPress = true
 						lastDpadSwipeDirection = null
 
 						handler.removeCallbacks(selectPressRunnable)
+						handler.postDelayed(selectPressRunnable, 200)
 					}
 					else
 					{
