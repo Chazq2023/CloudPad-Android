@@ -668,6 +668,7 @@ class PsCloudCatalogService
 			if (matchedEntitlement != null) {
 				ownedGames.add(
 					game.copy(
+						productId = matchedEntitlement.launchId,
 						isOwned = true
 					)
 				)
