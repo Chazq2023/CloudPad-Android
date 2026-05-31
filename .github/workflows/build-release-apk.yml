@@ -65,8 +65,8 @@ jobs:
           body: |
             ## Pylux Android Cloud Release
 
-            ### Fixes
-            - PS4 and PS5 streams are much smoother now, resulting in a lot less frequent packet losses
+            ### Improvements
+            - The select button for ps4 and ps5 titles now acts as a touchpad press. PS3 it remains select.
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now

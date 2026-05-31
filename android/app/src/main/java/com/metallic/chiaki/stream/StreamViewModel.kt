@@ -16,13 +16,18 @@ class StreamViewModel(val application: Application, val connectInfo: ConnectInfo
 	val preferences = Preferences(application)
 	val logManager = LogManager(application)
 
-	private val isPs5GaikaiStream =
-		connectInfo.ps5 && !connectInfo.cloudSessionId.isNullOrBlank()
+	private val isCloudStream =
+		!connectInfo.cloudSessionId.isNullOrBlank()
+
+	private val mapSelectToTouchpad =
+		isCloudStream &&
+				(connectInfo.cloudGamePlatform == "ps4" ||
+						connectInfo.cloudGamePlatform == "ps5")
 
 	val input = StreamInput(
 		application,
 		preferences,
-		mapSelectToTouchpad = isPs5GaikaiStream
+		mapSelectToTouchpad = mapSelectToTouchpad
 	)
 
 	val session = StreamSession(connectInfo, logManager, preferences.logVerbose, input)
