@@ -141,7 +141,7 @@ class TouchpadView @JvmOverloads constructor(
 						acc
 					else
 					{
-						it.value.onMove(event.getX(event.actionIndex), event.getY(event.actionIndex))
+						it.value.onMove(event.getX(index), event.getY(index))
 						acc || state.setTouchPos(it.value.stateId, touchX(event, index), touchY(event, index))
 					}
 				}
