@@ -10,8 +10,11 @@ import androidx.lifecycle.OnLifecycleEvent
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.ControllerState
 
-class StreamInput(val context: Context, val preferences: Preferences)
-{
+class StreamInput(
+	val context: Context,
+	val preferences: Preferences,
+	private val mapSelectToTouchpad: Boolean = false
+) {
 	var controllerStateChangedCallback: ((ControllerState) -> Unit)? = null
 
 	val controllerState: ControllerState get()
@@ -153,7 +156,11 @@ class StreamInput(val context: Context, val preferences: Preferences)
 			KeyEvent.KEYCODE_BUTTON_R1 -> ControllerState.BUTTON_R1
 			KeyEvent.KEYCODE_BUTTON_THUMBL -> ControllerState.BUTTON_L3
 			KeyEvent.KEYCODE_BUTTON_THUMBR -> ControllerState.BUTTON_R3
-			KeyEvent.KEYCODE_BUTTON_SELECT -> ControllerState.BUTTON_SHARE
+			KeyEvent.KEYCODE_BUTTON_SELECT ->
+				if (mapSelectToTouchpad)
+					ControllerState.BUTTON_TOUCHPAD
+				else
+					ControllerState.BUTTON_SHARE
 			KeyEvent.KEYCODE_BUTTON_START -> ControllerState.BUTTON_OPTIONS
 			KeyEvent.KEYCODE_BUTTON_C -> ControllerState.BUTTON_PS
 			KeyEvent.KEYCODE_BUTTON_MODE -> ControllerState.BUTTON_PS
