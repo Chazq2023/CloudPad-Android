@@ -16,7 +16,20 @@ class StreamViewModel(val application: Application, val connectInfo: ConnectInfo
 	val preferences = Preferences(application)
 	val logManager = LogManager(application)
 
-	val input = StreamInput(application, preferences)
+	private val isCloudStream =
+		!connectInfo.cloudSessionId.isNullOrBlank()
+
+	private val mapSelectToTouchpad =
+		isCloudStream &&
+				(connectInfo.cloudGamePlatform == "ps4" ||
+						connectInfo.cloudGamePlatform == "ps5")
+
+	val input = StreamInput(
+		application,
+		preferences,
+		mapSelectToTouchpad = mapSelectToTouchpad
+	)
+
 	val session = StreamSession(connectInfo, logManager, preferences.logVerbose, input)
 
 	private var _onScreenControlsEnabled = MutableLiveData<Boolean>(preferences.onScreenControlsEnabled)

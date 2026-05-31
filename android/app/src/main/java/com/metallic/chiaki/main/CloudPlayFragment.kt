@@ -1572,6 +1572,7 @@ class CloudPlayFragment : Fragment()
 			morning = ByteArray(0x10),  // Empty for cloud (not used)
 			videoProfile = videoProfile,
 			serviceType = session.serviceType,
+			cloudGamePlatform = session.platform,
 			cloudLaunchSpec = session.launchSpec,
 			cloudHandshakeKey = session.handshakeKey,
 			cloudSessionId = session.sessionId,

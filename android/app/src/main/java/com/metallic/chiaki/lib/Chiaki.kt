@@ -71,7 +71,9 @@ data class ConnectInfo(
 	val morning: ByteArray,
 	val videoProfile: ConnectVideoProfile,
 	// Cloud streaming fields (optional, null for remote play)
+
 	val serviceType: String? = null, // "psnow" or "pscloud"
+	val cloudGamePlatform: String? = null, // "ps3", "ps4", or "ps5"
 	val cloudLaunchSpec: String? = null,
 	val cloudHandshakeKey: String? = null,
 	val cloudSessionId: String? = null,
