@@ -58,13 +58,13 @@ class StreamInput(
 		}
 
 	private val swapCrossMoon = preferences.swapCrossMoon
-
 	private val handler = Handler(Looper.getMainLooper())
 
 	private var selectHeld = false
 	private var selectUsedForSwipe = false
 	private var pendingSelectPress = false
 	private var lastDpadSwipeDirection: Int? = null
+	private var suppressNextSelectReleasePress = false
 
 	private val selectPressRunnable = Runnable {
 		if(mapSelectToTouchpad && selectHeld && !selectUsedForSwipe && pendingSelectPress)
@@ -145,6 +145,7 @@ class StreamInput(
 		handler.removeCallbacks(selectPressRunnable)
 		pendingSelectPress = false
 		selectUsedForSwipe = true
+		suppressNextSelectReleasePress = true
 
 		keyControllerState.buttons = keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD.inv()
 		controllerStateUpdated()
@@ -206,6 +207,10 @@ class StreamInput(
 			dpadX > 0.5f -> KeyEvent.KEYCODE_DPAD_RIGHT
 			else -> {
 				lastDpadSwipeDirection = null
+
+				if(selectUsedForSwipe)
+					suppressNextSelectReleasePress = true
+
 				return false
 			}
 		}
@@ -269,21 +274,43 @@ class StreamInput(
 					{
 						selectHeld = true
 						selectUsedForSwipe = false
-						pendingSelectPress = true
+						suppressNextSelectReleasePress = false
+						pendingSelectPress = false
 						lastDpadSwipeDirection = null
 
 						handler.removeCallbacks(selectPressRunnable)
-						handler.postDelayed(selectPressRunnable, 120)
 					}
 					else
 					{
 						handler.removeCallbacks(selectPressRunnable)
 
-						keyControllerState.buttons = keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD.inv()
+						if(suppressNextSelectReleasePress)
+						{
+							touchControllerState = ControllerState()
+
+							selectHeld = false
+							selectUsedForSwipe = false
+							suppressNextSelectReleasePress = false
+							pendingSelectPress = false
+							lastDpadSwipeDirection = null
+
+							controllerStateUpdated()
+							return true
+						}
+
+						keyControllerState.buttons = keyControllerState.buttons or ControllerState.BUTTON_TOUCHPAD
+						controllerStateUpdated()
+
+						handler.postDelayed({
+							keyControllerState.buttons = keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD.inv()
+							controllerStateUpdated()
+						}, 80)
+
 						touchControllerState = ControllerState()
 
 						selectHeld = false
 						selectUsedForSwipe = false
+						suppressNextSelectReleasePress = false
 						pendingSelectPress = false
 						lastDpadSwipeDirection = null
 

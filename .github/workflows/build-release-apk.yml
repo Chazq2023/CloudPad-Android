@@ -69,10 +69,10 @@ jobs:
             - The select button for ps4 and ps5 titles now acts as a touchpad press. PS3 it remains select.
             - New touch pad scheme:
               - Press Select = touchpad press 
-              - Hold Select + Dpad up = Touchpad swipe up
-              - Hold Select + Dpad down = Touchpad swipe down
-              - Hold Select + Dpad left = Touchpad swipe left
-              - Hold Select + Dpad right = Touchpad swipe right
+              - Press Select + Dpad up = Touchpad swipe up
+              - Press Select + Dpad down = Touchpad swipe down
+              - Press Select + Dpad left = Touchpad swipe left
+              - Press Select + Dpad right = Touchpad swipe right
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
