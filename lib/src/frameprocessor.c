@@ -78,6 +78,20 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_frame_processor_alloc_frame(ChiakiFrameProc
 	if(frame_processor->units_fec_expected < 1)
 		frame_processor->units_fec_expected = 1;
 
+	if(packet->is_video && packet->unit_index != 0)
+	{
+		CHIAKI_LOGW(
+			frame_processor->log,
+			"FRAME_ALLOC_DETAIL total=%u source=%u fec=%u first_unit=%u data=%zu is_video=%u",
+			packet->units_in_frame_total,
+			frame_processor->units_source_expected,
+			frame_processor->units_fec_expected,
+			packet->unit_index,
+			packet->data_size,
+			packet->is_video ? 1 : 0
+		);
+	}
+
 	frame_processor->buf_size_per_unit = packet->data_size;
 	if(packet->is_video && packet->unit_index < frame_processor->units_source_expected)
 	{
@@ -149,20 +163,51 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_frame_processor_alloc_frame(ChiakiFrameProc
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_frame_processor_put_unit(ChiakiFrameProcessor *frame_processor, ChiakiTakionAVPacket *packet)
 {
-	if(packet->unit_index > frame_processor->unit_slots_size)
+	if(packet->unit_index >= frame_processor->unit_slots_size)
 	{
+		CHIAKI_LOGE(
+			frame_processor->log,
+			"FRAME_UNIT_REJECT_DETAIL reason=unit_too_high unit=%u slots=%zu total=%u fec=%u data=%zu is_video=%u",
+			packet->unit_index,
+			frame_processor->unit_slots_size,
+			packet->units_in_frame_total,
+			packet->units_in_frame_fec,
+			packet->data_size,
+			packet->is_video ? 1 : 0
+		);
 		CHIAKI_LOGE(frame_processor->log, "Packet's unit index is too high");
 		return CHIAKI_ERR_INVALID_DATA;
 	}
 
 	if(!packet->data_size)
 	{
+		CHIAKI_LOGW(
+			frame_processor->log,
+			"FRAME_UNIT_REJECT_DETAIL reason=empty unit=%u slots=%zu total=%u fec=%u data=%zu is_video=%u",
+			packet->unit_index,
+			frame_processor->unit_slots_size,
+			packet->units_in_frame_total,
+			packet->units_in_frame_fec,
+			packet->data_size,
+			packet->is_video ? 1 : 0
+		);
 		CHIAKI_LOGW(frame_processor->log, "Unit is empty");
 		return CHIAKI_ERR_INVALID_DATA;
 	}
 
 	if(packet->data_size > frame_processor->buf_size_per_unit)
 	{
+		CHIAKI_LOGW(
+			frame_processor->log,
+			"FRAME_UNIT_REJECT_DETAIL reason=oversize unit=%u slots=%zu total=%u fec=%u data=%zu max=%zu is_video=%u",
+			packet->unit_index,
+			frame_processor->unit_slots_size,
+			packet->units_in_frame_total,
+			packet->units_in_frame_fec,
+			packet->data_size,
+			frame_processor->buf_size_per_unit,
+			packet->is_video ? 1 : 0
+		);
 		CHIAKI_LOGW(frame_processor->log, "Unit is bigger than pre-calculated size!");
 		return CHIAKI_ERR_INVALID_DATA;
 	}
@@ -170,6 +215,17 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_frame_processor_put_unit(ChiakiFrameProcess
 	ChiakiFrameUnit *unit = frame_processor->unit_slots + packet->unit_index;
 	if(unit->data_size)
 	{
+		CHIAKI_LOGW(
+			frame_processor->log,
+			"FRAME_UNIT_REJECT_DETAIL reason=duplicate unit=%u slots=%zu total=%u fec=%u data=%zu existing=%zu is_video=%u",
+			packet->unit_index,
+			frame_processor->unit_slots_size,
+			packet->units_in_frame_total,
+			packet->units_in_frame_fec,
+			packet->data_size,
+			unit->data_size,
+			packet->is_video ? 1 : 0
+		);
 		CHIAKI_LOGW(frame_processor->log, "Received duplicate unit");
 		return CHIAKI_ERR_INVALID_DATA;
 	}
@@ -236,6 +292,19 @@ static ChiakiErrorCode chiaki_frame_processor_fec(ChiakiFrameProcessor *frame_pr
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		err = CHIAKI_ERR_FEC_FAILED;
+
+		CHIAKI_LOGW(
+			frame_processor->log,
+			"FEC_FAIL_DETAIL src=%u/%u fec=%u/%u erasures=%zu total=%u recoverable=%s",
+			frame_processor->units_source_received,
+			frame_processor->units_source_expected,
+			frame_processor->units_fec_received,
+			frame_processor->units_fec_expected,
+			erasures_count,
+			frame_processor->units_source_expected + frame_processor->units_fec_expected,
+			erasures_count <= frame_processor->units_fec_expected ? "yes" : "no"
+		);
+
 		CHIAKI_LOGW(frame_processor->log, "FEC failed");
 	}
 	else

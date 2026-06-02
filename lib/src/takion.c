@@ -36,7 +36,7 @@
 
 // VERY similar to SCTP, see RFC 4960
 
-#define TAKION_A_RWND 0x100000
+#define TAKION_A_RWND 0x400000
 #define TAKION_OUTBOUND_STREAMS 0x64
 #define TAKION_INBOUND_STREAMS 0x64
 
@@ -283,6 +283,22 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 			goto error_sock;
 		}
 
+		int actual_rcvbuf = 0;
+		socklen_t actual_rcvbuf_len = sizeof(actual_rcvbuf);
+		if(getsockopt(takion->sock, SOL_SOCKET, SO_RCVBUF, (CHIAKI_SOCKET_BUF_TYPE)&actual_rcvbuf, &actual_rcvbuf_len) == 0)
+		{
+			CHIAKI_LOGI(
+				takion->log,
+				"TAKION_RCVBUF_DETAIL requested=%d actual=%d",
+				rcvbuf_val,
+				actual_rcvbuf
+			);
+		}
+		else
+		{
+			CHIAKI_LOGW(takion->log, "TAKION_RCVBUF_DETAIL getsockopt failed");
+		}
+
 #if defined(__APPLE__) && TARGET_OS_OSX
 		// macOS < 11 doesn't support IP_DONTFRAG
 		SInt32 majorVersion;
@@ -373,6 +389,21 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 			CHIAKI_LOGE(takion->log, "Takion failed to setsockopt SO_RCVBUF: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
 			ret = CHIAKI_ERR_NETWORK;
 			goto error_sock;
+		}
+		int actual_rcvbuf = 0;
+		socklen_t actual_rcvbuf_len = sizeof(actual_rcvbuf);
+		if(getsockopt(takion->sock, SOL_SOCKET, SO_RCVBUF, (CHIAKI_SOCKET_BUF_TYPE)&actual_rcvbuf, &actual_rcvbuf_len) == 0)
+		{
+			CHIAKI_LOGI(
+				takion->log,
+				"TAKION_RCVBUF_DETAIL requested=%d actual=%d",
+				rcvbuf_val,
+				actual_rcvbuf
+			);
+		}
+		else
+		{
+			CHIAKI_LOGW(takion->log, "TAKION_RCVBUF_DETAIL getsockopt failed");
 		}
 		if(info->ip_dontfrag)
 		{
@@ -726,7 +757,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_message_data_cont(ChiakiTakion 
 	if(takion->psn_wrapper_type > 0)
 		actual_packet_size = takion_add_cloud_wrapper(packet_buf, actual_packet_size, takion->psn_wrapper_type);
 	
-	CHIAKI_LOGV(takion->log, "Takion sending DATA_CONT message: seq_num=%#x, channel=%u, size=%zu", seq_num_val, channel, buf_size);
+	// CHIAKI_LOGV(takion->log, "Takion sending DATA_CONT message: seq_num=%#x, channel=%u, size=%zu", seq_num_val, channel, buf_size);
 	err = chiaki_takion_send(takion, packet_buf, actual_packet_size, key_pos); // will alter packet_buf with gmac
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
@@ -798,7 +829,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_send_congestion(ChiakiTakion *takion
 	if(takion->psn_wrapper_type > 0)
 		actual_size = takion_add_cloud_wrapper(buf, actual_size, takion->psn_wrapper_type);
 	
-	CHIAKI_LOGV(takion->log, "[OUTGOING CONGESTION] Sending CONGESTION packet: size=%zu", actual_size);
+	// CHIAKI_LOGV(takion->log, "[OUTGOING CONGESTION] Sending CONGESTION packet: size=%zu", actual_size);
 	// Use chiaki_takion_send to compute MAC instead of chiaki_takion_send_raw
 	return chiaki_takion_send(takion, buf, actual_size, key_pos);
 }
@@ -1311,8 +1342,8 @@ static void takion_handle_packet_message(ChiakiTakion *takion, uint8_t *buf, siz
 
 	CHIAKI_LOGV(takion->log, "Takion received message: chunk_type=%#x, chunk_flags=%#x, tag=%#x, payload_size=%#x", 
 		msg.chunk_type, msg.chunk_flags, msg.tag, msg.payload_size);
-	CHIAKI_LOGD(takion->log, "Takion received message with tag %#x, key pos %#llx, chunk_type=%#x, chunk_flags=%#x, payload size %#x", 
-		msg.tag, (unsigned long long)msg.key_pos, msg.chunk_type, msg.chunk_flags, msg.payload_size);
+	// CHIAKI_LOGD(takion->log, "Takion received message with tag %#x, key pos %#llx, chunk_type=%#x, chunk_flags=%#x, payload size %#x", 
+	// 	msg.tag, (unsigned long long)msg.key_pos, msg.chunk_type, msg.chunk_flags, msg.payload_size);
 
 	switch(msg.chunk_type)
 	{
@@ -1420,8 +1451,8 @@ static void takion_handle_packet_message_data(ChiakiTakion *takion, uint8_t *pac
 	ChiakiSeqNum32 seq_num = ntohl(*((chiaki_unaligned_uint32_t *)(payload + 0)));
 
 	// Debug logging before reorder queue push
-	CHIAKI_LOGD(takion->log, "Pushing to reorder queue: seq_num=0x%x, channel=%u", 
-		(unsigned int)seq_num, (unsigned int)entry->channel);
+	// CHIAKI_LOGD(takion->log, "Pushing to reorder queue: seq_num=0x%x, channel=%u", 
+	// 	(unsigned int)seq_num, (unsigned int)entry->channel);
 
 	chiaki_reorder_queue_push(&takion->data_queue, seq_num, entry);
 	takion_flush_data_queue(takion);
@@ -1665,20 +1696,141 @@ static ChiakiErrorCode takion_recv_message_cookie_ack(ChiakiTakion *takion)
 
 static void takion_handle_packet_av(ChiakiTakion *takion, uint8_t base_type, uint8_t *buf, size_t buf_size)
 {
-	// HHIxIIx
-
 	assert(base_type == TAKION_PACKET_TYPE_VIDEO || base_type == TAKION_PACKET_TYPE_AUDIO);
+
 	if((takion->disable_audio_video & CHIAKI_VIDEO_DISABLED) && (base_type == TAKION_PACKET_TYPE_VIDEO))
 		return;
+
 	ChiakiTakionAVPacket packet;
 	ChiakiErrorCode err = takion->av_packet_parse(&packet, &takion->key_state, buf, buf_size);
-	if((takion->disable_audio_video & CHIAKI_AUDIO_DISABLED) && (base_type == TAKION_PACKET_TYPE_AUDIO) && !packet.is_haptics)
-		return;
+
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
+		uint8_t b0 = buf_size > 0 ? buf[0] : 0;
+		uint8_t b1 = buf_size > 1 ? buf[1] : 0;
+		uint8_t b2 = buf_size > 2 ? buf[2] : 0;
+		uint8_t b3 = buf_size > 3 ? buf[3] : 0;
+
+		CHIAKI_LOGW(
+			takion->log,
+			"AV_PARSE_FAIL_DETAIL type=%s err=%d size=%zu head=%02x %02x %02x %02x",
+			base_type == TAKION_PACKET_TYPE_VIDEO ? "video" : "audio",
+			(int)err,
+			buf_size,
+			b0, b1, b2, b3
+		);
+
 		if(err == CHIAKI_ERR_BUF_TOO_SMALL)
 			CHIAKI_LOGE(takion->log, "Takion received AV packet that was too small");
+
 		return;
+	}
+
+	if((takion->disable_audio_video & CHIAKI_AUDIO_DISABLED) && (base_type == TAKION_PACKET_TYPE_AUDIO) && !packet.is_haptics)
+		return;
+
+	if(packet.is_video)
+	{
+		static bool av_diag_have_video_frame = false;
+		static ChiakiSeqNum16 av_diag_frame = 0;
+		static unsigned int av_diag_total = 0;
+		static unsigned int av_diag_fec = 0;
+		static unsigned int av_diag_source_expected = 0;
+		static unsigned int av_diag_source_seen = 0;
+		static unsigned int av_diag_fec_seen = 0;
+		static uint64_t av_diag_seen_mask_low64 = 0;
+
+		bool new_frame = !av_diag_have_video_frame || packet.frame_index != av_diag_frame;
+
+		if(new_frame)
+		{
+			if(av_diag_have_video_frame)
+			{
+				if(av_diag_source_seen < av_diag_source_expected)
+				{
+					CHIAKI_LOGW(
+						takion->log,
+						"AV_FRAME_INCOMPLETE_DETAIL frame=%u source_seen=%u/%u fec_seen=%u/%u total=%u mask_low64=%#llx",
+						(unsigned int)av_diag_frame,
+						av_diag_source_seen,
+						av_diag_source_expected,
+						av_diag_fec_seen,
+						av_diag_fec,
+						av_diag_total,
+						(unsigned long long)av_diag_seen_mask_low64
+					);
+				}
+			}
+
+			av_diag_have_video_frame = true;
+			av_diag_frame = packet.frame_index;
+			av_diag_total = packet.units_in_frame_total;
+			av_diag_fec = packet.units_in_frame_fec;
+			av_diag_source_expected = packet.units_in_frame_total >= packet.units_in_frame_fec
+				? packet.units_in_frame_total - packet.units_in_frame_fec
+				: 0;
+			av_diag_source_seen = 0;
+			av_diag_fec_seen = 0;
+			av_diag_seen_mask_low64 = 0;
+
+			if(packet.unit_index != 0)
+			{
+				CHIAKI_LOGW(
+					takion->log,
+					"AV_FRAME_START_GAP_DETAIL frame=%u first_unit=%u total=%u source=%u fec=%u packet_index=%u data=%zu",
+					(unsigned int)packet.frame_index,
+					(unsigned int)packet.unit_index,
+					(unsigned int)packet.units_in_frame_total,
+					av_diag_source_expected,
+					(unsigned int)packet.units_in_frame_fec,
+					(unsigned int)packet.packet_index,
+					packet.data_size
+				);
+			}
+		}
+
+		if(packet.unit_index >= packet.units_in_frame_total)
+		{
+			CHIAKI_LOGW(
+				takion->log,
+				"AV_UNIT_RANGE_DETAIL frame=%u unit=%u total=%u fec=%u packet_index=%u data=%zu",
+				(unsigned int)packet.frame_index,
+				(unsigned int)packet.unit_index,
+				(unsigned int)packet.units_in_frame_total,
+				(unsigned int)packet.units_in_frame_fec,
+				(unsigned int)packet.packet_index,
+				packet.data_size
+			);
+		}
+		else
+		{
+			if(packet.unit_index < 64)
+			{
+				uint64_t bit = 1ULL << packet.unit_index;
+				if(av_diag_seen_mask_low64 & bit)
+				{
+					CHIAKI_LOGW(
+						takion->log,
+						"AV_DUP_UNIT_DETAIL frame=%u unit=%u total=%u fec=%u packet_index=%u data=%zu",
+						(unsigned int)packet.frame_index,
+						(unsigned int)packet.unit_index,
+						(unsigned int)packet.units_in_frame_total,
+						(unsigned int)packet.units_in_frame_fec,
+						(unsigned int)packet.packet_index,
+						packet.data_size
+					);
+				}
+				else
+				{
+					av_diag_seen_mask_low64 |= bit;
+				}
+			}
+
+			if(packet.unit_index < av_diag_source_expected)
+				av_diag_source_seen++;
+			else
+				av_diag_fec_seen++;
+		}
 	}
 
 	if(takion->cb)
