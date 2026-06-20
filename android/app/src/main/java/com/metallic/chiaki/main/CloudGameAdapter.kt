@@ -16,6 +16,7 @@ import com.pylux.stream.databinding.ItemCloudGameBinding
 class CloudGameAdapter(
 	private val onGameClick: (CloudGame) -> Unit,
 	private val onFavoriteClick: (CloudGame, Boolean) -> Unit,
+	private val onAddShortcutClick: (CloudGame) -> Unit,
 	private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>()
 {
@@ -156,7 +157,41 @@ class CloudGameAdapter(
 
 			binding.favoriteButton.setOnClickListener { toggleFavorite() }
 			binding.root.setOnLongClickListener {
-				toggleFavorite()
+				val popup = androidx.appcompat.widget.PopupMenu(binding.root.context, binding.root)
+
+				val isFav = isFavorite(game.productId)
+
+				popup.menu.add(
+					0,
+					1,
+					0,
+					if (isFav) "Remove from favorites" else "Add to favorites"
+				)
+
+				popup.menu.add(
+					0,
+					2,
+					1,
+					"Add to Home Screen"
+				)
+
+				popup.setOnMenuItemClickListener { item ->
+					when (item.itemId) {
+						1 -> {
+							toggleFavorite()
+							true
+						}
+
+						2 -> {
+							onAddShortcutClick(game)
+							true
+						}
+
+						else -> false
+					}
+				}
+
+				popup.show()
 				true
 			}
 			binding.root.setOnKeyListener { _, keyCode, event ->

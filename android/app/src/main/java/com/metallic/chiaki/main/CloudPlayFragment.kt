@@ -50,15 +50,18 @@ class CloudPlayFragment : Fragment()
 		private const val TAG = "CloudPlayFragment"
 		private const val REQUEST_PSN_LOGIN = 1001
 	}
-	
+
 	private lateinit var viewModel: CloudPlayViewModel
 	private lateinit var binding: FragmentCloudPlayBinding
 	private lateinit var adapter: CloudGameAdapter
 	private lateinit var preferences: Preferences
 	private lateinit var fastScrollerHelper: FastScrollerHelper
 
+	// Shortcut launch state
+	private var pendingShortcutProductId: String? = null
+	private var pendingShortcutServiceType: String? = null
+
 	// Cloud sub-tabs now in secondary header (binding.cloudSubHeader)
-	
 	// Sort state: 0 = Default, 1 = A->Z, 2 = Z->A
 	private var sortState: Int = 0
 	
@@ -118,15 +121,14 @@ class CloudPlayFragment : Fragment()
 		savedOrientation = -1
 	}
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?)
-	{
+	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 
 		preferences = Preferences(requireContext())
-		
+
 		// Load saved sort state
 		sortState = preferences.getCloudSortState()
-		
+
 		// Scope ViewModel to activity so it survives tab switches and maintains cache
 		viewModel = ViewModelProvider(requireActivity(), viewModelFactory {
 			CloudPlayViewModel(requireContext(), preferences)
@@ -139,17 +141,36 @@ class CloudPlayFragment : Fragment()
 		setupScrollListener()
 		setupLoginButton()
 
+		readShortcutIntent()
+
 		// Check login status BEFORE observing ViewModel to prevent cached games from showing
-		if(savedInstanceState == null)
-		{
+		if(savedInstanceState == null) {
 			checkLoginStatus()
 		}
-		
+
 		observeViewModel()
 	}
-	
-	private fun setupLoginButton()
-	{
+
+	private fun readShortcutIntent() {
+		val intent = requireActivity().intent ?: return
+
+		if (intent.action != GameShortcutHelper.ACTION_LAUNCH_CLOUD_GAME) {
+			return
+		}
+
+		pendingShortcutProductId = intent.getStringExtra(GameShortcutHelper.EXTRA_PRODUCT_ID)
+		pendingShortcutServiceType = intent.getStringExtra(GameShortcutHelper.EXTRA_SERVICE_TYPE)
+
+		Log.i(
+			TAG,
+			"Shortcut launch requested: productId=$pendingShortcutProductId, serviceType=$pendingShortcutServiceType"
+		)
+
+		// Clear the action so it does not auto-launch again on rotation/resume
+		intent.action = null
+	}
+
+	private fun setupLoginButton() {
 		binding.loginButton.setOnClickListener {
 			launchPsnLogin()
 		}
@@ -238,19 +259,28 @@ class CloudPlayFragment : Fragment()
 			}
 		}
 	}
-	
-	private fun loadCatalog()
-	{
+
+	private fun loadCatalog() {
 		hideLoginRequiredState()
-		
+
+		// If opened from a Home Screen shortcut, load the section that contains that game
+		if (pendingShortcutProductId != null) {
+			if (pendingShortcutServiceType == "pscloud") {
+				preferences.setPsCloudFilterOwned(false)
+				preferences.setPsCloudFilterFavorites(false)
+				selectLibraryTab()
+			} else {
+				preferences.setPsnowFilterFavorites(false)
+				selectCatalogTab()
+			}
+			return
+		}
+
 		// Load based on last selected section (default to PSNow)
 		val currentSection = viewModel.getCurrentSection()
-		if (currentSection == "pscloud")
-		{
+		if (currentSection == "pscloud") {
 			selectLibraryTab()
-		}
-		else
-		{
+		} else {
 			selectCatalogTab()
 		}
 	}
@@ -877,11 +907,18 @@ class CloudPlayFragment : Fragment()
 		updateFastScrollerVisibility()
 	}
 
+	private fun onAddShortcutClicked(game: CloudGame) {
+		lifecycleScope.launch {
+			GameShortcutHelper.requestPinnedShortcut(requireContext(), game)
+		}
+	}
+
 	private fun setupRecyclerView()
 	{
 		adapter = CloudGameAdapter(
 			onGameClick = this::onGameClicked,
 			onFavoriteClick = this::onGameFavoriteToggled,
+			onAddShortcutClick = this::onAddShortcutClicked,
 			isFavorite = { productId -> preferences.isFavoriteGame(productId) }
 		)
 		binding.gamesRecyclerView.adapter = adapter
@@ -960,14 +997,13 @@ class CloudPlayFragment : Fragment()
 		})
 	}
 
-	private fun observeViewModel()
-	{
+	private fun observeViewModel() {
 		viewModel.games.observe(viewLifecycleOwner, Observer { games ->
 			if (!preferences.hasNpssoToken()) {
 				adapter.games = emptyList()
 				return@Observer
 			}
-			
+
 			// Check if favorites filter is active for current section
 			val currentSection = viewModel.getCurrentSection()
 			val isFavoritesFilter = if (currentSection == "pscloud") {
@@ -975,7 +1011,7 @@ class CloudPlayFragment : Fragment()
 			} else {
 				preferences.getPsnowFilterFavorites()
 			}
-			
+
 			// Filter for favorites if that filter is active
 			val filteredGames = if (isFavoritesFilter) {
 				val favoriteIds = preferences.getFavoriteGames()
@@ -983,7 +1019,7 @@ class CloudPlayFragment : Fragment()
 			} else {
 				games
 			}
-			
+
 			// Apply saved sort state when games are loaded
 			val sortedGames = when (sortState) {
 				0 -> {
@@ -998,8 +1034,12 @@ class CloudPlayFragment : Fragment()
 				2 -> filteredGames.sortedByDescending { it.name.lowercase() } // Z->A
 				else -> filteredGames
 			}
+
 			sortedGames
-				.filter { it.name.contains("Demon", ignoreCase = true) || it.productId.contains("PPSA01341", ignoreCase = true) }
+				.filter {
+					it.name.contains("Demon", ignoreCase = true) ||
+							it.productId.contains("PPSA01341", ignoreCase = true)
+				}
 				.forEach {
 					Log.i(
 						"DEMON DEBUG UI",
@@ -1008,18 +1048,20 @@ class CloudPlayFragment : Fragment()
 				}
 
 			adapter.games = sortedGames
-			
 			updateEmptyState(sortedGames.isEmpty())
 			updateFastScrollerVisibility()
-			
+
+			handlePendingShortcutLaunch(sortedGames)
+
 			// Auto-focus first item after games are loaded, but not while search bar is active
-			if (sortedGames.isNotEmpty() && !isSearchExpanded) {
+			if (sortedGames.isNotEmpty() && !isSearchExpanded && pendingShortcutProductId == null) {
 				focusFirstGame()
 			}
 		})
 
 		viewModel.loading.observe(viewLifecycleOwner, Observer { loading ->
 			binding.progressBar.visibility = if(loading && adapter.games.isEmpty()) View.VISIBLE else View.GONE
+
 			if (loading) {
 				val rotate = RotateAnimation(0f, 360f, RotateAnimation.RELATIVE_TO_SELF, 0.5f, RotateAnimation.RELATIVE_TO_SELF, 0.5f).apply {
 					duration = 800
@@ -1039,8 +1081,25 @@ class CloudPlayFragment : Fragment()
 		})
 	}
 
-	private fun updateEmptyState(isEmpty: Boolean)
-	{
+	private fun handlePendingShortcutLaunch(games: List<CloudGame>) {
+		val productId = pendingShortcutProductId ?: return
+
+		val game = games.firstOrNull { it.productId == productId }
+
+		if (game == null) {
+			Log.w(TAG, "Shortcut game not found yet: $productId")
+			return
+		}
+
+		Log.i(TAG, "Launching shortcut game: ${game.name}")
+
+		pendingShortcutProductId = null
+		pendingShortcutServiceType = null
+
+		onGameClicked(game)
+	}
+
+	private fun updateEmptyState(isEmpty: Boolean) {
 		binding.emptyStateLayout.visibility = if(isEmpty) View.VISIBLE else View.GONE
 		binding.gamesRecyclerView.visibility = if(isEmpty) View.GONE else View.VISIBLE
 	}
