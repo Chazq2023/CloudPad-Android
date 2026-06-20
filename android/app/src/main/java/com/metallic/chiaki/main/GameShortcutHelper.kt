@@ -57,7 +57,7 @@ object GameShortcutHelper {
 
         val shortcut = ShortcutInfoCompat.Builder(
             context,
-            "cloud_game_${game.productId}"
+            "cloud_game_${game.productId.replace(Regex("[^A-Za-z0-9_]"), "_")}"
         )
             .setShortLabel(game.name.take(20))
             .setLongLabel(game.name.take(40))

@@ -896,6 +896,15 @@ class CloudPlayFragment : Fragment() {
     }
 
     private fun onAddShortcutClicked(game: CloudGame) {
+        if (game.serviceType == "pscloud" && !game.isOwned) {
+            Toast.makeText(
+                requireContext(),
+                "Only owned PS Cloud games can be added as launch shortcuts",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+
         lifecycleScope.launch {
             GameShortcutHelper.requestPinnedShortcut(requireContext(), game)
         }

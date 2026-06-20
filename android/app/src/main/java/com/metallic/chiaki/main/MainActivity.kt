@@ -104,6 +104,15 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+
+        if (intent.action == GameShortcutHelper.ACTION_LAUNCH_CLOUD_GAME) {
+            binding.viewPager.setCurrentItem(1, false)
+            currentPage = 1
+            preferences.setLastMainTab(1)
+            updateModeIcons()
+            updateActionIcons()
+            applyViewPagerPageFocusIsolation(1)
+        }
     }
 
     private fun setupNavigation() {
