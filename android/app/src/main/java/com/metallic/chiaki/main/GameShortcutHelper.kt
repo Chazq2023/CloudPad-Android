@@ -32,7 +32,11 @@ object GameShortcutHelper {
         game: CloudGame
     ) {
         if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
-            Toast.makeText(context, "Your launcher does not support pinned shortcuts", Toast.LENGTH_LONG).show()
+            Toast.makeText(
+                context,
+                "Your launcher does not support pinned shortcuts",
+                Toast.LENGTH_LONG
+            ).show()
             return
         }
 
