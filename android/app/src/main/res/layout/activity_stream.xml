@@ -26,6 +26,14 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"/>
 
+    <com.metallic.chiaki.stream.PerformanceOverlayView
+        android:id="@+id/performanceOverlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_margin="8dp"
+        android:visibility="gone"/>        
+
     <fragment
         android:id="@+id/controlsFragment"
         android:name="com.metallic.chiaki.touchcontrols.DefaultTouchControlsFragment"
@@ -81,7 +89,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="8dp"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@id/disconnectButton"
+                app:layout_constraintEnd_toStartOf="@id/performanceOverlayToggle"
                 app:singleSelection="true"
                 app:selectionRequired="true"
                 app:checkedButton="@id/display_mode_normal_button">
@@ -112,6 +120,21 @@
                     app:strokeColor="@color/stream_text"/>
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/performanceOverlayToggle"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="Stats"
+            android:textColor="@color/stream_text"
+            android:checkable="true"
+            app:icon="@drawable/ic_performance"
+            app:iconTint="@color/stream_material_button_icon_tint"
+            app:strokeColor="@color/stream_text"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/disconnectButton"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/disconnectButton"

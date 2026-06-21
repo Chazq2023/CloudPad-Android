@@ -67,6 +67,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stream_connection_init(ChiakiStreamConnecti
 	stream_connection->log = session->log;
 	stream_connection->packet_loss_max = packet_loss_max;
 
+	stream_connection->measured_bitrate = 0.0;
+	stream_connection->measured_rtt = 0.0;
+	stream_connection->measured_loss = 0.0;
+
 	stream_connection->ecdh_secret = NULL;
 	stream_connection->gkcrypt_remote = NULL;
 	stream_connection->gkcrypt_local = NULL;
@@ -722,6 +726,8 @@ static void stream_connection_takion_data_idle(ChiakiStreamConnection *stream_co
 			 q.target_bitrate, q.upstream_bitrate,
 			 q.upstream_loss,
 			 q.disable_upstream_audio, q.rtt, q.loss);
+		stream_connection->measured_rtt = q.has_rtt ? q.rtt : 0.0;
+		stream_connection->measured_loss = q.has_loss ? (double)q.loss : 0.0;
 		stream_connection->measured_bitrate = chiaki_stream_stats_bitrate(&stream_connection->video_receiver->frame_processor.stream_stats, stream_connection->session->connect_info.video_profile.max_fps) / 1000000.0;
 		CHIAKI_LOGV(stream_connection->log, "StreamConnection measured bitrate: %.4f MBit/s", stream_connection->measured_bitrate);
 		chiaki_stream_stats_reset(&stream_connection->video_receiver->frame_processor.stream_stats);
