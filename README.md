@@ -1,6 +1,9 @@
 
 ![Pylux Logo](pylux-logo.png)
 
+# Disclaimer
+I am not the original owner, i am just fixing issues for android, please visit: https://github.com/ForWard-Technologies-LLC/Pylux for the official build. Please support the official release, this is purely a fork that will add/update with experimental features.
+
 # Pylux
 
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
