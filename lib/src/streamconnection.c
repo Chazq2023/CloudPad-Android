@@ -718,7 +718,7 @@ static void stream_connection_takion_data_idle(ChiakiStreamConnection *stream_co
 	case tkproto_TakionMessage_PayloadType_CONNECTIONQUALITY:
 	{
 		tkproto_ConnectionQualityPayload q = msg.connection_quality_payload;
-		CHIAKI_LOGV(
+		CHIAKI_LOGI(
 			stream_connection->log,
 			"StreamConnection received connection quality: target_bitrate=%d, "
 			"upstream_bitrate=%d, upstream_loss=%.4f, "
@@ -729,7 +729,7 @@ static void stream_connection_takion_data_idle(ChiakiStreamConnection *stream_co
 		stream_connection->measured_rtt = q.has_rtt ? q.rtt : 0.0;
 		stream_connection->measured_loss = q.has_loss ? (double)q.loss : 0.0;
 		stream_connection->measured_bitrate = chiaki_stream_stats_bitrate(&stream_connection->video_receiver->frame_processor.stream_stats, stream_connection->session->connect_info.video_profile.max_fps) / 1000000.0;
-		CHIAKI_LOGV(stream_connection->log, "StreamConnection measured bitrate: %.4f MBit/s", stream_connection->measured_bitrate);
+		CHIAKI_LOGI(stream_connection->log, "StreamConnection measured bitrate: %.4f MBit/s", stream_connection->measured_bitrate);
 		chiaki_stream_stats_reset(&stream_connection->video_receiver->frame_processor.stream_stats);
 		break;
 	}
@@ -1036,6 +1036,13 @@ static ChiakiErrorCode stream_connection_send_big(ChiakiStreamConnection *stream
 	ChiakiSession *session = stream_connection->session;
 	ChiakiErrorCode err;
 	const char *launch_spec_b64_ptr;
+
+	CHIAKI_LOGI(
+	stream_connection->log,
+	"StreamConnection requested bitrate=%u kbps, service_type=%s",
+	session->connect_info.video_profile.bitrate,
+	chiaki_service_type_string(session->service_type)
+	);
 
 	// Cloud streaming: use API-provided launch spec directly
 	if(chiaki_service_type_is_cloud(session->service_type))

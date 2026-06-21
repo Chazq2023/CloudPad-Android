@@ -243,6 +243,9 @@ typedef struct android_chiaki_session_t
 	uint64_t metrics_video_frames_total;
 	uint64_t metrics_video_lost_frames_total;
 
+	uint64_t metrics_fps_last_total;
+	uint64_t metrics_fps_last_time_ms;
+
 	double metrics_live_bitrate_mbps;
 	double metrics_live_fps;
 	double metrics_ping_ms;
@@ -274,52 +277,10 @@ static bool android_chiaki_video_sample_with_metrics(
 	if(!session)
 		return false;
 
-	uint64_t now_ms = android_chiaki_now_ms();
-
-	if(session->metrics_window_start_ms == 0)
-		session->metrics_window_start_ms = now_ms;
-
-	session->metrics_video_bytes_window += buf_size;
-	session->metrics_video_frames_window++;
 	session->metrics_video_frames_total++;
 
 	if(frames_lost > 0)
-	{
-		uint64_t lost = (uint64_t)frames_lost;
-
-		session->metrics_drops += lost;
-		session->metrics_video_lost_frames_window += lost;
-		session->metrics_video_lost_frames_total += lost;
-	}
-
-	uint64_t elapsed_ms = now_ms - session->metrics_window_start_ms;
-	if(elapsed_ms >= 3000)
-	{
-		double elapsed_sec = (double)elapsed_ms / 1000.0;
-
-		session->metrics_live_bitrate_mbps =
-				((double)session->metrics_video_bytes_window * 8.0) /
-				elapsed_sec /
-				1000000.0;
-
-		session->metrics_live_fps =
-				(double)session->metrics_video_frames_window /
-				elapsed_sec;
-
-		uint64_t delivered = session->metrics_video_frames_window;
-		uint64_t lost = session->metrics_video_lost_frames_window;
-		uint64_t total = delivered + lost;
-
-		if(total > 0)
-			session->metrics_packet_loss = (double)lost / (double)total;
-		else
-			session->metrics_packet_loss = 0.0;
-
-		session->metrics_video_bytes_window = 0;
-		session->metrics_video_frames_window = 0;
-		session->metrics_video_lost_frames_window = 0;
-		session->metrics_window_start_ms = now_ms;
-	}
+		session->metrics_drops += (uint64_t)frames_lost;
 
 	return android_chiaki_video_decoder_video_sample(
 			buf,
@@ -514,6 +475,8 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	connect_info.video_profile.max_fps = (unsigned int)E->GetIntField(env, connect_video_profile_obj, E->GetFieldID(env, connect_video_profile_class, "maxFPS", "I"));
 	connect_info.video_profile.bitrate = (unsigned int)E->GetIntField(env, connect_video_profile_obj, E->GetFieldID(env, connect_video_profile_class, "bitrate", "I"));
 
+	CHIAKI_LOGI(log, "JNI requested video bitrate=%u kbps", connect_info.video_profile.bitrate);
+	
 	jobject codec_obj = E->GetObjectField(env, connect_video_profile_obj, E->GetFieldID(env, connect_video_profile_class, "codec", "L"BASE_PACKAGE"/Codec;"));
 	jclass codec_class = E->GetObjectClass(env, codec_obj);
 	jint target_value = E->GetIntField(env, codec_obj, E->GetFieldID(env, codec_class, "value", "I"));
@@ -614,6 +577,9 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	session->metrics_video_lost_frames_window = 0;
 	session->metrics_video_frames_total = 0;
 	session->metrics_video_lost_frames_total = 0;
+
+	session->metrics_fps_last_total = 0;
+	session->metrics_fps_last_time_ms = 0;
 
 	session->metrics_live_bitrate_mbps = 0.0;
 	session->metrics_live_fps = 0.0;
@@ -882,6 +848,29 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 
 	int width = session->session.connect_info.video_profile.width;
 	int height = session->session.connect_info.video_profile.height;
+	uint64_t now_ms = android_chiaki_now_ms();
+
+	if(session->metrics_fps_last_time_ms == 0)
+	{
+		session->metrics_fps_last_time_ms = now_ms;
+		session->metrics_fps_last_total = session->metrics_video_frames_total;
+	}
+	else
+	{
+		uint64_t elapsed_ms = now_ms - session->metrics_fps_last_time_ms;
+
+		if(elapsed_ms >= 500)
+		{
+			uint64_t frame_delta = session->metrics_video_frames_total - session->metrics_fps_last_total;
+			double elapsed_sec = (double)elapsed_ms / 1000.0;
+
+			session->metrics_live_fps = (double)frame_delta / elapsed_sec;
+
+			session->metrics_fps_last_total = session->metrics_video_frames_total;
+			session->metrics_fps_last_time_ms = now_ms;
+		}
+	}
+
 	float fps = (float)session->metrics_live_fps;
 	double bitrate = session->session.stream_connection.measured_bitrate > 0.0
 		? session->session.stream_connection.measured_bitrate

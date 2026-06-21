@@ -65,8 +65,8 @@ jobs:
           body: |
             ## Pylux Android Cloud Release
 
-            ### New feature
-            - Added a basic performance overlay, its still a WIP but it will show the following: FPS, bitrate, ping, frame packet loss, dropped frames
+            ### Bug fix
+            - Introducing the performance overlay actually exposed a long outstanding bug. Ps4/3/5 streams were always forcing 50Mbps for bitrate, meaning that even we can now specify the amount, it was being overriden by a hard coded 50000 value. This has now been resolved, and bitrate sliders work as they should.
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now

@@ -215,13 +215,13 @@ class PSGaikaiStreaming(
 			}
 			
 			// Qt lines 1702-1707: Extract fields EXACTLY as Qt does
-			val serverIp = launchSlot.optString("publicIp", "")           // Qt: allocatedServerIp = launchSlot["publicIp"].toString()
-			val serverPort = launchSlot.optInt("port", 0)                 // Qt: allocatedServerPort = launchSlot["port"].toInt()
-			val privateIp = launchSlot.optString("privateIp", "")         // Qt: QString privateIp = launchSlot["privateIp"].toString()
-			val handshakeKey = allocation.optString("handshakeKey", "")   // Qt: allocatedHandshakeKey = allocation["handshakeKey"].toString()
-			val launchSpec = allocation.optString("launchSpecification", "") // Qt: allocatedLaunchSpec = allocation["launchSpecification"].toString()
-			val sessionId = allocation.optString("sessionId", "")         // Qt: allocatedSessionId = allocation["sessionId"].toString()
-			
+			val serverIp = launchSlot.optString("publicIp", "")
+			val serverPort = launchSlot.optInt("port", 0)
+			val privateIp = launchSlot.optString("privateIp", "")
+			val handshakeKey = allocation.optString("handshakeKey", "")
+			val launchSpec = allocation.optString("launchSpecification", "")
+			val sessionId = allocation.optString("sessionId", "")
+
 			// Log what was extracted
 			Log.d(TAG, "Extracted from allocation response:")
 			Log.d(TAG, "  publicIp: '$serverIp'")
@@ -1189,16 +1189,32 @@ catch (e: Exception)
 		body.put("dataCenter", selectedDatacenter)
 		
 		// Network info from ping results
+		val requestedBitrateKbps = if (serviceType == "pscloud")
+		{
+			preferences.getCloudBitratePscloud()
+		}
+		else
+		{
+			preferences.getCloudBitratePsnow()
+		}
+
 		val network = JSONObject()
-		network.put("bwKbpsSent", 50000)  // 50 Mbps upload
-		network.put("bwLoss", 0.001)  // 0.1% packet loss
+		// TEST: cap this too. Gaikai may treat "sent" as server-to-client video bandwidth.
+		network.put("bwKbpsSent", requestedBitrateKbps)
+		network.put("bwLoss", 0.001)
 		network.put("mtu", selectedDatacenterPingResult.optInt("mtu_in", 1454))
 		network.put("rtt", selectedDatacenterPingResult.optInt("rtt", 25))
 		network.put("port", selectedDatacenterPort)
-		network.put("bwKbpsReceived", 200000)  // 200 Mbps download
+
+		// This is the important one.
+		// Do NOT advertise 200 Mbps if we want a 20 Mbps stream.
+		network.put("bwKbpsReceived", requestedBitrateKbps)
+
 		network.put("bwLossUpstream", 0)
 		network.put("mtuUpstream", selectedDatacenterPingResult.optInt("mtu_out", 1254))
 		body.put("network", network)
+
+		Log.i(TAG, "Step 13: Requested receive bandwidth cap=${requestedBitrateKbps}kbps for serviceType=$serviceType platform=$platform")
 		
 		body.put("stateExecutionTime", 5974.7632)
 		body.put("streamTestTime", 11262.8423)
@@ -1423,7 +1439,22 @@ catch (e: Exception)
 		spec.put("clientWidth", clientWidth)
 		spec.put("clientHeight", clientHeight)
 		spec.put("adaptiveStreamMode", "resize")
-		spec.put("useClientBwLadder", true)
+		spec.put("useClientBwLadder", false)
+
+		val requestedBitrateKbps = if (serviceType == "pscloud")
+		{
+			preferences.getCloudBitratePscloud()
+		}
+		else
+		{
+			preferences.getCloudBitratePsnow()
+		}
+
+		spec.put("bwKbpsSent", requestedBitrateKbps)
+		spec.put("maxBitrateKbps", requestedBitrateKbps)
+		spec.put("bitrateKbps", requestedBitrateKbps)
+
+		Log.i(TAG, "Game spec requested bitrate=${requestedBitrateKbps}kbps")
 		
 		// Audio Upload (common)
 		spec.put("audioUploadEnabled", true)
