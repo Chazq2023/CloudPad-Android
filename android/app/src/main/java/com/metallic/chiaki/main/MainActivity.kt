@@ -32,7 +32,7 @@ import com.metallic.chiaki.settings.SettingsActivity
 
 class MainActivity : AppCompatActivity() {
     companion object {
-        private const val ICON_SELECTED = 0xFF009FE3.toInt()  // Pylux blue
+        private const val ICON_SELECTED = 0xFFFF149D.toInt()  // Pylux neon pink
         private const val ICON_UNSELECTED = 0xFFFFFFFF.toInt() // Solid white
     }
 

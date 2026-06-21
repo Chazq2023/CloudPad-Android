@@ -38,13 +38,9 @@ Full setup guides, configuration, and controller options at **[forward-technolog
 
 ## Contributing
 
-Fork the repo, create a branch, and open a pull request targeting `release/beta`. When merged, CI automatically builds and deploys to all platforms (Google Play, TestFlight, App Store Connect, Dropbox).
+Fork the repo, create a branch, and open a pull request targeting `release/beta`. When merged, CI automatically build and creates a release.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and local development setup.
-
-## Why Pylux?
-
-I told ChatGPT to name the project and promised I'd actually use the first thing it said. It said Pylux...
 
 ## Legal & responsible use
 

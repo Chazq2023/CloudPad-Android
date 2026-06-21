@@ -65,8 +65,9 @@ jobs:
           body: |
             ## Pylux Android Cloud Release
 
-            ### Bug fix
-            - Introducing the performance overlay actually exposed a long outstanding bug. Ps4/3/5 streams were always forcing 50Mbps for bitrate, meaning that even we can now specify the amount, it was being overriden by a hard coded 50000 value. This has now been resolved, and bitrate sliders work as they should.
+            ### Updates
+            - Removed donation page. I don't own the original Pylux IP, so it feels wrong to have a donation page. (it didn't work anyway as i don't host this app on google play)
+            - New colour scheme! I will be maintaining my own version of Pylux going forward, but please support the official release :) this fork will mostly contain new/experimental features going forward.
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
