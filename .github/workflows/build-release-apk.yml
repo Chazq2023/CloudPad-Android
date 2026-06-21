@@ -66,7 +66,7 @@ jobs:
             ## Pylux Android Cloud Release
 
             ### New feature
-            - Added a basic performance overlay, packet loss etc are placeholders for now, i will work on live metrics soon!
+            - Added a basic performance overlay, its still a WIP but it will show the following: FPS, bitrate, ping, frame packet loss, dropped frames
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now

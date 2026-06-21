@@ -30,6 +30,8 @@
 #include "log.h"
 #include "chiaki-jni.h"
 
+#include <time.h>
+
 static char *strdup_jni(const char *str)
 {
 	if(!str)
@@ -233,6 +235,19 @@ typedef struct android_chiaki_session_t
 	jfieldID java_controller_touch_x;
 	jfieldID java_controller_touch_y;
 	jfieldID java_controller_touch_id;
+	uint64_t metrics_window_start_ms;
+	uint64_t metrics_video_bytes_window;
+	uint64_t metrics_video_frames_window;
+	uint64_t metrics_video_lost_frames_window;
+
+	uint64_t metrics_video_frames_total;
+	uint64_t metrics_video_lost_frames_total;
+
+	double metrics_live_bitrate_mbps;
+	double metrics_live_fps;
+	double metrics_ping_ms;
+	double metrics_packet_loss;
+	uint64_t metrics_drops;
 
 	AndroidChiakiVideoDecoder video_decoder;
 	AndroidChiakiAudioDecoder audio_decoder;
@@ -240,6 +255,80 @@ typedef struct android_chiaki_session_t
 	bool use_opus_decoder; // true for PSCloud, false for PSNow/Remote Play
 	void *audio_output;
 } AndroidChiakiSession;
+
+static uint64_t android_chiaki_now_ms()
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ((uint64_t)ts.tv_sec * 1000ULL) + ((uint64_t)ts.tv_nsec / 1000000ULL);
+}
+
+static bool android_chiaki_video_sample_with_metrics(
+		uint8_t *buf,
+		size_t buf_size,
+		int32_t frames_lost,
+		bool frame_recovered,
+		void *user)
+{
+	AndroidChiakiSession *session = user;
+	if(!session)
+		return false;
+
+	uint64_t now_ms = android_chiaki_now_ms();
+
+	if(session->metrics_window_start_ms == 0)
+		session->metrics_window_start_ms = now_ms;
+
+	session->metrics_video_bytes_window += buf_size;
+	session->metrics_video_frames_window++;
+	session->metrics_video_frames_total++;
+
+	if(frames_lost > 0)
+	{
+		uint64_t lost = (uint64_t)frames_lost;
+
+		session->metrics_drops += lost;
+		session->metrics_video_lost_frames_window += lost;
+		session->metrics_video_lost_frames_total += lost;
+	}
+
+	uint64_t elapsed_ms = now_ms - session->metrics_window_start_ms;
+	if(elapsed_ms >= 3000)
+	{
+		double elapsed_sec = (double)elapsed_ms / 1000.0;
+
+		session->metrics_live_bitrate_mbps =
+				((double)session->metrics_video_bytes_window * 8.0) /
+				elapsed_sec /
+				1000000.0;
+
+		session->metrics_live_fps =
+				(double)session->metrics_video_frames_window /
+				elapsed_sec;
+
+		uint64_t delivered = session->metrics_video_frames_window;
+		uint64_t lost = session->metrics_video_lost_frames_window;
+		uint64_t total = delivered + lost;
+
+		if(total > 0)
+			session->metrics_packet_loss = (double)lost / (double)total;
+		else
+			session->metrics_packet_loss = 0.0;
+
+		session->metrics_video_bytes_window = 0;
+		session->metrics_video_frames_window = 0;
+		session->metrics_video_lost_frames_window = 0;
+		session->metrics_window_start_ms = now_ms;
+	}
+
+	return android_chiaki_video_decoder_video_sample(
+			buf,
+			buf_size,
+			frames_lost,
+			frame_recovered,
+			&session->video_decoder
+	);
+}
 
 static void android_chiaki_event_cb(ChiakiEvent *event, void *user)
 {
@@ -515,6 +604,21 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	}
 	memset(session, 0, sizeof(AndroidChiakiSession));
 	session->log = log;
+
+	session->metrics_ping_ms = connect_info.cloud_rtt_us > 0
+		? ((double)connect_info.cloud_rtt_us) / 1000.0
+		: 0.0;
+
+	session->metrics_video_bytes_window = 0;
+	session->metrics_video_frames_window = 0;
+	session->metrics_video_lost_frames_window = 0;
+	session->metrics_video_frames_total = 0;
+	session->metrics_video_lost_frames_total = 0;
+
+	session->metrics_live_bitrate_mbps = 0.0;
+	session->metrics_live_fps = 0.0;
+	session->metrics_packet_loss = 0.0;
+	session->metrics_drops = 0;
 	err = android_chiaki_video_decoder_init(&session->video_decoder, log, connect_info.video_profile.width, connect_info.video_profile.height,
 			connect_info.ps5 ? connect_info.video_profile.codec : CHIAKI_CODEC_H264);
 	if(err != CHIAKI_ERR_SUCCESS)
@@ -634,7 +738,7 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	session->java_controller_touch_id = E->GetFieldID(env, controller_touch_class, "id", "B");
 
 	chiaki_session_set_event_cb(&session->session, android_chiaki_event_cb, session);
-	chiaki_session_set_video_sample_cb(&session->session, android_chiaki_video_decoder_video_sample, &session->video_decoder);
+	chiaki_session_set_video_sample_cb(&session->session, android_chiaki_video_sample_with_metrics, session);
 
 	ChiakiAudioSink audio_sink;
 	if(session->use_opus_decoder)
@@ -778,14 +882,23 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 
 	int width = session->session.connect_info.video_profile.width;
 	int height = session->session.connect_info.video_profile.height;
-	float fps = (float)session->session.connect_info.video_profile.max_fps;
-	double bitrate = ((double)session->session.connect_info.video_profile.bitrate) / 1000.0;
+	float fps = (float)session->metrics_live_fps;
+	double bitrate = session->session.stream_connection.measured_bitrate > 0.0
+		? session->session.stream_connection.measured_bitrate
+		: session->metrics_live_bitrate_mbps;
 
-	double ping = 0.0;
+	double ping = session->session.stream_connection.measured_rtt > 0.0
+			? session->session.stream_connection.measured_rtt
+			: session->metrics_ping_ms;
+
 	double latency = 0.0;
-	double packet_loss = 0.0;
+
+	double packet_loss = session->session.stream_connection.measured_loss > 0.0
+			? session->session.stream_connection.measured_loss
+			: session->metrics_packet_loss;
+
 	double decode_time = 0.0;
-	jlong drops = 0;
+	jlong drops = (jlong)session->metrics_drops;
 
 	return E->NewObject(
 			env,
