@@ -756,6 +756,53 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetLoginPin)(JNIEnv *env, jobject obj, jlo
 	E->ReleaseStringUTFChars(env, pin_java, pin);
 }
 
+JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, jlong ptr)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return NULL;
+
+	jclass metrics_class = E->FindClass(env, BASE_PACKAGE"/SessionMetrics");
+	if(!metrics_class)
+		return NULL;
+
+	jmethodID metrics_ctor = E->GetMethodID(
+			env,
+			metrics_class,
+			"<init>",
+			"(IIFDDDDDJ)V"
+	);
+
+	if(!metrics_ctor)
+		return NULL;
+
+	int width = session->session.connect_info.video_profile.width;
+	int height = session->session.connect_info.video_profile.height;
+	float fps = (float)session->session.connect_info.video_profile.max_fps;
+	double bitrate = ((double)session->session.connect_info.video_profile.bitrate) / 1000.0;
+
+	double ping = 0.0;
+	double latency = 0.0;
+	double packet_loss = 0.0;
+	double decode_time = 0.0;
+	jlong drops = 0;
+
+	return E->NewObject(
+			env,
+			metrics_class,
+			metrics_ctor,
+			(jint)width,
+			(jint)height,
+			(jfloat)fps,
+			(jdouble)bitrate,
+			(jdouble)ping,
+			(jdouble)latency,
+			(jdouble)packet_loss,
+			(jdouble)decode_time,
+			(jlong)drops
+	);
+}
+
 typedef struct android_discovery_service_t
 {
 	ChiakiDiscoveryService service;

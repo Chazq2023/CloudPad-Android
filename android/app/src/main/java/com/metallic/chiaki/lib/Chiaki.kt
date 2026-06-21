@@ -92,16 +92,27 @@ data class ConnectInfo(
 
 /** Device info returned by PSN holepunch device listing */
 data class PsnDevice(
-	val type: Int, // 0 = PS4, 1 = PS5
+	val type: Int,
 	val deviceName: String,
-	val deviceUid: ByteArray, // 32 bytes DUID
+	val deviceUid: ByteArray,
 	val remoteplayEnabled: Boolean
 )
 {
-	/** Get DUID as hex string */
 	val duidHex: String get() = deviceUid.joinToString("") { "%02x".format(it) }
 	val isPS5: Boolean get() = type == 1
 }
+
+data class SessionMetrics(
+	val width: Int,
+	val height: Int,
+	val fps: Float,
+	val bitrate: Double,
+	val ping: Double,
+	val latency: Double,
+	val packetLoss: Double,
+	val decodeTime: Double,
+	val drops: Long
+)
 
 private class ChiakiNative
 {
@@ -125,6 +136,8 @@ private class ChiakiNative
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
+
+		@JvmStatic external fun sessionGetMetrics(ptr: Long): SessionMetrics?
 		@JvmStatic external fun discoveryServiceCreate(result: CreateResult, options: DiscoveryServiceOptions, javaService: DiscoveryService)
 		@JvmStatic external fun discoveryServiceFree(ptr: Long)
 		@JvmStatic external fun discoveryServiceWakeup(ptr: Long, host: String, userCredential: Long, ps5: Boolean)
@@ -567,6 +580,10 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun setLoginPin(pin: String)
 	{
 		ChiakiNative.sessionSetLoginPin(nativePtr, pin)
+	}
+
+	fun getMetrics(): SessionMetrics? {
+		return ChiakiNative.sessionGetMetrics(nativePtr)
 	}
 }
 

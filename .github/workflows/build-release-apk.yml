@@ -66,11 +66,7 @@ jobs:
             ## Pylux Android Cloud Release
 
             ### New feature
-            - Added custom bitrate sliders in the settings menu for more customisation
-            - Small error in the previous release notes that i forgot to remove... you don't need to lock pylux in the background for shortcuts :) that issue is resolved.
-
-            ### Working on
-            - Performance overlay
+            - Added a basic performance overlay, packet loss etc are placeholders for now, i will work on live metrics soon!
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now

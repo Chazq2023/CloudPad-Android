@@ -98,6 +98,11 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(logVerboseKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(logVerboseKey, value).apply() }
 
+	val showPerformanceOverlayKey get() = resources.getString(R.string.preferences_show_performance_overlay_key)
+	var showPerformanceOverlay
+		get() = sharedPreferences.getBoolean(showPerformanceOverlayKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(showPerformanceOverlayKey, value).apply() }
+
 	val pipEnabledKey get() = resources.getString(R.string.preferences_pip_enabled_key)
 	var pipEnabled
 		get() = sharedPreferences.getBoolean(pipEnabledKey, true)

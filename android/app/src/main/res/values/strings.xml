@@ -208,6 +208,7 @@
     </string-array>
 
     <!-- Don't localize these -->
+    <string name="preferences_show_performance_overlay_key">show_performance_overlay</string>
     <string name="preferences_discovery_enabled_key">discovery_enabled</string>
     <string name="preferences_on_screen_controls_enabled_key">on_screen_controls_enabled</string>
     <string name="preferences_touchpad_only_enabled_key">touchpad_only_enabled</string>

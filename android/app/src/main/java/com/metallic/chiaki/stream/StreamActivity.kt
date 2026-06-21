@@ -129,6 +129,16 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			finish()
 		}
 
+		// Performance overlay toggle button
+		binding.performanceOverlayToggle.setOnClickListener {
+			viewModel.setShowPerformanceOverlay(!(viewModel.showPerformanceOverlay.value ?: false))
+			showOverlay()
+		}
+
+		viewModel.showPerformanceOverlay.observe(this, Observer { show ->
+			binding.performanceOverlayToggle.isChecked = show
+		})
+
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch show the overlay
 		onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
@@ -148,6 +158,16 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		viewModel.session.attachToSurfaceView(binding.surfaceView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()
+
+		viewModel.showPerformanceOverlay.observe(this, Observer { show ->
+			binding.performanceOverlay.isVisible = show
+		})
+
+		viewModel.overlayData.observe(this, Observer { data ->
+			if (binding.performanceOverlay.isVisible) {
+				binding.performanceOverlay.updateOverlay(data)
+			}
+		})
 
 		if (isTv()) {
 			// On TV: hide the touch-oriented overlay and controls permanently
