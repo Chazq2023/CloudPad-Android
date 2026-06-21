@@ -4,7 +4,7 @@
 
 This repository is an unofficial Android-focused fork of the original Pylux project.
 
-I am not the original owner or original developer of Pylux. This fork exists to maintain, fix, and experiment with the Android version of the app.
+I am not the original auther or original maintainer of Pylux. This fork exists to separately maintain, fix, and experiment with the Android version of the app.
 
 For the official upstream project, please visit:
 
@@ -33,7 +33,7 @@ For the latest Android APK, see the Releases page:
 
 https://github.com/Chazq2023/Pylux-Cloud-Android/releases
 
-Source code for each release is available from this repository. Where possible, releases should be tied to a matching commit or tag.
+Source code for each APK release is available from this repository. Release builds should be tied to a matching commit or tag so users can access the corresponding source code.
 
 # Features
 
@@ -90,7 +90,7 @@ This fork is based on the original Pylux project:
 
 https://github.com/ForWard-Technologies-LLC/Pylux
 
-# Pylux is built on top of:
+Pylux is built on top of:
 
 * Chiaki: https://git.sr.ht/~thestr4ng3r/chiaki
 * chiaki-ng: https://github.com/streetpea/chiaki-ng
