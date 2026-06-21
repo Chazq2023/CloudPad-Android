@@ -12,21 +12,11 @@ This is a fork of the original application. I am making updates to fix up the an
 
 For full release notes and all downloads see the [Releases page](https://github.com/Chazq2023/Pylux-Cloud-Android/releases).
 
-## Screenshots
-
-<p align="center">
-  <img src="assets/screenshots/android-phones/01.png" alt="Pylux screenshot 1" width="45%" />
-  <img src="assets/screenshots/android-phones/02.png" alt="Pylux screenshot 2" width="45%" />
-  <img src="assets/screenshots/android-phones/03.png" alt="Pylux screenshot 3" width="45%" />
-  <img src="assets/screenshots/android-phones/04.png" alt="Pylux screenshot 4" width="45%" />
-</p>
-
 ## Features
 
 - **Internet Play** — stream games from the game catalog or your owned game library
 - **Remote Play** — low-latency streaming of your PlayStation console to any supported device
 - **Cross-platform** — Android, Android TV, iOS, iPadOS, macOS, Windows, Linux, Steam Deck
-- **App-store installs** — available on Google Play, App Store, and Mac App Store
 - **Automatic console discovery and registration**
 - **Touch-friendly controls** — mobile-optimized UI for phones and tablets
 
