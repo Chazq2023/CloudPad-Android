@@ -124,6 +124,17 @@
             app:entryValues="@array/cloud_datacenter_values"
             app:defaultValue="Auto"
             app:icon="@drawable/ic_bitrate"/>
+
+        <SeekBarPreference
+            app:key="@string/preferences_cloud_bitrate_pscloud_key"
+            app:title="@string/preferences_cloud_bitrate_pscloud_title"
+            app:summary="@string/preferences_cloud_bitrate_pscloud_summary"
+            app:min="2"
+            android:max="200"
+            app:seekBarIncrement="1"
+            app:defaultValue="20"
+            app:showSeekBarValue="true"
+            app:icon="@drawable/ic_bitrate"/>    
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -147,6 +158,17 @@
             app:entryValues="@array/cloud_datacenter_values"
             app:defaultValue="Auto"
             app:icon="@drawable/ic_bitrate"/>
+            
+        <SeekBarPreference
+            app:key="@string/preferences_cloud_bitrate_psnow_key"
+            app:title="@string/preferences_cloud_bitrate_psnow_title"
+            app:summary="@string/preferences_cloud_bitrate_psnow_summary"
+            app:min="2"
+            android:max="200"
+            app:seekBarIncrement="1"
+            app:defaultValue="20"
+            app:showSeekBarValue="true"
+            app:icon="@drawable/ic_bitrate"/>           
     </PreferenceCategory>
 
     <PreferenceCategory

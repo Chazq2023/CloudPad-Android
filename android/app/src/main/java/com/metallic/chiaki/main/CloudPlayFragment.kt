@@ -1593,11 +1593,17 @@ class CloudPlayFragment : Fragment() {
             com.metallic.chiaki.lib.Codec.CODEC_H264
         }
 
-        // Get resolution from preferences based on service type
+        // Get resolution and bitrate from preferences based on service type
         val resolutionValue = if (session.serviceType == "pscloud") {
             preferences.getCloudResolutionPscloud()
         } else {
             preferences.getCloudResolutionPsnow()
+        }
+
+        val cloudBitrate = if (session.serviceType == "pscloud") {
+            preferences.getCloudBitratePscloud()
+        } else {
+            preferences.getCloudBitratePsnow()
         }
 
         // Create video profile based on resolution
@@ -1606,7 +1612,7 @@ class CloudPlayFragment : Fragment() {
                 width = 1280,
                 height = 720,
                 maxFPS = 60,
-                bitrate = 15000,  // 20 Mbps for 720p
+                bitrate = cloudBitrate,
                 codec = codec
             )
 
@@ -1614,7 +1620,7 @@ class CloudPlayFragment : Fragment() {
                 width = 1920,
                 height = 1080,
                 maxFPS = 60,
-                bitrate = 20000,  // 20 Mbps for 1080p
+                bitrate = cloudBitrate,
                 codec = codec
             )
 
@@ -1622,7 +1628,7 @@ class CloudPlayFragment : Fragment() {
                 width = 2560,
                 height = 1440,
                 maxFPS = 60,
-                bitrate = 30000,  // 30 Mbps for 1440p
+                bitrate = cloudBitrate,
                 codec = codec
             )
 
@@ -1630,7 +1636,7 @@ class CloudPlayFragment : Fragment() {
                 width = 3840,
                 height = 2160,
                 maxFPS = 60,
-                bitrate = 50000,  // 50 Mbps for 4K
+                bitrate = cloudBitrate,
                 codec = codec
             )
 
@@ -1638,7 +1644,7 @@ class CloudPlayFragment : Fragment() {
                 width = 1280,
                 height = 720,
                 maxFPS = 60,
-                bitrate = 20000,  // 20 Mbps default
+                bitrate = cloudBitrate,
                 codec = codec
             )
         }

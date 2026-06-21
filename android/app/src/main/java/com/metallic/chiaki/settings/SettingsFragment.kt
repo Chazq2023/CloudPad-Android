@@ -20,12 +20,10 @@ import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.metallic.chiaki.common.DonationPromptCoordinator
 import com.metallic.chiaki.common.LicenseAgreementActivity
 import com.metallic.chiaki.common.Preferences
-import com.metallic.chiaki.common.PsnTokenManager
 import com.metallic.chiaki.common.exportAndShareAllSettings
 import com.metallic.chiaki.common.ext.viewModelFactory
 import com.metallic.chiaki.common.getDatabase
 import com.metallic.chiaki.common.importSettingsFromUri
-import com.metallic.chiaki.discovery.PsnDiscoveryManager
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import kotlinx.coroutines.launch
@@ -91,6 +89,19 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudResolutionPsnowKey -> preferences.setCloudResolutionPsnow(value?.toIntOrNull() ?: 720)
 			preferences.cloudDatacenterPsnowKey -> preferences.setCloudDatacenterPsnow(value ?: "Auto")
 			preferences.cloudDatacenterPscloudKey -> preferences.setCloudDatacenterPscloud(value ?: "Auto")
+		}
+	}
+
+	override fun getInt(key: String, defValue: Int) = when (key) {
+		preferences.cloudBitratePscloudKey -> preferences.getCloudBitratePscloud() / 1000
+		preferences.cloudBitratePsnowKey -> preferences.getCloudBitratePsnow() / 1000
+		else -> defValue
+	}
+
+	override fun putInt(key: String, value: Int) {
+		when (key) {
+			preferences.cloudBitratePscloudKey -> preferences.setCloudBitratePscloud(value * 1000)
+			preferences.cloudBitratePsnowKey -> preferences.setCloudBitratePsnow(value * 1000)
 		}
 	}
 }
@@ -176,6 +187,16 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		populateCloudDatacenterPreference(
 			preferenceScreen.findPreference(getString(R.string.preferences_cloud_datacenter_pscloud_key)),
 			preferences.getCloudDatacentersJsonPscloud()
+		)
+
+		bindCloudBitratePreference(
+			preferenceScreen.findPreference(getString(R.string.preferences_cloud_bitrate_pscloud_key)),
+			preferences
+		)
+
+		bindCloudBitratePreference(
+			preferenceScreen.findPreference(getString(R.string.preferences_cloud_bitrate_psnow_key)),
+			preferences
 		)
 
 		val bitratePreference = preferenceScreen.findPreference<EditTextPreference>(getString(R.string.preferences_bitrate_key))
@@ -419,6 +440,20 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			// If JSON parsing fails, fall back to Auto only
 			preference.entries = arrayOf("Auto (Best Ping)")
 			preference.entryValues = arrayOf("Auto")
+		}
+	}
+
+	private fun bindCloudBitratePreference(preference: SeekBarPreference?, preferences: Preferences) {
+		if (preference == null) return
+
+		val summaryRes = when (preference.key) {
+			preferences.cloudBitratePsnowKey -> R.string.preferences_cloud_bitrate_psnow_summary
+			preferences.cloudBitratePscloudKey -> R.string.preferences_cloud_bitrate_pscloud_summary
+			else -> return
+		}
+
+		preference.summaryProvider = Preference.SummaryProvider<SeekBarPreference> { pref ->
+			getString(summaryRes, pref.value)
 		}
 	}
 }

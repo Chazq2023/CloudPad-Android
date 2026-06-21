@@ -40,14 +40,17 @@ class Preferences(context: Context)
 		CODEC_H265("h265", R.string.preferences_codec_title_h265, com.metallic.chiaki.lib.Codec.CODEC_H265)
 	}
 
-	companion object
-	{
+	companion object {
 		val resolutionDefault = Resolution.RES_720P
 		val resolutionAll = Resolution.values()
 		val fpsDefault = FPS.FPS_60
 		val fpsAll = FPS.values()
 		val codecDefault = Codec.CODEC_H265
 		val codecAll = Codec.values()
+
+		const val CLOUD_BITRATE_MIN_KBPS = 2000
+		const val CLOUD_BITRATE_MAX_KBPS = 200000
+		const val CLOUD_BITRATE_DEFAULT_KBPS = 20000
 	}
 
 	private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
@@ -265,6 +268,35 @@ class Preferences(context: Context)
 	fun setCloudResolutionPscloud(value: Int)
 	{
 		sharedPreferences.edit().putString(cloudResolutionPscloudKey, value.toString()).apply()
+	}
+
+	// Cloud bitrate settings
+	val cloudBitratePsnowKey get() = resources.getString(R.string.preferences_cloud_bitrate_psnow_key)
+	val cloudBitratePscloudKey get() = resources.getString(R.string.preferences_cloud_bitrate_pscloud_key)
+
+	private fun clampCloudBitrateKbps(value: Int): Int =
+		value.coerceIn(CLOUD_BITRATE_MIN_KBPS, CLOUD_BITRATE_MAX_KBPS)
+
+	fun getCloudBitratePsnow(): Int {
+		val legacy = sharedPreferences.getInt("cloud_bitrate", CLOUD_BITRATE_DEFAULT_KBPS)
+		return clampCloudBitrateKbps(sharedPreferences.getInt(cloudBitratePsnowKey, legacy))
+	}
+
+	fun setCloudBitratePsnow(value: Int) {
+		sharedPreferences.edit()
+			.putInt(cloudBitratePsnowKey, clampCloudBitrateKbps(value))
+			.apply()
+	}
+
+	fun getCloudBitratePscloud(): Int {
+		val legacy = sharedPreferences.getInt("cloud_bitrate", CLOUD_BITRATE_DEFAULT_KBPS)
+		return clampCloudBitrateKbps(sharedPreferences.getInt(cloudBitratePscloudKey, legacy))
+	}
+
+	fun setCloudBitratePscloud(value: Int) {
+		sharedPreferences.edit()
+			.putInt(cloudBitratePscloudKey, clampCloudBitrateKbps(value))
+			.apply()
 	}
 
 	// Cloud datacenter settings (matching Qt GetCloudDatacenterPSNOW/SetCloudDatacenterPSNOW)

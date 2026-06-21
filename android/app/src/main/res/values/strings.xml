@@ -268,4 +268,11 @@
     <string name="donation_paywall_restore_already">Your support purchase is already on this device.</string>
     <string name="donation_paywall_restore_success">Purchases restored. Thank you for supporting Pylux!</string>
     <string name="donation_paywall_restore_unavailable">Couldn\'t reach Google Play. Try again in a moment.</string>
+    <string name="preferences_cloud_bitrate_pscloud_key">cloud_bitrate_pscloud</string>
+    <string name="preferences_cloud_bitrate_pscloud_title">Bitrate</string>
+    <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps for Game Library streaming</string>
+
+    <string name="preferences_cloud_bitrate_psnow_key">cloud_bitrate_psnow</string>
+    <string name="preferences_cloud_bitrate_psnow_title">Bitrate</string>
+    <string name="preferences_cloud_bitrate_psnow_summary">%d Mbps for Game Catalog streaming</string>
 </resources>
