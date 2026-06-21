@@ -10,8 +10,6 @@
 
 This is a fork of the original application. I am making updates to fix up the android version. Please see the releases link for the latest apk
 
-```
-
 For full release notes and all downloads see the [Releases page](https://github.com/Chazq2023/Pylux-Cloud-Android/releases).
 
 ## Screenshots
