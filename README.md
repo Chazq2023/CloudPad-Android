@@ -74,10 +74,11 @@ This project is not endorsed, sponsored, approved, or certified by Sony Interact
 PlayStation, PS4, PS5, and related names are trademarks of their respective owners. All trademarks belong to their respective owners.
 
 # Licence
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
 
 This project is distributed under the same licence as the original Pylux project.
 
-Pylux is licensed under the AGPL-3.0 licence with the OpenSSL exception, as used by the upstream project. [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
+Pylux is licensed under the AGPL-3.0 licence with the OpenSSL exception, as used by the upstream project. 
 
 Modified source code for this fork is made available in this repository.
 
