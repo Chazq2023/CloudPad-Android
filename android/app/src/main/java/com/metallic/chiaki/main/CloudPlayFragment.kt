@@ -58,6 +58,7 @@ class CloudPlayFragment : Fragment() {
     // Shortcut launch state
     private var pendingShortcutProductId: String? = null
     private var pendingShortcutServiceType: String? = null
+    private var shortcutLaunchInProgress = false
 
     // Cloud sub-tabs now in secondary header (binding.cloudSubHeader)
     // Sort state: 0 = Default, 1 = A->Z, 2 = Z->A
@@ -115,6 +116,7 @@ class CloudPlayFragment : Fragment() {
         allocationProgressDialog = null
         allocationProgressTextView = null
         allocationGameImageView = null
+        shortcutLaunchInProgress = false
         savedOrientation = -1
     }
 
@@ -138,9 +140,8 @@ class CloudPlayFragment : Fragment() {
         setupScrollListener()
         setupLoginButton()
 
-        readShortcutIntent()
-
-        // Check login status BEFORE observing ViewModel to prevent cached games from showing
+        // Check login status BEFORE observing ViewModel to prevent cached games from showing.
+        // Shortcut launches are handled by MainActivity via handleNewShortcutIntent().
         if (savedInstanceState == null) {
             checkLoginStatus()
         }
@@ -167,6 +168,11 @@ class CloudPlayFragment : Fragment() {
     }
 
     fun handleNewShortcutIntent(intent: Intent?) {
+        if (shortcutLaunchInProgress) {
+            Log.i(TAG, "Shortcut launch already in progress, ignoring duplicate intent")
+            return
+        }
+
         val handled = readShortcutIntent(intent)
 
         if (!handled) {
@@ -184,6 +190,7 @@ class CloudPlayFragment : Fragment() {
             return
         }
 
+        shortcutLaunchInProgress = true
         validateTokenAndLoadCatalog()
     }
 
@@ -1358,6 +1365,7 @@ class CloudPlayFragment : Fragment() {
 
             cancelButton.setOnClickListener {
                 allocationCancelled = true
+                shortcutLaunchInProgress = false
                 requireActivity().requestedOrientation =
                     android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
                 savedOrientation = -1
@@ -1435,6 +1443,7 @@ class CloudPlayFragment : Fragment() {
 
                 result.onFailure { error ->
                     requireActivity().runOnUiThread {
+                        shortcutLaunchInProgress = false
                         requireActivity().requestedOrientation =
                             android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
                         savedOrientation = -1
@@ -1474,6 +1483,7 @@ class CloudPlayFragment : Fragment() {
                 }
             } catch (e: Exception) {
                 requireActivity().runOnUiThread {
+                    shortcutLaunchInProgress = false
                     requireActivity().requestedOrientation =
                         android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
                     savedOrientation = -1
@@ -1659,6 +1669,7 @@ class CloudPlayFragment : Fragment() {
         )
         intent.putExtra(com.metallic.chiaki.stream.StreamActivity.EXTRA_CONNECT_INFO, connectInfo)
         startActivity(intent)
+        shortcutLaunchInProgress = false
 
         requireActivity().runOnUiThread {
             requireActivity().requestedOrientation =
