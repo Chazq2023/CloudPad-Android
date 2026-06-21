@@ -4,7 +4,7 @@
 
 This repository is an unofficial Android-focused fork of the original Pylux project.
 
-I am not the original auther or original maintainer of Pylux. This fork exists to separately maintain, fix, and experiment with the Android version of the app.
+I am not the original author or maintainer of Pylux. This fork exists to maintain, fix, and experiment with the Android version of the app separately from the official upstream project.
 
 For the official upstream project, please visit:
 
