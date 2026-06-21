@@ -1,47 +1,97 @@
-
 ![Pylux Logo](pylux-logo.png)
 
-# Disclaimer
-I am not the original owner, i am just fixing issues for android, please visit: https://github.com/ForWard-Technologies-LLC/Pylux for the official build. Please support the official release, this is purely a fork that will add/update with experimental features.
+# Unofficial fork notice
 
-# Pylux
+This repository is an unofficial Android-focused fork of the original Pylux project.
 
-[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
+I am not the original owner or original developer of Pylux. This fork exists to maintain, fix, and experiment with the Android version of the app.
 
-This is an android only fork.
+For the official upstream project, please visit:
 
-**Pylux is a free, open-source PS4 and PS5 Remote Play client for Android, Android TV, iOS, macOS, Windows, Linux, and Steam Deck.** It focuses on app-store installs, Internet Play (streaming the game catalog or your owned games), automatic console discovery, and a touch-friendly mobile UI — all from one community-maintained codebase.
+https://github.com/ForWard-Technologies-LLC/Pylux
 
-This is a fork of the original application. I am making updates to fix up the android version. Please see the releases link for the latest apk
+Please support the official release. This fork contains Android-specific fixes, UI changes, streaming improvements, and experimental features.
 
-For full release notes and all downloads see the [Releases page](https://github.com/Chazq2023/Pylux-Cloud-Android/releases).
+# About this fork
 
-## Features
+This fork focuses on the Android version of Pylux, including Android handhelds and Android TV-style devices.
 
-- **Internet Play** — stream games from the game catalog or your owned game library
-- **Remote Play** — low-latency streaming of your PlayStation console to any supported device
-- **Cross-platform** — Android, Android TV, iOS, iPadOS, macOS, Windows, Linux, Steam Deck
-- **Automatic console discovery and registration**
-- **Touch-friendly controls** — mobile-optimized UI for phones and tablets
+# Changes in this fork may include:
 
-## Documentation
+* Android-specific UI changes
+* PSCloud and Remote Play fixes
+* streaming stability improvements
+* bitrate and performance-related changes
+* touch/control improvements
+* experimental features not present in the official upstream build
 
-Full setup guides, configuration, and controller options at **[forward-technologies-llc.github.io/Pylux](https://forward-technologies-llc.github.io/Pylux/)**.
+This fork should not be considered the official Pylux build.
 
-## Contributing
+# Releases
 
-Fork the repo, create a branch, and open a pull request targeting `release/beta`. When merged, CI automatically build and creates a release.
+For the latest Android APK, see the Releases page:
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow and local development setup.
+https://github.com/Chazq2023/Pylux-Cloud-Android/releases
 
-## Legal & responsible use
+Source code for each release is available from this repository. Where possible, releases should be tied to a matching commit or tag.
 
-Pylux is intended for use with games and content you own or are licensed to use, on hardware you own, with a valid account or subscription. It does not circumvent copy protection or facilitate piracy.
+# Features
 
-This project is not endorsed or certified by the console manufacturer. All trademarks belong to their respective owners.
+* Internet Play — stream games from the game catalog or your owned game library
+* Remote Play — stream from your PlayStation console to a supported Android device
+* Android-focused UI — tailored for Android handhelds, tablets, and TV-style devices
+* Automatic console discovery and registration
+* Touch-friendly controls
+* Performance and streaming diagnostics
+* Configurable cloud streaming settings
 
-For questions about this project or responsible use, contact [forward.technologies.llc@gmail.com](mailto:forward.technologies.llc@gmail.com).
+# Documentation
 
-## Credits
+For general Pylux setup guides, configuration, and controller options, see the original project documentation:
 
-Pylux is built on top of [Chiaki](https://git.sr.ht/~thestr4ng3r/chiaki) and [chiaki-ng](https://github.com/streetpea/chiaki-ng). Special thanks to the original Chiaki development team and the chiaki-ng maintainers for their excellent foundational work. Pylux extends that work with a focus on app-store distribution, mobile and Android TV support, and Internet Play.
+https://forward-technologies-llc.github.io/Pylux/
+
+Some behaviour in this fork may differ from the official upstream version.
+
+# Contributing
+
+This fork is maintained separately from the official Pylux project.
+
+If you want to contribute to this Android fork, please open a pull request against this repository.
+
+For contributions to the official upstream project, please use the original repository:
+
+https://github.com/ForWard-Technologies-LLC/Pylux
+
+# Legal and responsible use
+
+Pylux is intended for use with games and content you own or are licensed to use, on hardware you own, with a valid account or subscription.
+
+This project does not circumvent copy protection and does not facilitate piracy.
+
+This project is not endorsed, sponsored, approved, or certified by Sony Interactive Entertainment, PlayStation, or any console manufacturer.
+
+PlayStation, PS4, PS5, and related names are trademarks of their respective owners. All trademarks belong to their respective owners.
+
+# Licence
+
+This project is distributed under the same licence as the original Pylux project.
+
+Pylux is licensed under the AGPL-3.0 licence with the OpenSSL exception, as used by the upstream project. [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
+
+Modified source code for this fork is made available in this repository.
+
+# Credits
+
+Pylux was originally developed by ForWard Technologies LLC.
+
+This fork is based on the original Pylux project:
+
+https://github.com/ForWard-Technologies-LLC/Pylux
+
+# Pylux is built on top of:
+
+* Chiaki: https://git.sr.ht/~thestr4ng3r/chiaki
+* chiaki-ng: https://github.com/streetpea/chiaki-ng
+
+Special thanks to the original Pylux developer, the Chiaki development team, and the chiaki-ng maintainers for their excellent foundational work.
