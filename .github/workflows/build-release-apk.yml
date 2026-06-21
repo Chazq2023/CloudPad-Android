@@ -66,11 +66,11 @@ jobs:
             ## Pylux Android Cloud Release
 
             ### New feature
-            - You can now add shortcuts to your android home screen. Just press and hold the game, select "add shortcut" and then it will appear!
-            - For this to work properly, you will need to lock Pylux as an always open app on your android device. Otherwise you will encounter issues when launching shortcuts.
+            - Added custom bitrate sliders in the settings menu for more customisation
+            - Small error in the previous release notes that i forgot to remove... you don't need to lock pylux in the background for shortcuts :) that issue is resolved.
 
             ### Working on
-            - Custom bitrate sliders!
+            - Performance overlay
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
