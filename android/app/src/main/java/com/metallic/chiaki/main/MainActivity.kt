@@ -95,6 +95,9 @@ class MainActivity : AppCompatActivity() {
         binding.root.post {
             applyViewPagerPageFocusIsolation(currentPage)
             if (isTv()) requestInitialMainTabFocus()
+
+            handleCloudGameShortcutIntent(intent)
+
             // In-app review: once per *new* Main instance (not every resume). Play throttles whether a sheet is shown.
             if (savedInstanceState == null)
                 InAppReviewHelper.tryPromptIfEligible(this, preferences)
@@ -105,13 +108,27 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
 
-        if (intent.action == GameShortcutHelper.ACTION_LAUNCH_CLOUD_GAME) {
-            binding.viewPager.setCurrentItem(1, false)
-            currentPage = 1
-            preferences.setLastMainTab(1)
-            updateModeIcons()
-            updateActionIcons()
-            applyViewPagerPageFocusIsolation(1)
+        handleCloudGameShortcutIntent(intent)
+    }
+
+    private fun handleCloudGameShortcutIntent(intent: Intent?) {
+        if (intent?.action != GameShortcutHelper.ACTION_LAUNCH_CLOUD_GAME) {
+            return
+        }
+
+        binding.viewPager.setCurrentItem(1, false)
+        currentPage = 1
+        preferences.setLastMainTab(1)
+        updateModeIcons()
+        updateActionIcons()
+        applyViewPagerPageFocusIsolation(1)
+
+        binding.viewPager.post {
+            val cloudFragment = supportFragmentManager.fragments
+                .filterIsInstance<CloudPlayFragment>()
+                .firstOrNull()
+
+            cloudFragment?.handleNewShortcutIntent(intent)
         }
     }
 

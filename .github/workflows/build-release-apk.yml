@@ -67,7 +67,10 @@ jobs:
 
             ### New feature
             - You can now add shortcuts to your android home screen. Just press and hold the game, select "add shortcut" and then it will appear!
-            - Added custom bitrate sliders. Bitrate is not longer hardcoded, you can now select the bitrate yourself in the settings
+            - For this to work properly, you will need to lock Pylux as an always open app on your android device. Otherwise you will encounter issues when launching shortcuts.
+
+            ### Working on
+            - Custom bitrate sliders!
 
             ### Outstanding Issues
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now

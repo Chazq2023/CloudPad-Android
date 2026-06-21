@@ -148,23 +148,43 @@ class CloudPlayFragment : Fragment() {
         observeViewModel()
     }
 
-    private fun readShortcutIntent() {
-        val intent = requireActivity().intent ?: return
+    private fun readShortcutIntent(intent: Intent? = requireActivity().intent): Boolean {
+        val shortcutIntent = intent ?: return false
 
-        if (intent.action != GameShortcutHelper.ACTION_LAUNCH_CLOUD_GAME) {
-            return
+        if (shortcutIntent.action != GameShortcutHelper.ACTION_LAUNCH_CLOUD_GAME) {
+            return false
         }
 
-        pendingShortcutProductId = intent.getStringExtra(GameShortcutHelper.EXTRA_PRODUCT_ID)
-        pendingShortcutServiceType = intent.getStringExtra(GameShortcutHelper.EXTRA_SERVICE_TYPE)
+        pendingShortcutProductId = shortcutIntent.getStringExtra(GameShortcutHelper.EXTRA_PRODUCT_ID)
+        pendingShortcutServiceType = shortcutIntent.getStringExtra(GameShortcutHelper.EXTRA_SERVICE_TYPE)
 
         Log.i(
             TAG,
             "Shortcut launch requested: productId=$pendingShortcutProductId, serviceType=$pendingShortcutServiceType"
         )
 
-        // Clear the action so it does not auto-launch again on rotation/resume
-        intent.action = null
+        return true
+    }
+
+    fun handleNewShortcutIntent(intent: Intent?) {
+        val handled = readShortcutIntent(intent)
+
+        if (!handled) {
+            return
+        }
+
+        if (!::preferences.isInitialized || !::viewModel.isInitialized || !::adapter.isInitialized) {
+            Log.w(TAG, "Shortcut received before CloudPlayFragment was ready")
+            return
+        }
+
+        if (!preferences.hasNpssoToken()) {
+            Log.i(TAG, "Shortcut received but user is not logged in")
+            showLoginRequiredState()
+            return
+        }
+
+        validateTokenAndLoadCatalog()
     }
 
     private fun setupLoginButton() {
@@ -252,7 +272,7 @@ class CloudPlayFragment : Fragment() {
         // If opened from a Home Screen shortcut, load the section that contains that game
         if (pendingShortcutProductId != null) {
             if (pendingShortcutServiceType == "pscloud") {
-                preferences.setPsCloudFilterOwned(false)
+                preferences.setPsCloudFilterOwned(true)
                 preferences.setPsCloudFilterFavorites(false)
                 selectLibraryTab()
             } else {
