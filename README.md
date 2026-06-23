@@ -20,10 +20,10 @@ Changes in this fork may include:
 
 * Android-specific UI changes
 * PSCloud and Remote Play fixes
-* streaming stability improvements
-* bitrate and performance-related changes
-* touch/control improvements
-* experimental features not present in the official upstream build
+* Streaming stability improvements
+* Bitrate and performance-related changes
+* Touch/control improvements
+* Experimental features not present in the official upstream build
 
 This fork should not be considered the official Pylux build.
 
@@ -69,9 +69,11 @@ Pylux and this Android-focused fork are open-source community projects and shoul
 
 This fork is provided as-is, with no guarantee that every feature, device, game, account, subscription, or streaming scenario will work correctly.
 
-Pylux and this Android-focused fork do not guarantee that any specific game, purchased title, subscription title, or catalogue title will be available for cloud streaming. Game availability, streaming support, regional access, and subscription requirements are controlled by the relevant platform holder and may change at any time.
+Cloud streaming / Internet Play typically requires a valid PlayStation account and an active PlayStation Plus tier that includes cloud streaming, such as PlayStation Plus Premium in supported regions. Remote Play from your own console may have different requirements.
 
-Users should check official store listings, subscription catalogues, and streaming availability before purchasing games or subscriptions. Any purchases made for use with this fork are made at the user’s own risk.
+Pylux and this Android-focused fork do not guarantee that any specific game, purchased title, subscription title, or catalogue title will be available for cloud streaming. Game availability, streaming support, regional access, subscription requirements, and supported devices are controlled by the relevant platform holder and may change at any time.
+
+Users should check official store listings, subscription catalogues, subscription requirements, and streaming availability before purchasing games or subscriptions. Any purchases made for use with this fork are made at the user’s own risk.
 
 # Legal and responsible use
 
