@@ -33,7 +33,7 @@ This fork should not be considered the official Pylux build.
 
 For the latest Android APK, see the Releases page:
 
-https://github.com/Chazq2023/Pylux-Cloud-Android/releases
+[CloudPad Android Releases](https://github.com/Chazq2023/CloudPad-Android/releases)
 
 Source code for each APK release is available from this repository. Release builds should be tied to a matching commit or tag so users can access the corresponding source code.
 
