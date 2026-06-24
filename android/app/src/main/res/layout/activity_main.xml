@@ -91,12 +91,12 @@
                 <!-- Center: Pylux logo - absolutely centered -->
                 <ImageView
                     android:id="@+id/appTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="22dp"
+                    android:layout_width="258dp"
+                    android:layout_height="29dp"
                     android:layout_centerInParent="true"
-                    android:src="@drawable/pylux_logo"
                     android:adjustViewBounds="true"
-                    android:contentDescription="@string/app_name" />
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/cloudpad_logo" />
 
                 <!-- Right Island: Action Icons -->
                 <LinearLayout

@@ -48,7 +48,7 @@ jobs:
       - name: Prepare APK
         run: |
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/app-debug.apk release/pylux-android-cloud.apk
+          cp android/app/build/outputs/apk/debug/app-debug.apk release/cloudpad-android.apk
 
       - name: Create tag
         run: |
@@ -61,18 +61,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
-          name: Pylux Android Cloud ${{ env.TAG }}
+          name: CloudPad Android Cloud ${{ env.TAG }}
           body: |
-            ## Pylux Android Cloud Release
+            ## CloudPad Android Cloud Release
 
             ### Updates
-            - Removed donation page. I don't own the original Pylux IP, so it feels wrong to have a donation page. (it didn't work anyway as i don't host this app on google play)
-            - New colour scheme! I will be maintaining my own version of Pylux going forward, but please support the official release :) this fork will mostly contain new/experimental features going forward.
+            - Fork has been renamed to CloudPad, this is still an unofficial fork
+            - ApplicationID is has now changed so users can install the official Pylux application separately. Please support the official release!
+            - Important note: If you had my previous version installed and created shortcuts, you will need to delete and re-create the shortcuts as this is now a separate entity.
 
-            ### Outstanding Issues
+            ### Outstanding Issues/Improvements
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
             - Bloodbourne is not working currently, will look into this
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
+            - Simplify the login process
 
 
             ### Recommendations
@@ -81,6 +83,6 @@ jobs:
 
             ### APK
             Attached release asset:
-            `pylux-android-cloud.apk`
+            `cloudpad-android.apk`
 
-          files: release/pylux-android-cloud.apk
+          files: release/cloudpad-android.apk

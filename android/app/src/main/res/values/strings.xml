@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">Pylux</string>
-    <string name="title_main">Pylux</string>
+    <string name="app_name">CloudPad</string>
+    <string name="title_main">CloudPad</string>
     <string name="title_settings">Settings</string>
     <string name="tab_remote_play">Remote Play</string>
     <string name="tab_cloud_play">Cloud Play</string>
@@ -69,10 +69,10 @@
     <string name="hint_add_manual_regist_host">Registered Console</string>
     <string name="add_manual_regist_on_connect">Register on first Connection</string>
     <string name="preferences_category_title_support">Support</string>
-    <string name="preferences_donate_title">Support Pylux</string>
-    <string name="preferences_donate_summary">Donate to support development. Thank you for using Pylux.</string>
+    <string name="preferences_donate_title">Support CloudPad</string>
+    <string name="preferences_donate_summary">Donate to support development. Thank you for using CloudPad.</string>
     <string name="preferences_donate_no_products">Support options are not available in this build.</string>
-    <string name="preferences_donate_billing_unavailable">Google Play billing is not available on this device. Install or update the Play Store, or install Pylux from Google Play (e.g. internal testing) so support purchases work.</string>
+    <string name="preferences_donate_billing_unavailable">Google Play billing is not available on this device. Install or update the Play Store, or install CloudPad from Google Play (e.g. internal testing) so support purchases work.</string>
     <string name="donation_paypal_fallback_url" translatable="false">https://www.paypal.com/ncp/payment/AGV5G9KZAPJX6</string>
     <string name="donation_paywall_external_title">Support via PayPal</string>
     <string name="donation_paywall_external_hint">Google Play billing is not available here. Scan the QR code with your phone to open PayPal, or use Open link below.</string>
@@ -231,8 +231,8 @@
     <string name="preferences_cloud_resolution_pscloud_key">cloud_resolution_pscloud</string>
     <string name="preferences_pip_enabled_key">pip_enabled</string>
 
-    <string name="donation_dialog_title">Support Pylux</string>
-    <string name="donation_dialog_body">Pylux is built by the community. If you enjoy using it, please consider supporting its development. Your contribution helps fund continued updates and keeps the project alive.</string>
+    <string name="donation_dialog_title">Support CloudPad</string>
+    <string name="donation_dialog_body">CloudPad is built by the community. If you enjoy using it, please consider supporting its development. Your contribution helps fund continued updates and keeps the project alive.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
     <string name="donation_tier_button_label">%1$s · %2$s</string>
     <string name="donation_action_not_now">Not now</string>
@@ -240,11 +240,11 @@
     <string name="bullet_dot">\u2022</string>
 
     <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
-    <string name="donation_paywall_headline">Keep Pylux alive</string>
+    <string name="donation_paywall_headline">Keep CloudPad alive</string>
     <string name="donation_paywall_tagline">Open source and community-maintained.</string>
-    <string name="donation_paywall_story_title">Enjoying Pylux?</string>
+    <string name="donation_paywall_story_title">Enjoying CloudPad?</string>
     <string name="donation_paywall_story_lead">It\'s open source and maintained by the community. Please consider supporting the project. Donations go to the developers who maintain it.</string>
-    <string name="donation_paywall_bullet_1">Your donation goes to the people who build and maintain Pylux.</string>
+    <string name="donation_paywall_bullet_1">Your donation goes to the people who build and maintain CloudPad.</string>
     <string name="donation_paywall_bullet_2">Single payment in Google Play. No subscription.</string>
     <string name="donation_paywall_bullet_3">Optional. You get the full app either way.</string>
     <string name="donation_paywall_pick_title">Choose an amount</string>
@@ -261,13 +261,13 @@
     <string name="donation_tier_blurb_silver">A bit more support.</string>
     <string name="donation_tier_blurb_gold">When you want to give more.</string>
     <string name="donation_tier_blurb_platinum">If you want to give the most.</string>
-    <string name="donation_tier_blurb_default">Thank you for supporting Pylux.</string>
+    <string name="donation_tier_blurb_default">Thank you for supporting CloudPad.</string>
     <string name="donation_paywall_close">Close</string>
-    <string name="donation_paywall_logo_content_description">Pylux</string>
+    <string name="donation_paywall_logo_content_description">CloudPad</string>
     <string name="donation_paywall_restore_purchases">Restore purchases</string>
     <string name="donation_paywall_restore_none">No support purchases found for this Google account.</string>
     <string name="donation_paywall_restore_already">Your support purchase is already on this device.</string>
-    <string name="donation_paywall_restore_success">Purchases restored. Thank you for supporting Pylux!</string>
+    <string name="donation_paywall_restore_success">Purchases restored. Thank you for supporting CloudPad!</string>
     <string name="donation_paywall_restore_unavailable">Couldn\'t reach Google Play. Try again in a moment.</string>
     <string name="preferences_cloud_bitrate_pscloud_key">cloud_bitrate_pscloud</string>
     <string name="preferences_cloud_bitrate_pscloud_title">Bitrate</string>

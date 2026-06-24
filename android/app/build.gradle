@@ -62,7 +62,7 @@ android {
     ndkVersion "28.2.13676358" // NDK r28.2 - provides 16KB alignment by default
     
     defaultConfig {
-        applicationId "com.pylux.stream"
+        applicationId "com.cloudpad.stream"
         minSdk 24
         targetSdk 35
         versionCode androidVersionCode
