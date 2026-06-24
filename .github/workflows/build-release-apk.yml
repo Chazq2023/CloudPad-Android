@@ -66,16 +66,13 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Fork has been renamed to CloudPad, this is still an unofficial fork
-            - ApplicationID is has now changed so users can install the official Pylux application separately. Please support the official release!
-            - Important note: If you had my previous version installed and created shortcuts, you will need to delete and re-create the shortcuts as this is now a separate entity.
+            - Simplified login process, no longer relies on 3rd party sites to authenticate SSO cookie.
+            - It is recommended to set your android default browser to Chrome.
 
             ### Outstanding Issues/Improvements
             - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
             - Bloodbourne is not working currently, will look into this
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
-            - Simplify the login process
-
 
             ### Recommendations
             - Clear app cache and storage

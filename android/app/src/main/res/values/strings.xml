@@ -163,18 +163,18 @@
     <string name="psn_login_prompt_message">Cloud streaming requires an account. Would you like to login now?</string>
     <string name="psn_login_session_expired_message">Your session has expired. Please login again to continue.</string>
     <string name="psn_login_external_browser_error">Failed to open external browser</string>
-    <string name="psn_login_instructions">Use this code on the website to login</string>
-    <string name="psn_login_code_label">Your Login Code:</string>
-    <string name="psn_login_open_browser">Open Login Website</string>
-    <string name="psn_login_check_status">Check Status</string>
+    <string name="psn_login_instructions">Sign in with Sony, then grab your SSO cookie and finalise login.</string>
+    <string name="psn_login_code_label">Sony Sign In</string>
+    <string name="psn_login_open_browser">Sign into account</string>
+    <string name="psn_login_check_status">Grab SSO Cookie value</string>
     <string name="psn_login_connecting">Connecting to server…</string>
-    <string name="psn_login_code_ready">Code ready! Open the website and use your code</string>
+    <string name="psn_login_code_ready">Ready to sign in</string>
     <string name="psn_login_checking_status">Checking if login is complete…</string>
-    <string name="psn_login_browser_opened">Complete the login in your browser, then tap Check Status</string>
-    <string name="psn_login_not_complete">Login not complete yet. Complete the login in your browser first.</string>
-    <string name="psn_login_not_complete_toast">Please complete the login in your browser first</string>
-    <string name="psn_login_server_error">Failed to connect to login server</string>
-    
+    <string name="psn_login_browser_opened">Complete Sony sign-in, then tap Grab SSO Cookie value</string>
+    <string name="psn_login_not_complete">Login not complete yet. Complete Sony sign-in first.</string>
+    <string name="psn_login_not_complete_toast">Please complete Sony sign-in first</string>
+    <string name="psn_login_server_error">Failed to complete login</string>
+
     <!-- Datacenter options -->
     <string-array name="cloud_datacenter_entries">
         <item>Auto (Best Ping)</item>
