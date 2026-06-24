@@ -66,11 +66,10 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Simplified login process, no longer relies on 3rd party sites to authenticate SSO cookie.
-            - It is recommended to set your android default browser to Chrome.
+            - I have removed the "all" filter, only "owned" games will now appear. This will be the latest view.
+            - Labels should be much clearer, indicating which console the game belongs to.
 
             ### Outstanding Issues/Improvements
-            - The "all" filter for library is still jank, if you own a game and search for it, it might come up with "not owned" so stick with "owned" for now
             - Bloodbourne is not working currently, will look into this
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
 

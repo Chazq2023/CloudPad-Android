@@ -125,6 +125,9 @@ class CloudPlayFragment : Fragment() {
 
         preferences = Preferences(requireContext())
 
+        // Library should always show owned games only.
+        preferences.setPsCloudFilterOwned(true)
+
         // Load saved sort state
         sortState = preferences.getCloudSortState()
 
@@ -461,14 +464,10 @@ class CloudPlayFragment : Fragment() {
             selectLibraryTab()
         }
 
-        // All/Owned toggle (Library only)
-        binding.ownedToggleButton.setOnClickListener {
-            val currentlyOwned = viewModel.preferences.getPsCloudFilterOwned()
-            viewModel.preferences.setPsCloudFilterOwned(!currentlyOwned)
-            updateOwnedToggleButton()
-            // Re-fetch with new filter
-            viewModel.fetchPs5CloudCatalog(showOnlyOwned = !currentlyOwned)
-        }
+        // Library now always shows owned games only.
+        // Hide the old All/Owned toggle and do not allow switching to All.
+        binding.ownedToggleButton.visibility = View.GONE
+        binding.ownedToggleButton.setOnClickListener(null)
 
         // Icon buttons in header
         binding.headerFavoritesButton.setOnClickListener {
@@ -505,7 +504,6 @@ class CloudPlayFragment : Fragment() {
             View.OnFocusChangeListener { v, hasFocus -> highlightButton(v, hasFocus) }
         binding.catalogTabButton.onFocusChangeListener = focusHighlight
         binding.libraryTabButton.onFocusChangeListener = focusHighlight
-        binding.ownedToggleButton.onFocusChangeListener = focusHighlight
         binding.headerFavoritesButton.onFocusChangeListener = focusHighlight
         binding.headerSortButton.onFocusChangeListener = focusHighlight
         binding.headerSearchButton.onFocusChangeListener = focusHighlight
@@ -591,9 +589,9 @@ class CloudPlayFragment : Fragment() {
         binding.catalogTabButton.alpha = 0.45f
         binding.catalogTabButton.setBackgroundColor(android.graphics.Color.TRANSPARENT)
 
-        // Show All/Owned toggle for Library
-        binding.ownedToggleButton.visibility = android.view.View.VISIBLE
-        updateOwnedToggleButton()
+        // Library always shows owned games only.
+        binding.ownedToggleButton.visibility = View.GONE
+        preferences.setPsCloudFilterOwned(true)
 
         // Update section
         viewModel.setCurrentSection("pscloud")
@@ -606,14 +604,9 @@ class CloudPlayFragment : Fragment() {
         // Update favorites icon to match new section
         updateFavoritesIcon()
 
-        val isOwnedFilter = viewModel.preferences.getPsCloudFilterOwned()
-        val isFavoritesFilter = preferences.getPsCloudFilterFavorites()
-
-        if (isFavoritesFilter) {
-            viewModel.fetchPs5CloudCatalog(showOnlyOwned = false)
-        } else {
-            viewModel.fetchPs5CloudCatalog(showOnlyOwned = isOwnedFilter)
-        }
+        // Always fetch owned games for Library.
+        // Favorites, if active, will be applied on top of the owned list.
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
     }
 
     private fun updateOwnedToggleButton() {
@@ -651,8 +644,8 @@ class CloudPlayFragment : Fragment() {
 
         // Re-filter games - use correct item IDs
         if (currentSection == "pscloud") {
-            // Library: 0=All, 1=Owned, 2=Favorites
-            val selectedItem = if (newState) 2 else 0
+            // Library: 1=Owned, 2=Favorites. Never return to All.
+            val selectedItem = if (newState) 2 else 1
             applyFilterState(currentSection, selectedItem)
         } else {
             // Catalog: 0=All, 1=Favorites
@@ -664,8 +657,8 @@ class CloudPlayFragment : Fragment() {
     private fun refreshCurrentSection() {
         val currentSection = viewModel.getCurrentSection()
         if (currentSection == "pscloud") {
-            val isOwnedFilter = viewModel.preferences.getPsCloudFilterOwned()
-            viewModel.fetchPs5CloudCatalog(showOnlyOwned = isOwnedFilter, forceRefresh = true)
+            preferences.setPsCloudFilterOwned(true)
+            viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
         } else {
             viewModel.fetchPsnowCatalog(forceRefresh = true)
         }
@@ -811,17 +804,12 @@ class CloudPlayFragment : Fragment() {
         val popup = androidx.appcompat.widget.PopupMenu(requireContext(), anchor)
 
         if (currentSection == "pscloud") {
-            // Game Library: All Games, Owned Games, Favorites
-            popup.menu.add(0, 0, 0, "Show: All Games")
-            popup.menu.add(0, 1, 1, "Show: Owned Only")
-            popup.menu.add(0, 2, 2, "Show: Favorites")
+            // Game Library: Owned Games only, plus optional Favorites filter.
+            popup.menu.add(0, 1, 0, "Show: Owned Only")
+            popup.menu.add(0, 2, 1, "Show: Favorites")
 
             // Highlight current selection
-            val currentItem = when {
-                preferences.getPsCloudFilterFavorites() -> 2
-                preferences.getPsCloudFilterOwned() -> 1
-                else -> 0
-            }
+            val currentItem = if (preferences.getPsCloudFilterFavorites()) 2 else 1
             popup.menu.findItem(currentItem)?.isChecked = true
         } else {
             // Game Catalog: All Games, Favorites
@@ -845,27 +833,26 @@ class CloudPlayFragment : Fragment() {
 
     private fun applyFilterState(currentSection: String, selectedItem: Int) {
         if (currentSection == "pscloud") {
-            // Game Library
-            when (selectedItem) {
-                0 -> {
-                    // All Games
-                    preferences.setPsCloudFilterFavorites(false)
-                    preferences.setPsCloudFilterOwned(false)
-                    viewModel.fetchPs5CloudCatalog(showOnlyOwned = false, forceRefresh = false)
-                }
+            // Game Library always uses owned games only.
+            preferences.setPsCloudFilterOwned(true)
 
+            when (selectedItem) {
                 1 -> {
                     // Owned Games
                     preferences.setPsCloudFilterFavorites(false)
-                    preferences.setPsCloudFilterOwned(true)
                     viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = false)
                 }
 
                 2 -> {
-                    // Favorites
+                    // Favorites from owned Library only
                     preferences.setPsCloudFilterFavorites(true)
-                    preferences.setPsCloudFilterOwned(false)
-                    viewModel.fetchPs5CloudCatalog(showOnlyOwned = false, forceRefresh = false)
+                    viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = false)
+                }
+
+                else -> {
+                    // Safety fallback: never allow All Games in Library
+                    preferences.setPsCloudFilterFavorites(false)
+                    viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = false)
                 }
             }
         } else {
@@ -892,12 +879,8 @@ class CloudPlayFragment : Fragment() {
     private fun updateFilterButtonText() {
         val currentSection = viewModel.getCurrentSection()
         val text = if (currentSection == "pscloud") {
-            // Game Library
-            when {
-                preferences.getPsCloudFilterFavorites() -> "Show: Favorites"
-                preferences.getPsCloudFilterOwned() -> "Show: Owned"
-                else -> "Show: All"
-            }
+            // Game Library is always owned-only.
+            if (preferences.getPsCloudFilterFavorites()) "Show: Favorites" else "Show: Owned"
         } else {
             // Game Catalog
             if (preferences.getPsnowFilterFavorites()) "Show: Favorites" else "Show: All"
