@@ -85,6 +85,26 @@ class PsnLoginActivity : AppCompatActivity() {
 			"Tap Sign into account, sign in with Sony in your browser, then grab and paste your SSO cookie value."
 	}
 
+	private fun styleCloudPadButton(button: Button) {
+		button.setTextColor(Color.WHITE)
+		button.background = android.graphics.drawable.GradientDrawable().apply {
+			shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+			cornerRadius = 18f
+			setColor(Color.parseColor("#FF149D"))
+			setStroke(2, Color.parseColor("#FF4FBE"))
+		}
+	}
+
+	private fun styleCloudPadCancelButton(button: Button) {
+		button.setTextColor(Color.WHITE)
+		button.background = android.graphics.drawable.GradientDrawable().apply {
+			shape = android.graphics.drawable.GradientDrawable.RECTANGLE
+			cornerRadius = 18f
+			setColor(Color.parseColor("#4DFF149D"))
+			setStroke(2, Color.parseColor("#FF149D"))
+		}
+	}
+
 	private fun setupUi() {
 		val root = LinearLayout(this).apply {
 			orientation = LinearLayout.VERTICAL
@@ -128,6 +148,7 @@ class PsnLoginActivity : AppCompatActivity() {
 
 		signInButton = Button(this).apply {
 			text = "Sign into account"
+			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				startSonySignIn()
 			}
@@ -135,6 +156,7 @@ class PsnLoginActivity : AppCompatActivity() {
 
 		grabSsoButton = Button(this).apply {
 			text = "Grab SSO Cookie value"
+			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				grabSsoCookieValue()
 			}
@@ -143,6 +165,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		finaliseButton = Button(this).apply {
 			text = "Finalise log in"
 			isEnabled = true
+			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				val npsso = normaliseNpssoInput(npssoInput.text?.toString().orEmpty())
 
@@ -160,6 +183,7 @@ class PsnLoginActivity : AppCompatActivity() {
 
 		cancelButton = Button(this).apply {
 			text = "Cancel"
+			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				setResult(RESULT_LOGIN_CANCELLED)
 				finish()

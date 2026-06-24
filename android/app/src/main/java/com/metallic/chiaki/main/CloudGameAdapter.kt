@@ -96,9 +96,9 @@ class CloudGameAdapter(
         fun bind(game: CloudGame) {
             binding.gameNameTextView.text = game.name
             binding.gamePlatformTextView.text = when (game.platform.lowercase()) {
-                "ps3" -> "3"
-                "ps4" -> "4"
-                "ps5" -> "5"
+                "ps3" -> "PS3"
+                "ps4" -> "PS4"
+                "ps5" -> "PS5"
                 else -> game.platform.takeLast(1)
             }
 
@@ -106,7 +106,7 @@ class CloudGameAdapter(
                 binding.ownershipBadge.visibility = android.view.View.VISIBLE
                 if (game.isOwned) {
                     binding.ownershipBadge.text = "Owned"
-                    binding.ownershipBadge.setBackgroundColor(0xCC4CAF50.toInt())
+                    binding.ownershipBadge.setBackgroundColor(0xCCFF149D.toInt())
                 } else {
                     binding.ownershipBadge.text = "Not Owned"
                     binding.ownershipBadge.setBackgroundColor(0xCCFF9800.toInt())
