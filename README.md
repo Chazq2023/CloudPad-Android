@@ -1,10 +1,12 @@
-![Pylux Logo](pylux-logo.png)
+![CloudPad Logo](cloudpad-logo.png)
+
+# CloudPad
 
 # Unofficial fork notice
 
-This repository is an unofficial Android-focused fork of the original Pylux project.
+CloudPad is an unofficial Android-focused fork of the original Pylux project.
 
-I am not the original author or maintainer of Pylux. This fork exists to maintain, fix, and experiment with the Android version of the app separately from the official upstream project.
+I am not the original author or maintainer of Pylux. CloudPad exists to maintain, fix, and experiment with the Android version of the app separately from the official upstream project.
 
 For the official upstream project, please visit:
 

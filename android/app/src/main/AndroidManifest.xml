@@ -21,7 +21,7 @@
         tools:ignore="GoogleAppIndexingWarning">
 
         <provider
-            android:authorities="com.pylux.stream.fileprovider"
+            android:authorities="${applicationId}.fileprovider"
             android:name="androidx.core.content.FileProvider"
             android:grantUriPermissions="true"
             android:exported="false">
