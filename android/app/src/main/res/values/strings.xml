@@ -204,18 +204,14 @@
         <item>1080</item>
     </string-array>
     
-    <!-- Resolution options for Game Library (PSCloud) - up to 4K -->
+    <!-- Resolution options for Game Library (PSCloud) -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
-        <item>1440p (2560x1440)</item>
-        <item>2160p (3840x2160) - 4K</item>
     </string-array>
     <string-array name="cloud_resolution_pscloud_values">
         <item>720</item>
         <item>1080</item>
-        <item>1440</item>
-        <item>2160</item>
     </string-array>
 
     <!-- Don't localize these -->

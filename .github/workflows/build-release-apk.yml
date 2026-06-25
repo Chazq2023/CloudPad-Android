@@ -66,7 +66,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Added customisable button mappings! You can now customise your mappings to your liking, this includes mapping two inputs to one button.
+            - Removed 1440p and 2160p options as this was causing issues for people. 
 
             ### Outstanding Issues/Improvements
             - Bloodbourne is not working currently, will look into this
