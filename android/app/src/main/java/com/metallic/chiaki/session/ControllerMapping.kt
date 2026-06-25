@@ -63,6 +63,7 @@ sealed class PhysicalInput {
             ControllerAction.R3 to Button(KeyEvent.KEYCODE_BUTTON_THUMBR),
             ControllerAction.START to Button(KeyEvent.KEYCODE_BUTTON_START),
             ControllerAction.SELECT to Button(KeyEvent.KEYCODE_BUTTON_SELECT),
+            ControllerAction.HOME to Button(KeyEvent.KEYCODE_BUTTON_MODE),
             ControllerAction.DPAD_UP to AxisDirection(MotionEvent.AXIS_HAT_Y, false),
             ControllerAction.DPAD_DOWN to AxisDirection(MotionEvent.AXIS_HAT_Y, true),
             ControllerAction.DPAD_LEFT to AxisDirection(MotionEvent.AXIS_HAT_X, false),

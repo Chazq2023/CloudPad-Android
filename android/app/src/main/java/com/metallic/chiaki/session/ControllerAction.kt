@@ -25,6 +25,7 @@ enum class ControllerAction(val displayName: String, val group: String) {
     CIRCLE("Circle (○)", "Face Buttons"),
     START("Start / Options", "Menu"),
     SELECT("Select", "Menu"),
+    HOME("Home (PS Button)", "System"),
     TOUCHPAD_CLICK("Touchpad Click", "Touchpad"),
     TOUCHPAD_SWIPE_UP("Touchpad Swipe Up", "Touchpad"),
     TOUCHPAD_SWIPE_DOWN("Touchpad Swipe Down", "Touchpad"),

@@ -14,7 +14,8 @@ import com.metallic.chiaki.lib.ControllerState
 
 class StreamInput(
 	val context: Context,
-	val preferences: Preferences
+	val preferences: Preferences,
+	val isRemotePlay: Boolean = false
 ) {
 	var controllerStateChangedCallback: ((ControllerState) -> Unit)? = null
 
@@ -215,7 +216,8 @@ class StreamInput(
 		ControllerAction.L3 -> ControllerState.BUTTON_L3
 		ControllerAction.R3 -> ControllerState.BUTTON_R3
 		ControllerAction.START -> ControllerState.BUTTON_OPTIONS
-		ControllerAction.SELECT -> ControllerState.BUTTON_SHARE
+		ControllerAction.SELECT -> if(!isRemotePlay) ControllerState.BUTTON_SHARE else null
+		ControllerAction.HOME -> if(isRemotePlay) ControllerState.BUTTON_PS else null
 		ControllerAction.DPAD_UP -> ControllerState.BUTTON_DPAD_UP
 		ControllerAction.DPAD_DOWN -> ControllerState.BUTTON_DPAD_DOWN
 		ControllerAction.DPAD_LEFT -> ControllerState.BUTTON_DPAD_LEFT
@@ -332,16 +334,6 @@ class StreamInput(
 		if(event.action == KeyEvent.ACTION_DOWN && event.repeatCount > 0)
 			return event.keyCode in comboModifierKeyCodes || event.keyCode in singleKeyToActions
 		val isDown = event.action == KeyEvent.ACTION_DOWN
-
-		// Hardcoded PS button — not user-remappable
-		if(event.keyCode == KeyEvent.KEYCODE_BUTTON_C || event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE)
-		{
-			keyControllerState.buttons = keyControllerState.buttons.run {
-				if(isDown) this or ControllerState.BUTTON_PS else this and ControllerState.BUTTON_PS.inv()
-			}
-			controllerStateUpdated()
-			return true
-		}
 
 		// --- COMBO MODIFIER ---
 		if(event.keyCode in comboModifierKeyCodes)

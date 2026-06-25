@@ -32,7 +32,7 @@ class StreamViewModel(
 
 	val preferences = Preferences(application)
 	val logManager = LogManager(application)
-	val input = StreamInput(application, preferences)
+	val input = StreamInput(application, preferences, isRemotePlay = connectInfo.cloudSessionId.isNullOrBlank())
 	val session = StreamSession(connectInfo, logManager, preferences.logVerbose, input)
 
 	private var _onScreenControlsEnabled = MutableLiveData(preferences.onScreenControlsEnabled)
