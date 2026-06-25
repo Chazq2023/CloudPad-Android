@@ -55,6 +55,11 @@
             android:exported="false" />
 
         <activity
+            android:name="com.metallic.chiaki.settings.ControllerRemapActivity"
+            android:exported="false"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
+
+        <activity
             android:name="com.metallic.chiaki.regist.RegistActivity"
             android:exported="false"
             android:theme="@style/MageTheme"

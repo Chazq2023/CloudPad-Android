@@ -37,6 +37,12 @@
             app:summary="@string/preferences_swap_cross_moon_summary"
             app:icon="@drawable/ic_gamepad" />
 
+        <Preference
+            app:key="remap_controller"
+            app:title="@string/controller_remap_preference_title"
+            app:summary="@string/controller_remap_preference_summary"
+            app:icon="@drawable/ic_gamepad" />
+
         <SwitchPreference
             app:key="@string/preferences_rumble_enabled_key"
             app:title="@string/preferences_rumble_enabled_title"

@@ -225,6 +225,11 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			registeredHostsPreference?.summary = getString(R.string.preferences_registered_hosts_summary, it)
 		})
 
+		preferenceScreen.findPreference<Preference>("remap_controller")?.setOnPreferenceClickListener {
+			startActivity(Intent(requireContext(), ControllerRemapActivity::class.java))
+			true
+		}
+
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_export_settings_key))?.setOnPreferenceClickListener { exportSettings(); true }
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_import_settings_key))?.setOnPreferenceClickListener { importSettings(); true }
 		

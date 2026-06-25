@@ -9,6 +9,17 @@
     <string name="action_retry">Retry</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
+
+    <string name="controller_remap_title">Controller Layout</string>
+    <string name="controller_remap_preference_title">Remap Controller</string>
+    <string name="controller_remap_preference_summary">Customise button mapping for your controller</string>
+    <string name="controller_remap_press_button">Hold a button then press another for a combo, or tap once for a single button. Move a stick or trigger to map an axis.</string>
+    <string name="controller_remap_modifier_held">Modifier: %1$s\n\nNow press the trigger button or move a stick/trigger for a combo — or release %1$s to save as a single button.</string>
+    <string name="controller_remap_not_mapped">Not mapped</string>
+    <string name="controller_remap_clear">Clear</string>
+    <string name="controller_remap_reset_title">Reset to Defaults</string>
+    <string name="controller_remap_reset_message">Reset all button mappings to the default layout?</string>
+    <string name="controller_remap_reset_confirm">Reset</string>
     <string name="alert_message_standby_wakeup">The Console is currently in standby mode. Do you want to send a Wakeup packet instead of trying to connect immediately?</string>
     <string name="alert_message_session_quit">Session has quit: %s</string>
     <string name="alert_message_session_create_error">Failed to create Session: %s</string>

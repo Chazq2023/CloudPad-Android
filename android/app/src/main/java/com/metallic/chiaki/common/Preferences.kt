@@ -476,6 +476,26 @@ class Preferences(context: Context)
 		sharedPreferences.edit().putBoolean(LICENSE_AGREED_KEY, agreed).apply()
 	}
 
+	private val CONTROLLER_MAPPING_KEY = "controller_mapping_json"
+
+	fun saveControllerMapping(mapping: Map<com.metallic.chiaki.session.ControllerAction, com.metallic.chiaki.session.PhysicalInput>)
+	{
+		sharedPreferences.edit()
+			.putString(CONTROLLER_MAPPING_KEY, com.metallic.chiaki.session.PhysicalInput.mappingToJson(mapping))
+			.apply()
+	}
+
+	fun loadControllerMapping(): Map<com.metallic.chiaki.session.ControllerAction, com.metallic.chiaki.session.PhysicalInput>
+	{
+		val json = sharedPreferences.getString(CONTROLLER_MAPPING_KEY, null) ?: return emptyMap()
+		return com.metallic.chiaki.session.PhysicalInput.mappingFromJson(json)
+	}
+
+	fun clearControllerMapping()
+	{
+		sharedPreferences.edit().remove(CONTROLLER_MAPPING_KEY).apply()
+	}
+
 	/** Cumulative time spent in connected remote play sessions (client-side estimate). */
 	val totalStreamTimeMs: Long
 		get() = sharedPreferences.getLong(TOTAL_STREAM_TIME_MS_KEY, 0L)
