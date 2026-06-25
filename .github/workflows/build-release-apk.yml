@@ -66,8 +66,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - I have removed the "all" filter, only "owned" games will now appear. This will be the latest view.
-            - Labels should be much clearer, indicating which console the game belongs to.
+            - Added customisable button mappings! You can now customise your mappings to your liking, this includes mapping two inputs to one button.
 
             ### Outstanding Issues/Improvements
             - Bloodbourne is not working currently, will look into this

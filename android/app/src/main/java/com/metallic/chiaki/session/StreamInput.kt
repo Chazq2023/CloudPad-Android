@@ -97,6 +97,9 @@ class StreamInput(
 	private val heldModifiers = mutableMapOf<Int, Boolean>()
 	private val activeComboActions = mutableMapOf<ControllerAction, Int>()
 	private val triggeredComboAxes = mutableSetOf<Pair<Int, Boolean>>()
+	// Last-known values for axes used as combo triggers — used to ignore axes that were
+	// already above threshold when the modifier key was pressed (e.g. L2 drift at rest).
+	private val lastAxisValues = mutableMapOf<Int, Float>()
 
 	// ---- Sensor / lifecycle ----
 
@@ -165,7 +168,23 @@ class StreamInput(
 		controllerStateChangedCallback?.let { it(controllerState) }
 	}
 
-	// ---- Touchpad swipe ----
+	// ---- Touchpad gestures ----
+
+	private fun quickTouchpadTap(x: UShort, y: UShort)
+	{
+		touchControllerState = ControllerState()
+		val touchId = touchControllerState.startTouch(x, y) ?: return
+		// Set BUTTON_TOUCHPAD alongside the touch position to simulate a physical click
+		keyControllerState.buttons = keyControllerState.buttons or ControllerState.BUTTON_TOUCHPAD
+		controllerStateUpdated()
+
+		handler.postDelayed({
+			touchControllerState.stopTouch(touchId)
+			touchControllerState = ControllerState()
+			keyControllerState.buttons = keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD.inv()
+			controllerStateUpdated()
+		}, 80)
+	}
 
 	private fun quickTouchpadSwipe(direction: Int)
 	{
@@ -234,6 +253,9 @@ class StreamInput(
 		{
 			ControllerAction.L2 -> { keyControllerState.l2State = UByte.MAX_VALUE; controllerStateUpdated() }
 			ControllerAction.R2 -> { keyControllerState.r2State = UByte.MAX_VALUE; controllerStateUpdated() }
+			ControllerAction.TOUCHPAD_CLICK -> quickTouchpadTap(960U.toUShort(), 471U.toUShort())
+			ControllerAction.TOUCHPAD_LEFT_CLICK -> quickTouchpadTap(480U.toUShort(), 471U.toUShort())
+			ControllerAction.TOUCHPAD_RIGHT_CLICK -> quickTouchpadTap(1440U.toUShort(), 471U.toUShort())
 			ControllerAction.TOUCHPAD_SWIPE_UP -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_UP)
 			ControllerAction.TOUCHPAD_SWIPE_DOWN -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_DOWN)
 			ControllerAction.TOUCHPAD_SWIPE_LEFT -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_LEFT)
@@ -252,9 +274,11 @@ class StreamInput(
 		{
 			ControllerAction.L2 -> { keyControllerState.l2State = 0U; controllerStateUpdated() }
 			ControllerAction.R2 -> { keyControllerState.r2State = 0U; controllerStateUpdated() }
-			// Swipes are fire-and-forget
-			ControllerAction.TOUCHPAD_SWIPE_UP, ControllerAction.TOUCHPAD_SWIPE_DOWN,
-			ControllerAction.TOUCHPAD_SWIPE_LEFT, ControllerAction.TOUCHPAD_SWIPE_RIGHT -> {}
+			// Tap/swipe actions are fire-and-forget; quickTouchpadTap/Swipe handle their own cleanup
+			ControllerAction.TOUCHPAD_CLICK, ControllerAction.TOUCHPAD_LEFT_CLICK,
+			ControllerAction.TOUCHPAD_RIGHT_CLICK, ControllerAction.TOUCHPAD_SWIPE_UP,
+			ControllerAction.TOUCHPAD_SWIPE_DOWN, ControllerAction.TOUCHPAD_SWIPE_LEFT,
+			ControllerAction.TOUCHPAD_SWIPE_RIGHT -> {}
 			else -> {
 				val mask = actionToButtonMask(action) ?: return
 				keyControllerState.buttons = keyControllerState.buttons and mask.inv()
@@ -268,8 +292,10 @@ class StreamInput(
 		pressAction(action)
 		when(action)
 		{
-			ControllerAction.TOUCHPAD_SWIPE_UP, ControllerAction.TOUCHPAD_SWIPE_DOWN,
-			ControllerAction.TOUCHPAD_SWIPE_LEFT, ControllerAction.TOUCHPAD_SWIPE_RIGHT -> {}
+			ControllerAction.TOUCHPAD_CLICK, ControllerAction.TOUCHPAD_LEFT_CLICK,
+			ControllerAction.TOUCHPAD_RIGHT_CLICK, ControllerAction.TOUCHPAD_SWIPE_UP,
+			ControllerAction.TOUCHPAD_SWIPE_DOWN, ControllerAction.TOUCHPAD_SWIPE_LEFT,
+			ControllerAction.TOUCHPAD_SWIPE_RIGHT -> {}
 			else -> handler.postDelayed({ releaseAction(action) }, 80)
 		}
 	}
@@ -281,6 +307,8 @@ class StreamInput(
 	// the same physical key — the brief BUTTON_TOUCHPAD pulse fires then clears independently.
 	private fun isQuickPressAction(action: ControllerAction) =
 		action == ControllerAction.TOUCHPAD_CLICK
+		|| action == ControllerAction.TOUCHPAD_LEFT_CLICK
+		|| action == ControllerAction.TOUCHPAD_RIGHT_CLICK
 		|| action == ControllerAction.TOUCHPAD_SWIPE_UP
 		|| action == ControllerAction.TOUCHPAD_SWIPE_DOWN
 		|| action == ControllerAction.TOUCHPAD_SWIPE_LEFT
@@ -292,10 +320,34 @@ class StreamInput(
 		{
 			heldModifiers[keyCode] = false
 			triggeredComboAxes.clear()
-			// Immediately press held actions (e.g. SELECT → BUTTON_SHARE on key-down).
-			// Quick-press actions (TOUCHPAD_CLICK, swipes) fire on modifier release instead.
-			singleKeyToActions[keyCode]?.forEach { action ->
-				if(!isQuickPressAction(action)) pressAction(action)
+			// Pre-mark any combo-trigger axes that are already above threshold (e.g. L2 drift)
+			// so they don't fire a combo on the very first motion event after the modifier press.
+			for(combo in comboEntries)
+			{
+				if(combo.modifierKeyCode != keyCode) continue
+				if(combo.trigger !is PhysicalInput.AxisDirection) continue
+				val current = lastAxisValues[combo.trigger.axis] ?: 0f
+				val dir = if(combo.trigger.positive) maxOf(0f, current) else maxOf(0f, -current)
+				if(dir > 0.5f) triggeredComboAxes.add(combo.trigger.axis to combo.trigger.positive)
+			}
+
+			val actions = singleKeyToActions[keyCode]
+			val hasHeldActions = actions?.any { !isQuickPressAction(it) } == true
+
+			actions?.forEach { action ->
+				if(!isQuickPressAction(action))
+				{
+					// Held actions (e.g. SELECT→BUTTON_SHARE) always press immediately on key-down
+					pressAction(action)
+				}
+				else if(!hasHeldActions)
+				{
+					// No held actions present: fire quick-press actions immediately (same
+					// behaviour as the non-modifier single-action path, e.g. TOUCHPAD_CLICK)
+					fireQuickPress(action)
+				}
+				// If there ARE held actions, quick-press actions are deferred to key-up
+				// to avoid BUTTON_TOUCHPAD overlapping BUTTON_SHARE in the same state frame
 			}
 		}
 	}
@@ -312,16 +364,28 @@ class StreamInput(
 			releaseAction(action)
 		}
 
+		val actions = singleKeyToActions[keyCode]
+		val hasHeldActions = actions?.any { !isQuickPressAction(it) } == true
+
 		// Two passes: release held actions first, then fire quick presses.
 		// This guarantees BUTTON_SHARE (SELECT) is cleared before BUTTON_TOUCHPAD
 		// is set, so they never appear together in a controller state frame.
-		singleKeyToActions[keyCode]?.forEach { action ->
+		// Quick-press actions are only deferred here when held actions are also present;
+		// if there are no held actions they already fired on key-down.
+		actions?.forEach { action ->
 			if(!isQuickPressAction(action)) releaseAction(action)
 		}
-		if(!comboTriggered)
+		if(!comboTriggered && hasHeldActions)
 		{
-			singleKeyToActions[keyCode]?.forEach { action ->
-				if(isQuickPressAction(action)) fireQuickPress(action)
+			// Defer quick-press actions one event-loop tick (matching the single-action path's
+			// handler.post deferral) so the cleared BUTTON_SHARE state is fully processed
+			// by the server before BUTTON_TOUCHPAD appears.
+			val quickPressActions = singleKeyToActions[keyCode]?.filter { isQuickPressAction(it) } ?: emptyList()
+			if(quickPressActions.isNotEmpty())
+			{
+				handler.post {
+					quickPressActions.forEach { fireQuickPress(it) }
+				}
 			}
 		}
 	}
@@ -401,6 +465,8 @@ class StreamInput(
 					// overlaps BUTTON_SHARE (or similar) in the same controller state frame
 					hasHeldAction && !isDown -> handler.post { fireQuickPress(action) }
 				}
+				ControllerAction.TOUCHPAD_LEFT_CLICK -> { if(isDown) quickTouchpadTap(480U.toUShort(), 471U.toUShort()) }
+				ControllerAction.TOUCHPAD_RIGHT_CLICK -> { if(isDown) quickTouchpadTap(1440U.toUShort(), 471U.toUShort()) }
 				ControllerAction.TOUCHPAD_SWIPE_UP -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_UP) }
 				ControllerAction.TOUCHPAD_SWIPE_DOWN -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_DOWN) }
 				ControllerAction.TOUCHPAD_SWIPE_LEFT -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_LEFT) }
@@ -427,6 +493,13 @@ class StreamInput(
 		fun Float.unsignedAxis() = (this * UByte.MAX_VALUE.toFloat()).toUInt().toUByte()
 		fun Float.coerceSigned() = coerceIn(-1f, 1f)
 
+		// Update last-known axis values for combo edge detection
+		for(combo in comboEntries)
+		{
+			if(combo.trigger is PhysicalInput.AxisDirection)
+				lastAxisValues[combo.trigger.axis] = event.getAxisValue(combo.trigger.axis)
+		}
+
 		// Combo axis triggers (modifier held + axis movement)
 		if(heldModifiers.isNotEmpty())
 		{
@@ -438,10 +511,17 @@ class StreamInput(
 				val dirValue = if(combo.trigger.positive) maxOf(0f, rawValue) else maxOf(0f, -rawValue)
 				if(dirValue > 0.5f)
 				{
-					heldModifiers[combo.modifierKeyCode] = true
-					triggeredComboAxes.add(combo.trigger.axis to combo.trigger.positive)
-					pressAction(combo.action)
-					return true
+					val triggerKey = combo.trigger.axis to combo.trigger.positive
+					if(triggerKey !in triggeredComboAxes)
+					{
+						// First time this axis crosses the threshold — fire the combo once
+						heldModifiers[combo.modifierKeyCode] = true
+						triggeredComboAxes.add(triggerKey)
+						pressAction(combo.action)
+						return true
+					}
+					// Already triggered — let normal axis processing continue (axis is
+					// excluded from it via triggeredComboAxes, so no double-processing)
 				}
 			}
 		}
