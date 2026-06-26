@@ -8,13 +8,11 @@ import android.content.res.Resources
 import android.os.Bundle
 import android.text.InputType
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.*
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.pylux.stream.R
-import com.metallic.chiaki.common.DonationPromptCoordinator
 import com.metallic.chiaki.common.LicenseAgreementActivity
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.exportAndShareAllSettings
@@ -110,45 +108,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 
 	private var disposable = CompositeDisposable()
 	private var exportDisposable = CompositeDisposable().also { it.addTo(disposable) }
-	private var settingsDonationCoordinator: DonationPromptCoordinator? = null
-
-	private fun releaseSettingsDonationCoordinator()
-	{
-		settingsDonationCoordinator?.onDestroy()
-		settingsDonationCoordinator = null
-	}
-
-	private fun refreshDonatePreference(preferenceScreen: PreferenceScreen)
-	{
-		val act = activity as? AppCompatActivity ?: return
-		val category = preferenceScreen.findPreference<PreferenceCategory>("category_support") ?: return
-		val donatePref = preferenceScreen.findPreference<Preference>("donate_support") ?: return
-		if (DonationPromptCoordinator.donationProductIds(act).isEmpty())
-		{
-			category.isVisible = false
-			return
-		}
-		category.isVisible = true
-		donatePref.summary = getString(R.string.preferences_donate_summary)
-	}
-
-	private fun bindDonatePreference(preferenceScreen: PreferenceScreen, preferences: Preferences)
-	{
-		refreshDonatePreference(preferenceScreen)
-		preferenceScreen.findPreference<Preference>("donate_support")?.setOnPreferenceClickListener {
-			val act = activity as? AppCompatActivity ?: return@setOnPreferenceClickListener true
-			// Reset any stuck coordinator (e.g. billing never completed) so every click can retry.
-			releaseSettingsDonationCoordinator()
-			val coord = DonationPromptCoordinator.forSettings(act, preferences) { releaseSettingsDonationCoordinator() }
-			settingsDonationCoordinator = coord
-			if (!coord.openSupportFromSettings())
-			{
-				releaseSettingsDonationCoordinator()
-				Toast.makeText(requireContext(), R.string.preferences_donate_no_products, Toast.LENGTH_LONG).show()
-			}
-			true
-		}
-	}
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?)
 	{
@@ -160,8 +119,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		val preferences = viewModel.preferences
 		preferenceManager.preferenceDataStore = DataStore(preferences)
 		setPreferencesFromResource(R.xml.preferences, rootKey)
-
-		bindDonatePreference(preferenceScreen, preferences)
 
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_resolution_key))?.let {
 			it.entryValues = Preferences.resolutionAll.map { res -> res.value }.toTypedArray()
@@ -226,22 +183,14 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_export_settings_key))?.setOnPreferenceClickListener { exportSettings(); true }
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_import_settings_key))?.setOnPreferenceClickListener { importSettings(); true }
-		
+
+		val logoutPreference = preferenceScreen.findPreference<Preference>("psn_logout")
+		logoutPreference?.isVisible = preferences.hasNpssoToken()
+		logoutPreference?.setOnPreferenceClickListener { showLogoutConfirmation(preferences); true }
+
 		// View License
 		preferenceScreen.findPreference<Preference>("view_license")?.setOnPreferenceClickListener { viewLicense(); true }
 		
-	}
-
-	override fun onResume()
-	{
-		super.onResume()
-		preferenceScreen?.let { refreshDonatePreference(it) }
-	}
-
-	override fun onDestroyView()
-	{
-		releaseSettingsDonationCoordinator()
-		super.onDestroyView()
 	}
 
 	override fun onDestroy()
@@ -273,6 +222,29 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		val intent = Intent(requireContext(), LicenseAgreementActivity::class.java)
 		intent.putExtra(LicenseAgreementActivity.EXTRA_VIEW_ONLY, true)
 		startActivity(intent)
+	}
+
+	private fun showLogoutConfirmation(preferences: Preferences)
+	{
+		requireContext().alertDialogBuilder()
+			.setTitle(R.string.preferences_psn_logout_title)
+			.setMessage(R.string.preferences_psn_logout_message)
+			.setPositiveButton(R.string.preferences_psn_logout_confirm) { _, _ ->
+				performLogout(preferences)
+			}
+			.setNegativeButton(R.string.action_cancel, null)
+			.show()
+	}
+
+	private fun performLogout(preferences: Preferences)
+	{
+		preferences.clearNpssoToken()
+		preferences.psnAuthToken = ""
+		preferences.psnRefreshToken = ""
+		preferences.psnAuthTokenExpiry = 0L
+		preferences.psnAccountId = ""
+		preferenceScreen?.findPreference<Preference>("psn_logout")?.isVisible = false
+		Toast.makeText(requireContext(), R.string.preferences_psn_logout_success, Toast.LENGTH_SHORT).show()
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)

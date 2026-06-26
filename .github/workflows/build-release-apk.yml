@@ -49,6 +49,9 @@ jobs:
         run: |
           mkdir -p release
           cp android/app/build/outputs/apk/debug/app-debug.apk release/cloudpad-android.apk
+          cp android/app/src/main/assets/FrontendArt/cloudpad-hero.png release/cloudpad-hero.png
+          cp android/app/src/main/assets/FrontendArt/cloudpad-icon.png release/cloudpad-icon.png
+          cp android/app/src/main/assets/FrontendArt/cloudpad-logo.png release/cloudpad-logo.png
 
       - name: Create tag
         run: |
@@ -66,9 +69,9 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Separated out PS3,PS4 and PS5 to separate tabs for ease of use.
-            - Removed login from settings as this was causing an issue.
-            - Removed the swapping of cricle and cross, triagle and square as this was causing an issue.
+            - Removed the support cloudpad section in settings as I am not requiring donations :) echo
+            - Added a dynamic logout button in settings. When you log in, it will appear, when you log out it won't.
+            - Frontend artwork also available alongside .apk in release for FE's like Cocoon FE etc
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
@@ -81,4 +84,8 @@ jobs:
             Attached release asset:
             `cloudpad-android.apk`
 
-          files: release/cloudpad-android.apk
+          files: |
+            release/cloudpad-android.apk
+            release/cloudpad-hero.png
+            release/cloudpad-icon.png
+            release/cloudpad-logo.png

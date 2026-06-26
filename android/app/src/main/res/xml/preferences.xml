@@ -4,17 +4,6 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
-        app:key="category_support"
-        app:title="@string/preferences_category_title_support">
-        <Preference
-            app:key="donate_support"
-            app:title="@string/preferences_donate_title"
-            tools:summary="@string/preferences_donate_summary"
-            app:summary="@string/preferences_donate_summary"
-            app:icon="@drawable/ic_star" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
         app:key="category_general"
         app:title="@string/preferences_category_title_general">
         <Preference
@@ -24,6 +13,12 @@
             app:title="@string/preferences_registered_hosts_title"
             app:fragment="com.metallic.chiaki.settings.SettingsRegisteredHostsFragment"
             app:icon="@drawable/ic_console_simple"/>
+
+        <Preference
+            app:key="psn_logout"
+            app:title="@string/preferences_psn_logout_title"
+            app:summary="@string/preferences_psn_login_summary_logged_in"
+            app:icon="@drawable/ic_close_white"/>
 
         <Preference
             app:key="remap_controller"
