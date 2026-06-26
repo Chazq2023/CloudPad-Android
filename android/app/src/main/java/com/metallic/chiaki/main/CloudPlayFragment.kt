@@ -206,8 +206,8 @@ class CloudPlayFragment : Fragment() {
                 android.graphics.drawable.GradientDrawable().apply {
                     shape = android.graphics.drawable.GradientDrawable.RECTANGLE
                     cornerRadius = 24f
-                    setColor(0x33FFD700.toInt())
-                    setStroke(3, 0xCCFFD700.toInt())
+                    setColor(0x33FF149D.toInt())
+                    setStroke(3, 0x99FF149D.toInt())
                 }
             else null
         }
@@ -287,17 +287,24 @@ class CloudPlayFragment : Fragment() {
                 selectLibraryTab()
             } else {
                 preferences.setPsnowFilterFavorites(false)
-                selectCatalogTab()
+                // Route to PS3 or PS4 catalog based on product ID prefix
+                val productId = pendingShortcutProductId ?: ""
+                if (productId.contains("-CUSA") || productId.contains("-PPSA")) {
+                    selectPs4Tab()
+                } else {
+                    selectPs3Tab()
+                }
             }
             return
         }
 
-        // Load based on last selected section (default to PSNow)
+        // Load based on last selected section (default to PS3 catalog)
+        // Legacy stored value "psnow" maps to PS3 Catalog
         val currentSection = viewModel.getCurrentSection()
-        if (currentSection == "pscloud") {
-            selectLibraryTab()
-        } else {
-            selectCatalogTab()
+        when {
+            currentSection == "pscloud" -> selectLibraryTab()
+            currentSection == "psnow_ps4" -> selectPs4Tab()
+            else -> selectPs3Tab()
         }
     }
 
@@ -454,37 +461,17 @@ class CloudPlayFragment : Fragment() {
     }
 
     private fun setupCloudTabs() {
-        // Catalog tab button
-        binding.catalogTabButton.setOnClickListener {
-            selectCatalogTab()
-        }
+        binding.ps3TabButton.setOnClickListener { selectPs3Tab() }
+        binding.ps4TabButton.setOnClickListener { selectPs4Tab() }
+        binding.libraryTabButton.setOnClickListener { selectLibraryTab() }
 
-        // Library tab button
-        binding.libraryTabButton.setOnClickListener {
-            selectLibraryTab()
-        }
-
-        // Library now always shows owned games only.
-        // Hide the old All/Owned toggle and do not allow switching to All.
         binding.ownedToggleButton.visibility = View.GONE
         binding.ownedToggleButton.setOnClickListener(null)
 
-        // Icon buttons in header
-        binding.headerFavoritesButton.setOnClickListener {
-            toggleFavoritesFilter()
-        }
-
-        binding.headerSortButton.setOnClickListener {
-            showSortMenu()
-        }
-
-        binding.headerSearchButton.setOnClickListener {
-            toggleSearch()
-        }
-
-        binding.headerRefreshButton.setOnClickListener {
-            refreshCurrentSection()
-        }
+        binding.headerFavoritesButton.setOnClickListener { toggleFavoritesFilter() }
+        binding.headerSortButton.setOnClickListener { showSortMenu() }
+        binding.headerSearchButton.setOnClickListener { toggleSearch() }
+        binding.headerRefreshButton.setOnClickListener { refreshCurrentSection() }
 
         binding.root.enableFocusableInTouchModeForTv(requireContext())
         fun highlightButton(v: View, hasFocus: Boolean) {
@@ -492,25 +479,38 @@ class CloudPlayFragment : Fragment() {
                 v.background = android.graphics.drawable.GradientDrawable().apply {
                     shape = android.graphics.drawable.GradientDrawable.RECTANGLE
                     cornerRadius = 24f
-                    setColor(0x30FFD700.toInt())
-                    setStroke(2, 0xCCFFD700.toInt())
+                    setColor(0x30FF149D.toInt())
+                    setStroke(2, 0x99FF149D.toInt())
                 }
             } else {
                 v.background = null
             }
         }
 
-        val focusHighlight =
-            View.OnFocusChangeListener { v, hasFocus -> highlightButton(v, hasFocus) }
-        binding.catalogTabButton.onFocusChangeListener = focusHighlight
+        val focusHighlight = View.OnFocusChangeListener { v, hasFocus -> highlightButton(v, hasFocus) }
+        binding.ps3TabButton.onFocusChangeListener = focusHighlight
+        binding.ps4TabButton.onFocusChangeListener = focusHighlight
         binding.libraryTabButton.onFocusChangeListener = focusHighlight
         binding.headerFavoritesButton.onFocusChangeListener = focusHighlight
         binding.headerSortButton.onFocusChangeListener = focusHighlight
         binding.headerSearchButton.onFocusChangeListener = focusHighlight
         binding.headerRefreshButton.onFocusChangeListener = focusHighlight
 
-        // Initialize icon colors
         updateHeaderIconColors()
+    }
+
+    private fun setTabSelected(tab: TextView) {
+        tab.setTextColor(resources.getColor(android.R.color.white, null))
+        tab.setTypeface(null, android.graphics.Typeface.BOLD)
+        tab.setBackgroundResource(R.drawable.cloud_tab_selected)
+        tab.alpha = 1.0f
+    }
+
+    private fun setTabUnselected(tab: TextView) {
+        tab.setTextColor(resources.getColor(android.R.color.white, null))
+        tab.setTypeface(null, android.graphics.Typeface.NORMAL)
+        tab.alpha = 0.45f
+        tab.setBackgroundColor(android.graphics.Color.TRANSPARENT)
     }
 
     private fun updateHeaderIconColors() {
@@ -546,66 +546,58 @@ class CloudPlayFragment : Fragment() {
         binding.headerFavoritesButton.alpha = if (favActive) 1.0f else 0.45f
     }
 
-    private fun selectCatalogTab() {
-        // Update button styles (selected)
-        binding.catalogTabButton.setTextColor(resources.getColor(android.R.color.white, null))
-        binding.catalogTabButton.setTypeface(null, android.graphics.Typeface.BOLD)
-        binding.catalogTabButton.setBackgroundResource(R.drawable.cloud_tab_selected)
-        binding.catalogTabButton.alpha = 1.0f
+    private fun selectPs3Tab() {
+        setTabSelected(binding.ps3TabButton)
+        setTabUnselected(binding.ps4TabButton)
+        setTabUnselected(binding.libraryTabButton)
 
-        // Unselected style
-        binding.libraryTabButton.setTextColor(resources.getColor(android.R.color.white, null))
-        binding.libraryTabButton.setTypeface(null, android.graphics.Typeface.NORMAL)
-        binding.libraryTabButton.alpha = 0.45f
-        binding.libraryTabButton.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-        // Hide All/Owned toggle for Catalog
         binding.ownedToggleButton.visibility = android.view.View.GONE
 
-        // Update section
-        viewModel.setCurrentSection("psnow")
+        viewModel.setCurrentSection("psnow_ps3")
         adapter.showOwnershipBadge = false
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
         updateSortButtonText()
         updateFilterButtonText()
+        updateFavoritesIcon()
 
-        // Update favorites icon to match new section
+        viewModel.fetchPsnowCatalog()
+    }
+
+    private fun selectPs4Tab() {
+        setTabSelected(binding.ps4TabButton)
+        setTabUnselected(binding.ps3TabButton)
+        setTabUnselected(binding.libraryTabButton)
+
+        binding.ownedToggleButton.visibility = android.view.View.GONE
+
+        viewModel.setCurrentSection("psnow_ps4")
+        adapter.showOwnershipBadge = false
+        binding.sortOptionLayout.visibility = android.view.View.VISIBLE
+        binding.filterOptionLayout.visibility = android.view.View.VISIBLE
+        updateSortButtonText()
+        updateFilterButtonText()
         updateFavoritesIcon()
 
         viewModel.fetchPsnowCatalog()
     }
 
     private fun selectLibraryTab() {
-        // Update button styles (selected)
-        binding.libraryTabButton.setTextColor(resources.getColor(android.R.color.white, null))
-        binding.libraryTabButton.setTypeface(null, android.graphics.Typeface.BOLD)
-        binding.libraryTabButton.setBackgroundResource(R.drawable.cloud_tab_selected)
-        binding.libraryTabButton.alpha = 1.0f
+        setTabSelected(binding.libraryTabButton)
+        setTabUnselected(binding.ps3TabButton)
+        setTabUnselected(binding.ps4TabButton)
 
-        // Unselected style
-        binding.catalogTabButton.setTextColor(resources.getColor(android.R.color.white, null))
-        binding.catalogTabButton.setTypeface(null, android.graphics.Typeface.NORMAL)
-        binding.catalogTabButton.alpha = 0.45f
-        binding.catalogTabButton.setBackgroundColor(android.graphics.Color.TRANSPARENT)
-
-        // Library always shows owned games only.
         binding.ownedToggleButton.visibility = View.GONE
         preferences.setPsCloudFilterOwned(true)
 
-        // Update section
         viewModel.setCurrentSection("pscloud")
         adapter.showOwnershipBadge = true
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
         updateSortButtonText()
         updateFilterButtonText()
-
-        // Update favorites icon to match new section
         updateFavoritesIcon()
 
-        // Always fetch owned games for Library.
-        // Favorites, if active, will be applied on top of the owned list.
         viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
     }
 
@@ -975,11 +967,9 @@ class CloudPlayFragment : Fragment() {
 
         // If currently showing favorites, refresh the list
         val currentSection = viewModel.getCurrentSection()
-        if (currentSection == "psnow" && preferences.getPsnowFilterFavorites()) {
-            // Refresh catalog favorites
+        if (currentSection != "pscloud" && preferences.getPsnowFilterFavorites()) {
             refreshGamesList()
         } else if (currentSection == "pscloud" && preferences.getPsCloudFilterFavorites()) {
-            // Refresh game library favorites
             refreshGamesList()
         }
     }
@@ -1013,11 +1003,18 @@ class CloudPlayFragment : Fragment() {
             }
 
             // Filter for favorites if that filter is active
-            val filteredGames = if (isFavoritesFilter) {
+            val favFilteredGames = if (isFavoritesFilter) {
                 val favoriteIds = preferences.getFavoriteGames()
                 games.filter { favoriteIds.contains(it.productId) }
             } else {
                 games
+            }
+
+            // Filter by platform for catalog sections
+            val filteredGames = when (currentSection) {
+                "psnow_ps3" -> favFilteredGames.filter { it.platform == "ps3" }
+                "psnow_ps4" -> favFilteredGames.filter { it.platform == "ps4" }
+                else -> favFilteredGames
             }
 
             // Apply saved sort state when games are loaded

@@ -66,7 +66,9 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Fixed broken ps3 and ps4 entitlements. This means bloodborne is now resolved!
+            - Separated out PS3,PS4 and PS5 to separate tabs for ease of use.
+            - Removed login from settings as this was causing an issue.
+            - Removed the swapping of cricle and cross, triagle and square as this was causing an issue.
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

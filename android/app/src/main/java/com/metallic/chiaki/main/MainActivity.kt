@@ -222,7 +222,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val secondaryIds = setOf(
-            R.id.catalogTabButton, R.id.libraryTabButton, R.id.ownedToggleButton,
+            R.id.ps3TabButton, R.id.ps4TabButton, R.id.libraryTabButton, R.id.ownedToggleButton,
             R.id.headerFavoritesButton, R.id.headerSortButton,
             R.id.headerSearchButton, R.id.headerRefreshButton
         )
@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         fun focusSecondaryHeader() {
-            window.decorView.findViewById<View>(R.id.catalogTabButton)?.let {
+            window.decorView.findViewById<View>(R.id.ps3TabButton)?.let {
                 it.isFocusableInTouchMode = true
                 it.requestFocusFromTouch()
             }
@@ -417,7 +417,7 @@ class MainActivity : AppCompatActivity() {
             if (currentPage == 0) window.decorView.findViewById<RecyclerView>(R.id.hostsRecyclerView) else null
 
         val secondaryIds = setOf(
-            R.id.catalogTabButton, R.id.libraryTabButton, R.id.ownedToggleButton,
+            R.id.ps3TabButton, R.id.ps4TabButton, R.id.libraryTabButton, R.id.ownedToggleButton,
             R.id.headerFavoritesButton, R.id.headerSortButton,
             R.id.headerSearchButton, R.id.headerRefreshButton
         )
