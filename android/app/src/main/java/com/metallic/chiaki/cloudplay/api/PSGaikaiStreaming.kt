@@ -88,6 +88,7 @@ class PSGaikaiStreaming(
 	private var allocationMaxWaitSeconds = 0  // Calculated from waitTimeEstimate
 	private var allocationRetryCount = 0  // Counter for logging
 	private var lockSessionRetryCount = 0  // Counter for lock session retries (Qt line 145)
+	private var step8ErrorDetails: String = ""  // Surfaced to the user when step8 fails
 	
 	/**
 	 * Result class
@@ -143,7 +144,7 @@ class PSGaikaiStreaming(
 			if (isCancelled()) {
 				return@withContext AllocationResult(false, "Allocation cancelled")
 			}
-			step8_StartSession(entitlementId) ?: return@withContext AllocationResult(false, "Failed to start session")
+			step8_StartSession(entitlementId) ?: return@withContext AllocationResult(false, "Failed to start session — $step8ErrorDetails")
 			Log.i(TAG, "✓ Step 8: Started session")
 			
 			// Step 8a: Get gkClientId auth code
@@ -452,6 +453,7 @@ class PSGaikaiStreaming(
 			{
 				Log.e(TAG, "Step 8 failed: ${response.statusCode}")
 				Log.e(TAG, "Response: ${response.body}")
+				step8ErrorDetails = "HTTP ${response.statusCode} — ${response.body.take(300)}"
 				return null
 			}
 			

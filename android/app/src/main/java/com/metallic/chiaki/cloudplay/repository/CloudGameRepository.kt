@@ -264,6 +264,10 @@ class CloudGameRepository(
 				// Handle landscapeImageUrl (may be missing in old cache)
 				val landscapeImageUrl = obj.optString("landscapeImageUrl", obj.getString("imageUrl"))
 				
+				// Only restore PSRSVD0000000000 entitlements from cache — old PSNow standalone
+				// entitlements (e.g. PSNW01) are rejected by Gaikai for PS Plus Premium users.
+				val cachedEntitlementId = obj.optString("entitlementId", "")
+				val entitlementId = if (cachedEntitlementId.endsWith("PSRSVD0000000000")) cachedEntitlementId else ""
 				games.add(CloudGame(
 					productId = obj.getString("productId"),
 					name = obj.getString("name"),
@@ -273,7 +277,8 @@ class CloudGameRepository(
 					platform = obj.optString("platform", "ps4"),
 					serviceType = obj.optString("serviceType", "psnow"),
 					conceptUrl = obj.optString("conceptUrl", ""),  // Load from cache, empty if not present
-					isOwned = obj.optBoolean("isOwned", false)
+					isOwned = obj.optBoolean("isOwned", false),
+					entitlementId = entitlementId
 				))
 			}
 			
@@ -308,6 +313,7 @@ class CloudGameRepository(
 				obj.put("serviceType", game.serviceType)
 				obj.put("conceptUrl", game.conceptUrl)
 				obj.put("isOwned", game.isOwned)
+				obj.put("entitlementId", game.entitlementId)
 				jsonArray.put(obj)
 			}
 			
