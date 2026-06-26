@@ -33,6 +33,7 @@
 
     <style name="AppTheme.AlertDialog" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
+        <item name="colorPrimary">@color/accent</item>
         <item name="materialButtonStyle">@style/AppTheme.AlertDialog.Button</item>
     </style>
 
