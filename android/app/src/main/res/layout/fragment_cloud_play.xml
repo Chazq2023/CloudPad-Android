@@ -34,28 +34,43 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
-                    <!-- Catalog tab -->
+                    <!-- PS3 Catalog tab -->
                     <TextView
-                        android:id="@+id/catalogTabButton"
+                        android:id="@+id/ps3TabButton"
                         android:layout_width="wrap_content"
                         android:layout_height="32dp"
-                        android:text="Catalog"
+                        android:text="PS3 Catalog"
                         android:textSize="13sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
                         android:paddingHorizontal="12dp"
                         android:paddingVertical="0dp"
                         android:focusable="true"
-
                         android:clickable="true"
                         android:background="@android:color/transparent" />
 
-                    <!-- Library tab -->
+                    <!-- PS4 Catalog tab -->
+                    <TextView
+                        android:id="@+id/ps4TabButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="PS4 Catalog"
+                        android:textSize="13sp"
+                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="0dp"
+                        android:layout_marginStart="2dp"
+                        android:focusable="true"
+                        android:clickable="true"
+                        android:background="@android:color/transparent" />
+
+                    <!-- PS5 Library tab -->
                     <TextView
                         android:id="@+id/libraryTabButton"
                         android:layout_width="wrap_content"
                         android:layout_height="32dp"
-                        android:text="Library"
+                        android:text="PS5 Library"
                         android:textSize="13sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
