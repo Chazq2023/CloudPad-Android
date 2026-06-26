@@ -510,12 +510,28 @@ class PsnCatalogService(
 				"ps4"
 			}
 			
+			// Dump raw catalog item JSON for container-type products so we can diagnose
+			// what data is available (entitlement paths, child links, etc.).
+			if (name.contains("Bloodborne", ignoreCase = true) ||
+				gameObj.optJSONArray("links") != null && gameObj.optJSONArray("links")!!.length() > 0)
+			{
+				Log.i(TAG, "CATALOG ITEM '$name' raw JSON (first 3000): ${gameObj.toString().take(3000)}")
+			}
+
+			// Extract streaming entitlement (license_type==4) if present in the catalog game object.
+			// Container products (e.g. Bloodborne) return a facets page when queried directly,
+			// so carrying the entitlement from the catalog avoids that broken lookup at stream time.
+			val entitlementId = extractStreamingEntitlementId(gameObj)
+			if (entitlementId.isNotEmpty())
+				Log.i(TAG, "Pre-extracted streaming entitlement for '$name': $entitlementId")
+
 			return CloudGame(
 				productId = productId,
 				name = name,
 				imageUrl = imageUrl,
 				landscapeImageUrl = landscapeImageUrl,
-				platform = platform
+				platform = platform,
+				entitlementId = entitlementId
 			)
 		}
 		catch (e: Exception)
@@ -525,6 +541,76 @@ class PsnCatalogService(
 		}
 	}
 	
+	private fun extractStreamingEntitlementId(gameObj: JSONObject): String
+	{
+		val result = extractStreamingEntitlementIdFromObject(gameObj)
+		if (result.isNotEmpty()) return result
+
+		// For container-type catalog items, check links[] children — the base game child
+		// may carry the license_type==4 streaming entitlement even when the parent doesn't.
+		val links = gameObj.optJSONArray("links")
+		if (links != null)
+		{
+			for (i in 0 until links.length())
+			{
+				val child = links.optJSONObject(i) ?: continue
+				val childResult = extractStreamingEntitlementIdFromObject(child)
+				if (childResult.isNotEmpty()) return childResult
+			}
+		}
+		return ""
+	}
+
+	private fun extractStreamingEntitlementIdFromObject(obj: JSONObject): String
+	{
+		val license4Ids = mutableListOf<String>()
+
+		// Check default_sku.entitlements
+		val defaultSku = obj.optJSONObject("default_sku")
+		if (defaultSku != null)
+		{
+			val ents = defaultSku.optJSONArray("entitlements")
+			if (ents != null)
+			{
+				for (i in 0 until ents.length())
+				{
+					val ent = ents.optJSONObject(i) ?: continue
+					if (ent.optInt("license_type", -1) == 4)
+					{
+						val entId = ent.optString("id", "")
+						if (entId.isNotEmpty()) license4Ids.add(entId)
+					}
+				}
+			}
+		}
+		// Check skus[].entitlements
+		val skus = obj.optJSONArray("skus")
+		if (skus != null)
+		{
+			for (i in 0 until skus.length())
+			{
+				val sku = skus.optJSONObject(i) ?: continue
+				val ents = sku.optJSONArray("entitlements") ?: continue
+				for (j in 0 until ents.length())
+				{
+					val ent = ents.optJSONObject(j) ?: continue
+					if (ent.optInt("license_type", -1) == 4)
+					{
+						val entId = ent.optString("id", "")
+						if (entId.isNotEmpty()) license4Ids.add(entId)
+					}
+				}
+			}
+		}
+
+		// Only pre-extract PSRSVD0000000000 entitlements — the PS Plus Premium streaming format
+		// that Gaikai accepts. Old PSNow standalone entitlements (e.g. PSNW01) share license_type==4
+		// in the Kamaji catalog API but are rejected by Gaikai for PS Plus Premium users.
+		// Games without a PSRSVD entitlement get empty entitlementId and fall through to the full
+		// PSN store lookup in step 0.5d, which derives PSRSVD from the product ID.
+		return license4Ids.firstOrNull { it.endsWith("PSRSVD0000000000") } ?: ""
+	}
+
 	/**
 	 * Extract image URL from game object
 	 * Matches: CloudCatalogBackend::extractCoverImageFromGameObject()

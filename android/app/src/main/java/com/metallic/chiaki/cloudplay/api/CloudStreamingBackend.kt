@@ -61,6 +61,7 @@ class CloudStreamingBackend(
 		gameIdentifier: String,
 		gameName: String,
 		npssoToken: String,
+		preKnownEntitlementId: String = "",
 		onProgress: ((String) -> Unit)? = null,  // Progress callback
 		isCancelled: () -> Boolean = { false }  // Cancellation check
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
@@ -103,6 +104,7 @@ class CloudStreamingBackend(
 				gameName,
 				npssoToken,
 				sharedDuid,
+				preKnownEntitlementId,
 				onProgress,
 				isCancelled
 			)
@@ -126,6 +128,7 @@ class CloudStreamingBackend(
 		gameName: String,
 		npssoToken: String,
 		sharedDuid: String,
+		preKnownEntitlementId: String = "",
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
@@ -161,11 +164,12 @@ class CloudStreamingBackend(
 			// For PSCLOUD: Skip Kamaji entirely
 			var finalEntitlementId = gameIdentifier
 			var finalPlatform = initialPlatform
-			
+			var kamajiDiag = ""
+
 			if (serviceType == "psnow")
 			{
 				Log.i(TAG, "=== PSNOW Flow: Starting Kamaji Session ===")
-				
+
 			// Create Kamaji session with productId (will be converted to entitlementId)
 			// Platform will be automatically detected from the API response
 			val kamajiSession = PSKamajiSession(
@@ -174,21 +178,23 @@ class CloudStreamingBackend(
 				accountBaseUrl = CloudConfig.ACCOUNT_BASE,
 				redirectUri = redirectUri,
 				userAgent = userAgent,
-				preferences = preferences
+				preferences = preferences,
+				preKnownEntitlementId = preKnownEntitlementId
 			)
-				
+
 				// Start Kamaji session creation
 				val kamajiResult = kamajiSession.startSessionCreation(npssoToken)
-				
+
 				if (!kamajiResult.success)
 				{
 					Log.e(TAG, "Kamaji session creation failed: ${kamajiResult.message}")
 					return@withContext Result.failure(Exception("Kamaji session failed: ${kamajiResult.message}"))
 				}
-				
+
 				finalEntitlementId = kamajiResult.entitlementId
 				finalPlatform = kamajiResult.platform
-				
+				kamajiDiag = kamajiResult.message
+
 				Log.i(TAG, "✓ Kamaji session complete")
 				Log.i(TAG, "  Entitlement ID: $finalEntitlementId")
 				Log.i(TAG, "  Platform: $finalPlatform")
@@ -200,10 +206,10 @@ class CloudStreamingBackend(
 				Log.i(TAG, "=== PSCLOUD Flow: Skipping Kamaji, Starting Gaikai Directly ===")
 				Log.i(TAG, "Using PS5 platform for PSCLOUD")
 			}
-			
+
 			// Start Gaikai allocation (Steps 7-13)
 			Log.i(TAG, "=== Starting Gaikai Allocation ===")
-			
+
 			val gaikaiStreaming = PSGaikaiStreaming(
 				duid = sharedDuid,
 				serviceType = serviceType,
@@ -213,13 +219,14 @@ class CloudStreamingBackend(
 				onProgress = onProgress,
 				isCancelled = isCancelled
 			)
-			
+
 			val allocationResult = gaikaiStreaming.startAllocationFlow(finalEntitlementId)
-			
+
 			if (!allocationResult.success)
 			{
 				Log.e(TAG, "Gaikai allocation failed: ${allocationResult.message}")
-				return@withContext Result.failure(Exception("Gaikai allocation failed: ${allocationResult.message}"))
+				val detail = if (kamajiDiag.isNotEmpty()) "${allocationResult.message} | Kamaji: $kamajiDiag" else allocationResult.message
+				return@withContext Result.failure(Exception("Gaikai allocation failed: $detail"))
 			}
 			
 			Log.i(TAG, "✓ Gaikai allocation complete")
