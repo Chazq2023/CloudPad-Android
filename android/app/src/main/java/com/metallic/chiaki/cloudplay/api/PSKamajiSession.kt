@@ -1281,7 +1281,7 @@ class PSKamajiSession(
 					"Sec-Fetch-Dest" to "empty",
 					"Referer" to "https://psnow.playstation.com/app/2.2.0/133/5cdcc037d/",
 					"Accept-Encoding" to "identity",
-					"Accept-Language" to "en-US",
+					"Accept-Language" to preferences.getCloudLanguage(),
 					"Cookie" to "JSESSIONID=$sessionId"
 				)
 			)

@@ -188,6 +188,12 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		logoutPreference?.isVisible = preferences.hasNpssoToken()
 		logoutPreference?.setOnPreferenceClickListener { showLogoutConfirmation(preferences); true }
 
+		val localePreference = preferenceScreen.findPreference<Preference>("locale_display")
+		if (preferences.hasNpssoToken())
+			localePreference?.summary = preferences.getCloudLanguage()
+		else
+			localePreference?.summary = getString(R.string.preferences_locale_summary_not_set)
+
 		// View License
 		preferenceScreen.findPreference<Preference>("view_license")?.setOnPreferenceClickListener { viewLicense(); true }
 		

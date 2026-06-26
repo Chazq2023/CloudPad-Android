@@ -243,7 +243,13 @@ class Preferences(context: Context)
 	// Qt uses ONE setting for both PSNow and PSCloud
 	fun getCloudLanguage(): String
 	{
-		return sharedPreferences.getString("cloud_language_pscloud", "en-US") ?: "en-US"
+		val deviceLocale = java.util.Locale.getDefault()
+		val country = deviceLocale.country
+		val deviceDefault = if (country.isNotEmpty())
+			"${deviceLocale.language}-${country.uppercase()}"
+		else
+			"en-US"
+		return sharedPreferences.getString("cloud_language_pscloud", deviceDefault) ?: deviceDefault
 	}
 
 	fun setCloudLanguage(value: String)

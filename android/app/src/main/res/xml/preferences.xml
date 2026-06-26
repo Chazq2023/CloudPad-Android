@@ -21,6 +21,13 @@
             app:icon="@drawable/ic_close_white"/>
 
         <Preference
+            app:key="locale_display"
+            app:title="@string/preferences_locale_title"
+            app:summary="@string/preferences_locale_summary_not_set"
+            app:selectable="false"
+            app:icon="@drawable/ic_locale"/>
+
+        <Preference
             app:key="remap_controller"
             app:title="@string/controller_remap_preference_title"
             app:summary="@string/controller_remap_preference_summary"

@@ -603,12 +603,13 @@ class PsnCatalogService(
 			}
 		}
 
-		// Only pre-extract PSRSVD0000000000 entitlements — the PS Plus Premium streaming format
-		// that Gaikai accepts. Old PSNow standalone entitlements (e.g. PSNW01) share license_type==4
-		// in the Kamaji catalog API but are rejected by Gaikai for PS Plus Premium users.
-		// Games without a PSRSVD entitlement get empty entitlementId and fall through to the full
-		// PSN store lookup in step 0.5d, which derives PSRSVD from the product ID.
-		return license4Ids.firstOrNull { it.endsWith("PSRSVD0000000000") } ?: ""
+		// Only pre-extract PSRSVD entitlements — the PS Plus Premium streaming format that Gaikai
+		// accepts. Old PSNow standalone entitlements (e.g. PSNW01) share license_type==4 in the
+		// Kamaji catalog API but are rejected by Gaikai for PS Plus Premium users.
+		// Use contains("PSRSVD") rather than endsWith("PSRSVD0000000000") so that regional variants
+		// (e.g. "PSRSVD0000000EU" from French/EU stores) are also pre-extracted correctly.
+		// Games without any PSRSVD entitlement fall through to the PSN store lookup in step 0.5d.
+		return license4Ids.firstOrNull { it.contains("PSRSVD") } ?: ""
 	}
 
 	/**

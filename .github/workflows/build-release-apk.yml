@@ -69,9 +69,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Removed the support cloudpad section in settings as I am not requiring donations :) echo
-            - Added a dynamic logout button in settings. When you log in, it will appear, when you log out it won't.
-            - Frontend artwork also available alongside .apk in release for FE's like Cocoon FE etc
+            - Implemented real locale logic, so entitlements should now work depending on your country.
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
