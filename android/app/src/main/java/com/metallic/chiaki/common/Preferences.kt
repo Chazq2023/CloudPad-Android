@@ -241,6 +241,19 @@ class Preferences(context: Context)
 
 	// Cloud language settings - UNIFIED for both PSNow and PSCloud (matching Qt GetCloudLanguagePSCloud)
 	// Qt uses ONE setting for both PSNow and PSCloud
+	fun migrateLocaleIfNeeded()
+	{
+		val LOCALE_MIGRATION_VERSION = 1
+		val currentVersion = sharedPreferences.getInt("locale_migration_version", 0)
+		if (currentVersion < LOCALE_MIGRATION_VERSION)
+		{
+			sharedPreferences.edit()
+				.remove("cloud_language_pscloud")
+				.putInt("locale_migration_version", LOCALE_MIGRATION_VERSION)
+				.apply()
+		}
+	}
+
 	fun getCloudLanguage(): String
 	{
 		val deviceLocale = java.util.Locale.getDefault()
@@ -255,6 +268,30 @@ class Preferences(context: Context)
 	fun setCloudLanguage(value: String)
 	{
 		sharedPreferences.edit().putString("cloud_language_pscloud", value).apply()
+	}
+
+	fun isCloudLanguageConfigured(): Boolean = getRawStoredLocale() != null
+
+	fun setCloudLanguageFromSession(language: String?, country: String?)
+	{
+		if (language.isNullOrEmpty() || country.isNullOrEmpty()) return
+		val locale = "$language-${country.uppercase()}"
+		if (isCloudLanguageConfigured())
+		{
+			val storedCountry = getCloudLanguage().split("-").getOrElse(1) { "" }
+			val sessionCountry = country.uppercase()
+			if (storedCountry == sessionCountry)
+			{
+				android.util.Log.i("Preferences", "Session country unchanged ($sessionCountry), keeping validated locale ${getCloudLanguage()}")
+				return
+			}
+		}
+		setCloudLanguage(locale)
+	}
+
+	fun getRawStoredLocale(): String?
+	{
+		return sharedPreferences.getString("cloud_language_pscloud", null)
 	}
 	
 	// Cloud resolution settings (matching Qt GetCloudResolutionPSNOW/SetCloudResolutionPSNOW)

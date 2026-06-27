@@ -69,7 +69,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Implemented real locale logic, so entitlements should now work depending on your country.
+            - Updated locale logic and PS3/PS4 entitlement logic.
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

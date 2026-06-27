@@ -284,10 +284,8 @@ class PSKamajiSession(
 				
 				if (!sessionCountry.isNullOrEmpty() && !sessionLanguage.isNullOrEmpty())
 				{
-					// Format: language-COUNTRY (e.g., "nl-NL" or "en-US")
-					val locale = "$sessionLanguage-${sessionCountry.uppercase()}"
-					preferences.setCloudLanguage(locale)
-					Log.i(TAG, "Saved locale from session: $locale")
+					preferences.setCloudLanguageFromSession(sessionLanguage, sessionCountry)
+					Log.i(TAG, "Saved locale from session: ${preferences.getCloudLanguage()}")
 				}
 			}
 		}

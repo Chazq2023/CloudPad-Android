@@ -151,6 +151,8 @@
     <string name="preferences_psn_logout_success">Logged out successfully</string>
     <string name="preferences_locale_title">Locale</string>
     <string name="preferences_locale_summary_not_set">Not set - Please sign in to obtain locale</string>
+    <string name="preferences_cached_locale_title">Cached Locale</string>
+    <string name="preferences_cached_locale_summary_not_set">No cached locale stored</string>
     
     <!-- Game Library (PSCloud) Settings - supports up to 4K -->
     <string name="preferences_category_title_game_library">Game Library</string>
