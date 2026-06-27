@@ -221,10 +221,8 @@ class PsnCatalogService(
 		// Save country and language to settings as locale (Qt lines 435-440)
 		if (!sessionCountry.isNullOrEmpty() && !sessionLanguage.isNullOrEmpty())
 		{
-			// Format: language-COUNTRY (e.g., "nl-NL" or "en-US")
-			val locale = "$sessionLanguage-${sessionCountry.uppercase()}"
-			preferences.setCloudLanguage(locale)
-			Log.i(TAG, "[PSNOW] Saved locale from session: $locale")
+			preferences.setCloudLanguageFromSession(sessionLanguage, sessionCountry)
+			Log.i(TAG, "[PSNOW] Saved locale from session: ${preferences.getCloudLanguage()}")
 		}
 		
 		Log.i(TAG, "Extracted from session - country: $country, language: $language")

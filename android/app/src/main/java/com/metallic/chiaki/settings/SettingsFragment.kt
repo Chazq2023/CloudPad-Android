@@ -194,6 +194,10 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		else
 			localePreference?.summary = getString(R.string.preferences_locale_summary_not_set)
 
+		val cachedLocalePreference = preferenceScreen.findPreference<Preference>("cached_locale_display")
+		val rawStored = preferences.getRawStoredLocale()
+		cachedLocalePreference?.summary = rawStored ?: getString(R.string.preferences_cached_locale_summary_not_set)
+
 		// View License
 		preferenceScreen.findPreference<Preference>("view_license")?.setOnPreferenceClickListener { viewLicense(); true }
 		

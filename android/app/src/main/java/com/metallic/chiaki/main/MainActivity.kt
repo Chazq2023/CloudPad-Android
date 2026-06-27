@@ -53,6 +53,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         preferences = Preferences(this)
+        preferences.migrateLocaleIfNeeded()
 
         integrityManager = AppIntegrityManager(this)
         integrityManager?.validateAppState(this) { isValid ->
