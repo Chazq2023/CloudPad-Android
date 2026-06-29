@@ -131,11 +131,12 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 	AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, mime);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_WIDTH, decoder->target_width);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, decoder->target_height);
-	// Realtime decoding: tell the hardware decoder to minimise internal buffering,
-	// run its pipeline for the target frame rate, and output frames as they are decoded.
+	// Realtime decoding: hint the operating rate and switch to realtime scheduling.
+	// low-latency is intentionally omitted — on many devices it causes the hardware
+	// decoder to discard frames under load rather than buffer them, which is worse
+	// for streaming where every frame matters.
 	AMediaFormat_setInt32(format, "priority", 0);
 	AMediaFormat_setFloat(format, "operating-rate", (float)decoder->target_fps);
-	AMediaFormat_setInt32(format, "low-latency", 1);
 
 	media_status_t r = AMediaCodec_configure(decoder->codec, format, decoder->window, NULL, 0);
 	if(r != AMEDIA_OK)
@@ -275,6 +276,9 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
 	setpriority(PRIO_PROCESS, 0, -8);
 
+	int64_t out_frames = 0;
+	int64_t out_last_log_ms = 0;
+
 	while(1)
 	{
 		AMediaCodecBufferInfo info;
@@ -286,6 +290,14 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
         			(size_t)status,
         			true
     			);
+				out_frames++;
+				int64_t now = now_ms();
+				if(out_last_log_ms == 0) out_last_log_ms = now;
+				if(now - out_last_log_ms >= 1000) {
+					CHIAKI_LOGI(decoder->log, "VIDEO_OUTPUT_DIAG out_fps=%" PRId64, out_frames);
+					out_frames = 0;
+					out_last_log_ms = now;
+				}
 			} else {
         		AMediaCodec_releaseOutputBuffer(
             		decoder->codec,
