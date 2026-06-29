@@ -280,12 +280,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			return
 		}
 
-		if (!Preferences(this).pipEnabled)
-		{
-			Log.i("StreamActivity", "PiP: disabled in preferences")
-			return
-		}
-
 		try {
 			// Skip native setSurface(null) during the PiP surface transition -
 			// it blocks the decoder. The surface will be recreated at PiP size.

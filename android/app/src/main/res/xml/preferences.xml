@@ -57,18 +57,21 @@
             app:key="@string/preferences_rumble_enabled_key"
             app:title="@string/preferences_rumble_enabled_title"
             app:summary="@string/preferences_rumble_enabled_summary"
+            app:defaultValue="false"
             app:icon="@drawable/ic_rumble" />
 
         <SwitchPreference
             app:key="@string/preferences_motion_enabled_key"
             app:title="@string/preferences_motion_enabled_title"
             app:summary="@string/preferences_motion_enabled_summary"
+            app:defaultValue="false"
             app:icon="@drawable/ic_motion" />
 
         <SwitchPreference
             app:key="@string/preferences_button_haptic_enabled_key"
             app:title="@string/preferences_button_haptic_enabled_title"
             app:summary="@string/preferences_button_haptic_enabled_summary"
+            app:defaultValue="false"
             app:icon="@drawable/ic_button_haptic" />
 
         <SwitchPreference
@@ -84,12 +87,6 @@
             app:fragment="com.metallic.chiaki.settings.SettingsLogsFragment"
             app:icon="@drawable/ic_log"/>
 
-        <SwitchPreference
-            app:key="@string/preferences_pip_enabled_key"
-            app:title="@string/preferences_pip_enabled_title"
-            app:summary="@string/preferences_pip_enabled_summary"
-            app:defaultValue="true"
-            app:icon="@drawable/ic_resolution"/>
     </PreferenceCategory>
 
     <PreferenceCategory
