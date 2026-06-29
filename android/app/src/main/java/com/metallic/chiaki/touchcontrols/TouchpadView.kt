@@ -26,7 +26,7 @@ class TouchpadView @JvmOverloads constructor(
 		private const val BUTTON_HOLD_DELAY_MS = 500L
 	}
 
-	private val haptics = ButtonHaptics(this)
+	private val haptics = ButtonHaptics(context)
 
 	private val drawableIdle: Drawable?
 	private val drawablePressed: Drawable?
