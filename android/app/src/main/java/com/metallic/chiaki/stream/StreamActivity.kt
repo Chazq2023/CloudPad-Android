@@ -7,12 +7,10 @@ import android.animation.AnimatorListenerAdapter
 import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
-import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.graphics.Matrix
 import android.os.*
 import android.util.Log
-import android.util.Rational
 import android.view.*
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
@@ -58,16 +56,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private lateinit var binding: ActivityStreamBinding
 
 	private val uiVisibilityHandler = Handler()
-
-	/** Tracks whether the activity is in the stopped state (between onStop and onStart).
-	 *  Used to detect PiP dismissal: onStop fires while pip=true (so cleanup is skipped),
-	 *  then onPictureInPictureModeChanged(false) fires — at that point we check this
-	 *  flag to know we need to shut down the session. */
-	private var activityStopped = false
-
-	/** Saved control state before entering PiP, so we can restore when exiting PiP */
-	private var savedOnScreenControlsEnabled = false
-	private var savedTouchpadOnlyEnabled = false
 
 	/** [SystemClock.elapsedRealtime] when this session entered [StreamStateConnected]; 0 if not connected. */
 	private var connectedAtElapsedRealtime: Long = 0L
@@ -174,17 +162,25 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 		if(Preferences(this).rumbleEnabled)
 		{
-			val vibrator = getSystemService(VIBRATOR_SERVICE) as Vibrator
-			viewModel.session.rumbleState.observe(this, Observer {
-				val amplitude = min(255, (it.left.toInt() + it.right.toInt()) / 2)
-				vibrator.cancel()
-				if(amplitude == 0)
-					return@Observer
-				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-					vibrator.vibrate(VibrationEffect.createOneShot(1000, amplitude))
-				else
-					vibrator.vibrate(1000)
-			})
+			@Suppress("DEPRECATION")
+			val vibrator = getSystemService(VIBRATOR_SERVICE) as? Vibrator
+			if(vibrator != null)
+			{
+				var lastAmplitude = -1
+				viewModel.session.rumbleState.observe(this, Observer { event ->
+					val amplitude = min(255, (event.left.toInt() + event.right.toInt()) / 2)
+					Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} amplitude=$amplitude")
+					if(amplitude == lastAmplitude) return@Observer
+					lastAmplitude = amplitude
+					vibrator.cancel()
+					if(amplitude == 0) return@Observer
+					if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+						vibrator.vibrate(VibrationEffect.createOneShot(3000, amplitude))
+					else
+						@Suppress("DEPRECATION")
+						vibrator.vibrate(3000)
+				})
+			}
 		}
 	}
 
@@ -209,41 +205,17 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		}
 	}
 
-	override fun onResume() {
+	override fun onResume()
+	{
 		super.onResume()
-		activityStopped = false
-		Log.i("StreamActivity", "onResume: pip=$isInPictureInPictureMode session=${viewModel.session.session != null}")
 		hideSystemUI()
-
 		viewModel.session.resume()
 	}
 
 	override fun onPause()
 	{
 		super.onPause()
-		Log.i("StreamActivity", "onPause: pip=$isInPictureInPictureMode finishing=$isFinishing")
-		// In PiP mode the stream should keep running, so skip pause.
-		// isInPictureInPictureMode is the built-in Activity property.
-		if (!isInPictureInPictureMode)
-		{
-			viewModel.session.skipNativeSurfaceCleanup = false
-			viewModel.session.pause()
-		}
-	}
-
-	override fun onStop()
-	{
-		super.onStop()
-		activityStopped = true
-		Log.i("StreamActivity", "onStop: pip=$isInPictureInPictureMode finishing=$isFinishing")
-		// When not in PiP, ensure the session is properly shut down.
-		// This handles the normal exit path (redundant with onPause, but safe).
-		// When in PiP, onStop fires with pip=true (cleanup deferred to handlePipChanged).
-		if (!isInPictureInPictureMode)
-		{
-			viewModel.session.skipNativeSurfaceCleanup = false
-			viewModel.session.pause()
-		}
+		viewModel.session.pause()
 	}
 
 	override fun onDestroy()
@@ -254,110 +226,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		controlsDisposable.dispose()
 		uiVisibilityHandler.removeCallbacksAndMessages(null)
 	}
-
-	override fun onConfigurationChanged(newConfig: Configuration)
-	{
-		super.onConfigurationChanged(newConfig)
-		Log.i("StreamActivity", "onConfigurationChanged: pip=$isInPictureInPictureMode")
-	}
-
-	// --- Picture-in-Picture support ---
-
-	override fun onUserLeaveHint()
-	{
-		super.onUserLeaveHint()
-		Log.i("StreamActivity", "onUserLeaveHint")
-		enterPipModeIfEnabled()
-	}
-
-	private fun enterPipModeIfEnabled()
-	{
-		if (isTv()) return
-
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
-		{
-			Log.i("StreamActivity", "PiP: not supported (API ${Build.VERSION.SDK_INT})")
-			return
-		}
-
-		if (!Preferences(this).pipEnabled)
-		{
-			Log.i("StreamActivity", "PiP: disabled in preferences")
-			return
-		}
-
-		try {
-			// Skip native setSurface(null) during the PiP surface transition -
-			// it blocks the decoder. The surface will be recreated at PiP size.
-			viewModel.session.skipNativeSurfaceCleanup = true
-			val result = enterPictureInPictureMode(
-				PictureInPictureParams.Builder()
-					.setAspectRatio(Rational(16, 9))
-					.build()
-			)
-			Log.i("StreamActivity", "PiP: enterPictureInPictureMode returned $result")
-			if (!result) {
-				viewModel.session.skipNativeSurfaceCleanup = false
-			}
-		} catch (e: Exception) {
-			Log.w("StreamActivity", "PiP: failed to enter - ${e.message}")
-			viewModel.session.skipNativeSurfaceCleanup = false
-		}
-	}
-
-	@Suppress("DEPRECATION")
-	override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean)
-	{
-		super.onPictureInPictureModeChanged(isInPictureInPictureMode)
-		Log.i("StreamActivity", "onPipChanged(1-param): pip=$isInPictureInPictureMode finishing=$isFinishing")
-		handlePipChanged(isInPictureInPictureMode)
-	}
-
-	override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration)
-	{
-		super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
-		Log.i("StreamActivity", "onPipChanged(2-param): pip=$isInPictureInPictureMode finishing=$isFinishing")
-		// Don't call handlePipChanged here - the 2-param version calls the 1-param version internally
-	}
-
-	private fun handlePipChanged(isInPictureInPictureMode: Boolean)
-	{
-		if (isInPictureInPictureMode)
-		{
-			// Save current control state before hiding
-			savedOnScreenControlsEnabled = viewModel.onScreenControlsEnabled.value ?: false
-			savedTouchpadOnlyEnabled = viewModel.touchpadOnlyEnabled.value ?: false
-
-			// Hide all UI elements — PiP window should only show the video
-			hideOverlay()
-			viewModel.setOnScreenControlsEnabled(false)
-			viewModel.setTouchpadOnlyEnabled(false)
-			binding.progressBar.isGone = true
-		}
-		else
-		{
-			// Exiting PiP - restore normal surface cleanup behavior
-			viewModel.session.skipNativeSurfaceCleanup = false
-
-			if (activityStopped)
-			{
-				// PiP was dismissed (swiped away). onStop already fired with
-				// pip=true so it couldn't clean up. Do it now.
-				Log.i("StreamActivity", "handlePipChanged: PiP dismissed while stopped, shutting down session")
-				viewModel.session.pause()
-			}
-			else if (!isFinishing)
-			{
-				// Returning to fullscreen from PiP - restore UI elements
-				viewModel.setOnScreenControlsEnabled(savedOnScreenControlsEnabled)
-				viewModel.setTouchpadOnlyEnabled(savedTouchpadOnlyEnabled)
-				hideOverlay()
-				hideSystemUI()
-			}
-		}
-	}
-
-	// --- end PiP ---
 
 	private fun reconnect()
 	{
@@ -449,7 +317,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private fun stateChanged(state: StreamState)
 	{
-		Log.i("StreamActivity", "stateChanged: $state pip=$isInPictureInPictureMode")
+		Log.i("StreamActivity", "stateChanged: $state")
 		binding.progressBar.visibility = if(state == StreamStateConnecting) View.VISIBLE else View.GONE
 
 		when(state)

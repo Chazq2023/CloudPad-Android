@@ -69,7 +69,11 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Added theme colour changes, the default is neon pink, but you can also select from: Blue, green, yellow and orange. I understand not everyone is hot on pink as i am :D 
+            - Removed Picture-in-Picture (PiP) completely
+            - Renamed "Rumble" to "Vibration"; Touch Haptics, Motion, and Vibration now default to off
+            - Added "Test Vibration" button in settings to verify the vibration motor works
+            - Fixed Touch Haptics: now reads setting dynamically, uses VibratorManager on Android 12+, and uses stronger click effects
+            - Fixed controller vibration: no longer cancels and restarts on every event; only updates when amplitude changes, allowing the motor to sustain properly
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

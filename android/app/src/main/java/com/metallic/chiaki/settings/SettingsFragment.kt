@@ -3,9 +3,14 @@
 package com.metallic.chiaki.settings
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
+import android.os.Build
 import android.os.Bundle
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
 import android.text.InputType
 import android.widget.Toast
 import androidx.lifecycle.Observer
@@ -183,6 +188,11 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			true
 		}
 
+		preferenceScreen.findPreference<Preference>("test_vibration")?.setOnPreferenceClickListener {
+			testVibration()
+			true
+		}
+
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_export_settings_key))?.setOnPreferenceClickListener { exportSettings(); true }
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_import_settings_key))?.setOnPreferenceClickListener { importSettings(); true }
 
@@ -352,5 +362,26 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preference.summaryProvider = Preference.SummaryProvider<SeekBarPreference> { pref ->
 			getString(summaryRes, pref.value)
 		}
+	}
+
+	private fun testVibration()
+	{
+		val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+			(requireContext().getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+		else
+			@Suppress("DEPRECATION")
+			requireContext().getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
+
+		if (vibrator == null || !vibrator.hasVibrator())
+		{
+			Toast.makeText(requireContext(), "Vibration not available on this device", Toast.LENGTH_SHORT).show()
+			return
+		}
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+			vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
+		else
+			@Suppress("DEPRECATION")
+			vibrator.vibrate(500)
 	}
 }
