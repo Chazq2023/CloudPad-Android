@@ -133,7 +133,7 @@ class CloudPlayViewModel(
 				else
 				{
 					Log.i(TAG, "Fetching all PS5 Cloud catalog (forceRefresh=$forceRefresh)")
-					
+
 					when (val result = repository.fetchPs5CloudCatalog(npssoToken, forceRefresh))
 					{
 						is PsnResult.Success ->
@@ -189,6 +189,15 @@ class CloudPlayViewModel(
 		applySearchFilter()
 	}
 	
+	/**
+	 * Re-emit the current game list through the observer without fetching from network/disk.
+	 * Use when switching tabs that share the same underlying dataset (e.g. PS3↔PS4).
+	 */
+	fun reapplyCurrentGames()
+	{
+		applySearchFilter()
+	}
+
 	/**
 	 * Apply current search filter to games
 	 */

@@ -69,7 +69,9 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Refactored the way we handle locale and entitlement matching for PS Now titles
+            - Introduced some UI changes relating to catlog tabbing and refreshing the catalogs.
+            - You will now see "< L1" and "R1 >" next to the PS3 Catalog and PS5 Library. By Pressing either L1 or R1 you can now tab between the catalogs.
+            - By Pressing triangle or Y depending on your controller layout, this will now refresh your games :) 
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

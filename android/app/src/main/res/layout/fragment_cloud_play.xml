@@ -34,6 +34,22 @@
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
+                    <!-- L1 hint indicator (non-focusable decoration) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="&lt; L1"
+                        android:textSize="11sp"
+                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="0dp"
+                        android:layout_marginEnd="4dp"
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:importantForAccessibility="no"
+                        android:background="#33FF149D" />
+
                     <!-- PS3 Catalog tab -->
                     <TextView
                         android:id="@+id/ps3TabButton"
@@ -81,6 +97,22 @@
 
                         android:clickable="true"
                         android:background="@android:color/transparent" />
+
+                    <!-- R1 hint indicator (non-focusable decoration) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:text="R1 &gt;"
+                        android:textSize="11sp"
+                        android:textColor="#FFFFFF"
+                        android:gravity="center"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="0dp"
+                        android:layout_marginStart="4dp"
+                        android:focusable="false"
+                        android:clickable="false"
+                        android:importantForAccessibility="no"
+                        android:background="#33FF149D" />
 
                     <!-- All/Owned toggle (Library only) -->
                     <TextView
