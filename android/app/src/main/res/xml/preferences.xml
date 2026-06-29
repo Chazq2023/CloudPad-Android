@@ -66,6 +66,13 @@
             app:icon="@drawable/ic_button_haptic" />
 
         <SwitchPreference
+            app:key="@string/preferences_pip_enabled_key"
+            app:title="@string/preferences_pip_enabled_title"
+            app:summary="@string/preferences_pip_enabled_summary"
+            app:defaultValue="true"
+            app:icon="@drawable/ic_resolution"/>
+
+        <SwitchPreference
             app:key="@string/preferences_log_verbose_key"
             app:title="@string/preferences_log_verbose_title"
             app:summary="@string/preferences_log_verbose_summary"

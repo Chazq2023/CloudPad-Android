@@ -7,10 +7,12 @@ import android.animation.AnimatorListenerAdapter
 import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
+import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.graphics.Matrix
 import android.os.*
 import android.util.Log
+import android.util.Rational
 import android.view.*
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
@@ -55,6 +57,16 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private lateinit var binding: ActivityStreamBinding
 
 	private val uiVisibilityHandler = Handler()
+
+	/** Tracks whether the activity is in the stopped state (between onStop and onStart).
+	 *  Used to detect PiP dismissal: onStop fires while pip=true (so cleanup is skipped),
+	 *  then onPictureInPictureModeChanged(false) fires — at that point we check this
+	 *  flag to know we need to shut down the session. */
+	private var activityStopped = false
+
+	/** Saved control state before entering PiP, so we can restore when exiting PiP */
+	private var savedOnScreenControlsEnabled = false
+	private var savedTouchpadOnlyEnabled = false
 
 	/** [SystemClock.elapsedRealtime] when this session entered [StreamStateConnected]; 0 if not connected. */
 	private var connectedAtElapsedRealtime: Long = 0L
@@ -182,17 +194,36 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		}
 	}
 
-	override fun onResume()
-	{
+	override fun onResume() {
 		super.onResume()
+		activityStopped = false
+		Log.i("StreamActivity", "onResume: pip=$isInPictureInPictureMode session=${viewModel.session.session != null}")
 		hideSystemUI()
+
 		viewModel.session.resume()
 	}
 
 	override fun onPause()
 	{
 		super.onPause()
-		viewModel.session.pause()
+		Log.i("StreamActivity", "onPause: pip=$isInPictureInPictureMode finishing=$isFinishing")
+		if (!isInPictureInPictureMode)
+		{
+			viewModel.session.skipNativeSurfaceCleanup = false
+			viewModel.session.pause()
+		}
+	}
+
+	override fun onStop()
+	{
+		super.onStop()
+		activityStopped = true
+		Log.i("StreamActivity", "onStop: pip=$isInPictureInPictureMode finishing=$isFinishing")
+		if (!isInPictureInPictureMode)
+		{
+			viewModel.session.skipNativeSurfaceCleanup = false
+			viewModel.session.pause()
+		}
 	}
 
 	override fun onDestroy()
@@ -203,6 +234,101 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		controlsDisposable.dispose()
 		uiVisibilityHandler.removeCallbacksAndMessages(null)
 	}
+
+	override fun onConfigurationChanged(newConfig: Configuration)
+	{
+		super.onConfigurationChanged(newConfig)
+		Log.i("StreamActivity", "onConfigurationChanged: pip=$isInPictureInPictureMode")
+	}
+
+	// --- Picture-in-Picture support ---
+
+	override fun onUserLeaveHint()
+	{
+		super.onUserLeaveHint()
+		Log.i("StreamActivity", "onUserLeaveHint")
+		enterPipModeIfEnabled()
+	}
+
+	private fun enterPipModeIfEnabled()
+	{
+		if (isTv()) return
+
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+		{
+			Log.i("StreamActivity", "PiP: not supported (API ${Build.VERSION.SDK_INT})")
+			return
+		}
+
+		if (!Preferences(this).pipEnabled)
+		{
+			Log.i("StreamActivity", "PiP: disabled in preferences")
+			return
+		}
+
+		try {
+			viewModel.session.skipNativeSurfaceCleanup = true
+			val result = enterPictureInPictureMode(
+				PictureInPictureParams.Builder()
+					.setAspectRatio(Rational(16, 9))
+					.build()
+			)
+			Log.i("StreamActivity", "PiP: enterPictureInPictureMode returned $result")
+			if (!result) {
+				viewModel.session.skipNativeSurfaceCleanup = false
+			}
+		} catch (e: Exception) {
+			Log.w("StreamActivity", "PiP: failed to enter - ${e.message}")
+			viewModel.session.skipNativeSurfaceCleanup = false
+		}
+	}
+
+	@Suppress("DEPRECATION")
+	override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean)
+	{
+		super.onPictureInPictureModeChanged(isInPictureInPictureMode)
+		Log.i("StreamActivity", "onPipChanged(1-param): pip=$isInPictureInPictureMode finishing=$isFinishing")
+		handlePipChanged(isInPictureInPictureMode)
+	}
+
+	override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration)
+	{
+		super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+		Log.i("StreamActivity", "onPipChanged(2-param): pip=$isInPictureInPictureMode finishing=$isFinishing")
+	}
+
+	private fun handlePipChanged(isInPictureInPictureMode: Boolean)
+	{
+		if (isInPictureInPictureMode)
+		{
+			savedOnScreenControlsEnabled = viewModel.onScreenControlsEnabled.value ?: false
+			savedTouchpadOnlyEnabled = viewModel.touchpadOnlyEnabled.value ?: false
+
+			hideOverlay()
+			viewModel.setOnScreenControlsEnabled(false)
+			viewModel.setTouchpadOnlyEnabled(false)
+			binding.progressBar.isGone = true
+		}
+		else
+		{
+			viewModel.session.skipNativeSurfaceCleanup = false
+
+			if (activityStopped)
+			{
+				Log.i("StreamActivity", "handlePipChanged: PiP dismissed while stopped, shutting down session")
+				viewModel.session.pause()
+			}
+			else if (!isFinishing)
+			{
+				viewModel.setOnScreenControlsEnabled(savedOnScreenControlsEnabled)
+				viewModel.setTouchpadOnlyEnabled(savedTouchpadOnlyEnabled)
+				hideOverlay()
+				hideSystemUI()
+			}
+		}
+	}
+
+	// --- end PiP ---
 
 	private fun reconnect()
 	{
@@ -294,7 +420,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private fun stateChanged(state: StreamState)
 	{
-		Log.i("StreamActivity", "stateChanged: $state")
+		Log.i("StreamActivity", "stateChanged: $state pip=$isInPictureInPictureMode")
 		binding.progressBar.visibility = if(state == StreamStateConnecting) View.VISIBLE else View.GONE
 
 		when(state)

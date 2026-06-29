@@ -113,6 +113,11 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(showPerformanceOverlayKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(showPerformanceOverlayKey, value).apply() }
 
+	val pipEnabledKey get() = resources.getString(R.string.preferences_pip_enabled_key)
+	var pipEnabled
+		get() = sharedPreferences.getBoolean(pipEnabledKey, true)
+		set(value) { sharedPreferences.edit().putBoolean(pipEnabledKey, value).apply() }
+
 	val swapCrossMoonKey get() = resources.getString(R.string.preferences_swap_cross_moon_key)
 	var swapCrossMoon
 		get() = sharedPreferences.getBoolean(swapCrossMoonKey, false)
