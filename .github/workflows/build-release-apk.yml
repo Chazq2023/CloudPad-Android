@@ -69,7 +69,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Updated locale logic and PS3/PS4 entitlement logic.
+            - Refactored the way we handle locale and entitlement matching for PS Now titles
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
