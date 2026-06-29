@@ -116,7 +116,7 @@ class DPadView @JvmOverloads constructor(
 		if(state != newState)
 		{
 			if(newState != null)
-				haptics.trigger()
+				haptics.trigger(this@DPadView)
 			state = newState
 			invalidate()
 			stateChangeCallback?.let { it(state) }

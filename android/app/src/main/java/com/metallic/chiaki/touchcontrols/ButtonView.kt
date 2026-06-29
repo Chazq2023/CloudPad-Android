@@ -27,7 +27,7 @@ class ButtonView @JvmOverloads constructor(
 			if(diff)
 			{
 				if(value)
-					haptics.trigger()
+					haptics.trigger(this@ButtonView)
 				invalidate()
 				buttonPressedCallback?.let { it(field) }
 			}

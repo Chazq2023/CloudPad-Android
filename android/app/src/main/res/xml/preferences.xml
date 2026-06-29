@@ -84,12 +84,6 @@
             app:fragment="com.metallic.chiaki.settings.SettingsLogsFragment"
             app:icon="@drawable/ic_log"/>
 
-        <SwitchPreference
-            app:key="@string/preferences_pip_enabled_key"
-            app:title="@string/preferences_pip_enabled_title"
-            app:summary="@string/preferences_pip_enabled_summary"
-            app:defaultValue="true"
-            app:icon="@drawable/ic_resolution"/>
     </PreferenceCategory>
 
     <PreferenceCategory

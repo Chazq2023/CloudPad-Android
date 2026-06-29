@@ -51,7 +51,7 @@ class TouchpadView @JvmOverloads constructor(
 		val startButtonHoldRunnable = Runnable {
 			if(!moveInsignificant || buttonHeld)
 				return@Runnable
-			haptics.trigger(true)
+			haptics.trigger(this@TouchpadView, true)
 			state.buttons = state.buttons or ControllerState.BUTTON_TOUCHPAD
 			buttonHeld = true
 			triggerStateChanged()
@@ -109,7 +109,7 @@ class TouchpadView @JvmOverloads constructor(
 		{
 			MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
 				state.startTouch(touchX(event, event.actionIndex), touchY(event, event.actionIndex))?.let {
-					haptics.trigger()
+					haptics.trigger(this@TouchpadView)
 					val touch = Touch(it, event.getX(event.actionIndex), event.getY(event.actionIndex))
 					pointerTouches[event.getPointerId(event.actionIndex)] = touch
 					if(!buttonHeld)
