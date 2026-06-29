@@ -69,10 +69,8 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Fixed frame drops/microstutters: configure MediaCodec in realtime mode (priority=0, operating-rate=60, low-latency=1) so the hardware decoder minimises internal frame buffering and pipelines for 60fps output
-            - Raise video output thread to display-class CPU priority (-8) so it is scheduled promptly when a decoded frame is ready, preventing frames from missing their vsync window
-            - Use real wall-clock timestamps for decoder input so MediaCodec has accurate frame timing context
-            - Added ANativeWindow_setFrameRate() hint (API 30+) so SurfaceFlinger knows the surface is fixed-rate game content
+            - Remove low-latency=1 from MediaCodec config: on many devices this causes the hardware decoder to discard frames under load rather than buffer them
+            - Add VIDEO_OUTPUT_DIAG logcat output (1/sec) reporting decoder output FPS to diagnose whether frame drops happen inside the decoder or at the display level
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
