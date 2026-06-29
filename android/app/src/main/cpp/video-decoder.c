@@ -11,6 +11,7 @@
 #include <android/api-level.h>
 
 #include <string.h>
+#include <sys/resource.h>
 
 #include <time.h>
 #include <inttypes.h>
@@ -31,12 +32,6 @@ static int64_t now_us()
 	return ((int64_t)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
 
-static int64_t now_ns()
-{
-	struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	return ((int64_t)ts.tv_sec * 1000000000LL) + ts.tv_nsec;
-}
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
 
@@ -136,6 +131,11 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 	AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, mime);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_WIDTH, decoder->target_width);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, decoder->target_height);
+	// Realtime decoding: tell the hardware decoder to minimise internal buffering,
+	// run its pipeline for the target frame rate, and output frames as they are decoded.
+	AMediaFormat_setInt32(format, "priority", 0);
+	AMediaFormat_setFloat(format, "operating-rate", (float)decoder->target_fps);
+	AMediaFormat_setInt32(format, "low-latency", 1);
 
 	media_status_t r = AMediaCodec_configure(decoder->codec, format, decoder->window, NULL, 0);
 	if(r != AMEDIA_OK)
@@ -271,19 +271,20 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 {
 	AndroidChiakiVideoDecoder *decoder = user;
 
+	// Raise to display-class priority so the OS schedules us promptly when a
+	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
+	setpriority(PRIO_PROCESS, 0, -8);
+
 	while(1)
 	{
 		AMediaCodecBufferInfo info;
 		ssize_t status = AMediaCodec_dequeueOutputBuffer(decoder->codec, &info, -1);
 		if(status >= 0) {
     		if(info.size != 0) {
-				// Schedule 3ms ahead so SurfaceFlinger can latch at the next vsync
-				// without dropping the frame if the output thread runs mid-interval
-				int64_t render_time_ns = now_ns() + 3000000LL;
-    			AMediaCodec_releaseOutputBufferAtTime(
+    			AMediaCodec_releaseOutputBuffer(
         			decoder->codec,
         			(size_t)status,
-					render_time_ns
+        			true
     			);
 			} else {
         		AMediaCodec_releaseOutputBuffer(
