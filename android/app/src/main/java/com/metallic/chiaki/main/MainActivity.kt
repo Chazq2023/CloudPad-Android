@@ -200,6 +200,19 @@ class MainActivity : AppCompatActivity() {
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         if (event.keyCode == KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(event)
 
+        if (currentPage == 1) {
+            val cloudFragment = supportFragmentManager.fragments
+                .filterIsInstance<CloudPlayFragment>()
+                .firstOrNull()
+            if (cloudFragment != null) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_BUTTON_L1 -> { cloudFragment.navigateTabLeft(); return true }
+                    KeyEvent.KEYCODE_BUTTON_R1 -> { cloudFragment.navigateTabRight(); return true }
+                    KeyEvent.KEYCODE_BUTTON_Y  -> { cloudFragment.refreshCurrentSection(); return true }
+                }
+            }
+        }
+
         if (refocusIfWrongViewPagerPage()) return true
 
         val focused = currentFocus

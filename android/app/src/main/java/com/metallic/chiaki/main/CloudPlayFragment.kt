@@ -471,7 +471,7 @@ class CloudPlayFragment : Fragment() {
         binding.headerFavoritesButton.setOnClickListener { toggleFavoritesFilter() }
         binding.headerSortButton.setOnClickListener { showSortMenu() }
         binding.headerSearchButton.setOnClickListener { toggleSearch() }
-        binding.headerRefreshButton.setOnClickListener { refreshCurrentSection() }
+        binding.headerRefreshButton.setOnClickListener { refreshCurrentSectionInternal() }
 
         binding.root.enableFocusableInTouchModeForTv(requireContext())
         fun highlightButton(v: View, hasFocus: Boolean) {
@@ -546,7 +546,39 @@ class CloudPlayFragment : Fragment() {
         binding.headerFavoritesButton.alpha = if (favActive) 1.0f else 0.45f
     }
 
-    private fun selectPs3Tab() {
+    fun navigateTabLeft() {
+        when (viewModel.getCurrentSection()) {
+            // PS3 and PS4 share the same PSNow dataset — just re-filter, no fetch
+            "psnow_ps4" -> selectPs3Tab(fetchGames = false)
+            // Switching from PS5 Library requires a different dataset
+            "pscloud" -> selectPs4Tab(fetchGames = true)
+        }
+    }
+
+    fun navigateTabRight() {
+        when (viewModel.getCurrentSection()) {
+            // PS3 and PS4 share the same PSNow dataset — just re-filter, no fetch
+            "psnow_ps3" -> selectPs4Tab(fetchGames = false)
+            // Switching to PS5 Library requires a different dataset
+            "psnow_ps4" -> selectLibraryTab()
+        }
+    }
+
+    fun refreshCurrentSection() {
+        refreshCurrentSectionInternal()
+    }
+
+    private fun refreshCurrentSectionInternal() {
+        val currentSection = viewModel.getCurrentSection()
+        if (currentSection == "pscloud") {
+            preferences.setPsCloudFilterOwned(true)
+            viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
+        } else {
+            viewModel.fetchPsnowCatalog(forceRefresh = true)
+        }
+    }
+
+    private fun selectPs3Tab(fetchGames: Boolean = true) {
         setTabSelected(binding.ps3TabButton)
         setTabUnselected(binding.ps4TabButton)
         setTabUnselected(binding.libraryTabButton)
@@ -561,10 +593,10 @@ class CloudPlayFragment : Fragment() {
         updateFilterButtonText()
         updateFavoritesIcon()
 
-        viewModel.fetchPsnowCatalog()
+        if (fetchGames) viewModel.fetchPsnowCatalog() else viewModel.reapplyCurrentGames()
     }
 
-    private fun selectPs4Tab() {
+    private fun selectPs4Tab(fetchGames: Boolean = true) {
         setTabSelected(binding.ps4TabButton)
         setTabUnselected(binding.ps3TabButton)
         setTabUnselected(binding.libraryTabButton)
@@ -579,7 +611,7 @@ class CloudPlayFragment : Fragment() {
         updateFilterButtonText()
         updateFavoritesIcon()
 
-        viewModel.fetchPsnowCatalog()
+        if (fetchGames) viewModel.fetchPsnowCatalog() else viewModel.reapplyCurrentGames()
     }
 
     private fun selectLibraryTab() {
@@ -646,15 +678,6 @@ class CloudPlayFragment : Fragment() {
         }
     }
 
-    private fun refreshCurrentSection() {
-        val currentSection = viewModel.getCurrentSection()
-        if (currentSection == "pscloud") {
-            preferences.setPsCloudFilterOwned(true)
-            viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
-        } else {
-            viewModel.fetchPsnowCatalog(forceRefresh = true)
-        }
-    }
 
     private fun showSortMenu() {
         val currentSection = viewModel.getCurrentSection()
