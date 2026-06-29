@@ -134,6 +134,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        unitTests {
+            returnDefaultValues = true
+        }
+    }
     
     // Ensure native libraries are NOT compressed in APK (required for 16KB alignment)
     // Modern AGP automatically stores native libraries uncompressed by default, but we explicitly ensure it
@@ -213,6 +219,12 @@ dependencies {
     // Play Billing 8.x Java API (no billing-ktx: that artifact targets Kotlin 2.2+ and forces a full Kotlin/Room/Moshi upgrade chain)
     implementation 'com.android.billingclient:billing:8.1.0'
     implementation 'com.google.zxing:core:3.5.3'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'androidx.arch.core:core-testing:2.2.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+    testImplementation 'io.mockk:mockk:1.13.8'
+    testImplementation 'org.json:json:20231013'
 }
 
 // Single source of truth: shared/donation_prompt_phrases.json → generated res/raw for R.raw.donation_prompt_phrases
