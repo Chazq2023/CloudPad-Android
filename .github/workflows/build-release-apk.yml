@@ -69,8 +69,8 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Remove low-latency=1 from MediaCodec config: on many devices this causes the hardware decoder to discard frames under load rather than buffer them
-            - Add VIDEO_OUTPUT_DIAG logcat output (1/sec) reporting decoder output FPS to diagnose whether frame drops happen inside the decoder or at the display level
+            - Add DFPS (decoded FPS) row to the performance overlay, showing the hardware decoder's actual output frame rate alongside the stream input FPS — allows diagnosing whether frame drops occur inside the decoder or at the display compositor
+            - Remove per-second CHIAKI_LOGI calls from the video frame delivery and decoder output threads to eliminate unnecessary file I/O on streaming hot paths
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

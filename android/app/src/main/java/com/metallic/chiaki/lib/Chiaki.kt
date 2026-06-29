@@ -106,6 +106,7 @@ data class SessionMetrics(
 	val width: Int,
 	val height: Int,
 	val fps: Float,
+	val decodedFps: Float,
 	val bitrate: Double,
 	val ping: Double,
 	val latency: Double,
