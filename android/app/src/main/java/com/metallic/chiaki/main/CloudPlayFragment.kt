@@ -8,6 +8,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -197,17 +198,24 @@ class CloudPlayFragment : Fragment() {
         validateTokenAndLoadCatalog()
     }
 
+    private fun resolveAccentColor(): Int {
+        val tv = TypedValue()
+        requireContext().theme.resolveAttribute(com.pylux.stream.R.attr.pyluxAccent, tv, true)
+        return tv.data
+    }
+
     private fun setupLoginButton() {
         binding.loginButton.setOnClickListener {
             launchPsnLogin()
         }
         binding.loginButton.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+            val accent = resolveAccentColor()
             v.foreground = if (hasFocus)
                 android.graphics.drawable.GradientDrawable().apply {
                     shape = android.graphics.drawable.GradientDrawable.RECTANGLE
                     cornerRadius = 24f
-                    setColor(0x33FF149D.toInt())
-                    setStroke(3, 0x99FF149D.toInt())
+                    setColor((0x33 shl 24) or (accent and 0x00FFFFFF))
+                    setStroke(3, (0x99 shl 24) or (accent and 0x00FFFFFF))
                 }
             else null
         }
@@ -475,12 +483,13 @@ class CloudPlayFragment : Fragment() {
 
         binding.root.enableFocusableInTouchModeForTv(requireContext())
         fun highlightButton(v: View, hasFocus: Boolean) {
+            val accent = resolveAccentColor()
             if (hasFocus) {
                 v.background = android.graphics.drawable.GradientDrawable().apply {
                     shape = android.graphics.drawable.GradientDrawable.RECTANGLE
                     cornerRadius = 24f
-                    setColor(0x30FF149D.toInt())
-                    setStroke(2, 0x99FF149D.toInt())
+                    setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
+                    setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
                 }
             } else {
                 v.background = null

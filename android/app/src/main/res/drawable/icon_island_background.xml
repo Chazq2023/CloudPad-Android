@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Island background with Pylux blue border (matching iOS) -->
+<!-- Island background with Pylux brand border -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- Blue glow shadow (outer) - subtle -->
+    <!-- Glow shadow (outer) -->
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="23dp" />
-            <solid android:color="#20FF149D" />
+            <solid android:color="?attr/pyluxAccentA12" />
         </shape>
     </item>
-    
+
     <!-- Main island with border (inset to create glow effect) -->
     <item
         android:top="1dp"
@@ -20,7 +20,7 @@
             <solid android:color="#0AFFFFFF" />
             <stroke
                 android:width="1dp"
-                android:color="@color/pylux_blue_border" />
+                android:color="?attr/pyluxAccentA25" />
         </shape>
     </item>
 </layer-list>

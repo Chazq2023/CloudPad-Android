@@ -12,7 +12,7 @@
         android:id="@+id/appBarLayout"
         android:layout_height="wrap_content"
         android:layout_width="match_parent"
-        android:background="@color/toolbar_bg"
+        android:background="?attr/pyluxToolbarBg"
         android:elevation="0dp">
 
         <com.google.android.material.appbar.MaterialToolbar
@@ -24,7 +24,7 @@
             android:minHeight="?attr/actionBarSize"
             android:contentInsetStartWithNavigation="0dp"
             android:contentInsetEnd="0dp"
-            android:theme="@style/AppTheme.Toolbar">
+            android:theme="?attr/pyluxToolbarTheme">
 
             <RelativeLayout
                 android:layout_width="match_parent"
@@ -61,7 +61,7 @@
                             android:padding="8dp"
                             android:src="@drawable/ic_gamepad_modern"
                             android:contentDescription="Remote Play"
-                            android:background="@drawable/icon_island_selected"
+                            android:background="@android:color/transparent"
                             android:focusable="false"
                             android:clickable="false" />
                     </FrameLayout>

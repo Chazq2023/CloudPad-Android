@@ -22,7 +22,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@color/toolbar_bg"
+                android:background="?attr/pyluxToolbarBg"
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="6dp">
 
@@ -48,7 +48,7 @@
                         android:focusable="false"
                         android:clickable="false"
                         android:importantForAccessibility="no"
-                        android:background="#33FF149D" />
+                        android:background="?attr/pyluxAccentA20" />
 
                     <!-- PS3 Catalog tab -->
                     <TextView
@@ -112,7 +112,7 @@
                         android:focusable="false"
                         android:clickable="false"
                         android:importantForAccessibility="no"
-                        android:background="#33FF149D" />
+                        android:background="?attr/pyluxAccentA20" />
 
                     <!-- All/Owned toggle (Library only) -->
                     <TextView

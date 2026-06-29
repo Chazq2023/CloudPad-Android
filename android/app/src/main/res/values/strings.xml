@@ -93,6 +93,16 @@
     <string name="donation_paywall_trust_paypal">Donate via PayPal in your browser.</string>
     <string name="preferences_donate_already_supporting">You already have a support purchase on this account. Thank you!</string>
 
+    <!-- Theme colour preference -->
+    <string name="preferences_category_title_appearance">Appearance</string>
+    <string name="preferences_theme_colour_key">theme_colour</string>
+    <string name="preferences_theme_colour_title">Theme Colour</string>
+    <string name="preferences_theme_colour_summary">Choose the app colour theme</string>
+    <string name="preferences_theme_colour_pink">Neon Pink</string>
+    <string name="preferences_theme_colour_blue">Neon Blue</string>
+    <string name="preferences_theme_value_pink">pink</string>
+    <string name="preferences_theme_value_blue">blue</string>
+
     <string name="preferences_category_title_general">General</string>
     <string name="preferences_category_title_stream">Remote Play Settings</string>
     <string name="preferences_category_title_export">Export</string>
@@ -189,6 +199,16 @@
     <string name="psn_login_not_complete">Login not complete yet. Complete Sony sign-in first.</string>
     <string name="psn_login_not_complete_toast">Please complete Sony sign-in first</string>
     <string name="psn_login_server_error">Failed to complete login</string>
+
+    <!-- Theme colour options -->
+    <string-array name="theme_colour_entries">
+        <item>Neon Pink</item>
+        <item>Neon Blue</item>
+    </string-array>
+    <string-array name="theme_colour_values">
+        <item>pink</item>
+        <item>blue</item>
+    </string-array>
 
     <!-- Datacenter options -->
     <string-array name="cloud_datacenter_entries">

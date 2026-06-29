@@ -2,6 +2,6 @@
 <!-- Section indicator background (center of screen) -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="#CCFF149D" />
+    <solid android:color="?attr/pyluxAccentA80" />
     <corners android:radius="12dp" />
 </shape>

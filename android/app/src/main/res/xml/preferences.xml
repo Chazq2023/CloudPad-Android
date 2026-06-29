@@ -4,6 +4,19 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
+        app:key="category_appearance"
+        app:title="@string/preferences_category_title_appearance">
+        <ListPreference
+            app:key="@string/preferences_theme_colour_key"
+            app:title="@string/preferences_theme_colour_title"
+            app:summary="%s"
+            app:entries="@array/theme_colour_entries"
+            app:entryValues="@array/theme_colour_values"
+            app:defaultValue="@string/preferences_theme_value_pink"
+            app:icon="@drawable/ic_resolution"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="category_general"
         app:title="@string/preferences_category_title_general">
         <Preference

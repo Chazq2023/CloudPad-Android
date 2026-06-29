@@ -38,6 +38,34 @@
 
     <color name="toolbar_bg">#0B050D</color>
 
+    <!-- Pylux Dark Neon Blue Theme -->
+    <color name="primary_blue">#06101A</color>
+    <color name="primary_dark_blue">#030A0F</color>
+    <color name="accent_blue">#00B4FF</color>
+    <color name="accent_light_blue">#4FC8FF</color>
+    <color name="toolbar_bg_blue">#03090E</color>
+    <color name="support_tier_card_bg_blue">#06101A</color>
+    <color name="support_text_secondary_blue">#9BBDD4</color>
+    <color name="support_badge_bg_blue">#4D00B4FF</color>
+
+    <!-- Pink theme accent alpha variants (for drawables/color states) -->
+    <color name="accent_pink_a12">#20FF149D</color>
+    <color name="accent_pink_a20">#33FF149D</color>
+    <color name="accent_pink_a25">#40FF149D</color>
+    <color name="accent_pink_a30">#4DFF149D</color>
+    <color name="accent_pink_a50">#80FF149D</color>
+    <color name="accent_pink_a70">#B3FF149D</color>
+    <color name="accent_pink_a80">#CCFF149D</color>
+
+    <!-- Blue theme accent alpha variants -->
+    <color name="accent_blue_a12">#2000B4FF</color>
+    <color name="accent_blue_a20">#3300B4FF</color>
+    <color name="accent_blue_a25">#4000B4FF</color>
+    <color name="accent_blue_a30">#4D00B4FF</color>
+    <color name="accent_blue_a50">#8000B4FF</color>
+    <color name="accent_blue_a70">#B300B4FF</color>
+    <color name="accent_blue_a80">#CC00B4FF</color>
+
     <!-- Support / paywall sheet -->
     <color name="support_header_icon_scrim">#33FFFFFF</color>
     <color name="support_drag_handle">#66FFFFFF</color>

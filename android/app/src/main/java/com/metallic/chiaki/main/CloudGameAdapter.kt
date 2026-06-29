@@ -2,6 +2,7 @@
 
 package com.metallic.chiaki.main
 
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -106,7 +107,9 @@ class CloudGameAdapter(
                 binding.ownershipBadge.visibility = android.view.View.VISIBLE
                 if (game.isOwned) {
                     binding.ownershipBadge.text = "Owned"
-                    binding.ownershipBadge.setBackgroundColor(0xCCFF149D.toInt())
+                    val tv = TypedValue()
+                    binding.ownershipBadge.context.theme.resolveAttribute(R.attr.pyluxAccentA80, tv, true)
+                    binding.ownershipBadge.setBackgroundColor(tv.data)
                 } else {
                     binding.ownershipBadge.text = "Not Owned"
                     binding.ownershipBadge.setBackgroundColor(0xCCFF9800.toInt())

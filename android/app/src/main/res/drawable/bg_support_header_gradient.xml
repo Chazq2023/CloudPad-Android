@@ -3,8 +3,8 @@
     android:shape="rectangle">
     <gradient
         android:angle="135"
-        android:startColor="@color/pylux_blue"
-        android:centerColor="@color/primary"
-        android:endColor="@color/primary_dark"
+        android:startColor="?attr/pyluxAccent"
+        android:centerColor="?attr/colorPrimary"
+        android:endColor="?attr/colorPrimaryDark"
         android:type="linear" />
 </shape>

@@ -6,11 +6,11 @@
     android:layout_height="wrap_content"
     android:clickable="true"
     android:focusable="true"
-    app:cardBackgroundColor="@color/support_tier_card_bg"
+    app:cardBackgroundColor="?attr/pyluxSupportTierCardBg"
     app:cardCornerRadius="@dimen/support_tier_card_corner_radius"
     app:cardElevation="2dp"
     app:rippleColor="@color/support_tier_ripple"
-    app:strokeColor="@color/support_tier_card_stroke"
+    app:strokeColor="?attr/pyluxAccentA25"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -49,7 +49,7 @@
                 android:ellipsize="end"
                 android:includeFontPadding="false"
                 android:maxLines="1"
-                android:textColor="@color/support_text_secondary"
+                android:textColor="?attr/pyluxSupportTextSecondary"
                 android:textSize="11sp"
                 tools:text="Strong support for the app." />
         </LinearLayout>
@@ -69,7 +69,7 @@
                 android:includeFontPadding="false"
                 android:minWidth="56dp"
                 android:textAlignment="textEnd"
-                android:textColor="@color/pylux_blue"
+                android:textColor="?attr/pyluxAccent"
                 android:textSize="15sp"
                 android:textStyle="bold"
                 tools:text="$9.99" />
@@ -81,7 +81,7 @@
                 android:contentDescription="@null"
                 android:importantForAccessibility="no"
                 android:src="@drawable/ic_chevron_forward"
-                app:tint="@color/support_text_secondary" />
+                app:tint="?attr/pyluxSupportTextSecondary" />
         </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

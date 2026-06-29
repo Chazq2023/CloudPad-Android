@@ -108,7 +108,7 @@
                     android:lineSpacingExtra="3dp"
                     android:lineSpacingMultiplier="1.2"
                     android:text="@string/donation_paywall_story_lead"
-                    android:textColor="@color/support_text_secondary"
+                    android:textColor="?attr/pyluxSupportTextSecondary"
                     android:textSize="14sp" />
 
                 <LinearLayout
@@ -130,7 +130,7 @@
                             android:paddingTop="2dp"
                             android:paddingEnd="10dp"
                             android:text="@string/bullet_dot"
-                            android:textColor="@color/support_text_secondary"
+                            android:textColor="?attr/pyluxSupportTextSecondary"
                             android:textSize="14sp" />
 
                         <TextView
@@ -139,7 +139,7 @@
                             android:layout_weight="1"
                             android:lineSpacingExtra="2dp"
                             android:text="@string/donation_paywall_bullet_1"
-                            android:textColor="@color/support_text_secondary"
+                            android:textColor="?attr/pyluxSupportTextSecondary"
                             android:textSize="14sp" />
                     </LinearLayout>
 
@@ -155,7 +155,7 @@
                             android:paddingTop="2dp"
                             android:paddingEnd="10dp"
                             android:text="@string/bullet_dot"
-                            android:textColor="@color/support_text_secondary"
+                            android:textColor="?attr/pyluxSupportTextSecondary"
                             android:textSize="14sp" />
 
                         <TextView
@@ -164,7 +164,7 @@
                             android:layout_weight="1"
                             android:lineSpacingExtra="2dp"
                             android:text="@string/donation_paywall_bullet_2"
-                            android:textColor="@color/support_text_secondary"
+                            android:textColor="?attr/pyluxSupportTextSecondary"
                             android:textSize="14sp" />
                     </LinearLayout>
 
@@ -179,7 +179,7 @@
                             android:paddingTop="2dp"
                             android:paddingEnd="10dp"
                             android:text="@string/bullet_dot"
-                            android:textColor="@color/support_text_secondary"
+                            android:textColor="?attr/pyluxSupportTextSecondary"
                             android:textSize="14sp" />
 
                         <TextView
@@ -188,7 +188,7 @@
                             android:layout_weight="1"
                             android:lineSpacingExtra="2dp"
                             android:text="@string/donation_paywall_bullet_3"
-                            android:textColor="@color/support_text_secondary"
+                            android:textColor="?attr/pyluxSupportTextSecondary"
                             android:textSize="14sp" />
                     </LinearLayout>
                 </LinearLayout>
@@ -200,7 +200,7 @@
                     android:layout_marginTop="14dp"
                     android:lineSpacingExtra="3dp"
                     android:lineSpacingMultiplier="1.2"
-                    android:textColor="@color/support_text_secondary"
+                    android:textColor="?attr/pyluxSupportTextSecondary"
                     android:textSize="14sp"
                     android:textStyle="bold"
                     android:visibility="gone" />
@@ -222,7 +222,7 @@
                     android:layout_marginTop="6dp"
                     android:lineSpacingMultiplier="1.15"
                     android:text="@string/donation_paywall_pick_hint"
-                    android:textColor="@color/support_text_secondary"
+                    android:textColor="?attr/pyluxSupportTextSecondary"
                     android:textSize="13sp" />
 
                 <LinearLayout
@@ -252,7 +252,7 @@
                         android:gravity="center"
                         android:lineSpacingMultiplier="1.2"
                         android:text="@string/donation_paywall_external_hint"
-                        android:textColor="@color/support_text_secondary"
+                        android:textColor="?attr/pyluxSupportTextSecondary"
                         android:textSize="14sp" />
 
                     <ImageView
@@ -281,7 +281,7 @@
                         android:minHeight="48dp"
                         android:paddingHorizontal="16dp"
                         android:text="@string/donation_paywall_external_open_link"
-                        android:textColor="@color/accent_light"
+                        android:textColor="?attr/pyluxAccentLight"
                         android:textSize="15sp" />
                 </LinearLayout>
 
@@ -332,7 +332,7 @@
             android:maxLines="2"
             android:ellipsize="end"
             android:text="@string/donation_paywall_trust"
-            android:textColor="@color/support_text_secondary"
+            android:textColor="?attr/pyluxSupportTextSecondary"
             android:textSize="11sp" />
 
         <LinearLayout
@@ -356,7 +356,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
                 android:text="@string/donation_paywall_restore_purchases"
-                android:textColor="@color/accent_light"
+                android:textColor="?attr/pyluxAccentLight"
                 android:textSize="13sp" />
 
             <TextView
@@ -373,7 +373,7 @@
                 android:paddingHorizontal="10dp"
                 android:paddingVertical="4dp"
                 android:text="@string/donation_paywall_maybe_later"
-                android:textColor="@color/accent_light"
+                android:textColor="?attr/pyluxAccentLight"
                 android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
