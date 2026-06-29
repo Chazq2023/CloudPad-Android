@@ -75,6 +75,8 @@ jobs:
             - Fixed Touch Haptics: now reads setting dynamically, uses VibratorManager on Android 12+, and uses stronger click effects
             - Fixed controller vibration: no longer cancels and restarts on every event; only updates when amplitude changes, allowing the motor to sustain properly
             - Fixed vibration during streaming sessions: rumble observer is now always registered regardless of the Vibration toggle state at launch; preference is checked dynamically inside the observer so toggling it mid-session works immediately
+            - Fixed touch haptics on Android 13+: replaced createPredefined(EFFECT_CLICK) with createOneShot(DEFAULT_AMPLITUDE) which bypasses the system haptic feedback gate
+            - Fixed streaming vibration strength: now uses DEFAULT_AMPLITUDE (same as Test button) instead of a low per-rumble value that was too weak to feel on most devices
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
