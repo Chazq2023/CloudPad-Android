@@ -254,7 +254,11 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				Log.i("StreamSession", "EVENT: LoginPinRequest pinIncorrect=${event.pinIncorrect}")
 				_state.postValue(StreamStateLoginPinRequest(event.pinIncorrect))
 			}
-			is RumbleEvent -> _rumbleState.postValue(event)
+			is RumbleEvent ->
+			{
+				Log.i("StreamSession", "EVENT: Rumble left=${event.left} right=${event.right}")
+				_rumbleState.postValue(event)
+			}
 			is AutoRegistEvent -> Log.i("StreamSession", "EVENT: AutoRegist host=${event.host.serverNickname}")
 			is HolepunchEvent -> Log.i("StreamSession", "EVENT: Holepunch")
 		}
