@@ -69,8 +69,9 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Fixed frame drops/microstutters during streaming: replaced fake monotonic counter timestamps with real wall-clock timestamps so MediaCodec can pace frames correctly against vsync
-            - Use releaseOutputBufferAtTime with a 3ms lookahead to give SurfaceFlinger time to schedule each frame at the correct vsync boundary
+            - Fixed frame drops/microstutters: configure MediaCodec in realtime mode (priority=0, operating-rate=60, low-latency=1) so the hardware decoder minimises internal frame buffering and pipelines for 60fps output
+            - Raise video output thread to display-class CPU priority (-8) so it is scheduled promptly when a decoded frame is ready, preventing frames from missing their vsync window
+            - Use real wall-clock timestamps for decoder input so MediaCodec has accurate frame timing context
             - Added ANativeWindow_setFrameRate() hint (API 30+) so SurfaceFlinger knows the surface is fixed-rate game content
 
             ### Outstanding Issues/Improvements
