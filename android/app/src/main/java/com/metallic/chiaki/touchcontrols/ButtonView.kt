@@ -17,7 +17,7 @@ class ButtonView @JvmOverloads constructor(
 	context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr)
 {
-	private val haptics = ButtonHaptics(context)
+	private val haptics = ButtonHaptics(this)
 
 	var buttonPressed = false
 		private set(value)

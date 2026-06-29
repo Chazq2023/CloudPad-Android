@@ -1,43 +1,23 @@
 package com.metallic.chiaki.touchcontrols
 
-import android.content.Context
 import android.os.Build
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
-import android.util.Log
+import android.view.HapticFeedbackConstants
+import android.view.View
 import com.metallic.chiaki.common.Preferences
 
-class ButtonHaptics(val context: Context)
+class ButtonHaptics(val view: View)
 {
-	private val preferences = Preferences(context)
+	private val preferences = Preferences(view.context)
 
 	fun trigger(harder: Boolean = false)
 	{
 		if (!preferences.buttonHapticEnabled) return
-
-		val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-			(context.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-		else
-			@Suppress("DEPRECATION")
-			context.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-
-		if (vibrator == null || !vibrator.hasVibrator())
+		val constant = when
 		{
-			Log.w("ButtonHaptics", "No vibrator available")
-			return
+			harder -> HapticFeedbackConstants.LONG_PRESS
+			Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1 -> HapticFeedbackConstants.KEYBOARD_PRESS
+			else -> HapticFeedbackConstants.VIRTUAL_KEY
 		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-		{
-			// Ramp up then down to avoid the abrupt start/stop click from the motor
-			if (harder)
-				vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 15, 60, 15), intArrayOf(0, 60, 140, 0), -1))
-			else
-				vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 10, 40, 10), intArrayOf(0, 40, 90, 0), -1))
-		}
-		else
-			@Suppress("DEPRECATION")
-			vibrator.vibrate(if (harder) 90 else 60)
+		view.performHapticFeedback(constant, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)
 	}
 }
