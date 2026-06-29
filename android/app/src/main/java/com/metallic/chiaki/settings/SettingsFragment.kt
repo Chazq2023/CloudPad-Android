@@ -28,7 +28,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 	override fun getBoolean(key: String?, defValue: Boolean) = when(key)
 	{
 		preferences.logVerboseKey -> preferences.logVerbose
-		preferences.rumbleEnabledKey -> preferences.rumbleEnabled
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
 		else -> defValue
@@ -39,7 +38,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		when(key)
 		{
 			preferences.logVerboseKey -> preferences.logVerbose = value
-			preferences.rumbleEnabledKey -> preferences.rumbleEnabled = value
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
 		}
@@ -353,4 +351,5 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			getString(summaryRes, pref.value)
 		}
 	}
+
 }

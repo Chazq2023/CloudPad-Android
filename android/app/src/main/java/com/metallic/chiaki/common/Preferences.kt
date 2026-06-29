@@ -93,19 +93,14 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(touchpadOnlyEnabledKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(touchpadOnlyEnabledKey, value).apply() }
 
-	val rumbleEnabledKey get() = resources.getString(R.string.preferences_rumble_enabled_key)
-	var rumbleEnabled
-		get() = sharedPreferences.getBoolean(rumbleEnabledKey, true)
-		set(value) { sharedPreferences.edit().putBoolean(rumbleEnabledKey, value).apply() }
-
 	val motionEnabledKey get() = resources.getString(R.string.preferences_motion_enabled_key)
 	var motionEnabled
-		get() = sharedPreferences.getBoolean(motionEnabledKey, true)
+		get() = sharedPreferences.getBoolean(motionEnabledKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(motionEnabledKey, value).apply() }
 
 	val buttonHapticEnabledKey get() = resources.getString(R.string.preferences_button_haptic_enabled_key)
 	var buttonHapticEnabled
-		get() = sharedPreferences.getBoolean(buttonHapticEnabledKey, true)
+		get() = sharedPreferences.getBoolean(buttonHapticEnabledKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(buttonHapticEnabledKey, value).apply() }
 
 	val logVerboseKey get() = resources.getString(R.string.preferences_log_verbose_key)
@@ -117,11 +112,6 @@ class Preferences(context: Context)
 	var showPerformanceOverlay
 		get() = sharedPreferences.getBoolean(showPerformanceOverlayKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(showPerformanceOverlayKey, value).apply() }
-
-	val pipEnabledKey get() = resources.getString(R.string.preferences_pip_enabled_key)
-	var pipEnabled
-		get() = sharedPreferences.getBoolean(pipEnabledKey, true)
-		set(value) { sharedPreferences.edit().putBoolean(pipEnabledKey, value).apply() }
 
 	val swapCrossMoonKey get() = resources.getString(R.string.preferences_swap_cross_moon_key)
 	var swapCrossMoon

@@ -25,19 +25,12 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 
 	private val _state = MutableLiveData<StreamState>(StreamStateIdle)
 	val state: LiveData<StreamState> get() = _state
-	private val _rumbleState = MutableLiveData<RumbleEvent>(RumbleEvent(0U, 0U))
-	val rumbleState: LiveData<RumbleEvent> get() = _rumbleState
 
 	private var surfaceTexture: SurfaceTexture? = null
 	private var surface: Surface? = null
 
 	/** Holepunch session for PSN connections (kept alive for session lifetime) */
 	private var holepunchSession: HolepunchSession? = null
-
-	/** When true, surfaceDestroyed will not call setSurface(null) on the native session.
-	 *  Set to true during PiP transitions where the surface is briefly destroyed and
-	 *  recreated, and setSurface(null) blocks on the native decoder. */
-	var skipNativeSurfaceCleanup = false
 
 	init
 	{
@@ -259,7 +252,7 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				Log.i("StreamSession", "EVENT: LoginPinRequest pinIncorrect=${event.pinIncorrect}")
 				_state.postValue(StreamStateLoginPinRequest(event.pinIncorrect))
 			}
-			is RumbleEvent -> _rumbleState.postValue(event)
+			is RumbleEvent -> { }
 			is AutoRegistEvent -> Log.i("StreamSession", "EVENT: AutoRegist host=${event.host.serverNickname}")
 			is HolepunchEvent -> Log.i("StreamSession", "EVENT: Holepunch")
 		}
@@ -284,17 +277,9 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 
 			override fun surfaceDestroyed(holder: SurfaceHolder)
 			{
-				Log.i("StreamSession", "surfaceDestroyed: session=${session != null}, skipNativeCleanup=$skipNativeSurfaceCleanup")
+				Log.i("StreamSession", "surfaceDestroyed: session=${session != null}")
 				this@StreamSession.surface = null
-				if (!skipNativeSurfaceCleanup)
-				{
-					// Normal cleanup - session is being shut down or activity is finishing
-					session?.setSurface(null)
-					Log.i("StreamSession", "surfaceDestroyed: setSurface(null) done")
-				}
-				// When skipNativeSurfaceCleanup is true (PiP transition), don't call
-				// setSurface(null) - it blocks the native decoder. The new surface
-				// will be provided via surfaceChanged shortly after.
+				session?.setSurface(null)
 			}
 		})
 	}
