@@ -13,6 +13,7 @@ import android.os.*
 import android.util.Log
 import android.view.*
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -167,6 +168,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		if(vibrator != null)
 		{
 			var isVibrating = false
+			var rumbleDetected = false
 			viewModel.session.rumbleState.observe(this, Observer { event ->
 				if(!Preferences(this@StreamActivity).rumbleEnabled)
 				{
@@ -175,6 +177,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				}
 				val hasRumble = event.left > 0U || event.right > 0U
 				Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} hasRumble=$hasRumble")
+				if(hasRumble && !rumbleDetected)
+				{
+					rumbleDetected = true
+					Toast.makeText(this@StreamActivity, "Vibration signal received from server", Toast.LENGTH_SHORT).show()
+				}
 				if(hasRumble == isVibrating) return@Observer
 				isVibrating = hasRumble
 				vibrator.cancel()

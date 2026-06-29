@@ -29,9 +29,9 @@ class ButtonHaptics(val context: Context)
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			vibrator.vibrate(VibrationEffect.createOneShot(if (harder) 25 else 15, VibrationEffect.DEFAULT_AMPLITUDE))
+			vibrator.vibrate(VibrationEffect.createOneShot(if (harder) 90 else 60, 120))
 		else
 			@Suppress("DEPRECATION")
-			vibrator.vibrate(if (harder) 25 else 15)
+			vibrator.vibrate(if (harder) 90 else 60)
 	}
 }
