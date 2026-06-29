@@ -32,6 +32,11 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	/** Holepunch session for PSN connections (kept alive for session lifetime) */
 	private var holepunchSession: HolepunchSession? = null
 
+	/** When true, surfaceDestroyed will not call setSurface(null) on the native session.
+	 *  Set to true during PiP transitions where the surface is briefly destroyed and
+	 *  recreated, and setSurface(null) blocks on the native decoder. */
+	var skipNativeSurfaceCleanup = false
+
 	init
 	{
 		input.controllerStateChangedCallback = {
@@ -277,9 +282,13 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 
 			override fun surfaceDestroyed(holder: SurfaceHolder)
 			{
-				Log.i("StreamSession", "surfaceDestroyed: session=${session != null}")
+				Log.i("StreamSession", "surfaceDestroyed: session=${session != null}, skipNativeCleanup=$skipNativeSurfaceCleanup")
 				this@StreamSession.surface = null
-				session?.setSurface(null)
+				if (!skipNativeSurfaceCleanup)
+				{
+					session?.setSurface(null)
+					Log.i("StreamSession", "surfaceDestroyed: setSurface(null) done")
+				}
 			}
 		})
 	}

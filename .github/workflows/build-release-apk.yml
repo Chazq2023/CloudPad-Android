@@ -69,10 +69,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Removed Picture-in-Picture (PiP) completely
-            - Removed Vibration/Rumble setting and Test Vibration button (PS Cloud servers do not send rumble events to Android clients)
-            - Touch Haptics, Motion now default to off
-            - Fixed Touch Haptics: now uses a waveform with gradual ramp-up and ramp-down, producing a soft rumble feel on button presses without the audible motor click noise
+            - Restored Picture-in-Picture (PiP) support with toggle in settings (enabled by default)
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

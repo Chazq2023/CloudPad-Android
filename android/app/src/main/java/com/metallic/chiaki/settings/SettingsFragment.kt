@@ -30,6 +30,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.logVerboseKey -> preferences.logVerbose
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
+		preferences.pipEnabledKey -> preferences.pipEnabled
 		else -> defValue
 	}
 
@@ -40,6 +41,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.logVerboseKey -> preferences.logVerbose = value
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
+			preferences.pipEnabledKey -> preferences.pipEnabled = value
 		}
 	}
 
