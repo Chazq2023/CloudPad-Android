@@ -37,7 +37,6 @@ import com.metallic.chiaki.touchcontrols.TouchControlsFragment
 import com.metallic.chiaki.touchcontrols.TouchpadOnlyFragment
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
-import kotlin.math.min
 
 private sealed class DialogContents
 private object StreamQuitDialog: DialogContents()
@@ -167,17 +166,21 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			getSystemService(VIBRATOR_SERVICE) as? Vibrator
 		if(vibrator != null)
 		{
-			var lastAmplitude = -1
+			var isVibrating = false
 			viewModel.session.rumbleState.observe(this, Observer { event ->
-				if(!Preferences(this@StreamActivity).rumbleEnabled) return@Observer
-				val amplitude = min(255, (event.left.toInt() + event.right.toInt()) / 2)
-				Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} amplitude=$amplitude")
-				if(amplitude == lastAmplitude) return@Observer
-				lastAmplitude = amplitude
+				if(!Preferences(this@StreamActivity).rumbleEnabled)
+				{
+					if(isVibrating) { vibrator.cancel(); isVibrating = false }
+					return@Observer
+				}
+				val hasRumble = event.left > 0U || event.right > 0U
+				Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} hasRumble=$hasRumble")
+				if(hasRumble == isVibrating) return@Observer
+				isVibrating = hasRumble
 				vibrator.cancel()
-				if(amplitude == 0) return@Observer
+				if(!hasRumble) return@Observer
 				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-					vibrator.vibrate(VibrationEffect.createOneShot(3000, amplitude))
+					vibrator.vibrate(VibrationEffect.createOneShot(3000, VibrationEffect.DEFAULT_AMPLITUDE))
 				else
 					@Suppress("DEPRECATION")
 					vibrator.vibrate(3000)
