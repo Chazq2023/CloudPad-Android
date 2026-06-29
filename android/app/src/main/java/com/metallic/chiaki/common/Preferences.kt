@@ -673,6 +673,24 @@ class Preferences(context: Context)
 		sharedPreferences.edit().putBoolean(LICENSE_AGREED_KEY, agreed).apply()
 	}
 
+	val themeColourKey get() = resources.getString(R.string.preferences_theme_colour_key)
+
+	fun getThemeColour(): String = sharedPreferences.getString(themeColourKey, "pink") ?: "pink"
+
+	fun setThemeColour(value: String) {
+		sharedPreferences.edit().putString(themeColourKey, value).apply()
+	}
+
+	fun isBlueTheme(): Boolean = getThemeColour() == "blue"
+
+	fun getThemeStyleRes(): Int = when (getThemeColour()) {
+		"blue"   -> R.style.AppTheme_Blue
+		"green"  -> R.style.AppTheme_Green
+		"yellow" -> R.style.AppTheme_Yellow
+		"orange" -> R.style.AppTheme_Orange
+		else     -> R.style.AppTheme
+	}
+
 	private val CONTROLLER_MAPPING_KEY = "controller_mapping_json"
 
 	fun saveControllerMapping(mapping: Map<com.metallic.chiaki.session.ControllerAction, com.metallic.chiaki.session.PhysicalInput>)

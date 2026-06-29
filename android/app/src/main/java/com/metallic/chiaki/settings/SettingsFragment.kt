@@ -55,6 +55,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.cloudResolutionPsnowKey -> preferences.getCloudResolutionPsnow().toString()
 		preferences.cloudDatacenterPsnowKey -> preferences.getCloudDatacenterPsnow()
 		preferences.cloudDatacenterPscloudKey -> preferences.getCloudDatacenterPscloud()
+		preferences.themeColourKey -> preferences.getThemeColour()
 		else -> defValue
 	}
 
@@ -82,6 +83,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudResolutionPsnowKey -> preferences.setCloudResolutionPsnow(value?.toIntOrNull() ?: 720)
 			preferences.cloudDatacenterPsnowKey -> preferences.setCloudDatacenterPsnow(value ?: "Auto")
 			preferences.cloudDatacenterPscloudKey -> preferences.setCloudDatacenterPscloud(value ?: "Auto")
+			preferences.themeColourKey -> preferences.setThemeColour(value ?: "pink")
 		}
 	}
 
@@ -200,7 +202,14 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 
 		// View License
 		preferenceScreen.findPreference<Preference>("view_license")?.setOnPreferenceClickListener { viewLicense(); true }
-		
+
+		// Theme colour: save first, then recreate so the new theme takes effect
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_theme_colour_key))
+			?.setOnPreferenceChangeListener { _, newValue ->
+				preferences.setThemeColour(newValue as? String ?: "pink")
+				requireActivity().recreate()
+				true
+			}
 	}
 
 	override fun onDestroy()

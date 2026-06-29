@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.metallic.chiaki.common.Preferences
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivitySettingsBinding
 
@@ -22,6 +23,8 @@ class SettingsActivity: AppCompatActivity(), PreferenceFragmentCompat.OnPreferen
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
+		val prefs = Preferences(this)
+		if (prefs.getThemeColour() != "pink") setTheme(prefs.getThemeStyleRes())
 		super.onCreate(savedInstanceState)
 		binding = ActivitySettingsBinding.inflate(layoutInflater)
 		setContentView(binding.root)

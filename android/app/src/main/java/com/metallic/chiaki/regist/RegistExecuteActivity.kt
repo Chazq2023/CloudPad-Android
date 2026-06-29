@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.pylux.stream.R
 import com.metallic.chiaki.common.MacAddress
@@ -35,6 +36,8 @@ class RegistExecuteActivity: AppCompatActivity()
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
+		val prefs = Preferences(this)
+		if (prefs.getThemeColour() != "pink") setTheme(prefs.getThemeStyleRes())
 		super.onCreate(savedInstanceState)
 		binding = ActivityRegistExecuteBinding.inflate(layoutInflater)
 		setContentView(binding.root)

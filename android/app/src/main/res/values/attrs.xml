@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Pylux theme colour attributes -->
+    <attr name="pyluxAccent" format="color"/>
+    <attr name="pyluxAccentLight" format="color"/>
+    <attr name="pyluxAccentA12" format="color"/>
+    <attr name="pyluxAccentA20" format="color"/>
+    <attr name="pyluxAccentA25" format="color"/>
+    <attr name="pyluxAccentA30" format="color"/>
+    <attr name="pyluxAccentA50" format="color"/>
+    <attr name="pyluxAccentA70" format="color"/>
+    <attr name="pyluxAccentA80" format="color"/>
+    <attr name="pyluxToolbarBg" format="color"/>
+    <attr name="pyluxSupportTierCardBg" format="color"/>
+    <attr name="pyluxSupportTextSecondary" format="color"/>
+    <attr name="pyluxSupportBadgeBg" format="color"/>
+    <attr name="pyluxToolbarTheme" format="reference"/>
+
     <attr name="drawableIdle" format="reference" />
     <attr name="drawablePressed" format="reference" />
 

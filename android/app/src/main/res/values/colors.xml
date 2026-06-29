@@ -38,6 +38,85 @@
 
     <color name="toolbar_bg">#0B050D</color>
 
+    <!-- Pylux Dark Neon Blue Theme -->
+    <color name="primary_blue">#06101A</color>
+    <color name="primary_dark_blue">#030A0F</color>
+    <color name="accent_blue">#00B4FF</color>
+    <color name="accent_light_blue">#4FC8FF</color>
+    <color name="toolbar_bg_blue">#03090E</color>
+    <color name="support_tier_card_bg_blue">#06101A</color>
+    <color name="support_text_secondary_blue">#9BBDD4</color>
+    <color name="support_badge_bg_blue">#4D00B4FF</color>
+
+    <!-- Pink theme accent alpha variants (for drawables/color states) -->
+    <color name="accent_pink_a12">#20FF149D</color>
+    <color name="accent_pink_a20">#33FF149D</color>
+    <color name="accent_pink_a25">#40FF149D</color>
+    <color name="accent_pink_a30">#4DFF149D</color>
+    <color name="accent_pink_a50">#80FF149D</color>
+    <color name="accent_pink_a70">#B3FF149D</color>
+    <color name="accent_pink_a80">#CCFF149D</color>
+
+    <!-- Blue theme accent alpha variants -->
+    <color name="accent_blue_a12">#2000B4FF</color>
+    <color name="accent_blue_a20">#3300B4FF</color>
+    <color name="accent_blue_a25">#4000B4FF</color>
+    <color name="accent_blue_a30">#4D00B4FF</color>
+    <color name="accent_blue_a50">#8000B4FF</color>
+    <color name="accent_blue_a70">#B300B4FF</color>
+    <color name="accent_blue_a80">#CC00B4FF</color>
+
+    <!-- Pylux Dark Neon Green Theme -->
+    <color name="primary_green">#071A0D</color>
+    <color name="primary_dark_green">#030C06</color>
+    <color name="accent_green">#00E676</color>
+    <color name="accent_light_green">#4FFFA0</color>
+    <color name="toolbar_bg_green">#030C05</color>
+    <color name="support_tier_card_bg_green">#071A0D</color>
+    <color name="support_text_secondary_green">#9BD4B0</color>
+    <color name="support_badge_bg_green">#4D00E676</color>
+    <color name="accent_green_a12">#2000E676</color>
+    <color name="accent_green_a20">#3300E676</color>
+    <color name="accent_green_a25">#4000E676</color>
+    <color name="accent_green_a30">#4D00E676</color>
+    <color name="accent_green_a50">#8000E676</color>
+    <color name="accent_green_a70">#B300E676</color>
+    <color name="accent_green_a80">#CC00E676</color>
+
+    <!-- Pylux Dark Yellow Theme -->
+    <color name="primary_yellow">#1A1500</color>
+    <color name="primary_dark_yellow">#0D0B00</color>
+    <color name="accent_yellow">#FFE000</color>
+    <color name="accent_light_yellow">#FFEE4F</color>
+    <color name="toolbar_bg_yellow">#0A0900</color>
+    <color name="support_tier_card_bg_yellow">#1A1500</color>
+    <color name="support_text_secondary_yellow">#D4C89B</color>
+    <color name="support_badge_bg_yellow">#4DFFE000</color>
+    <color name="accent_yellow_a12">#20FFE000</color>
+    <color name="accent_yellow_a20">#33FFE000</color>
+    <color name="accent_yellow_a25">#40FFE000</color>
+    <color name="accent_yellow_a30">#4DFFE000</color>
+    <color name="accent_yellow_a50">#80FFE000</color>
+    <color name="accent_yellow_a70">#B3FFE000</color>
+    <color name="accent_yellow_a80">#CCFFE000</color>
+
+    <!-- Pylux Dark Orange Theme -->
+    <color name="primary_orange">#1A0900</color>
+    <color name="primary_dark_orange">#0D0500</color>
+    <color name="accent_orange">#FF6D00</color>
+    <color name="accent_light_orange">#FFA040</color>
+    <color name="toolbar_bg_orange">#0A0600</color>
+    <color name="support_tier_card_bg_orange">#1A0900</color>
+    <color name="support_text_secondary_orange">#D4AA9B</color>
+    <color name="support_badge_bg_orange">#4DFF6D00</color>
+    <color name="accent_orange_a12">#20FF6D00</color>
+    <color name="accent_orange_a20">#33FF6D00</color>
+    <color name="accent_orange_a25">#40FF6D00</color>
+    <color name="accent_orange_a30">#4DFF6D00</color>
+    <color name="accent_orange_a50">#80FF6D00</color>
+    <color name="accent_orange_a70">#B3FF6D00</color>
+    <color name="accent_orange_a80">#CCFF6D00</color>
+
     <!-- Support / paywall sheet -->
     <color name="support_header_icon_scrim">#33FFFFFF</color>
     <color name="support_drag_handle">#66FFFFFF</color>

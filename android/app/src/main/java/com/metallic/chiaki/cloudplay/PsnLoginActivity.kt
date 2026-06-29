@@ -7,6 +7,7 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -74,6 +75,8 @@ class PsnLoginActivity : AppCompatActivity() {
 	private var finalising = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
+		val prefs = Preferences(this)
+		if (prefs.getThemeColour() != "pink") setTheme(prefs.getThemeStyleRes())
 		super.onCreate(savedInstanceState)
 
 		tokenManager = SecureTokenManager(this)
@@ -85,23 +88,33 @@ class PsnLoginActivity : AppCompatActivity() {
 			"Tap Sign into account, sign in with Sony in your browser, then grab and paste your SSO cookie value."
 	}
 
+	private fun resolveThemeColor(attrId: Int): Int {
+		val tv = TypedValue()
+		theme.resolveAttribute(attrId, tv, true)
+		return tv.data
+	}
+
 	private fun styleCloudPadButton(button: Button) {
+		val accent = resolveThemeColor(R.attr.pyluxAccent)
+		val accentLight = resolveThemeColor(R.attr.pyluxAccentLight)
 		button.setTextColor(Color.WHITE)
 		button.background = android.graphics.drawable.GradientDrawable().apply {
 			shape = android.graphics.drawable.GradientDrawable.RECTANGLE
 			cornerRadius = 18f
-			setColor(Color.parseColor("#FF149D"))
-			setStroke(2, Color.parseColor("#FF4FBE"))
+			setColor(accent)
+			setStroke(2, accentLight)
 		}
 	}
 
 	private fun styleCloudPadCancelButton(button: Button) {
+		val accent = resolveThemeColor(R.attr.pyluxAccent)
+		val accentA30 = resolveThemeColor(R.attr.pyluxAccentA30)
 		button.setTextColor(Color.WHITE)
 		button.background = android.graphics.drawable.GradientDrawable().apply {
 			shape = android.graphics.drawable.GradientDrawable.RECTANGLE
 			cornerRadius = 18f
-			setColor(Color.parseColor("#4DFF149D"))
-			setStroke(2, Color.parseColor("#FF149D"))
+			setColor(accentA30)
+			setStroke(2, accent)
 		}
 	}
 

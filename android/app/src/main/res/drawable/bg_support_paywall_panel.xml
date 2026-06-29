@@ -3,7 +3,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
-            <solid android:color="@color/pylux_blue" />
+            <solid android:color="?attr/pyluxAccent" />
         </shape>
     </item>
     <item
@@ -12,7 +12,7 @@
         android:right="@dimen/support_paywall_frame_stroke"
         android:top="@dimen/support_paywall_frame_stroke">
         <shape android:shape="rectangle">
-            <solid android:color="@color/primary_dark" />
+            <solid android:color="?attr/colorPrimaryDark" />
         </shape>
     </item>
 </layer-list>

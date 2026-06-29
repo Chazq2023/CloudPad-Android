@@ -57,7 +57,7 @@
             android:textSize="9sp"
             android:textStyle="bold"
             android:textColor="#FFFFFF"
-            android:background="#4DFF149D"
+            android:background="?attr/pyluxAccentA30"
             android:visibility="gone" />
 
         <LinearLayout

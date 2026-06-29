@@ -11,9 +11,130 @@
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog</item>
         <item name="alertDialogTheme">@style/AppTheme.AlertDialog.NonMaterial</item>
         <item name="android:windowActivityTransitions">true</item>
+        <!-- Pylux brand colour attrs — Neon Pink default -->
+        <item name="pyluxAccent">@color/accent</item>
+        <item name="pyluxAccentLight">@color/accent_light</item>
+        <item name="pyluxAccentA12">@color/accent_pink_a12</item>
+        <item name="pyluxAccentA20">@color/accent_pink_a20</item>
+        <item name="pyluxAccentA25">@color/accent_pink_a25</item>
+        <item name="pyluxAccentA30">@color/accent_pink_a30</item>
+        <item name="pyluxAccentA50">@color/accent_pink_a50</item>
+        <item name="pyluxAccentA70">@color/accent_pink_a70</item>
+        <item name="pyluxAccentA80">@color/accent_pink_a80</item>
+        <item name="pyluxToolbarBg">@color/toolbar_bg</item>
+        <item name="pyluxToolbarTheme">@style/AppTheme.Toolbar</item>
+        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg</item>
+        <item name="pyluxSupportTextSecondary">@color/support_text_secondary</item>
+        <item name="pyluxSupportBadgeBg">@color/support_badge_bg</item>
+    </style>
+
+    <!-- Neon Blue variant — all activity/fragment themes that extend AppTheme pick this up -->
+    <style name="AppTheme.Blue" parent="AppTheme">
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorPrimaryDark">@color/primary_dark_blue</item>
+        <item name="colorAccent">@color/accent_blue</item>
+        <item name="colorSecondary">@color/accent_blue</item>
+        <item name="pyluxAccent">@color/accent_blue</item>
+        <item name="pyluxAccentLight">@color/accent_light_blue</item>
+        <item name="pyluxAccentA12">@color/accent_blue_a12</item>
+        <item name="pyluxAccentA20">@color/accent_blue_a20</item>
+        <item name="pyluxAccentA25">@color/accent_blue_a25</item>
+        <item name="pyluxAccentA30">@color/accent_blue_a30</item>
+        <item name="pyluxAccentA50">@color/accent_blue_a50</item>
+        <item name="pyluxAccentA70">@color/accent_blue_a70</item>
+        <item name="pyluxAccentA80">@color/accent_blue_a80</item>
+        <item name="pyluxToolbarBg">@color/toolbar_bg_blue</item>
+        <item name="pyluxToolbarTheme">@style/AppTheme.Blue.Toolbar</item>
+        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_blue</item>
+        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_blue</item>
+        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_blue</item>
     </style>
 
     <style name="AppTheme.Toolbar" parent="AppTheme">
+        <item name="android:textColorSecondary">#fff</item>
+        <item name="actionButtonStyle">@style/AppTheme.Toolbar.ActionButton</item>
+    </style>
+
+    <!-- Blue variant — keeps all pylux attrs from AppTheme.Blue, adds toolbar overrides -->
+    <style name="AppTheme.Blue.Toolbar" parent="AppTheme.Blue">
+        <item name="android:textColorSecondary">#fff</item>
+        <item name="actionButtonStyle">@style/AppTheme.Toolbar.ActionButton</item>
+    </style>
+
+    <!-- Neon Green theme -->
+    <style name="AppTheme.Green" parent="AppTheme">
+        <item name="colorPrimary">@color/primary_green</item>
+        <item name="colorPrimaryDark">@color/primary_dark_green</item>
+        <item name="colorAccent">@color/accent_green</item>
+        <item name="colorSecondary">@color/accent_green</item>
+        <item name="pyluxAccent">@color/accent_green</item>
+        <item name="pyluxAccentLight">@color/accent_light_green</item>
+        <item name="pyluxAccentA12">@color/accent_green_a12</item>
+        <item name="pyluxAccentA20">@color/accent_green_a20</item>
+        <item name="pyluxAccentA25">@color/accent_green_a25</item>
+        <item name="pyluxAccentA30">@color/accent_green_a30</item>
+        <item name="pyluxAccentA50">@color/accent_green_a50</item>
+        <item name="pyluxAccentA70">@color/accent_green_a70</item>
+        <item name="pyluxAccentA80">@color/accent_green_a80</item>
+        <item name="pyluxToolbarBg">@color/toolbar_bg_green</item>
+        <item name="pyluxToolbarTheme">@style/AppTheme.Green.Toolbar</item>
+        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_green</item>
+        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_green</item>
+        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_green</item>
+    </style>
+    <style name="AppTheme.Green.Toolbar" parent="AppTheme.Green">
+        <item name="android:textColorSecondary">#fff</item>
+        <item name="actionButtonStyle">@style/AppTheme.Toolbar.ActionButton</item>
+    </style>
+
+    <!-- Yellow theme -->
+    <style name="AppTheme.Yellow" parent="AppTheme">
+        <item name="colorPrimary">@color/primary_yellow</item>
+        <item name="colorPrimaryDark">@color/primary_dark_yellow</item>
+        <item name="colorAccent">@color/accent_yellow</item>
+        <item name="colorSecondary">@color/accent_yellow</item>
+        <item name="pyluxAccent">@color/accent_yellow</item>
+        <item name="pyluxAccentLight">@color/accent_light_yellow</item>
+        <item name="pyluxAccentA12">@color/accent_yellow_a12</item>
+        <item name="pyluxAccentA20">@color/accent_yellow_a20</item>
+        <item name="pyluxAccentA25">@color/accent_yellow_a25</item>
+        <item name="pyluxAccentA30">@color/accent_yellow_a30</item>
+        <item name="pyluxAccentA50">@color/accent_yellow_a50</item>
+        <item name="pyluxAccentA70">@color/accent_yellow_a70</item>
+        <item name="pyluxAccentA80">@color/accent_yellow_a80</item>
+        <item name="pyluxToolbarBg">@color/toolbar_bg_yellow</item>
+        <item name="pyluxToolbarTheme">@style/AppTheme.Yellow.Toolbar</item>
+        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_yellow</item>
+        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_yellow</item>
+        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_yellow</item>
+    </style>
+    <style name="AppTheme.Yellow.Toolbar" parent="AppTheme.Yellow">
+        <item name="android:textColorSecondary">#fff</item>
+        <item name="actionButtonStyle">@style/AppTheme.Toolbar.ActionButton</item>
+    </style>
+
+    <!-- Orange theme -->
+    <style name="AppTheme.Orange" parent="AppTheme">
+        <item name="colorPrimary">@color/primary_orange</item>
+        <item name="colorPrimaryDark">@color/primary_dark_orange</item>
+        <item name="colorAccent">@color/accent_orange</item>
+        <item name="colorSecondary">@color/accent_orange</item>
+        <item name="pyluxAccent">@color/accent_orange</item>
+        <item name="pyluxAccentLight">@color/accent_light_orange</item>
+        <item name="pyluxAccentA12">@color/accent_orange_a12</item>
+        <item name="pyluxAccentA20">@color/accent_orange_a20</item>
+        <item name="pyluxAccentA25">@color/accent_orange_a25</item>
+        <item name="pyluxAccentA30">@color/accent_orange_a30</item>
+        <item name="pyluxAccentA50">@color/accent_orange_a50</item>
+        <item name="pyluxAccentA70">@color/accent_orange_a70</item>
+        <item name="pyluxAccentA80">@color/accent_orange_a80</item>
+        <item name="pyluxToolbarBg">@color/toolbar_bg_orange</item>
+        <item name="pyluxToolbarTheme">@style/AppTheme.Orange.Toolbar</item>
+        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_orange</item>
+        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_orange</item>
+        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_orange</item>
+    </style>
+    <style name="AppTheme.Orange.Toolbar" parent="AppTheme.Orange">
         <item name="android:textColorSecondary">#fff</item>
         <item name="actionButtonStyle">@style/AppTheme.Toolbar.ActionButton</item>
     </style>
@@ -27,7 +148,7 @@
 
     <style name="AppTheme.FloatingActionButtonSpeedDial">
         <item name="tint">@color/floating_action_button_speed_dial_tint</item>
-        <item name="android:backgroundTint">@color/floating_action_button_speed_dial_background</item>
+        <item name="android:backgroundTint">?attr/pyluxAccent</item>
         <item name="android:textColor">@color/floating_action_button_speed_dial_tint</item>
     </style>
 
@@ -44,7 +165,7 @@
     </style>
 
     <style name="AppTheme.AlertDialog.Button" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
-        <item name="android:textColor">@color/accent</item>
+        <item name="android:textColor">?attr/pyluxAccent</item>
     </style>
 
     <style name="MageTheme" parent="Theme.MaterialComponents.NoActionBar">
