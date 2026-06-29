@@ -7,6 +7,8 @@
 #include <media/NdkMediaCodec.h>
 #include <media/NdkMediaFormat.h>
 #include <android/native_window_jni.h>
+#include <android/native_window.h>
+#include <android/api-level.h>
 
 #include <string.h>
 
@@ -22,15 +24,29 @@ static int64_t now_ms()
 	return ((int64_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
 }
 
+static int64_t now_us()
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ((int64_t)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+}
+
+static int64_t now_ns()
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return ((int64_t)ts.tv_sec * 1000000000LL) + ts.tv_nsec;
+}
+
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
 
-ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, ChiakiCodec codec)
+ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec)
 {
 	decoder->log = log;
 	decoder->codec = NULL;
-	decoder->timestamp_cur = 0;
 	decoder->target_width = target_width;
 	decoder->target_height = target_height;
+	decoder->target_fps = target_fps;
 	decoder->target_codec = codec;
 	decoder->shutdown_output = false;
 	return chiaki_mutex_init(&decoder->codec_mutex, false);
@@ -44,7 +60,7 @@ static void kill_decoder(AndroidChiakiVideoDecoder *decoder)
 	if(codec_buf_index >= 0)
 	{
 		CHIAKI_LOGI(decoder->log, "Video Decoder sending EOS buffer");
-		AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, 0, decoder->timestamp_cur++, AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
+		AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, 0, now_us(), AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM);
 		AMediaCodec_stop(decoder->codec);
 		chiaki_mutex_unlock(&decoder->codec_mutex);
 		chiaki_thread_join(&decoder->output_thread, NULL);
@@ -96,6 +112,15 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 	}
 
 	decoder->window = ANativeWindow_fromSurface(env, surface);
+
+#if __ANDROID_API__ >= 30
+	if(android_get_device_api_level() >= 30)
+	{
+		// ANATIVEWINDOW_FRAME_RATE_COMPATIBILITY_FIXED_SOURCE (1) = fixed-rate game/stream content
+		ANativeWindow_setFrameRate(decoder->window, (float)decoder->target_fps, 1);
+		CHIAKI_LOGI(decoder->log, "Set ANativeWindow frame rate to %d fps", decoder->target_fps);
+	}
+#endif
 
 	const char *mime = chiaki_codec_is_h265(decoder->target_codec) ? "video/hevc" : "video/avc";
 	CHIAKI_LOGI(decoder->log, "Initializing decoder with mime %s", mime);
@@ -208,10 +233,9 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
     		(size_t)codec_buf_index,
     		0,
     		codec_sample_size,
-    		decoder->timestamp_cur++,
+    		now_us(),
     		0
 		);
-		// timestamp just raised by 1 for maximum realtime
 		buf += codec_sample_size;
 		buf_size -= codec_sample_size;
 		}
@@ -253,10 +277,13 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 		ssize_t status = AMediaCodec_dequeueOutputBuffer(decoder->codec, &info, -1);
 		if(status >= 0) {
     		if(info.size != 0) {
-    			AMediaCodec_releaseOutputBuffer(
+				// Schedule 3ms ahead so SurfaceFlinger can latch at the next vsync
+				// without dropping the frame if the output thread runs mid-interval
+				int64_t render_time_ns = now_ns() + 3000000LL;
+    			AMediaCodec_releaseOutputBufferAtTime(
         			decoder->codec,
         			(size_t)status,
-        			true
+					render_time_ns
     			);
 			} else {
         		AMediaCodec_releaseOutputBuffer(

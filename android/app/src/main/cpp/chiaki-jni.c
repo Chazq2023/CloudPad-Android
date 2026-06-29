@@ -586,6 +586,7 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	session->metrics_packet_loss = 0.0;
 	session->metrics_drops = 0;
 	err = android_chiaki_video_decoder_init(&session->video_decoder, log, connect_info.video_profile.width, connect_info.video_profile.height,
+			(int32_t)connect_info.video_profile.max_fps,
 			connect_info.ps5 ? connect_info.video_profile.codec : CHIAKI_CODEC_H264);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
