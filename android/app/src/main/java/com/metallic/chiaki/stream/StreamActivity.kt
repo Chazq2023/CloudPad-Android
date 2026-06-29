@@ -160,27 +160,28 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			binding.overlay.isGone = true
 		}
 
-		if(Preferences(this).rumbleEnabled)
-		{
+		val vibrator: Vibrator? = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+			(getSystemService(VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
+		else
 			@Suppress("DEPRECATION")
-			val vibrator = getSystemService(VIBRATOR_SERVICE) as? Vibrator
-			if(vibrator != null)
-			{
-				var lastAmplitude = -1
-				viewModel.session.rumbleState.observe(this, Observer { event ->
-					val amplitude = min(255, (event.left.toInt() + event.right.toInt()) / 2)
-					Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} amplitude=$amplitude")
-					if(amplitude == lastAmplitude) return@Observer
-					lastAmplitude = amplitude
-					vibrator.cancel()
-					if(amplitude == 0) return@Observer
-					if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-						vibrator.vibrate(VibrationEffect.createOneShot(3000, amplitude))
-					else
-						@Suppress("DEPRECATION")
-						vibrator.vibrate(3000)
-				})
-			}
+			getSystemService(VIBRATOR_SERVICE) as? Vibrator
+		if(vibrator != null)
+		{
+			var lastAmplitude = -1
+			viewModel.session.rumbleState.observe(this, Observer { event ->
+				if(!Preferences(this@StreamActivity).rumbleEnabled) return@Observer
+				val amplitude = min(255, (event.left.toInt() + event.right.toInt()) / 2)
+				Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} amplitude=$amplitude")
+				if(amplitude == lastAmplitude) return@Observer
+				lastAmplitude = amplitude
+				vibrator.cancel()
+				if(amplitude == 0) return@Observer
+				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+					vibrator.vibrate(VibrationEffect.createOneShot(3000, amplitude))
+				else
+					@Suppress("DEPRECATION")
+					vibrator.vibrate(3000)
+			})
 		}
 	}
 

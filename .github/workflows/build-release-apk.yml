@@ -74,6 +74,7 @@ jobs:
             - Added "Test Vibration" button in settings to verify the vibration motor works
             - Fixed Touch Haptics: now reads setting dynamically, uses VibratorManager on Android 12+, and uses stronger click effects
             - Fixed controller vibration: no longer cancels and restarts on every event; only updates when amplitude changes, allowing the motor to sustain properly
+            - Fixed vibration during streaming sessions: rumble observer is now always registered regardless of the Vibration toggle state at launch; preference is checked dynamically inside the observer so toggling it mid-session works immediately
 
             ### Outstanding Issues/Improvements
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
