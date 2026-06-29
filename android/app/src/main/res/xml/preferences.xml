@@ -54,18 +54,6 @@
             app:icon="@drawable/ic_gamepad" />
 
         <SwitchPreference
-            app:key="@string/preferences_rumble_enabled_key"
-            app:title="@string/preferences_rumble_enabled_title"
-            app:summary="@string/preferences_rumble_enabled_summary"
-            app:icon="@drawable/ic_rumble" />
-
-        <Preference
-            app:key="test_vibration"
-            app:title="@string/preferences_test_vibration_title"
-            app:summary="@string/preferences_test_vibration_summary"
-            app:icon="@drawable/ic_rumble" />
-
-        <SwitchPreference
             app:key="@string/preferences_motion_enabled_key"
             app:title="@string/preferences_motion_enabled_title"
             app:summary="@string/preferences_motion_enabled_summary"

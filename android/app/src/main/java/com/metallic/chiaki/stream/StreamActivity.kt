@@ -13,7 +13,6 @@ import android.os.*
 import android.util.Log
 import android.view.*
 import android.widget.EditText
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -160,39 +159,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			binding.overlay.isGone = true
 		}
 
-		val vibrator: Vibrator? = if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-			(getSystemService(VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-		else
-			@Suppress("DEPRECATION")
-			getSystemService(VIBRATOR_SERVICE) as? Vibrator
-		if(vibrator != null)
-		{
-			var isVibrating = false
-			var rumbleDetected = false
-			viewModel.session.rumbleState.observe(this, Observer { event ->
-				if(!Preferences(this@StreamActivity).rumbleEnabled)
-				{
-					if(isVibrating) { vibrator.cancel(); isVibrating = false }
-					return@Observer
-				}
-				val hasRumble = event.left > 0U || event.right > 0U
-				Log.i("StreamActivity", "Rumble: left=${event.left} right=${event.right} hasRumble=$hasRumble")
-				if(hasRumble && !rumbleDetected)
-				{
-					rumbleDetected = true
-					Toast.makeText(this@StreamActivity, "Vibration signal received from server", Toast.LENGTH_SHORT).show()
-				}
-				if(hasRumble == isVibrating) return@Observer
-				isVibrating = hasRumble
-				vibrator.cancel()
-				if(!hasRumble) return@Observer
-				if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-					vibrator.vibrate(VibrationEffect.createOneShot(3000, VibrationEffect.DEFAULT_AMPLITUDE))
-				else
-					@Suppress("DEPRECATION")
-					vibrator.vibrate(3000)
-			})
-		}
 	}
 
 	private val controlsDisposable = CompositeDisposable()

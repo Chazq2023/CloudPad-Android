@@ -3,14 +3,9 @@
 package com.metallic.chiaki.settings
 
 import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
-import android.os.Build
 import android.os.Bundle
-import android.os.VibrationEffect
-import android.os.Vibrator
-import android.os.VibratorManager
 import android.text.InputType
 import android.widget.Toast
 import androidx.lifecycle.Observer
@@ -33,7 +28,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 	override fun getBoolean(key: String?, defValue: Boolean) = when(key)
 	{
 		preferences.logVerboseKey -> preferences.logVerbose
-		preferences.rumbleEnabledKey -> preferences.rumbleEnabled
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
 		else -> defValue
@@ -44,7 +38,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		when(key)
 		{
 			preferences.logVerboseKey -> preferences.logVerbose = value
-			preferences.rumbleEnabledKey -> preferences.rumbleEnabled = value
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
 		}
@@ -185,11 +178,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 
 		preferenceScreen.findPreference<Preference>("remap_controller")?.setOnPreferenceClickListener {
 			startActivity(Intent(requireContext(), ControllerRemapActivity::class.java))
-			true
-		}
-
-		preferenceScreen.findPreference<Preference>("test_vibration")?.setOnPreferenceClickListener {
-			testVibration()
 			true
 		}
 
@@ -364,24 +352,4 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		}
 	}
 
-	private fun testVibration()
-	{
-		val vibrator: Vibrator? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-			(requireContext().getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
-		else
-			@Suppress("DEPRECATION")
-			requireContext().getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator
-
-		if (vibrator == null || !vibrator.hasVibrator())
-		{
-			Toast.makeText(requireContext(), "Vibration not available on this device", Toast.LENGTH_SHORT).show()
-			return
-		}
-
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			vibrator.vibrate(VibrationEffect.createOneShot(500, VibrationEffect.DEFAULT_AMPLITUDE))
-		else
-			@Suppress("DEPRECATION")
-			vibrator.vibrate(500)
-	}
 }

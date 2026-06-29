@@ -29,7 +29,13 @@ class ButtonHaptics(val context: Context)
 		}
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-			vibrator.vibrate(VibrationEffect.createOneShot(if (harder) 90 else 60, 120))
+		{
+			// Ramp up then down to avoid the abrupt start/stop click from the motor
+			if (harder)
+				vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 15, 60, 15), intArrayOf(0, 60, 140, 0), -1))
+			else
+				vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 10, 40, 10), intArrayOf(0, 40, 90, 0), -1))
+		}
 		else
 			@Suppress("DEPRECATION")
 			vibrator.vibrate(if (harder) 90 else 60)
