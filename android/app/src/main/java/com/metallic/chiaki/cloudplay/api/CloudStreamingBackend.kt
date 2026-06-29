@@ -61,9 +61,10 @@ class CloudStreamingBackend(
 		gameIdentifier: String,
 		gameName: String,
 		npssoToken: String,
-		preKnownEntitlementId: String = "",
-		onProgress: ((String) -> Unit)? = null,  // Progress callback
-		isCancelled: () -> Boolean = { false }  // Cancellation check
+		ownedEntitlementId: String = "",
+		ownedPlatform: String = "",
+		onProgress: ((String) -> Unit)? = null,
+		isCancelled: () -> Boolean = { false }
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
 	{
 		try
@@ -99,14 +100,15 @@ class CloudStreamingBackend(
 			
 			// Continue with cloud session setup
 			val result = continueCloudSessionAfterAuth(
-				normalizedServiceType,
-				gameIdentifier,
-				gameName,
-				npssoToken,
-				sharedDuid,
-				preKnownEntitlementId,
-				onProgress,
-				isCancelled
+				serviceType = normalizedServiceType,
+				gameIdentifier = gameIdentifier,
+				gameName = gameName,
+				npssoToken = npssoToken,
+				sharedDuid = sharedDuid,
+				ownedEntitlementId = ownedEntitlementId,
+				ownedPlatform = ownedPlatform,
+				onProgress = onProgress,
+				isCancelled = isCancelled
 			)
 			
 			result
@@ -128,7 +130,9 @@ class CloudStreamingBackend(
 		gameName: String,
 		npssoToken: String,
 		sharedDuid: String,
-		preKnownEntitlementId: String = "",
+		ownedEntitlementId: String = "",
+		ownedPlatform: String = "",
+		forceFullEntitlementFlow: Boolean = false,
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
@@ -165,6 +169,7 @@ class CloudStreamingBackend(
 			var finalEntitlementId = gameIdentifier
 			var finalPlatform = initialPlatform
 			var kamajiDiag = ""
+			var usedFastPath = false
 
 			if (serviceType == "psnow")
 			{
@@ -178,12 +183,28 @@ class CloudStreamingBackend(
 				accountBaseUrl = CloudConfig.ACCOUNT_BASE,
 				redirectUri = redirectUri,
 				userAgent = userAgent,
-				preferences = preferences,
-				preKnownEntitlementId = preKnownEntitlementId
+				preferences = preferences
 			)
 
-				// Start Kamaji session creation
-				val kamajiResult = kamajiSession.startSessionCreation(npssoToken)
+			if (!forceFullEntitlementFlow && ownedEntitlementId.isNotEmpty())
+			{
+				Log.i(
+					TAG,
+					"PSNOW owned fast-path: catalog entitlementId=$ownedEntitlementId platform=$ownedPlatform"
+				)
+				kamajiSession.setOwnedEntitlementFastPath(
+					ownedEntitlementId = ownedEntitlementId,
+					ownedPlatform = ownedPlatform
+				)
+			}
+			else if (forceFullEntitlementFlow)
+			{
+				Log.i(TAG, "PSNOW: forcing full entitlement flow (fast-path retry fallback)")
+			}
+
+			// Start Kamaji session creation
+			val kamajiResult = kamajiSession.startSessionCreation(npssoToken)
+			usedFastPath = kamajiSession.usedEntitlementFastPath
 
 				if (!kamajiResult.success)
 				{
@@ -225,6 +246,32 @@ class CloudStreamingBackend(
 			if (!allocationResult.success)
 			{
 				Log.e(TAG, "Gaikai allocation failed: ${allocationResult.message}")
+
+				if (
+					usedFastPath &&
+					!forceFullEntitlementFlow &&
+					isEntitlementRejectedError(allocationResult.message)
+				)
+				{
+					Log.w(
+						TAG,
+						"Owned fast-path entitlement rejected by Gaikai; retrying once with the full entitlement flow"
+					)
+
+					return@withContext continueCloudSessionAfterAuth(
+						serviceType = serviceType,
+						gameIdentifier = gameIdentifier,
+						gameName = gameName,
+						npssoToken = npssoToken,
+						sharedDuid = sharedDuid,
+						ownedEntitlementId = "",
+						ownedPlatform = "",
+						forceFullEntitlementFlow = true,
+						onProgress = onProgress,
+						isCancelled = isCancelled
+					)
+				}
+
 				val detail = if (kamajiDiag.isNotEmpty()) "${allocationResult.message} | Kamaji: $kamajiDiag" else allocationResult.message
 				return@withContext Result.failure(Exception("Gaikai allocation failed: $detail"))
 			}
@@ -260,6 +307,9 @@ class CloudStreamingBackend(
 		}
 	}
 	
+	private fun isEntitlementRejectedError(error: String): Boolean =
+		error.contains("noGameForEntitlement", ignoreCase = true)
+
 	/**
 	 * Centralized Authorization Check (used by both PSNOW and PSCLOUD)
 	 * Mirrors: CloudStreamingBackend::checkAuthorization() (Qt lines 543-613)

@@ -30,6 +30,28 @@ class CloudGameRepository(
 		private const val PSNOW_CACHE_FILE = "psnow_catalog.json"
 		private const val PSCLOUD_CACHE_FILE = "pscloud_catalog.json"
 		private const val CACHE_DURATION_MS = 24 * 60 * 60 * 1000L // 24 hours
+
+		fun invalidateCatalogCache(context: Context, reason: String = "")
+		{
+			try
+			{
+				val dir = File(context.cacheDir, CACHE_DIR)
+
+				if (dir.exists())
+				{
+					dir.deleteRecursively()
+				}
+
+				Log.i(
+					TAG,
+					"Catalog cache invalidated" + if (reason.isNotEmpty()) " ($reason)" else ""
+				)
+			}
+			catch (e: Exception)
+			{
+				Log.w(TAG, "Error invalidating catalog cache", e)
+			}
+		}
 	}
 	
 	private val psnowCatalogService = PsnCatalogService(preferences)
@@ -96,7 +118,7 @@ class CloudGameRepository(
 		try
 		{
 			// Get locale from unified language setting and convert to lowercase (Qt lines 847-848)
-			val localeSetting = preferences.getCloudLanguage()
+			val localeSetting = preferences.getCloudStoreLocale()
 			val locale = localeSetting.lowercase() // Convert "en-US" to "en-us"
 			
 			val games = pscloudCatalogService.fetchPs5CloudCatalog(locale)
@@ -129,7 +151,7 @@ class CloudGameRepository(
 		try
 		{
 			// Get locale for owned games fetch
-			val localeSetting = preferences.getCloudLanguage()
+			val localeSetting = preferences.getCloudStoreLocale()
 			val locale = localeSetting.lowercase()
 			
 			// Fetch owned games
@@ -213,7 +235,7 @@ class CloudGameRepository(
 		try
 		{
 			// Get locale from unified language setting and convert to lowercase (Qt lines 847-848)
-			val localeSetting = preferences.getCloudLanguage()
+			val localeSetting = preferences.getCloudStoreLocale()
 			val locale = localeSetting.lowercase() // Convert "en-US" to "en-us"
 			
 			val games = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale)

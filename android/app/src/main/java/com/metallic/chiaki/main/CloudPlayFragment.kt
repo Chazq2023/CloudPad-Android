@@ -1409,7 +1409,8 @@ class CloudPlayFragment : Fragment() {
                     gameIdentifier = game.productId,
                     gameName = game.name,
                     npssoToken = npssoToken,
-                    preKnownEntitlementId = game.entitlementId,
+                    ownedEntitlementId = game.entitlementId,
+                    ownedPlatform = game.platform,
                     onProgress = { message ->
                         requireActivity().runOnUiThread {
                             allocationProgressTextView?.text = message
