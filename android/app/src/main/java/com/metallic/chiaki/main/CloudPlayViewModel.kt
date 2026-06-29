@@ -20,15 +20,14 @@ import kotlinx.coroutines.launch
  */
 class CloudPlayViewModel(
 	private val context: Context,
-	val preferences: Preferences // Made public for access from CloudPlayFragment
+	val preferences: Preferences, // Made public for access from CloudPlayFragment
+	private val repository: CloudGameRepository = CloudGameRepository(context, preferences)
 ) : ViewModel()
 {
 	companion object
 	{
 		private const val TAG = "CloudPlayViewModel"
 	}
-	
-	private val repository = CloudGameRepository(context, preferences)
 	
 	private val _games = MutableLiveData<List<CloudGame>>()
 	val games: LiveData<List<CloudGame>> get() = _games

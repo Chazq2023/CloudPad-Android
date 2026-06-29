@@ -3,7 +3,11 @@ package com.metallic.chiaki.main
 import android.content.Context
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.PsnResult
+import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.metallic.chiaki.common.Preferences
+import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
@@ -16,12 +20,12 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudPlayViewModelTest {
@@ -32,6 +36,7 @@ class CloudPlayViewModelTest {
     private val testDispatcher = UnconfinedTestDispatcher()
     private val context: Context = mockk(relaxed = true)
     private val preferences: Preferences = mockk(relaxed = true)
+    private val repository: CloudGameRepository = mockk(relaxed = true)
 
     private lateinit var viewModel: CloudPlayViewModel
 
@@ -40,8 +45,7 @@ class CloudPlayViewModelTest {
         Dispatchers.setMain(testDispatcher)
         every { preferences.getLastCloudSection() } returns "psnow_ps3"
         every { preferences.setLastCloudSection(any()) } just runs
-        every { context.cacheDir } returns File(System.getProperty("java.io.tmpdir")!!)
-        viewModel = CloudPlayViewModel(context, preferences)
+        viewModel = CloudPlayViewModel(context, preferences, repository)
     }
 
     @After
@@ -144,7 +148,6 @@ class CloudPlayViewModelTest {
     fun `reapplyCurrentGames re-emits the current game list`() {
         val games = listOf(makeGame("G1", "Horizon"), makeGame("G2", "Ghost of Tsushima"))
         viewModel.setSortedGames(games)
-        // Simulate a section switch that would normally re-emit via reapplyCurrentGames
         viewModel.reapplyCurrentGames()
         assertEquals(games, viewModel.games.value)
     }
@@ -156,6 +159,112 @@ class CloudPlayViewModelTest {
         viewModel.reapplyCurrentGames()
         assertEquals(1, viewModel.games.value?.size)
         assertEquals("Horizon", viewModel.games.value?.first()?.name)
+    }
+
+    // --- fetchPsnowCatalog ---
+
+    @Test
+    fun `fetchPsnowCatalog success populates games LiveData`() {
+        val fakeGames = listOf(makeGame("G1", "God of War III", "ps3"), makeGame("G2", "Ratchet", "ps4"))
+        coEvery { repository.fetchPsnowCatalog(any(), any()) } returns PsnResult.Success(fakeGames)
+
+        viewModel.fetchPsnowCatalog()
+
+        assertEquals(fakeGames, viewModel.games.value)
+    }
+
+    @Test
+    fun `fetchPsnowCatalog success clears error LiveData`() {
+        coEvery { repository.fetchPsnowCatalog(any(), any()) } returns PsnResult.Success(emptyList())
+
+        viewModel.fetchPsnowCatalog()
+
+        assertNull(viewModel.error.value)
+    }
+
+    @Test
+    fun `fetchPsnowCatalog success sets loading to false when done`() {
+        coEvery { repository.fetchPsnowCatalog(any(), any()) } returns PsnResult.Success(emptyList())
+
+        viewModel.fetchPsnowCatalog()
+
+        assertFalse(viewModel.loading.value ?: true)
+    }
+
+    @Test
+    fun `fetchPsnowCatalog error sets error LiveData`() {
+        coEvery { repository.fetchPsnowCatalog(any(), any()) } returns PsnResult.Error("Network unavailable")
+
+        viewModel.fetchPsnowCatalog()
+
+        assertEquals("Network unavailable", viewModel.error.value)
+    }
+
+    @Test
+    fun `fetchPsnowCatalog error sets loading to false when done`() {
+        coEvery { repository.fetchPsnowCatalog(any(), any()) } returns PsnResult.Error("fail")
+
+        viewModel.fetchPsnowCatalog()
+
+        assertFalse(viewModel.loading.value ?: true)
+    }
+
+    @Test
+    fun `fetchPsnowCatalog passes forceRefresh flag to repository`() {
+        coEvery { repository.fetchPsnowCatalog(any(), any()) } returns PsnResult.Success(emptyList())
+
+        viewModel.fetchPsnowCatalog(forceRefresh = true)
+
+        coVerify { repository.fetchPsnowCatalog(any(), forceRefresh = true) }
+    }
+
+    // --- fetchPs5CloudCatalog ---
+
+    @Test
+    fun `fetchPs5CloudCatalog owned success populates games LiveData`() {
+        val fakeGames = listOf(makeGame("PPSA001", "Demon's Souls", "ps5"))
+        coEvery { repository.fetchOwnedPs5Games(any(), any()) } returns PsnResult.Success(fakeGames)
+
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
+
+        assertEquals(fakeGames, viewModel.games.value)
+    }
+
+    @Test
+    fun `fetchPs5CloudCatalog owned error sets error LiveData`() {
+        coEvery { repository.fetchOwnedPs5Games(any(), any()) } returns PsnResult.Error("Token expired")
+
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
+
+        assertEquals("Token expired", viewModel.error.value)
+    }
+
+    @Test
+    fun `fetchPs5CloudCatalog owned sets loading to false when done`() {
+        coEvery { repository.fetchOwnedPs5Games(any(), any()) } returns PsnResult.Success(emptyList())
+
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
+
+        assertFalse(viewModel.loading.value ?: true)
+    }
+
+    @Test
+    fun `fetchPs5CloudCatalog all-games success populates games LiveData`() {
+        val fakeGames = listOf(makeGame("PPSA001", "Returnal", "ps5"))
+        coEvery { repository.fetchPs5CloudCatalog(any(), any()) } returns PsnResult.Success(fakeGames)
+
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = false)
+
+        assertEquals(fakeGames, viewModel.games.value)
+    }
+
+    @Test
+    fun `fetchPs5CloudCatalog passes forceRefresh flag to repository`() {
+        coEvery { repository.fetchOwnedPs5Games(any(), any()) } returns PsnResult.Success(emptyList())
+
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
+
+        coVerify { repository.fetchOwnedPs5Games(any(), forceRefresh = true) }
     }
 
     // --- Error handling ---
