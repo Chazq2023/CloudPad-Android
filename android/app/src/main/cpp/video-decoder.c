@@ -18,13 +18,6 @@
 
 #define INPUT_BUFFER_TIMEOUT_MS 10
 
-static int64_t now_ms()
-{
-	struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-	return ((int64_t)ts.tv_sec * 1000) + (ts.tv_nsec / 1000000);
-}
-
 static int64_t now_us()
 {
 	struct timespec ts;
@@ -44,6 +37,7 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->target_fps = target_fps;
 	decoder->target_codec = codec;
 	decoder->shutdown_output = false;
+	decoder->output_frames_total = 0;
 	return chiaki_mutex_init(&decoder->codec_mutex, false);
 }
 
@@ -179,17 +173,10 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 {
 	bool r = true;
 	AndroidChiakiVideoDecoder *decoder = user;
-	static int64_t last_log_ms = 0;
-	static int64_t samples_in = 0;
-	static int64_t samples_dropped = 0;
-	static int64_t input_retries = 0;
-	static int64_t bytes_in = 0;
 	// Ignore frames_lost and frame_recovered parameters for now - Android decoder handles frame loss internally
 	(void)frames_lost;
 	(void)frame_recovered;
 	chiaki_mutex_lock(&decoder->codec_mutex);
-	samples_in++;
-	bytes_in += buf_size;
 
 	if(!decoder->codec)
 	{
@@ -210,13 +197,10 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 
 		    if(codec_buf_index >= 0)
 		        break;
-
-		    input_retries++;
 		}
 
 		if(codec_buf_index < 0)
 		{
-		    samples_dropped++;
 		    r = false;
 		    goto beach;
 		}
@@ -241,28 +225,6 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 		buf_size -= codec_sample_size;
 		}
 
-		int64_t now = now_ms();
-		if(last_log_ms == 0)
-			last_log_ms = now;
-
-		if(now - last_log_ms >= 1000)
-		{
-			CHIAKI_LOGI(
-				decoder->log,
-				"VIDEO_DIAG in=%" PRId64 " dropped=%" PRId64 " retries=%" PRId64 " bytes=%" PRId64,
-				samples_in,
-				samples_dropped,
-				input_retries,
-				bytes_in
-			);
-
-			samples_in = 0;
-			samples_dropped = 0;
-			input_retries = 0;
-			bytes_in = 0;
-			last_log_ms = now;
-		}
-
 	beach:
 		chiaki_mutex_unlock(&decoder->codec_mutex);
 		return r;
@@ -276,9 +238,6 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
 	setpriority(PRIO_PROCESS, 0, -8);
 
-	int64_t out_frames = 0;
-	int64_t out_last_log_ms = 0;
-
 	while(1)
 	{
 		AMediaCodecBufferInfo info;
@@ -290,14 +249,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
         			(size_t)status,
         			true
     			);
-				out_frames++;
-				int64_t now = now_ms();
-				if(out_last_log_ms == 0) out_last_log_ms = now;
-				if(now - out_last_log_ms >= 1000) {
-					CHIAKI_LOGI(decoder->log, "VIDEO_OUTPUT_DIAG out_fps=%" PRId64, out_frames);
-					out_frames = 0;
-					out_last_log_ms = now;
-				}
+				decoder->output_frames_total++;
 			} else {
         		AMediaCodec_releaseOutputBuffer(
             		decoder->codec,

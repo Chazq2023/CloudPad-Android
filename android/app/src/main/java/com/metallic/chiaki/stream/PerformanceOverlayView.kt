@@ -26,6 +26,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelNet = metricRow("Net")
     private val labelVisual = metricRow("Visual")
     private val labelFPS = metricRow("FPS")
+    private val labelDFPS = metricRow("DFPS")
     private val labelBT = metricRow("BT")
     private val labelRes = metricRow("Res")
     private val labelRTT = metricRow("RTT")
@@ -64,6 +65,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         val streamCol = buildColumn()
         sparklineView = SparklineView(context)
         streamCol.addView(labelFPS)
+        streamCol.addView(labelDFPS)
         streamCol.addView(
             sparklineView,
             LinearLayout.LayoutParams(dpToPx(48), dpToPx(14))
@@ -165,6 +167,14 @@ class PerformanceOverlayView @JvmOverloads constructor(
         }
         labelFPS.text = String.format(Locale.US, "FPS %5.1f", m.fps)
         labelFPS.setTextColor(fpsColor)
+
+        val dfpsColor = when {
+            m.decodedFps >= 55f -> Color.rgb(0, 220, 100)
+            m.decodedFps >= 30f -> Color.rgb(255, 200, 40)
+            else -> Color.rgb(255, 80, 80)
+        }
+        labelDFPS.text = String.format(Locale.US, "DFPS %5.1f", m.decodedFps)
+        labelDFPS.setTextColor(dfpsColor)
 
         labelBT.text = String.format(Locale.US, "BT %5.1f Mbps", m.bitrate)
 
