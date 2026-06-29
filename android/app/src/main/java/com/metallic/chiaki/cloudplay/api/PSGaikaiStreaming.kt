@@ -80,6 +80,7 @@ class PSGaikaiStreaming(
 	private var streamServerAuthCode = ""
 	private var requestGameSpec = JSONObject()
 	private var selectedDatacenter = ""
+	private var lastStartSessionError = ""
 	private var selectedDatacenterPort = 0
 	private var selectedDatacenterPingResult = JSONObject()
 	
@@ -454,6 +455,7 @@ class PSGaikaiStreaming(
 				Log.e(TAG, "Step 8 failed: ${response.statusCode}")
 				Log.e(TAG, "Response: ${response.body}")
 				step8ErrorDetails = "HTTP ${response.statusCode} — ${response.body.take(300)}"
+				lastStartSessionError = response.body
 				return null
 			}
 			
@@ -1394,9 +1396,15 @@ catch (e: Exception)
 	spec.put("entitlementId", entitlementId)
 	spec.put("npEnv", "np")
 	
-	// Read language from unified settings (Qt lines 153, 161)
-	// Use unified language setting for both PSCloud and PSNOW
-	val language = preferences.getCloudLanguage()
+	// Game language is separate from the store/catalog locale.
+	// Empty game-language override means "follow store locale".
+	val chosenLocale = preferences.getCloudGameLanguage()
+		.ifEmpty { preferences.getCloudStoreLocale() }
+
+	val language = com.metallic.chiaki.cloudplay.CloudLocale.gaikaiLanguageForLocale(chosenLocale)
+
+	Log.i(TAG, "Cloud game language: chosenLocale=$chosenLocale -> gaikaiLanguage=$language")
+
 	spec.put("language", language)
 	
 	spec.put("cloudEndpoint", "https://cc.prod.gaikai.com")

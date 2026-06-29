@@ -221,8 +221,8 @@ class PsnCatalogService(
 		// Save country and language to settings as locale (Qt lines 435-440)
 		if (!sessionCountry.isNullOrEmpty() && !sessionLanguage.isNullOrEmpty())
 		{
-			preferences.setCloudLanguageFromSession(sessionLanguage, sessionCountry)
-			Log.i(TAG, "[PSNOW] Saved locale from session: ${preferences.getCloudLanguage()}")
+			preferences.setCloudStoreLocaleFromSession(sessionLanguage, sessionCountry)
+			Log.i(TAG, "[PSNOW] Saved store locale from session: ${preferences.getCloudStoreLocale()}")
 		}
 		
 		Log.i(TAG, "Extracted from session - country: $country, language: $language")
@@ -299,6 +299,7 @@ class PsnCatalogService(
 			
 			Log.i(TAG, "[PSNOW] Stores fetched successfully")
 			Log.i(TAG, "Base URL from response: $baseUrl")
+			saveResolvedStoreLocaleFromBaseUrl(baseUrl)
 			return baseUrl
 		}
 		catch (e: Exception)
@@ -610,10 +611,27 @@ class PsnCatalogService(
 		return license4Ids.firstOrNull { it.contains("PSRSVD") } ?: ""
 	}
 
-	/**
-	 * Extract image URL from game object
-	 * Matches: CloudCatalogBackend::extractCoverImageFromGameObject()
-	 */
+	private fun saveResolvedStoreLocaleFromBaseUrl(baseUrl: String)
+	{
+		val match = Regex("/container/([A-Za-z]{2})/([A-Za-z]{2,3})/")
+			.find(baseUrl)
+
+		if (match == null)
+		{
+			Log.w(TAG, "Could not parse resolved store locale from base_url: $baseUrl")
+			return
+		}
+
+		val country = match.groupValues[1].uppercase()
+		val language = match.groupValues[2].lowercase()
+
+		preferences.setCloudResolvedStoreCountry(country)
+		preferences.setCloudResolvedStoreLang(language)
+		preferences.setCloudCatalogNativeMode(true)
+
+		Log.i(TAG, "Resolved store locale from base_url: country=$country language=$language")
+	}
+
 	/**
 	 * Extract both cover and landscape image URLs from game object
 	 * Returns Pair<coverUrl, landscapeUrl>

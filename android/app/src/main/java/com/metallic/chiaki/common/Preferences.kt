@@ -4,8 +4,10 @@ package com.metallic.chiaki.common
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.preference.PreferenceManager
+import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.pylux.stream.R
 import com.metallic.chiaki.lib.Codec
 import com.metallic.chiaki.lib.ConnectVideoProfile
@@ -51,8 +53,21 @@ class Preferences(context: Context)
 		const val CLOUD_BITRATE_MIN_KBPS = 2000
 		const val CLOUD_BITRATE_MAX_KBPS = 200000
 		const val CLOUD_BITRATE_DEFAULT_KBPS = 20000
+
+		private const val CLOUD_STORE_LOCALE_KEY = "cloud_store_locale"
+		private const val LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY = "cloud_language_pscloud"
+
+		private const val CLOUD_GAME_LANGUAGE_KEY = "cloud_game_language"
+		private const val LEGACY_CLOUD_STREAM_LANGUAGE_KEY = "cloud_stream_language"
+
+		private const val CLOUD_RESOLVED_STORE_COUNTRY_KEY = "cloud_resolved_store_country"
+		private const val CLOUD_RESOLVED_STORE_LANG_KEY = "cloud_resolved_store_lang"
+		private const val LEGACY_CLOUD_FALLBACK_REGION_KEY = "cloud_fallback_region"
+
+		private const val CLOUD_CATALOG_NATIVE_MODE_KEY = "cloud_catalog_native_mode"
 	}
 
+	private val appContext = context.applicationContext
 	private val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 	private val sharedPreferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
 		when(key)
@@ -239,60 +254,199 @@ class Preferences(context: Context)
 			.apply()
 	}
 
-	// Cloud language settings - UNIFIED for both PSNow and PSCloud (matching Qt GetCloudLanguagePSCloud)
-	// Qt uses ONE setting for both PSNow and PSCloud
+	// Store/catalog locale and game-language settings.
+	// Store locale controls PS Store/Kamaji catalog/container requests.
+	// Game language controls the actual Gaikai stream language.
 	fun migrateLocaleIfNeeded()
 	{
-		val LOCALE_MIGRATION_VERSION = 1
-		val currentVersion = sharedPreferences.getInt("locale_migration_version", 0)
-		if (currentVersion < LOCALE_MIGRATION_VERSION)
-		{
-			sharedPreferences.edit()
-				.remove("cloud_language_pscloud")
-				.putInt("locale_migration_version", LOCALE_MIGRATION_VERSION)
-				.apply()
-		}
+		// Legacy migration is now handled lazily by getCloudStoreLocale()
+		// and getCloudGameLanguage().
 	}
 
-	fun getCloudLanguage(): String
+	private fun deviceDefaultStoreLocale(): String
 	{
 		val deviceLocale = java.util.Locale.getDefault()
-		val country = deviceLocale.country
-		val deviceDefault = if (country.isNotEmpty())
-			"${deviceLocale.language}-${country.uppercase()}"
-		else
-			"en-US"
-		return sharedPreferences.getString("cloud_language_pscloud", deviceDefault) ?: deviceDefault
+		val language = deviceLocale.language.takeIf { it.isNotEmpty() } ?: "en"
+		val country = deviceLocale.country.takeIf { it.isNotEmpty() } ?: "US"
+		return "$language-${country.uppercase()}"
 	}
 
-	fun setCloudLanguage(value: String)
-	{
-		sharedPreferences.edit().putString("cloud_language_pscloud", value).apply()
-	}
+	fun isCloudStoreLocaleConfigured(): Boolean =
+		sharedPreferences.contains(CLOUD_STORE_LOCALE_KEY) ||
+			sharedPreferences.contains(LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY)
 
-	fun isCloudLanguageConfigured(): Boolean = getRawStoredLocale() != null
-
-	fun setCloudLanguageFromSession(language: String?, country: String?)
+	private fun migrateCloudStoreLocaleIfNeeded(): String
 	{
-		if (language.isNullOrEmpty() || country.isNullOrEmpty()) return
-		val locale = "$language-${country.uppercase()}"
-		if (isCloudLanguageConfigured())
+		if (sharedPreferences.contains(CLOUD_STORE_LOCALE_KEY))
 		{
-			val storedCountry = getCloudLanguage().split("-").getOrElse(1) { "" }
-			val sessionCountry = country.uppercase()
+			return sharedPreferences.getString(CLOUD_STORE_LOCALE_KEY, deviceDefaultStoreLocale())
+				?: deviceDefaultStoreLocale()
+		}
+
+		val legacy = sharedPreferences.getString(LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY, null)
+
+		if (!legacy.isNullOrEmpty())
+		{
+			sharedPreferences.edit()
+				.putString(CLOUD_STORE_LOCALE_KEY, legacy)
+				.apply()
+			return legacy
+		}
+
+		return deviceDefaultStoreLocale()
+	}
+
+	fun getCloudStoreLocale(): String = migrateCloudStoreLocaleIfNeeded()
+
+	fun setCloudStoreLocale(value: String)
+	{
+		val configured = isCloudStoreLocaleConfigured()
+		val previous = getCloudStoreLocale()
+
+		if (configured && previous == value) return
+
+		sharedPreferences.edit()
+			.putString(CLOUD_STORE_LOCALE_KEY, value)
+			.apply()
+
+		Log.i(
+			"Preferences",
+			"Cloud store locale ${if (configured) "changed" else "configured"}: $previous -> $value"
+		)
+
+		CloudGameRepository.invalidateCatalogCache(appContext, "locale change")
+	}
+
+	fun noteCloudStoreLocaleSettled(value: String)
+	{
+		if (value.isEmpty()) return
+		if (isCloudStoreLocaleConfigured() && getCloudStoreLocale() == value) return
+
+		sharedPreferences.edit()
+			.putString(CLOUD_STORE_LOCALE_KEY, value)
+			.apply()
+
+		Log.i("Preferences", "Cloud store locale settled: $value")
+	}
+
+	fun setCloudStoreLocaleFromSession(language: String?, country: String?)
+	{
+		val locale = com.metallic.chiaki.cloudplay.CloudLocale.fromSession(language, country)
+			?: return
+
+		if (isCloudStoreLocaleConfigured())
+		{
+			val storedCountry =
+				com.metallic.chiaki.cloudplay.CloudLocale.parseStorePath(getCloudStoreLocale()).first
+
+			val sessionCountry =
+				com.metallic.chiaki.cloudplay.CloudLocale.parseStorePath(locale).first
+
 			if (storedCountry == sessionCountry)
 			{
-				android.util.Log.i("Preferences", "Session country unchanged ($sessionCountry), keeping validated locale ${getCloudLanguage()}")
+				Log.i(
+					"Preferences",
+					"Kamaji session country unchanged ($sessionCountry), keeping ${getCloudStoreLocale()}"
+				)
 				return
 			}
 		}
-		setCloudLanguage(locale)
+
+		setCloudStoreLocale(locale)
 	}
 
-	fun getRawStoredLocale(): String?
+	private fun migrateCloudGameLanguageIfNeeded(): String
 	{
-		return sharedPreferences.getString("cloud_language_pscloud", null)
+		if (sharedPreferences.contains(CLOUD_GAME_LANGUAGE_KEY))
+		{
+			return sharedPreferences.getString(CLOUD_GAME_LANGUAGE_KEY, "") ?: ""
+		}
+
+		val legacy = sharedPreferences.getString(LEGACY_CLOUD_STREAM_LANGUAGE_KEY, "") ?: ""
+
+		sharedPreferences.edit()
+			.putString(CLOUD_GAME_LANGUAGE_KEY, legacy)
+			.apply()
+
+		return legacy
 	}
+
+	fun getCloudGameLanguage(): String = migrateCloudGameLanguageIfNeeded()
+
+	fun setCloudGameLanguage(value: String)
+	{
+		sharedPreferences.edit()
+			.putString(CLOUD_GAME_LANGUAGE_KEY, value)
+			.apply()
+	}
+
+	fun getCloudResolvedStoreCountry(): String
+	{
+		if (sharedPreferences.contains(CLOUD_RESOLVED_STORE_COUNTRY_KEY))
+		{
+			return sharedPreferences.getString(CLOUD_RESOLVED_STORE_COUNTRY_KEY, "") ?: ""
+		}
+
+		val legacy = sharedPreferences.getString(LEGACY_CLOUD_FALLBACK_REGION_KEY, "") ?: ""
+
+		sharedPreferences.edit()
+			.putString(CLOUD_RESOLVED_STORE_COUNTRY_KEY, legacy)
+			.apply()
+
+		return legacy
+	}
+
+	fun setCloudResolvedStoreCountry(country: String)
+	{
+		sharedPreferences.edit()
+			.putString(CLOUD_RESOLVED_STORE_COUNTRY_KEY, country)
+			.apply()
+	}
+
+	fun getCloudResolvedStoreLang(): String =
+		sharedPreferences.getString(CLOUD_RESOLVED_STORE_LANG_KEY, "") ?: ""
+
+	fun setCloudResolvedStoreLang(lang: String)
+	{
+		sharedPreferences.edit()
+			.putString(CLOUD_RESOLVED_STORE_LANG_KEY, lang)
+			.apply()
+	}
+
+	fun getCloudCatalogNativeMode(): Boolean
+	{
+		if (sharedPreferences.contains(CLOUD_CATALOG_NATIVE_MODE_KEY))
+		{
+			return sharedPreferences.getBoolean(CLOUD_CATALOG_NATIVE_MODE_KEY, true)
+		}
+
+		val native = getCloudResolvedStoreCountry().isEmpty()
+
+		sharedPreferences.edit()
+			.putBoolean(CLOUD_CATALOG_NATIVE_MODE_KEY, native)
+			.apply()
+
+		return native
+	}
+
+	fun setCloudCatalogNativeMode(nativeMode: Boolean)
+	{
+		sharedPreferences.edit()
+			.putBoolean(CLOUD_CATALOG_NATIVE_MODE_KEY, nativeMode)
+			.apply()
+	}
+
+	fun isCloudCatalogIsForeign(): Boolean = !getCloudCatalogNativeMode()
+
+	// Compatibility wrappers so existing code paths keep compiling.
+	fun getCloudLanguage(): String = getCloudStoreLocale()
+	fun setCloudLanguage(value: String) = setCloudStoreLocale(value)
+	fun isCloudLanguageConfigured(): Boolean = isCloudStoreLocaleConfigured()
+	fun setCloudLanguageFromSession(language: String?, country: String?) = setCloudStoreLocaleFromSession(language, country)
+
+	fun getRawStoredLocale(): String? =
+		sharedPreferences.getString(CLOUD_STORE_LOCALE_KEY, null)
+			?: sharedPreferences.getString(LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY, null)
 	
 	// Cloud resolution settings (matching Qt GetCloudResolutionPSNOW/SetCloudResolutionPSNOW)
 	val cloudResolutionPsnowKey get() = resources.getString(R.string.preferences_cloud_resolution_psnow_key)

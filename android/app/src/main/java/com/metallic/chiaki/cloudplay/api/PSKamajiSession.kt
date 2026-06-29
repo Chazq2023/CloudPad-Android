@@ -52,6 +52,20 @@ class PSKamajiSession(
 	private var productLookupDiag: String = ""    // Diagnostic info from step0_5d for error messages
 	private var isEntitlementDerived = false      // True when entitlement ID was guessed via IV0000 prefix
 	private var commerceSearchDiag: String = ""  // Result of step0_5e.1b search, for error surfacing
+
+	// Owned-PSNOW fast-path: the catalog already resolved the streaming entitlement.
+	// When set, startSessionCreation skips 0.5b/0.5d/0.5e and goes straight to step 5/6.
+	private var fastPathEntitlementId: String = ""
+	private var fastPathPlatform: String = ""
+
+	var usedEntitlementFastPath = false
+		private set
+
+	fun setOwnedEntitlementFastPath(ownedEntitlementId: String, ownedPlatform: String)
+	{
+		fastPathEntitlementId = ownedEntitlementId
+		fastPathPlatform = ownedPlatform
+	}
 	
 	/**
 	 * Data class for session result
@@ -79,7 +93,44 @@ class PSKamajiSession(
 			{
 				return@withContext SessionResult(false, "NPSSO token is empty")
 			}
-			
+
+			if (fastPathEntitlementId.isNotEmpty())
+			{
+				entitlementId = fastPathEntitlementId
+				platform = if (fastPathPlatform.isEmpty()) "ps4" else fastPathPlatform
+
+				scopesStr = if (platform == "ps3")
+				{
+					"kamaji:commerce_native"
+				}
+				else
+				{
+					PsnApiConstants.PS4_SCOPES
+				}
+
+				usedEntitlementFastPath = true
+
+				Log.i(
+					TAG,
+					"Kamaji fast-path: owned entitlementId=$entitlementId platform=$platform - skipping 0.5b/0.5d/0.5e"
+				)
+
+				val authCode = step5_GetAuthCode(npssoToken)
+					?: return@withContext SessionResult(false, "Failed to get auth code")
+
+				authorizationCode = authCode
+
+				step6_CreateAuthSession(authCode)
+					?: return@withContext SessionResult(false, "Failed to create authenticated session")
+
+				Log.i(
+					TAG,
+					"=== Kamaji Session Complete (fast-path) === Entitlement ID: $entitlementId, Platform: $platform"
+				)
+
+				return@withContext SessionResult(true, "Success", entitlementId!!, platform)
+			}
+
 			// Step 0.5b: Get Anonymous Auth Code
 			val anonCode = step0_5b_GetAnonymousAuthCode(npssoToken)
 				?: return@withContext SessionResult(false, "Failed to get anonymous auth code")
@@ -284,8 +335,8 @@ class PSKamajiSession(
 				
 				if (!sessionCountry.isNullOrEmpty() && !sessionLanguage.isNullOrEmpty())
 				{
-					preferences.setCloudLanguageFromSession(sessionLanguage, sessionCountry)
-					Log.i(TAG, "Saved locale from session: ${preferences.getCloudLanguage()}")
+					preferences.setCloudStoreLocaleFromSession(sessionLanguage, sessionCountry)
+					Log.i(TAG, "Saved locale from session: ${preferences.getCloudStoreLocale()}")
 				}
 			}
 		}
@@ -311,37 +362,28 @@ class PSKamajiSession(
 	 */
 	private fun step0_5d_ConvertProductId(sessionId: String): Triple<String, String, String>?
 	{
-		// If the entitlement was already extracted from the catalog, skip the store lookup.
-		if (preKnownEntitlementId.isNotEmpty())
-		{
-			Log.i(TAG, "Step 0.5d: Using pre-known entitlement '$preKnownEntitlementId' for '$productId'")
-			// Detect platform from the 4-letter title ID prefix embedded in the product ID.
-			// PS4 = CUSA, PS5 = PPSA; everything else (BLES, BLUS, BCES, NPEA, NPUB, etc.) = PS3.
-			// Platform matters: PSGaikaiStreaming uses it to pick the correct OAuth scope in step 8b
-			// (PS3 requires kamaji:commerce_native without duid; PS4/PS5 use sso:none with duid).
-			val titlePrefix = Regex("-([A-Z]{4})\\d").find(productId)?.groupValues?.get(1)
-			val detectedPlatform = when (titlePrefix) {
-				"PPSA" -> "ps5"
-				"CUSA" -> "ps4"
-				else -> "ps3"
-			}
-			Log.i(TAG, "Step 0.5d: Detected platform '$detectedPlatform' from product ID")
-			return Triple(preKnownEntitlementId, detectedPlatform, "")
-		}
-
 		try
 		{
-		// Get locale from unified language setting (Qt line 321: GetCloudLanguagePSCloud)
-		// Qt uses ONE setting for both PSNow and PSCloud
-		val localeSetting = preferences.getCloudLanguage() // Default "en-US"
-		val locale = localeSetting.lowercase() // Convert "en-US" to "en-us"
-		
-		// Extract country and language from locale (e.g., "en-us" -> "US", "en")
-		val localeParts = locale.split("-")
-		val country = if (localeParts.size > 1) localeParts[1].uppercase() else "US"
-		val language = if (localeParts.isNotEmpty()) localeParts[0].lowercase() else "en"
-		
-		Log.i(TAG, "Using locale from settings: $localeSetting -> country=$country, language=$language")
+		val resolvedCountry = preferences.getCloudResolvedStoreCountry()
+		val resolvedLang = preferences.getCloudResolvedStoreLang()
+
+		val localeSetting = preferences.getCloudStoreLocale()
+		val parsedLocale = com.metallic.chiaki.cloudplay.CloudLocale.parseStorePath(localeSetting)
+
+		val (country, language) = if (resolvedCountry.isNotEmpty())
+		{
+			// Use server-authoritative store language when known.
+			resolvedCountry to resolvedLang.ifEmpty { parsedLocale.second }
+		}
+		else
+		{
+			parsedLocale
+		}
+
+		Log.i(
+			TAG,
+			"Using store path: storeLocale=$localeSetting resolvedCountry=$resolvedCountry resolvedLang=$resolvedLang -> country=$country language=$language"
+		)
 		
 		val url = "$storeBase/container/$country/$language/19/$productId?useOffers=true&gkb=1&gkb2=1"
 			
