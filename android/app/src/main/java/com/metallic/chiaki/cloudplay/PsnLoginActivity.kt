@@ -75,7 +75,8 @@ class PsnLoginActivity : AppCompatActivity() {
 	private var finalising = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
-		if (Preferences(this).isBlueTheme()) setTheme(R.style.AppTheme_Blue)
+		val prefs = Preferences(this)
+		if (prefs.getThemeColour() != "pink") setTheme(prefs.getThemeStyleRes())
 		super.onCreate(savedInstanceState)
 
 		tokenManager = SecureTokenManager(this)

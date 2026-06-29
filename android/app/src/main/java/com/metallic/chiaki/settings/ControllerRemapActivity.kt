@@ -43,6 +43,8 @@ class ControllerRemapActivity : AppCompatActivity() {
     // ---- Activity lifecycle ----
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val prefs = Preferences(this)
+        if (prefs.getThemeColour() != "pink") setTheme(prefs.getThemeStyleRes())
         super.onCreate(savedInstanceState)
         binding = ActivityControllerRemapBinding.inflate(layoutInflater)
         setContentView(binding.root)

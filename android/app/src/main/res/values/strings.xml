@@ -100,8 +100,14 @@
     <string name="preferences_theme_colour_summary">Choose the app colour theme</string>
     <string name="preferences_theme_colour_pink">Neon Pink</string>
     <string name="preferences_theme_colour_blue">Neon Blue</string>
+    <string name="preferences_theme_colour_green">Neon Green</string>
+    <string name="preferences_theme_colour_yellow">Neon Yellow</string>
+    <string name="preferences_theme_colour_orange">Neon Orange</string>
     <string name="preferences_theme_value_pink">pink</string>
     <string name="preferences_theme_value_blue">blue</string>
+    <string name="preferences_theme_value_green">green</string>
+    <string name="preferences_theme_value_yellow">yellow</string>
+    <string name="preferences_theme_value_orange">orange</string>
 
     <string name="preferences_category_title_general">General</string>
     <string name="preferences_category_title_stream">Remote Play Settings</string>
@@ -204,10 +210,16 @@
     <string-array name="theme_colour_entries">
         <item>Neon Pink</item>
         <item>Neon Blue</item>
+        <item>Neon Green</item>
+        <item>Neon Yellow</item>
+        <item>Neon Orange</item>
     </string-array>
     <string-array name="theme_colour_values">
         <item>pink</item>
         <item>blue</item>
+        <item>green</item>
+        <item>yellow</item>
+        <item>orange</item>
     </string-array>
 
     <!-- Datacenter options -->

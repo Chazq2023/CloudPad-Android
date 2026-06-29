@@ -23,7 +23,8 @@ class SettingsActivity: AppCompatActivity(), PreferenceFragmentCompat.OnPreferen
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
-		if (Preferences(this).isBlueTheme()) setTheme(R.style.AppTheme_Blue)
+		val prefs = Preferences(this)
+		if (prefs.getThemeColour() != "pink") setTheme(prefs.getThemeStyleRes())
 		super.onCreate(savedInstanceState)
 		binding = ActivitySettingsBinding.inflate(layoutInflater)
 		setContentView(binding.root)

@@ -48,14 +48,15 @@ class MainActivity : AppCompatActivity() {
     private var integrityManager: AppIntegrityManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Preferences(this).isBlueTheme()) setTheme(R.style.AppTheme_Blue)
+        val prefsEarly = Preferences(this)
+        if (prefsEarly.getThemeColour() != "pink") setTheme(prefsEarly.getThemeStyleRes())
         super.onCreate(savedInstanceState)
 
         // Resolve the accent colour from the applied theme
         val tv = TypedValue()
         theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
         iconSelectedColor = tv.data
-        appliedThemeIsBlue = Preferences(this).isBlueTheme()
+        appliedThemeColour = prefsEarly.getThemeColour()
 
         // Initialize SSL CA bundle for native curl+mbedTLS (must happen before any holepunch calls)
         try {
@@ -85,10 +86,10 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Blue theme: hue-shift bitmap so coloured pixels become blue while white glow stays white
-        // Pink theme: original PNG unchanged
-        if (preferences.isBlueTheme()) {
-            binding.appTitle.setImageBitmap(buildBlueLogo())
+        // Non-pink themes: hue-shift bitmap so coloured pixels become the theme hue while white glow stays white
+        val logoHue = themeLogoHue(preferences.getThemeColour())
+        if (logoHue != null) {
+            binding.appTitle.setImageBitmap(buildThemedLogo(logoHue))
         } else {
             binding.appTitle.setImageResource(R.drawable.cloudpad_logo)
         }
@@ -125,13 +126,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private var appliedThemeIsBlue = false
+    private var appliedThemeColour = "pink"
 
     override fun onResume() {
         super.onResume()
         // If the theme was changed in Settings while this activity was paused, recreate to apply it
-        val nowBlue = preferences.isBlueTheme()
-        if (nowBlue != appliedThemeIsBlue) recreate()
+        if (preferences.getThemeColour() != appliedThemeColour) recreate()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -508,7 +508,15 @@ class MainActivity : AppCompatActivity() {
         binding.cloudPlayIcon.background = if (currentPage == 1) buildIconIslandSelectedDrawable() else null
     }
 
-    private fun buildBlueLogo(): Bitmap {
+    private fun themeLogoHue(colour: String): Float? = when (colour) {
+        "blue"   -> 201f
+        "green"  -> 151f
+        "yellow" -> 53f
+        "orange" -> 26f
+        else     -> null
+    }
+
+    private fun buildThemedLogo(targetHue: Float): Bitmap {
         val src = BitmapFactory.decodeResource(resources, R.drawable.cloudpad_logo)
         val out = src.copy(Bitmap.Config.ARGB_8888, true)
         val pixels = IntArray(out.width * out.height)
@@ -520,9 +528,7 @@ class MainActivity : AppCompatActivity() {
             if (alpha < 10) continue
             Color.colorToHSV(pixel, hsv)
             // Only shift saturated (coloured) pixels — white/near-white glow stays white
-            if (hsv[1] > 0.15f) {
-                hsv[0] = 201f // neon blue hue (#00B4FF)
-            }
+            if (hsv[1] > 0.15f) hsv[0] = targetHue
             pixels[i] = (alpha shl 24) or (Color.HSVToColor(hsv) and 0x00FFFFFF)
         }
         out.setPixels(pixels, 0, out.width, 0, 0, out.width, out.height)
