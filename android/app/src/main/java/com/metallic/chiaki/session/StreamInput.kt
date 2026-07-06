@@ -63,8 +63,7 @@ class StreamInput(
 	// ---- Mapping lookup structures ----
 
 	private val activeMapping: Map<ControllerAction, PhysicalInput> = run {
-		val saved = preferences.loadControllerMapping()
-		if(saved.isEmpty()) PhysicalInput.DEFAULT_MAPPING else saved
+		PhysicalInput.resolveMapping(preferences.loadControllerMapping())
 	}
 
 	private val singleKeyToActions: Map<Int, List<ControllerAction>> =

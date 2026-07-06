@@ -63,7 +63,6 @@ sealed class PhysicalInput {
             ControllerAction.R3 to Button(KeyEvent.KEYCODE_BUTTON_THUMBR),
             ControllerAction.START to Button(KeyEvent.KEYCODE_BUTTON_START),
             ControllerAction.SELECT to Button(KeyEvent.KEYCODE_BUTTON_SELECT),
-            ControllerAction.HOME to Button(KeyEvent.KEYCODE_BUTTON_MODE),
             ControllerAction.DPAD_UP to AxisDirection(MotionEvent.AXIS_HAT_Y, false),
             ControllerAction.DPAD_DOWN to AxisDirection(MotionEvent.AXIS_HAT_Y, true),
             ControllerAction.DPAD_LEFT to AxisDirection(MotionEvent.AXIS_HAT_X, false),
@@ -76,6 +75,16 @@ sealed class PhysicalInput {
             ControllerAction.RIGHT_STICK_RIGHT to AxisDirection(MotionEvent.AXIS_Z, true),
             ControllerAction.RIGHT_STICK_UP to AxisDirection(MotionEvent.AXIS_RZ, false),
             ControllerAction.RIGHT_STICK_DOWN to AxisDirection(MotionEvent.AXIS_RZ, true),
+            // Touchpad: SELECT button = touchpad click; hold SELECT + face/trigger = swipe/click
+            ControllerAction.TOUCHPAD_CLICK to Button(KeyEvent.KEYCODE_BUTTON_SELECT),
+            ControllerAction.TOUCHPAD_LEFT_CLICK to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, AxisDirection(MotionEvent.AXIS_LTRIGGER, true)),
+            ControllerAction.TOUCHPAD_RIGHT_CLICK to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, AxisDirection(MotionEvent.AXIS_RTRIGGER, true)),
+            ControllerAction.TOUCHPAD_SWIPE_UP to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_Y)),
+            ControllerAction.TOUCHPAD_SWIPE_DOWN to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_A)),
+            ControllerAction.TOUCHPAD_SWIPE_LEFT to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_X)),
+            ControllerAction.TOUCHPAD_SWIPE_RIGHT to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_B)),
+            // PS Home: hold START + press SELECT
+            ControllerAction.HOME to Combo(KeyEvent.KEYCODE_BUTTON_START, Button(KeyEvent.KEYCODE_BUTTON_SELECT)),
         )
 
         fun mappingToJson(mapping: Map<ControllerAction, PhysicalInput>): String {
@@ -98,6 +107,16 @@ sealed class PhysicalInput {
                 }
                 result
             }.getOrDefault(emptyMap())
+        }
+
+        /**
+         * Merges a saved mapping with the current defaults so that any action not present in the
+         * saved mapping (e.g. newly added actions in a later version) picks up its default value,
+         * while existing user customisations are preserved.
+         */
+        fun resolveMapping(saved: Map<ControllerAction, PhysicalInput>): Map<ControllerAction, PhysicalInput> {
+            if (saved.isEmpty()) return DEFAULT_MAPPING
+            return DEFAULT_MAPPING.toMutableMap().apply { putAll(saved) }
         }
     }
 }
