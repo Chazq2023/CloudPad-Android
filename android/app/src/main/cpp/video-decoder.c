@@ -360,6 +360,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int64_t last_frame_ns     = 0;
 	int32_t last_input_timeouts = 0;
 	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
+	int64_t ema_inter_frame_ns = vsync_period_ns; // EMA of actual inter-frame interval
 
 	decoder->next_render_ns = 0;
 
@@ -373,15 +374,19 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 			{
 				int64_t now_ns = now_us() * 1000LL;
 
-				// Track wall-clock interval between consecutive output frames,
-				// distinguishing bunching (short) from stalls/drops (long).
+				// Track wall-clock interval between consecutive output frames.
+				// EMA of normal intervals (10-25ms) tracks actual server FPS so the
+				// vsync grid advances at the real rate, preventing headroom drain.
 				if(last_frame_ns > 0)
 				{
-					int64_t delta_us = (now_ns - last_frame_ns) / 1000LL;
+					int64_t delta_ns = now_ns - last_frame_ns;
+					int64_t delta_us = delta_ns / 1000LL;
 					if(delta_us < 10000)
 						short_intervals++;
 					else if(delta_us > 25000)
 						long_intervals++;
+					else
+						ema_inter_frame_ns = (ema_inter_frame_ns * 7 + delta_ns) / 8;
 				}
 				last_frame_ns = now_ns;
 
@@ -425,7 +430,11 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					render_ns = now_ns + baseline_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				decoder->next_render_ns = render_ns + vsync_period_ns;
+				// Advance by EMA period (>= vsync_period) so the grid tracks actual server
+				// rate. If server delivers at 59.9fps, EMA corrects in ~1s, eliminating
+				// the slow headroom drain that causes stutters after 20-30s of clean play.
+				int64_t advance_ns = ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns;
+				decoder->next_render_ns = render_ns + advance_ns;
 				decoder->output_frames_total++;
 			}
 			else
