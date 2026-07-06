@@ -88,8 +88,8 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Add DFPS (decoded FPS) row to the performance overlay, showing the hardware decoder's actual output frame rate alongside the stream input FPS — allows diagnosing whether frame drops occur inside the decoder or at the display compositor
-            - Remove per-second CHIAKI_LOGI calls from the video frame delivery and decoder output threads to eliminate unnecessary file I/O on streaming hot paths
+            - Replace immediate releaseOutputBuffer with vsync-grid releaseOutputBufferAtTime: each decoded frame is now scheduled for a distinct vsync boundary (one period after the previous frame) so SurfaceFlinger never receives two frames in the same vsync window, preventing frame-bunching microstutters
+            - Add VIDEO_FRAME_TIMING logcat output (once per second) reporting decoder output FPS and count of abnormal frame intervals for diagnosing remaining stutter issues
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.

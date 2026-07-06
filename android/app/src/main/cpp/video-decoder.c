@@ -38,6 +38,7 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->target_codec = codec;
 	decoder->shutdown_output = false;
 	decoder->output_frames_total = 0;
+	decoder->next_render_ns = 0;
 	return chiaki_mutex_init(&decoder->codec_mutex, false);
 }
 
@@ -234,34 +235,77 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 {
 	AndroidChiakiVideoDecoder *decoder = user;
 
-	// Raise to display-class priority so the OS schedules us promptly when a
-	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
 	setpriority(PRIO_PROCESS, 0, -8);
+
+	// Vsync grid period in nanoseconds (e.g. 16666667 ns at 60fps).
+	// Each frame is scheduled exactly one period after the previous one so
+	// SurfaceFlinger never receives two frames in the same vsync window.
+	const int64_t vsync_period_ns = 1000000000LL / decoder->target_fps;
+
+	// Per-second diagnostics (local state, reset on each thread start)
+	int64_t bucket_start_ns = 0;
+	int     bucket_frames   = 0;
+	int     bad_intervals   = 0;
+	int64_t last_frame_ns   = 0;
+
+	// Reset vsync grid anchor for a clean start
+	decoder->next_render_ns = 0;
 
 	while(1)
 	{
 		AMediaCodecBufferInfo info;
 		ssize_t status = AMediaCodec_dequeueOutputBuffer(decoder->codec, &info, -1);
-		if(status >= 0) {
-    		if(info.size != 0) {
-    			AMediaCodec_releaseOutputBuffer(
-        			decoder->codec,
-        			(size_t)status,
-        			true
-    			);
-				decoder->output_frames_total++;
-			} else {
-        		AMediaCodec_releaseOutputBuffer(
-            		decoder->codec,
-            		(size_t)status,
-            		false
-        		);
-    		}
+		if(status >= 0)
+		{
+			if(info.size != 0)
+			{
+				int64_t now_ns = now_us() * 1000LL;
 
-    		if(info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM) {
-        		CHIAKI_LOGI(decoder->log, "AMediaCodec reported EOS");
-        		break;
-    		}
+				// Track wall-clock interval between consecutive output frames.
+				// Anything outside 10-25 ms at 60 fps is a sign of bunching or a stall.
+				if(last_frame_ns > 0)
+				{
+					int64_t delta_us = (now_ns - last_frame_ns) / 1000LL;
+					if(delta_us < 10000 || delta_us > 25000)
+						bad_intervals++;
+				}
+				last_frame_ns = now_ns;
+
+				// Per-second summary log
+				if(bucket_start_ns == 0) bucket_start_ns = now_ns;
+				bucket_frames++;
+				int64_t elapsed_ns = now_ns - bucket_start_ns;
+				if(elapsed_ns >= 1000000000LL)
+				{
+					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f bad_intervals=%d",
+						bucket_frames * 1e9f / (float)elapsed_ns, bad_intervals);
+					bucket_start_ns = now_ns;
+					bucket_frames   = 0;
+					bad_intervals   = 0;
+				}
+
+				// Vsync-grid presentation: advance on a fixed period grid so every
+				// frame targets a distinct vsync boundary.  If we've fallen behind
+				// (first frame, or a genuine stall), anchor 2 ms ahead of now so
+				// SurfaceFlinger has enough time to latch the buffer.
+				int64_t render_ns = decoder->next_render_ns;
+				if(render_ns <= now_ns + 1000000LL)
+					render_ns = now_ns + 2000000LL;
+
+				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
+				decoder->next_render_ns = render_ns + vsync_period_ns;
+				decoder->output_frames_total++;
+			}
+			else
+			{
+				AMediaCodec_releaseOutputBuffer(decoder->codec, (size_t)status, false);
+			}
+
+			if(info.flags & AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM)
+			{
+				CHIAKI_LOGI(decoder->log, "AMediaCodec reported EOS");
+				break;
+			}
 		}
 		else
 		{
@@ -277,6 +321,5 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	}
 
 	CHIAKI_LOGI(decoder->log, "Video Decoder Output Thread exiting");
-
 	return NULL;
 }
