@@ -349,14 +349,19 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
 	setpriority(PRIO_PROCESS, 0, -8);
 
-	// Vsync grid period in nanoseconds (e.g. 16666667 ns at 60fps).
+	// Vsync grid period in nanoseconds (e.g. 16666667 ns at 60fps, 8333333 ns at 120fps).
 	const int64_t vsync_period_ns = 1000000000LL / decoder->target_fps;
+
+	// Short/long thresholds scaled to vsync_period so they work at any target fps.
+	// At 60fps: short < 10ms, long > 25ms. At 120fps: short < 5ms, long > 12.5ms.
+	const int64_t short_threshold_us = vsync_period_ns * 6 / 10000LL;  // 0.6 × vsync in µs
+	const int64_t long_threshold_us  = vsync_period_ns * 15 / 10000LL; // 1.5 × vsync in µs
 
 	// Per-second diagnostics
 	int64_t bucket_start_ns   = 0;
 	int     bucket_frames     = 0;
-	int     short_intervals   = 0; // < 10ms — frame bunching (vsync grid absorbs these)
-	int     long_intervals    = 0; // > 25ms — frame stalls or drops (visible stutters)
+	int     short_intervals   = 0; // < 0.6× vsync — frame bunching
+	int     long_intervals    = 0; // > 1.5× vsync — frame stalls or drops
 	int64_t last_frame_ns     = 0;
 	int32_t last_input_timeouts = 0;
 	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
@@ -381,9 +386,9 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				{
 					int64_t delta_ns = now_ns - last_frame_ns;
 					int64_t delta_us = delta_ns / 1000LL;
-					if(delta_us < 10000)
+					if(delta_us < short_threshold_us)
 						short_intervals++;
-					else if(delta_us > 25000)
+					else if(delta_us > long_threshold_us)
 						long_intervals++;
 					else
 						ema_inter_frame_ns = (ema_inter_frame_ns * 7 + delta_ns) / 8;
@@ -414,11 +419,9 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// 4x vsync (67ms) headroom absorbs longs up to 84ms without missing a
-				// display vsync. Cap at 8x vsync (133ms) to bound latency drift during
-				// bursts. Both underflow and overflow reset to the same baseline so the
-				// post-burst period (when longs are most common) always starts with buffer.
-				const int64_t baseline_ns = 4 * vsync_period_ns;
+				// 2x vsync (33ms at 60fps) baseline minimises display-side input latency.
+				// Cap at 8x vsync (133ms at 60fps) as a safety net for extreme jitter bursts.
+				const int64_t baseline_ns = 2 * vsync_period_ns;
 				const int64_t cap_ns      = 8 * vsync_period_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
