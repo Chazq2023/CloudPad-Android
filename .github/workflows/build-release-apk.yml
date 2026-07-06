@@ -41,6 +41,25 @@ jobs:
           sudo apt-get install -y protobuf-compiler
           python3 -m pip install grpcio-tools
 
+      - name: Set up signing keystore
+        working-directory: android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PYLUX_KEYSTORE_BASE64 }}
+          KEYSTORE_STORE_PASSWORD: ${{ secrets.PYLUX_KEYSTORE_STORE_PASSWORD }}
+          KEYSTORE_KEY_ALIAS: ${{ secrets.PYLUX_KEYSTORE_KEY_ALIAS }}
+          KEYSTORE_KEY_PASSWORD: ${{ secrets.PYLUX_KEYSTORE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
+            echo "chiakiKeystore=../android/pylux-release.jks" >> local.properties
+            echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
+            echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
+            echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
+            echo "Signing enabled"
+          else
+            echo "No keystore secret found — build will use default debug signing (updates may require reinstall)"
+          fi
+
       - name: Build APK
         working-directory: android
         run: ./gradlew assembleDebug
@@ -69,14 +88,9 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Restored Picture-in-Picture (PiP) support with toggle in settings (enabled by default)
-
-            ### Outstanding Issues/Improvements
-            - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
-
-            ### Recommendations
-            - Clear app cache and storage
-            - Then uninstall the app and re-install new version
+            - Home shortcuts now survive app reinstalls — shortcuts added to your launcher will continue to work after updating or reinstalling the app
+            - App updates no longer require an uninstall first — builds are now signed with a consistent key so you can install over any previous version
+            - Pre-mapped PS controller touchpad: SELECT = touchpad click; SELECT+Y/A/X/B = swipe up/down/left/right; SELECT+L2/R2 = left/right touchpad click; START+SELECT = PS Home
 
             ### APK
             Attached release asset:

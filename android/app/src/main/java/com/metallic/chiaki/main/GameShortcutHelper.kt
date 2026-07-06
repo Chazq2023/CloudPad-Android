@@ -40,15 +40,16 @@ object GameShortcutHelper {
             return
         }
 
-        val shortcutIntent = Intent(context, MainActivity::class.java).apply {
-            action = ACTION_LAUNCH_CLOUD_GAME
+        val shortcutIntent = Intent(ACTION_LAUNCH_CLOUD_GAME).apply {
+            setPackage(context.packageName)
             putExtra(EXTRA_PRODUCT_ID, game.productId)
             putExtra(EXTRA_GAME_NAME, game.name)
             putExtra(EXTRA_PLATFORM, game.platform)
             putExtra(EXTRA_SERVICE_TYPE, game.serviceType)
             putExtra(EXTRA_CONCEPT_URL, game.conceptUrl)
 
-            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
                     Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
 
