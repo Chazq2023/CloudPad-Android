@@ -51,7 +51,7 @@ jobs:
         run: |
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
-            echo "chiakiKeystore=../android/pylux-release.jks" >> local.properties
+            echo "chiakiKeystore=../pylux-release.jks" >> local.properties
             echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
             echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
             echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
