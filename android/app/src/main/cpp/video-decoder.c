@@ -405,15 +405,21 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// Cap at 4 × vsync_period (matching ring-buffer capacity) to bound latency
-				// drift. A 2× cap fires after just 2 consecutive short intervals and resets
-				// the grid to now+2ms, which collides with frames already queued in
-				// SurfaceFlinger — causing the paired short+long pattern observed in logs.
-				// At 4× the cap only fires in extreme bursts; normally the grid never resets.
+				// Two recovery cases:
+				//   underflow (headroom ≤ 1ms): grid fell behind real time — bootstrap fresh.
+				//   overflow  (headroom > 4× vsync): decoder burst caused the grid to run
+				//     ahead — step back by whole vsync periods to ~2× vsync headroom,
+				//     preserving phase alignment. A hard reset to now+2ms would land in a
+				//     slot already occupied by frames queued in SurfaceFlinger, creating
+				//     the paired short+long stutter pattern seen in logs.
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
-				if(headroom_ns <= 1000000LL || headroom_ns > 4 * vsync_period_ns)
+				if(headroom_ns <= 1000000LL) {
 					render_ns = now_ns + 2000000LL;
+				} else if(headroom_ns > 4 * vsync_period_ns) {
+					int64_t excess = headroom_ns - 2 * vsync_period_ns;
+					render_ns -= (excess / vsync_period_ns) * vsync_period_ns;
+				}
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
 				decoder->next_render_ns = render_ns + vsync_period_ns;
