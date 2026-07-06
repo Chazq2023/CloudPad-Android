@@ -65,10 +65,6 @@ For contributions to the official upstream project, please use the original repo
 
 https://github.com/ForWard-Technologies-LLC/Pylux
 
-# Known Issues
-
-* More games will show as titles you own, however these titles aren't part of the streaming library and will fail to launch.
-
 # Work in progress / known limitations
 
 Pylux and this Android-focused fork are open-source community projects and should be treated as works in progress. Bugs, crashes, missing features, compatibility issues, streaming issues, and unexpected behaviour may occur.
