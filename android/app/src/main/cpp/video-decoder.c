@@ -409,12 +409,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// 3x vsync (50ms) headroom absorbs longs up to 67ms without missing a
-				// display vsync. Cap at 6x vsync (100ms) to bound latency drift during
+				// 4x vsync (67ms) headroom absorbs longs up to 84ms without missing a
+				// display vsync. Cap at 8x vsync (133ms) to bound latency drift during
 				// bursts. Both underflow and overflow reset to the same baseline so the
 				// post-burst period (when longs are most common) always starts with buffer.
-				const int64_t baseline_ns = 3 * vsync_period_ns;
-				const int64_t cap_ns      = 6 * vsync_period_ns;
+				const int64_t baseline_ns = 4 * vsync_period_ns;
+				const int64_t cap_ns      = 8 * vsync_period_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
 				// Skip headroom recording on the very first frame (next_render_ns==0
