@@ -281,6 +281,10 @@ static void *android_chiaki_video_decoder_input_thread_func(void *user)
 {
 	AndroidChiakiVideoDecoder *decoder = user;
 
+	// Raise above default so codec back-pressure is resolved promptly,
+	// reducing input timing jitter that causes output bunching.
+	setpriority(PRIO_PROCESS, 0, -4);
+
 	while(1)
 	{
 		chiaki_mutex_lock(&decoder->frame_queue_mutex);
@@ -399,10 +403,16 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 
 				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
 				// (one period after the previous frame) so SurfaceFlinger never receives two
-				// frames in the same window. Cap headroom at 2 periods to prevent drift.
+				// frames in the same window.
+				//
+				// Cap at 4 × vsync_period (matching ring-buffer capacity) to bound latency
+				// drift. A 2× cap fires after just 2 consecutive short intervals and resets
+				// the grid to now+2ms, which collides with frames already queued in
+				// SurfaceFlinger — causing the paired short+long pattern observed in logs.
+				// At 4× the cap only fires in extreme bursts; normally the grid never resets.
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
-				if(headroom_ns <= 1000000LL || headroom_ns > 2 * vsync_period_ns)
+				if(headroom_ns <= 1000000LL || headroom_ns > 4 * vsync_period_ns)
 					render_ns = now_ns + 2000000LL;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
