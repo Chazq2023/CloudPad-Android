@@ -38,6 +38,7 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->shutdown_output = false;
 	decoder->output_frames_total = 0;
 	decoder->next_render_ns = 0;
+	decoder->input_timeouts = 0;
 
 	decoder->frame_queue_head = 0;
 	decoder->frame_queue_tail = 0;
@@ -310,10 +311,11 @@ static void *android_chiaki_video_decoder_input_thread_func(void *user)
 			size_t buf_size = frame.size;
 			while(buf_size > 0)
 			{
-				ssize_t codec_buf_index = AMediaCodec_dequeueInputBuffer(decoder->codec, 5000);
+				ssize_t codec_buf_index = AMediaCodec_dequeueInputBuffer(decoder->codec, 10000);
 				if(codec_buf_index < 0)
 				{
-					CHIAKI_LOGW(decoder->log, "Decoder input thread: no codec buffer after 5ms, dropping frame remainder");
+					CHIAKI_LOGW(decoder->log, "Decoder input thread: no codec buffer after 10ms, dropping frame remainder");
+					decoder->input_timeouts++;
 					break;
 				}
 				size_t codec_buf_size;
@@ -346,10 +348,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	const int64_t vsync_period_ns = 1000000000LL / decoder->target_fps;
 
 	// Per-second diagnostics
-	int64_t bucket_start_ns = 0;
-	int     bucket_frames   = 0;
-	int     bad_intervals   = 0;
-	int64_t last_frame_ns   = 0;
+	int64_t bucket_start_ns   = 0;
+	int     bucket_frames     = 0;
+	int     short_intervals   = 0; // < 10ms — frame bunching (vsync grid absorbs these)
+	int     long_intervals    = 0; // > 25ms — frame stalls or drops (visible stutters)
+	int64_t last_frame_ns     = 0;
+	int32_t last_input_timeouts = 0;
 
 	decoder->next_render_ns = 0;
 
@@ -363,13 +367,15 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 			{
 				int64_t now_ns = now_us() * 1000LL;
 
-				// Track wall-clock interval between consecutive output frames.
-				// Anything outside 10-25 ms at 60 fps is a sign of bunching or a stall.
+				// Track wall-clock interval between consecutive output frames,
+				// distinguishing bunching (short) from stalls/drops (long).
 				if(last_frame_ns > 0)
 				{
 					int64_t delta_us = (now_ns - last_frame_ns) / 1000LL;
-					if(delta_us < 10000 || delta_us > 25000)
-						bad_intervals++;
+					if(delta_us < 10000)
+						short_intervals++;
+					else if(delta_us > 25000)
+						long_intervals++;
 				}
 				last_frame_ns = now_ns;
 
@@ -379,11 +385,16 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				int64_t elapsed_ns = now_ns - bucket_start_ns;
 				if(elapsed_ns >= 1000000000LL)
 				{
-					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f bad_intervals=%d",
-						bucket_frames * 1e9f / (float)elapsed_ns, bad_intervals);
-					bucket_start_ns = now_ns;
-					bucket_frames   = 0;
-					bad_intervals   = 0;
+					int32_t cur_timeouts = decoder->input_timeouts;
+					int32_t new_timeouts = cur_timeouts - last_input_timeouts;
+					last_input_timeouts = cur_timeouts;
+					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d",
+						bucket_frames * 1e9f / (float)elapsed_ns,
+						short_intervals, long_intervals, new_timeouts);
+					bucket_start_ns   = now_ns;
+					bucket_frames     = 0;
+					short_intervals   = 0;
+					long_intervals    = 0;
 				}
 
 				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary

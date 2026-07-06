@@ -34,6 +34,7 @@ typedef struct android_chiaki_video_decoder_t
 	ChiakiCodec target_codec;
 	volatile uint64_t output_frames_total;
 	int64_t next_render_ns;
+	volatile int32_t input_timeouts;
 
 	// Producer-consumer frame queue: stream thread enqueues, input thread submits to codec
 	AndroidChiakiVideoDecoderFrame frame_queue[ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY];
