@@ -220,6 +220,10 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 			video_receiver->frames_lost += video_receiver->frame_index_cur - next_frame_expected + 1;
 			video_receiver->frame_index_prev = video_receiver->frame_index_cur;
 			video_receiver->frame_index_prev_complete = video_receiver->frame_index_cur;
+			// Track this frame as "received" even though FEC failed, so subsequent
+			// P-frames that reference it are sent to the decoder (which uses error
+			// concealment) rather than being cascade-dropped until the next I-frame.
+			add_ref_frame(video_receiver, video_receiver->frame_index_cur);
 
 			return CHIAKI_ERR_SUCCESS;
 		}
@@ -287,17 +291,17 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 			succ = false;
 			CHIAKI_LOGW(video_receiver->log, "Video callback did not process frame successfully.");
 		}
-		else
-		{
-			add_ref_frame(video_receiver, video_receiver->frame_index_cur);
-			CHIAKI_LOGV(video_receiver->log, "Added reference %c frame %d", slice.slice_type == CHIAKI_BITSTREAM_SLICE_I ? 'I' : 'P', (int)video_receiver->frame_index_cur);
-		}
+		// Always track this frame in the reference list and advance prev_complete
+		// regardless of whether the decoder accepted it. If the decoder was busy,
+		// subsequent P-frames would otherwise cascade-drop (missing reference) until
+		// the next I-frame. The hardware decoder uses error concealment for missing
+		// reference frames, which is far better than a multi-second freeze.
+		add_ref_frame(video_receiver, video_receiver->frame_index_cur);
+		CHIAKI_LOGV(video_receiver->log, "Added reference frame %d", (int)video_receiver->frame_index_cur);
 	}
 
 	video_receiver->frame_index_prev = video_receiver->frame_index_cur;
-
-	if(succ)
-		video_receiver->frame_index_prev_complete = video_receiver->frame_index_cur;
+	video_receiver->frame_index_prev_complete = video_receiver->frame_index_cur;
 
 	return CHIAKI_ERR_SUCCESS;
 }

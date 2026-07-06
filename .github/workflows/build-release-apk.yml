@@ -88,9 +88,7 @@ jobs:
             ## CloudPad Android Cloud Release
 
             ### Updates
-            - Home shortcuts now survive app reinstalls — shortcuts added to your launcher will continue to work after updating or reinstalling the app
-            - App updates no longer require an uninstall first — builds are now signed with a consistent key so you can install over any previous version
-            - Pre-mapped PS controller touchpad: SELECT = touchpad click; SELECT+Y/A/X/B = swipe up/down/left/right; SELECT+L2/R2 = left/right touchpad click; START+SELECT = PS Home
+            - Fixed microstutter at 1080p: eliminated cascade frame drops caused by FEC failures and momentary decoder unavailability at higher resolutions
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
