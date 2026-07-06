@@ -16,6 +16,7 @@
 
 #include <time.h>
 #include <inttypes.h>
+#include <limits.h>
 
 static int64_t now_us()
 {
@@ -358,6 +359,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int     long_intervals    = 0; // > 25ms — frame stalls or drops (visible stutters)
 	int64_t last_frame_ns     = 0;
 	int32_t last_input_timeouts = 0;
+	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
 
 	decoder->next_render_ns = 0;
 
@@ -392,34 +394,32 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int32_t cur_timeouts = decoder->input_timeouts;
 					int32_t new_timeouts = cur_timeouts - last_input_timeouts;
 					last_input_timeouts = cur_timeouts;
-					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d",
+					int min_hdm_ms = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
+					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d",
 						bucket_frames * 1e9f / (float)elapsed_ns,
-						short_intervals, long_intervals, new_timeouts);
+						short_intervals, long_intervals, new_timeouts, min_hdm_ms);
 					bucket_start_ns   = now_ns;
 					bucket_frames     = 0;
 					short_intervals   = 0;
 					long_intervals    = 0;
+					min_headroom_ns   = INT64_MAX;
 				}
 
 				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// Two recovery cases:
-				//   underflow (headroom ≤ 1ms): grid fell behind real time — bootstrap fresh.
-				//   overflow  (headroom > 4× vsync): decoder burst caused the grid to run
-				//     ahead — step back by whole vsync periods to ~2× vsync headroom,
-				//     preserving phase alignment. A hard reset to now+2ms would land in a
-				//     slot already occupied by frames queued in SurfaceFlinger, creating
-				//     the paired short+long stutter pattern seen in logs.
+				// Bootstrap and overflow both reset to 2x vsync (33ms) headroom:
+				//   underflow (headroom <= 1ms): grid fell behind, restart with buffer.
+				//   overflow  (headroom > 4x vsync): burst caused too much lead; reset to
+				//     2x vsync so subsequent decoder stalls (longs) are absorbed without
+				//     missing a display vsync. 2ms was too low: a 25ms long with 2ms headroom
+				//     misses the vsync slot by 6ms and causes a visible stutter.
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
-				if(headroom_ns <= 1000000LL) {
-					render_ns = now_ns + 2000000LL;
-				} else if(headroom_ns > 4 * vsync_period_ns) {
-					int64_t excess = headroom_ns - 2 * vsync_period_ns;
-					render_ns -= (excess / vsync_period_ns) * vsync_period_ns;
-				}
+				if(headroom_ns < min_headroom_ns) min_headroom_ns = headroom_ns;
+				if(headroom_ns <= 1000000LL || headroom_ns > 4 * vsync_period_ns)
+					render_ns = now_ns + 2 * vsync_period_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
 				decoder->next_render_ns = render_ns + vsync_period_ns;
