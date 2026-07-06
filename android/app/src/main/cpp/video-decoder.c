@@ -13,7 +13,6 @@
 #include <time.h>
 #include <inttypes.h>
 
-#define INPUT_BUFFER_TIMEOUT_MS 10
 
 static int64_t now_ms()
 {
@@ -156,7 +155,6 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 	static int64_t last_log_ms = 0;
 	static int64_t samples_in = 0;
 	static int64_t samples_dropped = 0;
-	static int64_t input_retries = 0;
 	static int64_t bytes_in = 0;
 	// Ignore frames_lost and frame_recovered parameters for now - Android decoder handles frame loss internally
 	(void)frames_lost;
@@ -173,20 +171,14 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 
 	while(buf_size > 0)
 	{
-		ssize_t codec_buf_index = -1;
-
-		for(int retry = 0; retry < 3; retry++)
-		{
-		    codec_buf_index = AMediaCodec_dequeueInputBuffer(
-		        decoder->codec,
-		        INPUT_BUFFER_TIMEOUT_MS * 1000
-		    );
-
-		    if(codec_buf_index >= 0)
-		        break;
-
-		    input_retries++;
-		}
+		// Use zero timeout: never block the stream-processing thread waiting for a decoder
+		// input buffer. At 1080p the decoder pipeline occasionally fills briefly; a 30ms
+		// blocking wait (3 × 10ms) would stall network packet reception for two full frame
+		// periods, disrupting the arrival timing of the next frame and causing 58 fps dips.
+		// Dropping the frame immediately lets the stream thread stay responsive. The cascade
+		// fix in videoreceiver.c means a dropped frame causes at most one error-concealed
+		// frame rather than a multi-second freeze.
+		ssize_t codec_buf_index = AMediaCodec_dequeueInputBuffer(decoder->codec, 0);
 
 		if(codec_buf_index < 0)
 		{
@@ -224,16 +216,14 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 		{
 			CHIAKI_LOGI(
 				decoder->log,
-				"VIDEO_DIAG in=%" PRId64 " dropped=%" PRId64 " retries=%" PRId64 " bytes=%" PRId64,
+				"VIDEO_DIAG in=%" PRId64 " dropped=%" PRId64 " bytes=%" PRId64,
 				samples_in,
 				samples_dropped,
-				input_retries,
 				bytes_in
 			);
 
 			samples_in = 0;
 			samples_dropped = 0;
-			input_retries = 0;
 			bytes_in = 0;
 			last_log_ms = now;
 		}
