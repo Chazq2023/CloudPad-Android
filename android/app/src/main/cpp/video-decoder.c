@@ -11,12 +11,11 @@
 #include <android/api-level.h>
 
 #include <string.h>
+#include <stdlib.h>
 #include <sys/resource.h>
 
 #include <time.h>
 #include <inttypes.h>
-
-#define INPUT_BUFFER_TIMEOUT_MS 10
 
 static int64_t now_us()
 {
@@ -25,8 +24,8 @@ static int64_t now_us()
 	return ((int64_t)ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
 
-
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
+static void *android_chiaki_video_decoder_input_thread_func(void *user);
 
 ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec)
 {
@@ -39,7 +38,43 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->shutdown_output = false;
 	decoder->output_frames_total = 0;
 	decoder->next_render_ns = 0;
-	return chiaki_mutex_init(&decoder->codec_mutex, false);
+
+	decoder->frame_queue_head = 0;
+	decoder->frame_queue_tail = 0;
+	decoder->frame_queue_count = 0;
+	decoder->frame_queue_shutdown = true;
+	decoder->input_thread_running = false;
+
+	ChiakiErrorCode err = chiaki_mutex_init(&decoder->codec_mutex, false);
+	if(err != CHIAKI_ERR_SUCCESS)
+		return err;
+
+	err = chiaki_mutex_init(&decoder->frame_queue_mutex, false);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		chiaki_mutex_fini(&decoder->codec_mutex);
+		return err;
+	}
+
+	err = chiaki_cond_init(&decoder->frame_queue_cond);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		chiaki_mutex_fini(&decoder->frame_queue_mutex);
+		chiaki_mutex_fini(&decoder->codec_mutex);
+		return err;
+	}
+
+	return CHIAKI_ERR_SUCCESS;
+}
+
+static void stop_input_thread(AndroidChiakiVideoDecoder *decoder)
+{
+	chiaki_mutex_lock(&decoder->frame_queue_mutex);
+	decoder->frame_queue_shutdown = true;
+	chiaki_cond_signal(&decoder->frame_queue_cond);
+	chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+	chiaki_thread_join(&decoder->input_thread, NULL);
+	decoder->input_thread_running = false;
 }
 
 static void kill_decoder(AndroidChiakiVideoDecoder *decoder)
@@ -68,30 +103,42 @@ static void kill_decoder(AndroidChiakiVideoDecoder *decoder)
 
 void android_chiaki_video_decoder_fini(AndroidChiakiVideoDecoder *decoder)
 {
+	if(decoder->input_thread_running)
+		stop_input_thread(decoder);
 	if(decoder->codec)
 		kill_decoder(decoder);
+	chiaki_cond_fini(&decoder->frame_queue_cond);
+	chiaki_mutex_fini(&decoder->frame_queue_mutex);
 	chiaki_mutex_fini(&decoder->codec_mutex);
 }
 
 void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder, JNIEnv *env, jobject surface)
 {
-	chiaki_mutex_lock(&decoder->codec_mutex);
-
 	if(!surface)
 	{
+		if(decoder->input_thread_running)
+			stop_input_thread(decoder);
+		chiaki_mutex_lock(&decoder->codec_mutex);
 		if(decoder->codec)
 		{
+			chiaki_mutex_unlock(&decoder->codec_mutex);
 			kill_decoder(decoder);
 			CHIAKI_LOGI(decoder->log, "Decoder shut down after surface was removed");
 		}
+		else
+		{
+			chiaki_mutex_unlock(&decoder->codec_mutex);
+		}
 		return;
 	}
+
+	chiaki_mutex_lock(&decoder->codec_mutex);
 
 	if(decoder->codec)
 	{
 #if __ANDROID_API__ >= 23
 		CHIAKI_LOGI(decoder->log, "Video decoder already initialized, swapping surface");
-		ANativeWindow *new_window = surface ? ANativeWindow_fromSurface(env, surface) : NULL;
+		ANativeWindow *new_window = ANativeWindow_fromSurface(env, surface);
 		AMediaCodec_setOutputSurface(decoder->codec, new_window);
 		ANativeWindow_release(decoder->window);
 		decoder->window = new_window;
@@ -126,10 +173,8 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 	AMediaFormat_setString(format, AMEDIAFORMAT_KEY_MIME, mime);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_WIDTH, decoder->target_width);
 	AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_HEIGHT, decoder->target_height);
-	// Realtime decoding: hint the operating rate and switch to realtime scheduling.
-	// low-latency is intentionally omitted — on many devices it causes the hardware
-	// decoder to discard frames under load rather than buffer them, which is worse
-	// for streaming where every frame matters.
+	// Realtime decoding hints. low-latency is intentionally omitted — on many devices
+	// it causes the hardware decoder to discard frames under load rather than buffer them.
 	AMediaFormat_setInt32(format, "priority", 0);
 	AMediaFormat_setFloat(format, "operating-rate", (float)decoder->target_fps);
 
@@ -156,6 +201,20 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 		goto error_codec;
 	}
 
+	decoder->frame_queue_head = 0;
+	decoder->frame_queue_tail = 0;
+	decoder->frame_queue_count = 0;
+	decoder->frame_queue_shutdown = false;
+	decoder->next_render_ns = 0;
+
+	err = chiaki_thread_create(&decoder->input_thread, android_chiaki_video_decoder_input_thread_func, decoder);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(decoder->log, "Failed to create decoder input thread");
+		goto error_codec;
+	}
+	decoder->input_thread_running = true;
+
 	goto beach;
 
 error_codec:
@@ -170,85 +229,128 @@ beach:
 	chiaki_mutex_unlock(&decoder->codec_mutex);
 }
 
+// Called on the stream thread. Copies the frame into the ring buffer and signals
+// the input thread, then returns immediately — the stream thread is never blocked
+// waiting for MediaCodec input buffers.
 bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, int32_t frames_lost, bool frame_recovered, void *user)
 {
-	bool r = true;
 	AndroidChiakiVideoDecoder *decoder = user;
-	// Ignore frames_lost and frame_recovered parameters for now - Android decoder handles frame loss internally
 	(void)frames_lost;
 	(void)frame_recovered;
-	chiaki_mutex_lock(&decoder->codec_mutex);
 
-	if(!decoder->codec)
+	chiaki_mutex_lock(&decoder->frame_queue_mutex);
+
+	if(decoder->frame_queue_shutdown)
 	{
-		CHIAKI_LOGE(decoder->log, "Received video data, but decoder is not initialized!");
-		goto beach;
+		chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+		return false;
 	}
 
-	while(buf_size > 0)
+	uint8_t *data = malloc(buf_size);
+	if(!data)
 	{
-		ssize_t codec_buf_index = -1;
+		chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+		return false;
+	}
+	memcpy(data, buf, buf_size);
 
-		for(int retry = 0; retry < 3; retry++)
+	if(decoder->frame_queue_count == ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY)
+	{
+		// Queue full: evict the oldest frame so the stream thread never stalls
+		free(decoder->frame_queue[decoder->frame_queue_head].data);
+		decoder->frame_queue_head = (decoder->frame_queue_head + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
+		decoder->frame_queue_count--;
+	}
+
+	decoder->frame_queue[decoder->frame_queue_tail].data = data;
+	decoder->frame_queue[decoder->frame_queue_tail].size = buf_size;
+	decoder->frame_queue_tail = (decoder->frame_queue_tail + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
+	decoder->frame_queue_count++;
+
+	chiaki_cond_signal(&decoder->frame_queue_cond);
+	chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+
+	return true;
+}
+
+// Dedicated thread: pops frames from the ring buffer and submits them to MediaCodec.
+// Codec back-pressure is absorbed here with a 5ms timeout per buffer, without ever
+// stalling the stream thread.
+static void *android_chiaki_video_decoder_input_thread_func(void *user)
+{
+	AndroidChiakiVideoDecoder *decoder = user;
+
+	while(1)
+	{
+		chiaki_mutex_lock(&decoder->frame_queue_mutex);
+		while(decoder->frame_queue_count == 0 && !decoder->frame_queue_shutdown)
+			chiaki_cond_wait(&decoder->frame_queue_cond, &decoder->frame_queue_mutex);
+
+		if(decoder->frame_queue_shutdown)
 		{
-		    codec_buf_index = AMediaCodec_dequeueInputBuffer(
-		        decoder->codec,
-		        INPUT_BUFFER_TIMEOUT_MS * 1000
-		    );
-
-		    if(codec_buf_index >= 0)
-		        break;
+			while(decoder->frame_queue_count > 0)
+			{
+				free(decoder->frame_queue[decoder->frame_queue_head].data);
+				decoder->frame_queue_head = (decoder->frame_queue_head + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
+				decoder->frame_queue_count--;
+			}
+			chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+			break;
 		}
 
-		if(codec_buf_index < 0)
+		AndroidChiakiVideoDecoderFrame frame = decoder->frame_queue[decoder->frame_queue_head];
+		decoder->frame_queue_head = (decoder->frame_queue_head + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
+		decoder->frame_queue_count--;
+		chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+
+		chiaki_mutex_lock(&decoder->codec_mutex);
+		if(decoder->codec)
 		{
-		    r = false;
-		    goto beach;
+			uint8_t *buf = frame.data;
+			size_t buf_size = frame.size;
+			while(buf_size > 0)
+			{
+				ssize_t codec_buf_index = AMediaCodec_dequeueInputBuffer(decoder->codec, 5000);
+				if(codec_buf_index < 0)
+				{
+					CHIAKI_LOGW(decoder->log, "Decoder input thread: no codec buffer after 5ms, dropping frame remainder");
+					break;
+				}
+				size_t codec_buf_size;
+				uint8_t *codec_buf = AMediaCodec_getInputBuffer(decoder->codec, (size_t)codec_buf_index, &codec_buf_size);
+				size_t chunk = buf_size < codec_buf_size ? buf_size : codec_buf_size;
+				memcpy(codec_buf, buf, chunk);
+				AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, chunk, now_us(), 0);
+				buf += chunk;
+				buf_size -= chunk;
+			}
 		}
-		size_t codec_buf_size;
-		uint8_t *codec_buf = AMediaCodec_getInputBuffer(decoder->codec, (size_t)codec_buf_index, &codec_buf_size);
-		size_t codec_sample_size = buf_size;
-		if(codec_sample_size > codec_buf_size)
-		{
-			//CHIAKI_LOGD(decoder->log, "Sample is bigger than buffer, splitting");
-			codec_sample_size = codec_buf_size;
-		}
-		memcpy(codec_buf, buf, codec_sample_size);
-		media_status_t r = AMediaCodec_queueInputBuffer(
-    		decoder->codec,
-    		(size_t)codec_buf_index,
-    		0,
-    		codec_sample_size,
-    		now_us(),
-    		0
-		);
-		buf += codec_sample_size;
-		buf_size -= codec_sample_size;
-		}
-
-	beach:
 		chiaki_mutex_unlock(&decoder->codec_mutex);
-		return r;
+
+		free(frame.data);
 	}
+
+	CHIAKI_LOGI(decoder->log, "Video Decoder Input Thread exiting");
+	return NULL;
+}
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user)
 {
 	AndroidChiakiVideoDecoder *decoder = user;
 
+	// Raise to display-class priority so the OS schedules us promptly when a
+	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
 	setpriority(PRIO_PROCESS, 0, -8);
 
 	// Vsync grid period in nanoseconds (e.g. 16666667 ns at 60fps).
-	// Each frame is scheduled exactly one period after the previous one so
-	// SurfaceFlinger never receives two frames in the same vsync window.
 	const int64_t vsync_period_ns = 1000000000LL / decoder->target_fps;
 
-	// Per-second diagnostics (local state, reset on each thread start)
+	// Per-second diagnostics
 	int64_t bucket_start_ns = 0;
 	int     bucket_frames   = 0;
 	int     bad_intervals   = 0;
 	int64_t last_frame_ns   = 0;
 
-	// Reset vsync grid anchor for a clean start
 	decoder->next_render_ns = 0;
 
 	while(1)
@@ -284,12 +386,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					bad_intervals   = 0;
 				}
 
-				// Vsync-grid presentation: advance on a fixed period grid so every
-				// frame targets a distinct vsync boundary.  If we've fallen behind
-				// (first frame, or a genuine stall), anchor 2 ms ahead of now so
-				// SurfaceFlinger has enough time to latch the buffer.
+				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
+				// (one period after the previous frame) so SurfaceFlinger never receives two
+				// frames in the same window. Cap headroom at 2 periods to prevent drift.
 				int64_t render_ns = decoder->next_render_ns;
-				if(render_ns <= now_ns + 1000000LL)
+				int64_t headroom_ns = render_ns - now_ns;
+				if(headroom_ns <= 1000000LL || headroom_ns > 2 * vsync_period_ns)
 					render_ns = now_ns + 2000000LL;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);

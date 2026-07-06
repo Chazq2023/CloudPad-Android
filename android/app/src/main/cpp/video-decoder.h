@@ -4,12 +4,21 @@
 #define CHIAKI_JNI_VIDEO_DECODER_H
 
 #include <jni.h>
+#include <stddef.h>
 
 #include <chiaki/thread.h>
 #include <chiaki/log.h>
 
 typedef struct AMediaCodec AMediaCodec;
 typedef struct ANativeWindow ANativeWindow;
+
+#define ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY 4
+
+typedef struct
+{
+	uint8_t *data;
+	size_t size;
+} AndroidChiakiVideoDecoderFrame;
 
 typedef struct android_chiaki_video_decoder_t
 {
@@ -25,6 +34,17 @@ typedef struct android_chiaki_video_decoder_t
 	ChiakiCodec target_codec;
 	volatile uint64_t output_frames_total;
 	int64_t next_render_ns;
+
+	// Producer-consumer frame queue: stream thread enqueues, input thread submits to codec
+	AndroidChiakiVideoDecoderFrame frame_queue[ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY];
+	size_t frame_queue_head;
+	size_t frame_queue_tail;
+	size_t frame_queue_count;
+	ChiakiMutex frame_queue_mutex;
+	ChiakiCond frame_queue_cond;
+	bool frame_queue_shutdown;
+	ChiakiThread input_thread;
+	bool input_thread_running;
 } AndroidChiakiVideoDecoder;
 
 ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec);
