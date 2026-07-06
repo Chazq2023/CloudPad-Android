@@ -54,8 +54,7 @@ class ControllerRemapActivity : AppCompatActivity() {
         binding.titleTextView.text = getString(R.string.controller_remap_title)
 
         preferences = Preferences(this)
-        val saved = preferences.loadControllerMapping()
-        currentMapping.putAll(if (saved.isEmpty()) PhysicalInput.DEFAULT_MAPPING else saved)
+        currentMapping.putAll(PhysicalInput.resolveMapping(preferences.loadControllerMapping()))
 
         adapter = RemapAdapter(buildItems()) { action -> startListeningFor(action) }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)

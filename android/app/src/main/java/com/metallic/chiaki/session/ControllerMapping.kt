@@ -62,6 +62,7 @@ sealed class PhysicalInput {
             ControllerAction.L3 to Button(KeyEvent.KEYCODE_BUTTON_THUMBL),
             ControllerAction.R3 to Button(KeyEvent.KEYCODE_BUTTON_THUMBR),
             ControllerAction.START to Button(KeyEvent.KEYCODE_BUTTON_START),
+            ControllerAction.SELECT to Button(KeyEvent.KEYCODE_BUTTON_SELECT),
             ControllerAction.DPAD_UP to AxisDirection(MotionEvent.AXIS_HAT_Y, false),
             ControllerAction.DPAD_DOWN to AxisDirection(MotionEvent.AXIS_HAT_Y, true),
             ControllerAction.DPAD_LEFT to AxisDirection(MotionEvent.AXIS_HAT_X, false),
@@ -106,6 +107,16 @@ sealed class PhysicalInput {
                 }
                 result
             }.getOrDefault(emptyMap())
+        }
+
+        /**
+         * Merges a saved mapping with the current defaults so that any action not present in the
+         * saved mapping (e.g. newly added actions in a later version) picks up its default value,
+         * while existing user customisations are preserved.
+         */
+        fun resolveMapping(saved: Map<ControllerAction, PhysicalInput>): Map<ControllerAction, PhysicalInput> {
+            if (saved.isEmpty()) return DEFAULT_MAPPING
+            return DEFAULT_MAPPING.toMutableMap().apply { putAll(saved) }
         }
     }
 }
