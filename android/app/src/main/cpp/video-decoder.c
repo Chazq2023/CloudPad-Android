@@ -409,17 +409,20 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// Bootstrap and overflow both reset to 2x vsync (33ms) headroom:
-				//   underflow (headroom <= 1ms): grid fell behind, restart with buffer.
-				//   overflow  (headroom > 4x vsync): burst caused too much lead; reset to
-				//     2x vsync so subsequent decoder stalls (longs) are absorbed without
-				//     missing a display vsync. 2ms was too low: a 25ms long with 2ms headroom
-				//     misses the vsync slot by 6ms and causes a visible stutter.
+				// 3x vsync (50ms) headroom absorbs longs up to 67ms without missing a
+				// display vsync. Cap at 6x vsync (100ms) to bound latency drift during
+				// bursts. Both underflow and overflow reset to the same baseline so the
+				// post-burst period (when longs are most common) always starts with buffer.
+				const int64_t baseline_ns = 3 * vsync_period_ns;
+				const int64_t cap_ns      = 6 * vsync_period_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
-				if(headroom_ns < min_headroom_ns) min_headroom_ns = headroom_ns;
-				if(headroom_ns <= 1000000LL || headroom_ns > 4 * vsync_period_ns)
-					render_ns = now_ns + 2 * vsync_period_ns;
+				// Skip headroom recording on the very first frame (next_render_ns==0
+				// gives a boot-time-sized negative that pollutes the min_hdm log).
+				if(decoder->next_render_ns > 0 && headroom_ns < min_headroom_ns)
+					min_headroom_ns = headroom_ns;
+				if(headroom_ns <= 1000000LL || headroom_ns > cap_ns)
+					render_ns = now_ns + baseline_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
 				decoder->next_render_ns = render_ns + vsync_period_ns;
