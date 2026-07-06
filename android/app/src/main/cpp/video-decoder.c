@@ -430,10 +430,15 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					render_ns = now_ns + baseline_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				// Advance by EMA period (>= vsync_period) so the grid tracks actual server
-				// rate. If server delivers at 59.9fps, EMA corrects in ~1s, eliminating
-				// the slow headroom drain that causes stutters after 20-30s of clean play.
-				int64_t advance_ns = ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns;
+				// Target baseline headroom: when above baseline use vsync_period so excess
+				// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
+				// counteract systematic drain if server delivers slightly below 60fps.
+				// This keeps headroom near baseline and prevents cap-overflow resets, which
+				// cause timestamp inversions (newer frame scheduled before older frame in
+				// SurfaceFlinger queue → visible stutter every ~13s).
+				int64_t advance_ns = (headroom_ns > baseline_ns)
+					? vsync_period_ns
+					: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
 				decoder->next_render_ns = render_ns + advance_ns;
 				decoder->output_frames_total++;
 			}
