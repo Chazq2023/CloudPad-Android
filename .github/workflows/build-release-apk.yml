@@ -89,7 +89,7 @@ jobs:
 
             ### Updates
             - Fixed microstutter at 1080p: eliminated cascade frame drops caused by FEC failures and momentary decoder unavailability at higher resolutions
-            - Fixed 58fps dips at 1080p: replaced blocking MediaCodec input buffer wait (up to 30ms) with a zero-timeout non-blocking call so the stream thread is never stalled waiting for the decoder
+            - Fixed residual 1080p microstutter: decoupled stream thread from MediaCodec using a producer-consumer frame queue — stream thread enqueues frames instantly, a dedicated input thread submits to the decoder without blocking network reception
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
