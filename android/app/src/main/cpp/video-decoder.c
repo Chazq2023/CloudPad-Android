@@ -358,10 +358,11 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	const int64_t long_threshold_us  = vsync_period_ns * 15 / 10000LL; // 1.5 × vsync in µs
 
 	// Vsync-grid baseline headroom. At 720p the hardware decoder's jitter fits
-	// comfortably inside 2× vsync (33ms). At 1080p the decoder processes ~2.25×
-	// more pixels per frame, pushing worst-case decode time to 40-60ms, so 3×
-	// vsync (50ms at 60fps) is needed to avoid headroom resets on complex frames.
-	const int baseline_mult = (decoder->target_width * decoder->target_height > 1000000) ? 3 : 2;
+	// comfortably inside 2× vsync (33ms). At 1080p, larger frames mean more FEC
+	// work on packet loss, producing sustained clusters of 2-3 longs/sec that
+	// drain 30-55ms of headroom; 4× vsync (67ms) gives enough buffer to survive
+	// a full cluster and still have headroom left for the next one.
+	const int baseline_mult = (decoder->target_width * decoder->target_height > 1000000) ? 4 : 2;
 	const int64_t baseline_ns = (int64_t)baseline_mult * vsync_period_ns;
 	const int64_t cap_ns      = 8 * vsync_period_ns;
 	CHIAKI_LOGI(decoder->log, "Vsync grid: period=%.2fms baseline=%dx=%.0fms cap=%dx=%.0fms (%dx%d)",
@@ -441,15 +442,20 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					render_ns = now_ns + baseline_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				// Target baseline headroom: when above baseline use vsync_period so excess
-				// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
-				// counteract systematic drain if server delivers slightly below 60fps.
-				// This keeps headroom near baseline and prevents cap-overflow resets, which
-				// cause timestamp inversions (newer frame scheduled before older frame in
-				// SurfaceFlinger queue → visible stutter every ~13s).
-				int64_t advance_ns = (headroom_ns > baseline_ns)
-					? vsync_period_ns
-					: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
+				// Three-tier advance to keep headroom near baseline at all times:
+				//  > baseline : vsync_period — bleed excess back down to baseline
+				//  > baseline/2: EMA (≥ vsync_period) — track actual server FPS to prevent
+				//                systematic drain when server delivers slightly below target
+				//  ≤ baseline/2: 1.5× vsync_period — fast rebuild after a long cluster
+				//                drains headroom low; at 60fps this recovers ~8ms/frame so
+				//                the buffer is restored in ~4 frames before the next cluster
+				int64_t advance_ns;
+				if(headroom_ns > baseline_ns)
+					advance_ns = vsync_period_ns;
+				else if(headroom_ns > baseline_ns / 2)
+					advance_ns = ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns;
+				else
+					advance_ns = vsync_period_ns * 3 / 2;
 				decoder->next_render_ns = render_ns + advance_ns;
 				decoder->output_frames_total++;
 			}
