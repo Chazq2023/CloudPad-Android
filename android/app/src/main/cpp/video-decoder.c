@@ -358,11 +358,11 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	const int64_t long_threshold_us  = vsync_period_ns * 15 / 10000LL; // 1.5 × vsync in µs
 
 	// Vsync-grid baseline headroom. At 720p the hardware decoder's jitter fits
-	// comfortably inside 2× vsync (33ms). At 1080p, larger frames mean more FEC
-	// work on packet loss, producing sustained clusters of 2-3 longs/sec that
-	// drain 30-55ms of headroom; 4× vsync (67ms) gives enough buffer to survive
-	// a full cluster and still have headroom left for the next one.
-	const int baseline_mult = (decoder->target_width * decoder->target_height > 1000000) ? 4 : 2;
+	// comfortably inside 2× vsync (33ms). At 1080p, FEC recovery on large frames
+	// produces back-to-back ~62ms stalls; 5× vsync (83ms) combined with the
+	// fast-recovery tier (1.5× advance when below baseline/2) keeps headroom
+	// positive through two consecutive 62ms longs before fast-recovery engages.
+	const int baseline_mult = (decoder->target_width * decoder->target_height > 1000000) ? 5 : 2;
 	const int64_t baseline_ns = (int64_t)baseline_mult * vsync_period_ns;
 	const int64_t cap_ns      = 8 * vsync_period_ns;
 	CHIAKI_LOGI(decoder->log, "Vsync grid: period=%.2fms baseline=%dx=%.0fms cap=%dx=%.0fms (%dx%d)",
