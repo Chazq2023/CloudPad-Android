@@ -246,6 +246,10 @@ typedef struct android_chiaki_session_t
 	uint64_t metrics_fps_last_total;
 	uint64_t metrics_fps_last_time_ms;
 
+	uint64_t metrics_decoded_fps_last_total;
+	uint64_t metrics_decoded_fps_last_time_ms;
+	double metrics_live_decoded_fps;
+
 	double metrics_live_bitrate_mbps;
 	double metrics_live_fps;
 	double metrics_ping_ms;
@@ -581,11 +585,16 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	session->metrics_fps_last_total = 0;
 	session->metrics_fps_last_time_ms = 0;
 
+	session->metrics_decoded_fps_last_total = 0;
+	session->metrics_decoded_fps_last_time_ms = 0;
+	session->metrics_live_decoded_fps = 0.0;
+
 	session->metrics_live_bitrate_mbps = 0.0;
 	session->metrics_live_fps = 0.0;
 	session->metrics_packet_loss = 0.0;
 	session->metrics_drops = 0;
 	err = android_chiaki_video_decoder_init(&session->video_decoder, log, connect_info.video_profile.width, connect_info.video_profile.height,
+			(int32_t)connect_info.video_profile.max_fps,
 			connect_info.ps5 ? connect_info.video_profile.codec : CHIAKI_CODEC_H264);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
@@ -840,7 +849,7 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 			env,
 			metrics_class,
 			"<init>",
-			"(IIFDDDDDJ)V"
+			"(IIFFDDDDDJ)V"
 	);
 
 	if(!metrics_ctor)
@@ -872,6 +881,26 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 	}
 
 	float fps = (float)session->metrics_live_fps;
+
+	// Compute decoded (output) FPS from the video decoder's output frame counter
+	uint64_t decoded_total = session->video_decoder.output_frames_total;
+	if(session->metrics_decoded_fps_last_time_ms == 0)
+	{
+		session->metrics_decoded_fps_last_time_ms = now_ms;
+		session->metrics_decoded_fps_last_total = decoded_total;
+	}
+	else
+	{
+		uint64_t elapsed_dec = now_ms - session->metrics_decoded_fps_last_time_ms;
+		if(elapsed_dec >= 500)
+		{
+			uint64_t dec_delta = decoded_total - session->metrics_decoded_fps_last_total;
+			session->metrics_live_decoded_fps = (double)dec_delta / ((double)elapsed_dec / 1000.0);
+			session->metrics_decoded_fps_last_total = decoded_total;
+			session->metrics_decoded_fps_last_time_ms = now_ms;
+		}
+	}
+	float decoded_fps = (float)session->metrics_live_decoded_fps;
 	double bitrate = session->session.stream_connection.measured_bitrate > 0.0
 		? session->session.stream_connection.measured_bitrate
 		: session->metrics_live_bitrate_mbps;
@@ -896,6 +925,7 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 			(jint)width,
 			(jint)height,
 			(jfloat)fps,
+			(jfloat)decoded_fps,
 			(jdouble)bitrate,
 			(jdouble)ping,
 			(jdouble)latency,
