@@ -379,6 +379,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int64_t last_frame_ns     = 0;
 	int32_t last_input_timeouts = 0;
 	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
+	int64_t max_interval_ns   = 0;         // peak inter-frame interval per bucket
 	int64_t ema_inter_frame_ns = vsync_period_ns; // EMA of actual inter-frame interval
 
 	decoder->next_render_ns = 0;
@@ -406,6 +407,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 						long_intervals++;
 					else
 						ema_inter_frame_ns = (ema_inter_frame_ns * 7 + delta_ns) / 8;
+					if(delta_ns > max_interval_ns) max_interval_ns = delta_ns;
 				}
 				last_frame_ns = now_ns;
 
@@ -418,15 +420,17 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int32_t cur_timeouts = decoder->input_timeouts;
 					int32_t new_timeouts = cur_timeouts - last_input_timeouts;
 					last_input_timeouts = cur_timeouts;
-					int min_hdm_ms = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
-					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d",
+					int min_hdm_ms  = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
+					int max_int_ms  = (int)(max_interval_ns / 1000000LL);
+					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d max_int=%d",
 						bucket_frames * 1e9f / (float)elapsed_ns,
-						short_intervals, long_intervals, new_timeouts, min_hdm_ms);
+						short_intervals, long_intervals, new_timeouts, min_hdm_ms, max_int_ms);
 					bucket_start_ns   = now_ns;
 					bucket_frames     = 0;
 					short_intervals   = 0;
 					long_intervals    = 0;
 					min_headroom_ns   = INT64_MAX;
+					max_interval_ns   = 0;
 				}
 
 				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
