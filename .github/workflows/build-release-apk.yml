@@ -97,10 +97,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - PS5 library now only shows streamable games: DLC, add-ons, themes, and avatars are filtered out before matching against the streaming catalog, so the library correctly shows ~350 games instead of every owned entitlement
-            - Cross-gen upgrades (e.g. disc-upgrade titles) now stream correctly: the owned full-game product ID is used instead of the stale entitlement ID that Gaikai rejects
-            - Catalog now fetches from multiple Sony lists (PS Plus subscription, Ubisoft Classics, monthly games, free-to-play, all PS5 games) so PS4-only PS Plus titles are no longer missing
-            - Cross-gen PS4/PS5 editions now appear as separate streamable cards
+            - Fixed game launch: Gaikai is now sent the catalog product ID (what it actually knows) instead of the raw entitlement hash; cross-gen disc-upgrade rescue still sends the correct full-game ID when the title differs
+            - Library no longer shows non-streamable titles (e.g. Returnal): only games in the main streamable catalog are cross-referenced, not the PS Plus supplement whose entries may have been removed from Gaikai
+            - Library now correctly excludes trials, free-to-play entitlements, and demos in addition to DLC/add-ons
 
             ### Known Issues
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.

@@ -299,7 +299,7 @@ class PsCloudCatalogService
 		val ownedGames = getOwnedPs5CloudGames(
 			npssoToken,
 			catalog.browseGames,
-			catalog.plusLibrarySupplement,
+			emptyList(),  // supplement excluded: supplement games may not be in Gaikai's backend
 			catalog.productIdAliases
 		).filter { it.platform == "ps5" }
 

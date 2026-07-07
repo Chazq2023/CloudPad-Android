@@ -33,8 +33,9 @@ object PsCloudOwnership
 			ent.activeFlag &&
 				!ent.productId.startsWith("IP") &&
 				!ent.productId.startsWith("SUB") &&
-				// feature_type==0 is DLC/add-ons/themes/avatars — never a base game, safe to drop
-				ent.featureType != 0
+				ent.featureType != 0 &&  // DLC/add-ons/themes/avatars
+				ent.featureType != 1 &&  // trials/free-to-play
+				!ent.name.contains("demo", ignoreCase = true)
 		}
 	}
 
@@ -335,13 +336,20 @@ object PsCloudOwnership
 		)
 	}
 
-	// For pscloud: stream the owned storeProductId (the actual product_id from entitlements),
-	// falling back to entitlementId, then productId. Cross-gen upgrades carry stale entitlement
-	// ids that Gaikai has no game for; the storeProductId is the real streamable edition.
+	private val titleIdRegex = Regex("""(PPSA|CUSA)\d+""", RegexOption.IGNORE_CASE)
+
+	// For pscloud: Gaikai identifies games by their catalog productId (from the imagic list).
+	// Exception: disc-upgrade rescue replaces storeProductId with a full-game edition whose
+	// title ID genuinely differs from the catalog SKU — use storeProductId in that case only.
 	fun streamingIdentifier(game: CloudGame): String
 	{
 		if (game.serviceType.equals("pscloud", ignoreCase = true))
 		{
+			val catalogTitle = titleIdRegex.find(game.productId)?.value?.uppercase()
+			val storeTitle = titleIdRegex.find(game.storeProductId)?.value?.uppercase()
+			if (storeTitle != null && catalogTitle != null && storeTitle != catalogTitle)
+				return game.storeProductId  // disc-upgrade rescue: genuinely different title
+			if (game.productId.isNotEmpty()) return game.productId
 			if (game.storeProductId.isNotEmpty()) return game.storeProductId
 			if (game.entitlementId.isNotEmpty()) return game.entitlementId
 		}
