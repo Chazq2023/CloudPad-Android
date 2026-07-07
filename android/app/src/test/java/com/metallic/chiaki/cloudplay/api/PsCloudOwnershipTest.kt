@@ -178,6 +178,32 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun streamPlatformReturnsPsnowForCusaEntitlementEvenWithPpsaStoreProductId() {
+        // PSN can assign a PS5 ent.productId to a cross-gen entitlement whose ent.id is still PS4.
+        // The CUSA entitlementId must take priority over the PPSA storeProductId.
+        val game = pscloudGame(
+            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            storeProductId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
+            featureType = 3
+        )
+        assertEquals("ps4", PsCloudOwnership.streamPlatform(game))
+        assertEquals("psnow", PsCloudOwnership.streamServiceType(game))
+    }
+
+    @Test
+    fun streamIdentifierSendsCusaEntitlementIdEvenWithNonEmptyPpsaStoreProductId() {
+        // Same GoT scenario but ent.productId is non-empty PPSA — must still send CUSA to Kamaji
+        val game = pscloudGame(
+            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            storeProductId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
+            featureType = 3
+        )
+        assertEquals("EP9000-CUSA32709_00-GHOSTSHIP0000000", PsCloudOwnership.streamIdentifier(game))
+    }
+
+    @Test
     fun platformTokenDetectsPs5() {
         assertEquals("ps5", PsCloudOwnership.platformToken("PPSA01234_00"))
     }
