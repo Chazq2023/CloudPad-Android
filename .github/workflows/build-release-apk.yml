@@ -72,10 +72,19 @@ jobs:
           cp android/app/src/main/assets/FrontendArt/cloudpad-icon.png release/cloudpad-icon.png
           cp android/app/src/main/assets/FrontendArt/cloudpad-logo.png release/cloudpad-logo.png
 
-      - name: Create tag
+      - name: Compute version
         run: |
-          TAG=auto-build-${GITHUB_RUN_NUMBER}
-          echo "TAG=$TAG" >> $GITHUB_ENV
+          git fetch --tags
+          LATEST=$(git tag -l "v0.0.*" | sort -t. -k3 -n | tail -1)
+          if [ -z "$LATEST" ]; then
+            VERSION="0.0.1"
+          else
+            PATCH=$(echo "$LATEST" | sed 's/v0\.0\.//')
+            VERSION="0.0.$((PATCH + 1))"
+          fi
+          TAG="v${VERSION}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG=${TAG}" >> $GITHUB_ENV
           git tag $TAG
           git push origin $TAG
 
@@ -83,9 +92,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG }}
-          name: CloudPad Android Cloud ${{ env.TAG }}
+          name: CloudPad Beta Release ${{ env.VERSION }}
           body: |
-            ## CloudPad Android Cloud Release
+            ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
             - Fix FEC cascade freeze: frames whose FEC recovery fails are now always added to the reference list, so subsequent P-frames are sent to the decoder with hardware error concealment rather than cascade-dropping until the next I-frame
@@ -94,7 +103,9 @@ jobs:
             - Reduce display-side input latency: lower vsync-grid baseline from 4× to 2× vsync period (67ms → 33ms at 60fps, 16ms at 120fps); fix 120fps EMA breakage where hardcoded 10ms/25ms thresholds misclassified all 120fps frames as short (8.33ms < 10ms), preventing EMA from ever updating — thresholds are now scaled to 0.6× and 1.5× vsync period so they work correctly at any target fps
 
             ### Known Issues
-            - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch, i need to fix this.
+            - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.
+            - 60hz displays suffer from microstutter, this is being looked into. This is not an issue with 120hz displays.
+            - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
 
             ### APK
             Attached release asset:
