@@ -359,9 +359,8 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 
 	// Vsync-grid baseline headroom. At 720p the hardware decoder's jitter fits
 	// comfortably inside 2× vsync (33ms). At 1080p, FEC recovery on large frames
-	// produces back-to-back ~62ms stalls; 5× vsync (83ms) combined with the
-	// fast-recovery tier (1.5× advance when below baseline/2) keeps headroom
-	// positive through two consecutive 62ms longs before fast-recovery engages.
+	// produces back-to-back ~62ms stalls; 5× vsync (83ms) keeps headroom positive
+	// through two consecutive 62ms longs before the emergency tier engages.
 	const int baseline_mult = (decoder->target_width * decoder->target_height > 1000000) ? 5 : 2;
 	const int64_t baseline_ns = (int64_t)baseline_mult * vsync_period_ns;
 	const int64_t cap_ns      = 8 * vsync_period_ns;
@@ -380,7 +379,6 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int32_t last_input_timeouts = 0;
 	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
 	int64_t max_interval_ns   = 0;         // peak inter-frame interval per bucket
-	int64_t ema_inter_frame_ns = vsync_period_ns; // EMA of actual inter-frame interval
 
 	decoder->next_render_ns = 0;
 
@@ -395,8 +393,6 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				int64_t now_ns = now_us() * 1000LL;
 
 				// Track wall-clock interval between consecutive output frames.
-				// EMA of normal intervals (10-25ms) tracks actual server FPS so the
-				// vsync grid advances at the real rate, preventing headroom drain.
 				if(last_frame_ns > 0)
 				{
 					int64_t delta_ns = now_ns - last_frame_ns;
@@ -405,8 +401,6 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 						short_intervals++;
 					else if(delta_us > long_threshold_us)
 						long_intervals++;
-					else
-						ema_inter_frame_ns = (ema_inter_frame_ns * 7 + delta_ns) / 8;
 					if(delta_ns > max_interval_ns) max_interval_ns = delta_ns;
 				}
 				last_frame_ns = now_ns;
@@ -446,24 +440,17 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					render_ns = now_ns + baseline_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				// Two-tier advance to keep display gaps exactly one vsync period:
-				//  > baseline    : vsync_period — bleed excess back down to baseline
-				//  > vsync_period: EMA (≥ vsync_period) — track server fps; advance is
-				//                  always ≤ vsync_period so SurfaceFlinger hits the NEXT
-				//                  vsync boundary, never the one after (no held frames)
-				//  ≤ vsync_period: 2× vsync_period — emergency rebuild when headroom is
-				//                  near-zero. Net gain per normal frame = 2×vsync - vsync
-				//                  = vsync (16.67ms), so one activation escapes the danger
-				//                  zone in a single step. 3/2× only adds 8.33ms per step,
-				//                  requiring two activations and risking a reset; 2× avoids
-				//                  both the extra gap and the reset in sustained-jitter runs.
+				// Advance the vsync grid by exactly one vsync period in all normal cases.
+				// This is the only value that reliably lands on the NEXT vsync boundary:
+				// any advance larger than vsync_period overshoots and SurfaceFlinger snaps
+				// to the vsync after that (33ms gap instead of 16.67ms).
+				// When headroom is near zero, use 2× to escape in one step (net gain =
+				// 2×vsync - vsync = vsync per normal frame after the long that triggered it).
 				int64_t advance_ns;
-				if(headroom_ns > baseline_ns)
-					advance_ns = vsync_period_ns;
-				else if(headroom_ns > vsync_period_ns)
-					advance_ns = ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns;
-				else
+				if(headroom_ns <= vsync_period_ns)
 					advance_ns = vsync_period_ns * 2;
+				else
+					advance_ns = vsync_period_ns;
 				decoder->next_render_ns = render_ns + advance_ns;
 				decoder->output_frames_total++;
 			}

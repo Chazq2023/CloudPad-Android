@@ -97,8 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fix 1080p stutter during sustained network jitter: raise emergency advance from 1.5× to 2× vsync — each activation now adds a full vsync (16.67ms) of headroom instead of half (8.33ms), letting one fire escape the near-zero danger zone in a single step; with 1.5× two fires were needed, headroom never climbed high enough before the next jitter event hit, and an 83ms reset stutter eventually fired after ~8 seconds of sustained load
-            - Fix 1080p micro-stutter from over-eager fast-recovery: lowered the emergency threshold from baseline/2 (41.5ms) to vsync_period (16.67ms) so the 2-vsync display gap only fires when headroom is truly near-zero, not during ordinary stress
+            - Fix 1080p persistent jitter: remove EMA from vsync-grid advance — EMA was inflating the per-frame advance above vsync_period whenever a normal frame arrived slightly late (19-24ms, which happened every second), causing SurfaceFlinger to snap to the next-next vsync and display frames at 33ms gaps instead of 16.67ms; advance is now always exactly vsync_period (or 2× during near-zero emergency), making 1080p and 720p behave identically
             - Enable NEON SIMD acceleration for GF(2^8) FEC recovery: gf-complete now compiles with ARM_NEON+ARCH_AARCH64 on arm64-v8a, making the Galois-field multiply-region operations used during packet loss recovery execute via NEON vector instructions instead of scalar loops — reduces FEC stall time at 1080p
 
             ### Known Issues
