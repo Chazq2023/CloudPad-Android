@@ -32,8 +32,8 @@ class PsCloudOwnershipTest {
     }
 
     @Test
-    fun trialEntitlementsAreFilteredOut() {
-        val ents = listOf(entitlement(featureType = 1))
+    fun trialsByNameAreFilteredOut() {
+        val ents = listOf(entitlement(name = "My Game Trial", featureType = 3))
         assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
     }
 
@@ -62,29 +62,34 @@ class PsCloudOwnershipTest {
     }
 
     @Test
-    fun ipProductIdEntitlementsAreFilteredOut() {
-        val ents = listOf(entitlement(productId = "IP9000-GAME", featureType = 3))
-        assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
+    fun subscriptionEntitlementsWithFeatureType1PassThrough() {
+        // PS Plus subscription access entitlements (featureType=1) carry the Gaikai streaming key
+        // in their id field — they must not be filtered so the pscloud retry can use that key
+        val ents = listOf(entitlement(name = "Ghost of Tsushima Director's Cut", featureType = 1))
+        assertEquals(1, PsCloudOwnership.filterOwnedPs5Games(ents).size)
     }
 
     @Test
-    fun subProductIdEntitlementsAreFilteredOut() {
-        val ents = listOf(entitlement(productId = "SUB-PREMIUM", featureType = 3))
-        assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
+    fun subscriptionEntitlementsWithIpPrefixPassThrough() {
+        // IP-prefix product IDs are subscription markers; the imagic cross-reference
+        // naturally excludes anything not in the streaming catalog
+        val ents = listOf(entitlement(productId = "IP9000-GAME", featureType = 3))
+        assertEquals(1, PsCloudOwnership.filterOwnedPs5Games(ents).size)
     }
 
     @Test
     fun mixedEntitlementsOnlyValidGamesRemain() {
         val ents = listOf(
             entitlement(id = "E1", productId = "PPSA00001_00", featureType = 3),
-            entitlement(id = "E2", productId = "PPSA00001_01", featureType = 0),
-            entitlement(id = "E3", productId = "PPSA00002_00", featureType = 3, activeFlag = false),
-            entitlement(id = "E4", productId = "IP9000-GAME", featureType = 3),
-            entitlement(id = "E5", productId = "PPSA00003_00", featureType = 1),
+            entitlement(id = "E2", productId = "PPSA00001_01", featureType = 0),   // DLC → filtered
+            entitlement(id = "E3", productId = "PPSA00002_00", featureType = 3, activeFlag = false),  // inactive → filtered
+            entitlement(id = "E4", productId = "IP9000-GAME", featureType = 3),   // IP prefix → now kept
+            entitlement(id = "E5", productId = "PPSA00003_00", featureType = 1, name = "My Game Trial"),  // trial name → filtered
         )
         val filtered = PsCloudOwnership.filterOwnedPs5Games(ents)
-        assertEquals(1, filtered.size)
+        assertEquals(2, filtered.size)
         assertTrue(filtered.any { it.id == "E1" })
+        assertTrue(filtered.any { it.id == "E4" })
     }
 
     private fun pscloudGame(
@@ -149,58 +154,6 @@ class PsCloudOwnershipTest {
             serviceType = "psnow"
         )
         assertEquals("CUSA12345_00-MYGAME", PsCloudOwnership.streamingIdentifier(game))
-    }
-
-    @Test
-    fun streamPlatformReturnsPsnowForPs5CatalogWithPs4Entitlement() {
-        // GoT: catalog=PPSA03208 (PS5) but user only has a PS4 license (CUSA entitlementId, empty storeProductId)
-        val game = pscloudGame(
-            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
-            storeProductId = "",
-            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
-            featureType = 3
-        )
-        assertEquals("ps4", PsCloudOwnership.streamPlatform(game))
-        assertEquals("psnow", PsCloudOwnership.streamServiceType(game))
-    }
-
-    @Test
-    fun streamIdentifierSendsCusaEntitlementIdToPsnowForPs5CatalogGame() {
-        // GoT: when routed to PSNOW because user has PS4 license, send the CUSA entitlementId
-        // to Kamaji — NOT the PS5 catalog productId, which Gaikai would reject
-        val game = pscloudGame(
-            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
-            storeProductId = "",
-            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
-            featureType = 3
-        )
-        assertEquals("EP9000-CUSA32709_00-GHOSTSHIP0000000", PsCloudOwnership.streamIdentifier(game))
-    }
-
-    @Test
-    fun streamPlatformReturnsPsnowForCusaEntitlementEvenWithPpsaStoreProductId() {
-        // PSN can assign a PS5 ent.productId to a cross-gen entitlement whose ent.id is still PS4.
-        // The CUSA entitlementId must take priority over the PPSA storeProductId.
-        val game = pscloudGame(
-            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
-            storeProductId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
-            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
-            featureType = 3
-        )
-        assertEquals("ps4", PsCloudOwnership.streamPlatform(game))
-        assertEquals("psnow", PsCloudOwnership.streamServiceType(game))
-    }
-
-    @Test
-    fun streamIdentifierSendsCusaEntitlementIdEvenWithNonEmptyPpsaStoreProductId() {
-        // Same GoT scenario but ent.productId is non-empty PPSA — must still send CUSA to Kamaji
-        val game = pscloudGame(
-            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
-            storeProductId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
-            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
-            featureType = 3
-        )
-        assertEquals("EP9000-CUSA32709_00-GHOSTSHIP0000000", PsCloudOwnership.streamIdentifier(game))
     }
 
     @Test

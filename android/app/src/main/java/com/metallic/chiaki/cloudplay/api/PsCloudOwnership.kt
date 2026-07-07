@@ -30,12 +30,15 @@ object PsCloudOwnership
 	fun filterOwnedPs5Games(entitlements: List<Entitlement>): List<Entitlement>
 	{
 		return entitlements.filter { ent ->
+			// featureType 0 = DLC/add-ons/themes/avatars — never streamable games
+			// featureType 1 (PS Plus subscription access) is intentionally kept: the catalog
+			// cross-reference naturally filters out anything not in the streaming catalog,
+			// and subscription entitlements carry the Gaikai streaming key in their id field.
+			// Trials and demos are excluded by name instead of featureType.
 			val keep = ent.activeFlag &&
-				!ent.productId.startsWith("IP") &&
-				!ent.productId.startsWith("SUB") &&
-				ent.featureType != 0 &&  // DLC/add-ons/themes/avatars
-				ent.featureType != 1 &&  // trials/free-to-play
-				!ent.name.contains("demo", ignoreCase = true)
+				ent.featureType != 0 &&
+				!ent.name.contains("demo", ignoreCase = true) &&
+				!ent.name.contains("trial", ignoreCase = true)
 			if (!keep) Log.d(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} active=${ent.activeFlag}")
 			keep
 		}
@@ -217,10 +220,13 @@ object PsCloudOwnership
 		return byKey.values.toList()
 	}
 
-	// Edition identity: conceptId + PLATFORM so cross-gen titles appear as separate entries
+	// Edition identity: conceptId only (no platform suffix) so a PS Plus subscription
+	// entitlement (PPSA ent.productId, featureType=1) and a PS4 purchase (empty ent.productId)
+	// for the same game compete in the same slot. The higher-ranked entitlement wins, which
+	// ensures the streaming entitlement's Gaikai key (ent.id) is used for the pscloud retry.
 	private fun ownedDedupeKey(meta: CloudGame, ent: Entitlement): String
 	{
-		if (meta.conceptId.isNotEmpty()) return "c:${meta.conceptId}:${platformToken(ent.productId)}"
+		if (meta.conceptId.isNotEmpty()) return "c:${meta.conceptId}"
 		if (meta.productId.isNotEmpty()) return "p:${meta.productId}"
 		if (ent.id.isNotEmpty()) return "e:${ent.id}"
 		return "u:${meta.productId}:${ent.id}"
@@ -247,6 +253,9 @@ object PsCloudOwnership
 		if (ent.productId.isNotEmpty() && ent.productId == ent.id) rank += 4
 		if (isFullGameEntitlement(ent)) rank += 2
 		if (ent.id.isNotEmpty()) rank += 1
+		// Prefer PS5 (PPSA) entitlement ids: they carry the Gaikai streaming key for
+		// PS Plus subscription games (e.g. GoT streaming ent vs PS4 purchase ent)
+		if (ent.id.contains("PPSA")) rank += 3
 		return rank
 	}
 
@@ -312,15 +321,22 @@ object PsCloudOwnership
 
 		for (owned in ownedCrossRef)
 		{
-			// Trials (feature_type 1) stay as their own card so the full version still shows
-			// separately as a not-owned "Add Game" card
-			val catalogMatch = if (owned.featureType == 1) -1 else findCatalogIndexForOwned(owned, catalogIndex)
+			val catalogMatch = findCatalogIndexForOwned(owned, catalogIndex)
 			if (catalogMatch >= 0)
 			{
 				val existing = games[catalogMatch]
+				// Prefer PS5 (PPSA) entitlementIds: a streaming entitlement's Gaikai key wins
+				// over a PS4 purchase's CUSA id regardless of merge order.
+				val bestEntitlementId = when
+				{
+					owned.entitlementId.contains("PPSA") -> owned.entitlementId
+					existing.entitlementId.contains("PPSA") -> existing.entitlementId
+					owned.entitlementId.isNotEmpty() -> owned.entitlementId
+					else -> existing.entitlementId
+				}
 				games[catalogMatch] = existing.copy(
 					isOwned = true,
-					entitlementId = owned.entitlementId.ifEmpty { existing.entitlementId },
+					entitlementId = bestEntitlementId,
 					storeProductId = owned.storeProductId.ifEmpty { existing.storeProductId }
 				)
 				continue
@@ -360,22 +376,7 @@ object PsCloudOwnership
 
 	fun streamPlatform(game: CloudGame): String
 	{
-		// entitlementId (= ent.id) is the raw PSN license id — it unambiguously reflects what
-		// the user actually bought. Prioritise it over storeProductId (= ent.productId), because
-		// PSN can assign a PS5 ent.productId to a cross-gen entitlement whose ent.id is still PS4.
-		// GoT example: ent.id=CUSA32709 (PS4 purchase), ent.productId may be PPSA (PS5 mapping).
-		// Skip for disc-upgrades (featureType=5) — their storeProductId is set by rescue logic.
-		if (game.entitlementId.isNotEmpty() && game.featureType != 5)
-		{
-			if (game.entitlementId.contains("PPSA")) return "ps5"
-			if (game.entitlementId.contains("CUSA")) return "ps4"
-		}
-		if (game.storeProductId.isNotEmpty())
-		{
-			if (game.storeProductId.contains("PPSA")) return "ps5"
-			if (game.storeProductId.contains("CUSA")) return "ps4"
-		}
-		val p = game.productId
+		val p = game.storeProductId.ifEmpty { game.productId.ifEmpty { game.entitlementId } }
 		return when
 		{
 			p.contains("PPSA") -> "ps5"
@@ -393,15 +394,7 @@ object PsCloudOwnership
 	fun streamIdentifier(game: CloudGame): String
 	{
 		val svcType = streamServiceType(game)
-		val id = if (svcType == "psnow")
-		{
-			// Routed to PSNOW because entitlementId is CUSA (PS4 license). Send the actual PS4
-			// license to Kamaji even if storeProductId or productId maps to a PS5 SKU.
-			if (game.entitlementId.contains("CUSA", ignoreCase = true) && game.featureType != 5)
-				game.entitlementId
-			else
-				game.productId.ifEmpty { streamingIdentifier(game) }
-		}
+		val id = if (svcType == "psnow") game.productId.ifEmpty { streamingIdentifier(game) }
 		else streamingIdentifier(game)
 		Log.i(TAG, "streamIdentifier '${game.name}': productId=${game.productId} storeProductId=${game.storeProductId} entitlementId=${game.entitlementId} -> $id (svc=$svcType)")
 		return id
