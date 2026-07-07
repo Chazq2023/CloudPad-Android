@@ -446,17 +446,20 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					render_ns = now_ns + baseline_ns;
 
 				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				// Three-tier advance to keep headroom near baseline at all times:
-				//  > baseline : vsync_period — bleed excess back down to baseline
-				//  > baseline/2: EMA (≥ vsync_period) — track actual server FPS to prevent
-				//                systematic drain when server delivers slightly below target
-				//  ≤ baseline/2: 1.5× vsync_period — fast rebuild after a long cluster
-				//                drains headroom low; at 60fps this recovers ~8ms/frame so
-				//                the buffer is restored in ~4 frames before the next cluster
+				// Two-tier advance to keep display gaps exactly one vsync period:
+				//  > baseline    : vsync_period — bleed excess back down to baseline
+				//  > vsync_period: EMA (≥ vsync_period) — track server fps; advance is
+				//                  always ≤ vsync_period so SurfaceFlinger hits the NEXT
+				//                  vsync boundary, never the one after (no held frames)
+				//  ≤ vsync_period: 1.5× vsync_period — emergency rebuild when headroom
+				//                  is near-zero; any gap > vsync here is preferable to
+				//                  a full reset (83ms gap). Threshold is vsync_period not
+				//                  baseline/2 so the 2-vsync display gap only fires when
+				//                  headroom is truly exhausted, not during normal stress.
 				int64_t advance_ns;
 				if(headroom_ns > baseline_ns)
 					advance_ns = vsync_period_ns;
-				else if(headroom_ns > baseline_ns / 2)
+				else if(headroom_ns > vsync_period_ns)
 					advance_ns = ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns;
 				else
 					advance_ns = vsync_period_ns * 3 / 2;
