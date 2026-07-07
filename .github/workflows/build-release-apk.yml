@@ -97,9 +97,10 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - PSCLOUD retry: if Gaikai rejects the primary entitlement ID with noGameForEntitlementId, the app now automatically retries once with the raw ent.id from the entitlements API; fixes games (e.g. FF7 Rebirth) where the catalog productId differs from what Gaikai actually indexes
-            - Library no longer shows non-streamable titles (e.g. Returnal): only games in the main streamable catalog are cross-referenced, not the PS Plus supplement whose entries may have been removed from Gaikai
-            - Library now correctly excludes trials, free-to-play entitlements, and demos in addition to DLC/add-ons
+            - Fixed catalog ordering: all-ps5-list is now processed first so Gaikai-compatible productIds always win over subscription-list SKUs (e.g. Ghost of Tsushima now uses GHOSTDIRECTORPS5 not GHOSTDCPS5PSPLUS)
+            - Disc-upgrade detection now uses featureType=5 instead of title-ID comparison, avoiding false positives when games have two legitimate PS5 SKUs
+            - PSCLOUD retry: if Gaikai rejects the primary entitlement ID, the app automatically retries with the raw ent.id; fixes games like FF7 Rebirth
+            - Library excludes trials, demos, and non-streamable supplement titles
 
             ### Known Issues
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.

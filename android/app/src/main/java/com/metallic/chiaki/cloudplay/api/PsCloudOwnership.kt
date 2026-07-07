@@ -336,19 +336,19 @@ object PsCloudOwnership
 		)
 	}
 
-	private val titleIdRegex = Regex("""(PPSA|CUSA)\d+""", RegexOption.IGNORE_CASE)
-
 	// For pscloud: Gaikai identifies games by their catalog productId (from the imagic list).
-	// Exception: disc-upgrade rescue replaces storeProductId with a full-game edition whose
-	// title ID genuinely differs from the catalog SKU — use storeProductId in that case only.
+	// Exception: disc-upgrade rescue (featureType=5) replaces storeProductId with the owned
+	// full-game edition. The catalog holds the disc-upgrade SKU which Gaikai won't stream;
+	// use storeProductId in that case. For all other feature types (including games with
+	// two legitimately different PS5 SKUs like Ghost of Tsushima), the catalog productId wins.
 	fun streamingIdentifier(game: CloudGame): String
 	{
 		if (game.serviceType.equals("pscloud", ignoreCase = true))
 		{
-			val catalogTitle = titleIdRegex.find(game.productId)?.value?.uppercase()
-			val storeTitle = titleIdRegex.find(game.storeProductId)?.value?.uppercase()
-			if (storeTitle != null && catalogTitle != null && storeTitle != catalogTitle)
-				return game.storeProductId  // disc-upgrade rescue: genuinely different title
+			if (game.featureType == 5 &&
+				game.storeProductId.isNotEmpty() &&
+				game.storeProductId != game.productId)
+				return game.storeProductId
 			if (game.productId.isNotEmpty()) return game.productId
 			if (game.storeProductId.isNotEmpty()) return game.storeProductId
 			if (game.entitlementId.isNotEmpty()) return game.entitlementId

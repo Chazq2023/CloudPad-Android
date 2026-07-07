@@ -31,15 +31,17 @@ class PsCloudCatalogService
 		private const val ACCOUNT_BASE = "https://ca.account.sony.com/api"
 		private const val IMAGIC_GAMESLIST_BASE = "https://www.playstation.com/bin/imagic/gameslist"
 
-		// Lists fetched in parallel. plus-* lists are the PS Plus subscription catalog.
-		// all-ps5-list is the full streamable universe (PS4 + PS5).
+		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
+		// when a game appears in both the subscription lists and the full streaming catalog.
+		// Subscription-list SKUs (e.g. GHOSTDCPS5PSPLUS) differ from what Gaikai indexes;
+		// the all-ps5-list SKU (e.g. GHOSTDIRECTORPS5) is the one Gaikai actually knows.
 		private val IMAGIC_CATEGORY_LISTS = listOf(
+			"all-ps5-list",
 			"plus-games-list",
 			"ubisoft-classics-list",
 			"plus-classics-list",
 			"plus-monthly-games-list",
 			"free-to-play-list",
-			"all-ps5-list",
 		)
 	}
 

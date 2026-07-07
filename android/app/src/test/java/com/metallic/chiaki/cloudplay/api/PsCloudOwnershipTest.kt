@@ -90,19 +90,20 @@ class PsCloudOwnershipTest {
     private fun pscloudGame(
         productId: String,
         storeProductId: String = "",
-        entitlementId: String = ""
+        entitlementId: String = "",
+        featureType: Int = 3
     ) = CloudGame(
         productId = productId,
         name = "Test",
         imageUrl = "",
         serviceType = "pscloud",
         storeProductId = storeProductId,
-        entitlementId = entitlementId
+        entitlementId = entitlementId,
+        featureType = featureType
     )
 
     @Test
     fun streamingIdentifierUsesProductIdForOrdinaryOwnedGame() {
-        // storeProductId has same PPSA → catalog productId wins (Gaikai uses catalog ID)
         val game = pscloudGame(
             productId = "EP0082-PPSA08668_00-CATALOGID00000",
             storeProductId = "EP0082-PPSA08668_00-0978938405039882"
@@ -112,12 +113,25 @@ class PsCloudOwnershipTest {
 
     @Test
     fun streamingIdentifierUsesStoreProductIdForDiscUpgradeRescue() {
-        // storeProductId has different PPSA (disc-upgrade rescue) → use storeProductId
+        // featureType=5 and storeProductId differs from productId → disc-upgrade rescue
         val game = pscloudGame(
             productId = "EP0082-PPSA01521_00-DISCUPGRADE",
-            storeProductId = "EP0082-PPSA17903_00-FULLGAME"
+            storeProductId = "EP0082-PPSA17903_00-FULLGAME",
+            featureType = 5
         )
         assertEquals("EP0082-PPSA17903_00-FULLGAME", PsCloudOwnership.streamingIdentifier(game))
+    }
+
+    @Test
+    fun streamingIdentifierUsesProductIdWhenTitleIdsDifferButNotDiscUpgrade() {
+        // Ghost of Tsushima case: two different PS5 SKUs for the same game (featureType=3).
+        // The catalog productId from all-ps5-list must win, not the PS Plus subscription SKU.
+        val game = pscloudGame(
+            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            storeProductId = "EP9000-PPSA05031_00-GHOSTDCPS5PSPLUS",
+            featureType = 3
+        )
+        assertEquals("EP9000-PPSA03208_00-GHOSTDIRECTORPS5", PsCloudOwnership.streamingIdentifier(game))
     }
 
     @Test
