@@ -97,11 +97,12 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Simplified PSN login: removed the manual SSO cookie grab-and-paste step; tapping Finalise log in now automatically fetches the SSO cookie in the background using an in-app WebView session
-            - Fix logout dialog buttons always showing in pink: dialog button colour now matches the selected app theme (neon blue, green, yellow, or orange)
+            - PS5 library now only shows streamable games: DLC, add-ons, themes, and avatars are filtered out before matching against the streaming catalog, so the library correctly shows ~350 games instead of every owned entitlement
+            - Cross-gen upgrades (e.g. disc-upgrade titles) now stream correctly: the owned full-game product ID is used instead of the stale entitlement ID that Gaikai rejects
+            - Catalog now fetches from multiple Sony lists (PS Plus subscription, Ubisoft Classics, monthly games, free-to-play, all PS5 games) so PS4-only PS Plus titles are no longer missing
+            - Cross-gen PS4/PS5 editions now appear as separate streamable cards
 
             ### Known Issues
-            - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
 
             ### APK
