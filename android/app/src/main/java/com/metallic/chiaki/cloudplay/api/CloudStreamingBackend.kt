@@ -225,7 +225,7 @@ class CloudStreamingBackend(
 				// PSCLOUD: Skip Kamaji, start directly with Gaikai (Qt lines 231-237)
 				// PSCLOUD always uses PS5 platform, gameIdentifier is already an entitlementId
 				Log.i(TAG, "=== PSCLOUD Flow: Skipping Kamaji, Starting Gaikai Directly ===")
-				Log.i(TAG, "Using PS5 platform for PSCLOUD")
+				Log.i(TAG, "PSCLOUD primary id: $finalEntitlementId  fallback ent.id: $ownedEntitlementId")
 			}
 
 			// Start Gaikai allocation (Steps 7-13)
@@ -267,6 +267,29 @@ class CloudStreamingBackend(
 						ownedEntitlementId = "",
 						ownedPlatform = "",
 						forceFullEntitlementFlow = true,
+						onProgress = onProgress,
+						isCancelled = isCancelled
+					)
+				}
+
+				// PSCLOUD: retry with the raw ent.id if the catalog productId is rejected.
+				// Gaikai indexes games by the entitlement's id field, which can differ from
+				// the imagic catalog productId or the entitlement's product_id field.
+				if (serviceType == "pscloud" &&
+					isEntitlementRejectedError(allocationResult.message) &&
+					ownedEntitlementId.isNotEmpty() &&
+					ownedEntitlementId != finalEntitlementId)
+				{
+					Log.w(TAG, "PSCLOUD: '$finalEntitlementId' rejected by Gaikai; retrying with ent.id '$ownedEntitlementId'")
+					return@withContext continueCloudSessionAfterAuth(
+						serviceType = serviceType,
+						gameIdentifier = ownedEntitlementId,
+						gameName = gameName,
+						npssoToken = npssoToken,
+						sharedDuid = sharedDuid,
+						ownedEntitlementId = "",
+						ownedPlatform = ownedPlatform,
+						forceFullEntitlementFlow = forceFullEntitlementFlow,
 						onProgress = onProgress,
 						isCancelled = isCancelled
 					)

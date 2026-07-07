@@ -375,8 +375,10 @@ object PsCloudOwnership
 
 	fun streamIdentifier(game: CloudGame): String
 	{
-		return if (streamServiceType(game) == "psnow") game.productId.ifEmpty { streamingIdentifier(game) }
+		val id = if (streamServiceType(game) == "psnow") game.productId.ifEmpty { streamingIdentifier(game) }
 		else streamingIdentifier(game)
+		Log.d(TAG, "streamIdentifier '${game.name}': productId=${game.productId} storeProductId=${game.storeProductId} entitlementId=${game.entitlementId} -> $id")
+		return id
 	}
 
 	private fun buildCatalogIndex(games: List<CloudGame>): CatalogIndex

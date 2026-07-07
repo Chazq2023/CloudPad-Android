@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed game launch: Gaikai is now sent the catalog product ID (what it actually knows) instead of the raw entitlement hash; cross-gen disc-upgrade rescue still sends the correct full-game ID when the title differs
+            - PSCLOUD retry: if Gaikai rejects the primary entitlement ID with noGameForEntitlementId, the app now automatically retries once with the raw ent.id from the entitlements API; fixes games (e.g. FF7 Rebirth) where the catalog productId differs from what Gaikai actually indexes
             - Library no longer shows non-streamable titles (e.g. Returnal): only games in the main streamable catalog are cross-referenced, not the PS Plus supplement whose entries may have been removed from Gaikai
             - Library now correctly excludes trials, free-to-play entitlements, and demos in addition to DLC/add-ons
 
