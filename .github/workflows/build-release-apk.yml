@@ -97,11 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fix FEC cascade freeze: frames whose FEC recovery fails are now always added to the reference list, so subsequent P-frames are sent to the decoder with hardware error concealment rather than cascade-dropping until the next I-frame
-            - Decouple stream thread from MediaCodec via producer-consumer frame queue: stream thread enqueues frames instantly, a dedicated input thread submits to the codec — codec back-pressure no longer stalls network packet reception
-            - Fix frame-bunching microstutters: vsync-grid releaseOutputBufferAtTime schedules each decoded frame at a distinct vsync boundary so SurfaceFlinger never receives two frames in the same window
-            - Reduce display-side input latency: lower vsync-grid baseline from 4× to 2× vsync period (67ms → 33ms at 60fps, 16ms at 120fps); fix 120fps EMA breakage where hardcoded 10ms/25ms thresholds misclassified all 120fps frames as short (8.33ms < 10ms), preventing EMA from ever updating — thresholds are now scaled to 0.6× and 1.5× vsync period so they work correctly at any target fps
-            - Fix 1080p frame drops: two consecutive ~62ms FEC-recovery stalls drain 90ms of headroom in one second; raised 1080p baseline to 5× vsync (83ms) — combined with the fast-recovery advance tier (1.5× vsync below baseline/2) this keeps headroom positive through the back-to-back worst-case stalls that previously caused the only visible drop per ~66s of play
+            - Enable NEON SIMD acceleration for GF(2^8) FEC recovery: gf-complete now compiles with ARM_NEON+ARCH_AARCH64 on arm64-v8a, making the Galois-field multiply-region operations used during packet loss recovery execute via NEON vector instructions instead of scalar loops — reduces FEC stall time at 1080p and improves 60fps stability under packet loss
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.

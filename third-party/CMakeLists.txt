@@ -32,10 +32,43 @@ if(NOT CHIAKI_USE_SYSTEM_JERASURE)
 			gf-complete/src/gf_general.c
 			gf-complete/src/gf_cpu.c)
 
-	# TODO: support NEON
+	# NEON acceleration: arm64-v8a has mandatory NEON; enable gf-complete's
+	# SIMD paths to speed up GF(2^8) FEC recovery (reduces 1080p stall time).
+	if(ANDROID AND ANDROID_ABI STREQUAL "arm64-v8a")
+		list(APPEND GF_COMPLETE_SOURCE
+			gf-complete/src/neon/gf_w4_neon.c
+			gf-complete/src/neon/gf_w8_neon.c
+			gf-complete/src/neon/gf_w16_neon.c
+			gf-complete/src/neon/gf_w32_neon.c
+			gf-complete/src/neon/gf_w64_neon.c
+		)
+		set(GF_COMPLETE_NEON ON)
+	elseif(ANDROID AND ANDROID_ABI STREQUAL "armeabi-v7a")
+		list(APPEND GF_COMPLETE_SOURCE
+			gf-complete/src/neon/gf_w4_neon.c
+			gf-complete/src/neon/gf_w8_neon.c
+			gf-complete/src/neon/gf_w16_neon.c
+			gf-complete/src/neon/gf_w32_neon.c
+			gf-complete/src/neon/gf_w64_neon.c
+		)
+		set(GF_COMPLETE_NEON ON)
+		set(GF_COMPLETE_NEON_V7 ON)
+	endif()
 
 	add_library(gf_complete STATIC ${GF_COMPLETE_SOURCE})
 	target_include_directories(gf_complete PUBLIC gf-complete/include)
+
+	if(GF_COMPLETE_NEON)
+		if(GF_COMPLETE_NEON_V7)
+			target_compile_definitions(gf_complete PRIVATE ARM_NEON)
+			target_compile_options(gf_complete PRIVATE -mfpu=neon)
+		else()
+			target_compile_definitions(gf_complete PRIVATE ARM_NEON ARCH_AARCH64)
+		endif()
+		# Force -O3 for this math library regardless of build type — SIMD only
+		# helps when the compiler doesn't inhibit auto-vectorisation.
+		target_compile_options(gf_complete PRIVATE -O3)
+	endif()
 
 	##################
 	# jerasure
