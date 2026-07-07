@@ -451,18 +451,19 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				//  > vsync_period: EMA (≥ vsync_period) — track server fps; advance is
 				//                  always ≤ vsync_period so SurfaceFlinger hits the NEXT
 				//                  vsync boundary, never the one after (no held frames)
-				//  ≤ vsync_period: 1.5× vsync_period — emergency rebuild when headroom
-				//                  is near-zero; any gap > vsync here is preferable to
-				//                  a full reset (83ms gap). Threshold is vsync_period not
-				//                  baseline/2 so the 2-vsync display gap only fires when
-				//                  headroom is truly exhausted, not during normal stress.
+				//  ≤ vsync_period: 2× vsync_period — emergency rebuild when headroom is
+				//                  near-zero. Net gain per normal frame = 2×vsync - vsync
+				//                  = vsync (16.67ms), so one activation escapes the danger
+				//                  zone in a single step. 3/2× only adds 8.33ms per step,
+				//                  requiring two activations and risking a reset; 2× avoids
+				//                  both the extra gap and the reset in sustained-jitter runs.
 				int64_t advance_ns;
 				if(headroom_ns > baseline_ns)
 					advance_ns = vsync_period_ns;
 				else if(headroom_ns > vsync_period_ns)
 					advance_ns = ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns;
 				else
-					advance_ns = vsync_period_ns * 3 / 2;
+					advance_ns = vsync_period_ns * 2;
 				decoder->next_render_ns = render_ns + advance_ns;
 				decoder->output_frames_total++;
 			}

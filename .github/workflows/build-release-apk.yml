@@ -97,8 +97,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fix 1080p micro-stutter from over-eager fast-recovery: the advance threshold for the 1.5× vsync emergency tier was baseline/2 (41.5ms at 60fps), which fired constantly during mild network jitter — every 30ms long dropped headroom below the threshold, setting the NEXT frame's advance to 25ms, which SurfaceFlinger rounds up to a 33ms (2-vsync) display gap; lowered threshold to vsync_period (16.67ms) so the 2-vsync gap only fires when headroom is truly near-zero, not during ordinary stress
-            - Enable NEON SIMD acceleration for GF(2^8) FEC recovery: gf-complete now compiles with ARM_NEON+ARCH_AARCH64 on arm64-v8a, making the Galois-field multiply-region operations used during packet loss recovery execute via NEON vector instructions instead of scalar loops — reduces FEC stall time at 1080p and improves 60fps stability under packet loss
+            - Fix 1080p stutter during sustained network jitter: raise emergency advance from 1.5× to 2× vsync — each activation now adds a full vsync (16.67ms) of headroom instead of half (8.33ms), letting one fire escape the near-zero danger zone in a single step; with 1.5× two fires were needed, headroom never climbed high enough before the next jitter event hit, and an 83ms reset stutter eventually fired after ~8 seconds of sustained load
+            - Fix 1080p micro-stutter from over-eager fast-recovery: lowered the emergency threshold from baseline/2 (41.5ms) to vsync_period (16.67ms) so the 2-vsync display gap only fires when headroom is truly near-zero, not during ordinary stress
+            - Enable NEON SIMD acceleration for GF(2^8) FEC recovery: gf-complete now compiles with ARM_NEON+ARCH_AARCH64 on arm64-v8a, making the Galois-field multiply-region operations used during packet loss recovery execute via NEON vector instructions instead of scalar loops — reduces FEC stall time at 1080p
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.
