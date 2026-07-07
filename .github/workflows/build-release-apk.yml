@@ -98,6 +98,7 @@ jobs:
 
             ### Updates
             - Simplified PSN login: removed the manual SSO cookie grab-and-paste step; tapping Finalise log in now automatically fetches the SSO cookie in the background using an in-app WebView session
+            - Fix logout dialog buttons always showing in pink: dialog button colour now matches the selected app theme (neon blue, green, yellow, or orange)
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.
