@@ -357,6 +357,19 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	const int64_t short_threshold_us = vsync_period_ns * 6 / 10000LL;  // 0.6 × vsync in µs
 	const int64_t long_threshold_us  = vsync_period_ns * 15 / 10000LL; // 1.5 × vsync in µs
 
+	// Vsync-grid baseline headroom. At 720p the hardware decoder's jitter fits
+	// comfortably inside 2× vsync (33ms). At 1080p the decoder processes ~2.25×
+	// more pixels per frame, pushing worst-case decode time to 40-60ms, so 3×
+	// vsync (50ms at 60fps) is needed to avoid headroom resets on complex frames.
+	const int baseline_mult = (decoder->target_width * decoder->target_height > 1000000) ? 3 : 2;
+	const int64_t baseline_ns = (int64_t)baseline_mult * vsync_period_ns;
+	const int64_t cap_ns      = 8 * vsync_period_ns;
+	CHIAKI_LOGI(decoder->log, "Vsync grid: period=%.2fms baseline=%dx=%.0fms cap=%dx=%.0fms (%dx%d)",
+		vsync_period_ns / 1e6,
+		baseline_mult, baseline_ns / 1e6,
+		8, cap_ns / 1e6,
+		decoder->target_width, decoder->target_height);
+
 	// Per-second diagnostics
 	int64_t bucket_start_ns   = 0;
 	int     bucket_frames     = 0;
@@ -418,11 +431,6 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
-				//
-				// 2x vsync (33ms at 60fps) baseline minimises display-side input latency.
-				// Cap at 8x vsync (133ms at 60fps) as a safety net for extreme jitter bursts.
-				const int64_t baseline_ns = 2 * vsync_period_ns;
-				const int64_t cap_ns      = 8 * vsync_period_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
 				// Skip headroom recording on the very first frame (next_render_ns==0
