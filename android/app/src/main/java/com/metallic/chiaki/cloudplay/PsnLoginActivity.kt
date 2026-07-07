@@ -10,13 +10,14 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.webkit.CookieManager
 import android.widget.Button
-import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.metallic.chiaki.cloudplay.api.HttpClient
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.PsnTokenManager
 import com.metallic.chiaki.common.SecureTokenManager
@@ -28,20 +29,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import android.net.Uri
 
-/**
- * PSN Login Activity for CloudPad.
- *
- * New flow:
- * 1. User signs in directly with Sony in their browser.
- * 2. User opens the Sony NPSSO endpoint in the same browser.
- * 3. User copies/pastes the NPSSO value into CloudPad.
- * 4. CloudPad saves NPSSO locally.
- * 5. CloudPad exchanges NPSSO for Remote Play tokens using the existing PsnTokenManager.
- *
- * This removes the old third-party xbgamestream login-code website flow.
- */
 class PsnLoginActivity : AppCompatActivity() {
 
 	companion object {
@@ -65,9 +53,7 @@ class PsnLoginActivity : AppCompatActivity() {
 
 	private lateinit var statusTextView: TextView
 	private lateinit var progressBar: ProgressBar
-	private lateinit var npssoInput: EditText
 	private lateinit var signInButton: Button
-	private lateinit var grabSsoButton: Button
 	private lateinit var finaliseButton: Button
 	private lateinit var cancelButton: Button
 	private val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -84,8 +70,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		psnTokenManager = PsnTokenManager(preferences)
 
 		setupUi()
-		statusTextView.text =
-			"Tap Sign into account, sign in with Sony in your browser, then grab and paste your SSO cookie value."
+		statusTextView.text = "Tap Sign into account, sign in with Sony, then tap Finalise log in."
 	}
 
 	private fun resolveThemeColor(attrId: Int): Int {
@@ -138,21 +123,11 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		statusTextView = TextView(this).apply {
-			text = "Tap Sign into account, sign in with Sony in your browser, then grab and paste your SSO cookie value."
+			text = "Tap Sign into account, sign in with Sony, then tap Finalise log in."
 			setTextColor(Color.WHITE)
 			textSize = 15f
 			gravity = Gravity.CENTER
 			setPadding(0, 0, 0, 16)
-		}
-
-		npssoInput = EditText(this).apply {
-			hint = "Paste NPSSO value or full JSON here"
-			setTextColor(Color.WHITE)
-			setHintTextColor(Color.LTGRAY)
-			setSingleLine(false)
-			setMinLines(2)
-			setMaxLines(4)
-			setPadding(16, 16, 16, 16)
 		}
 
 		progressBar = ProgressBar(this).apply {
@@ -167,30 +142,12 @@ class PsnLoginActivity : AppCompatActivity() {
 			}
 		}
 
-		grabSsoButton = Button(this).apply {
-			text = "Grab SSO Cookie value"
-			styleCloudPadCancelButton(this)
-			setOnClickListener {
-				grabSsoCookieValue()
-			}
-		}
-
 		finaliseButton = Button(this).apply {
 			text = "Finalise log in"
 			isEnabled = true
 			styleCloudPadCancelButton(this)
 			setOnClickListener {
-				val npsso = normaliseNpssoInput(npssoInput.text?.toString().orEmpty())
-
-				if (npsso.isBlank()) {
-					Toast.makeText(
-						this@PsnLoginActivity,
-						"Paste your NPSSO value first.",
-						Toast.LENGTH_SHORT
-					).show()
-				} else {
-					finaliseLogin(npsso)
-				}
+				finaliseLogin()
 			}
 		}
 
@@ -206,10 +163,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		root.addView(titleText)
 		root.addView(statusTextView)
 		root.addView(progressBar)
-		root.addView(npssoInput)
-
 		root.addView(signInButton)
-		root.addView(grabSsoButton)
 		root.addView(finaliseButton)
 		root.addView(cancelButton)
 
@@ -217,89 +171,45 @@ class PsnLoginActivity : AppCompatActivity() {
 	}
 
 	private fun startSonySignIn() {
-		npssoInput.text?.clear()
-		finaliseButton.isEnabled = true
-		progressBar.visibility = View.GONE
-
 		statusTextView.text =
-			"Sony sign-in opened in your browser. After signing in, tap Grab SSO Cookie value, copy the npsso value, paste it here, then tap Finalise log in."
-
-		openUrlInBrowser(SONY_SIGN_IN_URL)
+			"Sign in with Sony, then tap Finalise log in."
+		val intent = Intent(this, PsnSignInWebViewActivity::class.java)
+		startActivity(intent)
 	}
 
-	private fun grabSsoCookieValue() {
-		progressBar.visibility = View.GONE
-		finaliseButton.isEnabled = true
-
-		statusTextView.text =
-			"The SSO cookie page opened in your browser. Copy the npsso value, paste it into CloudPad, then tap Finalise log in."
-
-		openUrlInBrowser(SONY_SSO_COOKIE_URL)
-	}
-
-	private fun openUrlInBrowser(url: String) {
-		try {
-			val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-			startActivity(intent)
-		} catch (e: Exception) {
-			Log.e(TAG, "Failed to open browser URL: $url", e)
-			Toast.makeText(
-				this,
-				"Failed to open browser",
-				Toast.LENGTH_LONG
-			).show()
-		}
-	}
-
-	private fun normaliseNpssoInput(input: String): String {
-		val trimmed = input.trim()
-
-		if (trimmed.isBlank()) return ""
-
-		// Allows user to paste the full JSON:
-		// { "npsso": "..." }
-		try {
-			val json = JSONObject(trimmed)
-			val npsso = json.optString("npsso")
-			if (npsso.isNotBlank()) return npsso.trim()
-		} catch (_: Exception) {
-		}
-
-		// Allows pasted JSON-ish text:
-		// "npsso": "..."
-		Regex(""""npsso"\s*:\s*"([^"]+)"""")
-			.find(trimmed)
-			?.groupValues
-			?.getOrNull(1)
-			?.let { return it.trim() }
-
-		// Allows user to paste only the raw NPSSO value.
-		return trimmed
-	}
-
-	private fun finaliseLogin(npsso: String) {
+	private fun finaliseLogin() {
 		if (finalising) return
 
 		finalising = true
 		progressBar.visibility = View.VISIBLE
 		finaliseButton.isEnabled = false
-		grabSsoButton.isEnabled = false
 		signInButton.isEnabled = false
-		statusTextView.text = "Finalising login…"
+		statusTextView.text = "Fetching login credentials…"
+
+		// CookieManager must be read on the main thread
+		val cookies = CookieManager.getInstance().getCookie(SONY_SSO_COOKIE_URL) ?: ""
 
 		scope.launch {
 			try {
-				val exchangeSuccess = withContext(Dispatchers.IO) {
-					/*
-                     * Save NPSSO using the existing secure token path.
-                     * This is what Cloud Play / catalog code uses.
-                     */
-					tokenManager.saveNpssoToken(npsso)
+				val npsso = withContext(Dispatchers.IO) {
+					fetchNpssoFromSsoCookie(cookies)
+				}
 
-					/*
-                     * Keep the existing Remote Play token exchange.
-                     * This is what your old PsnLoginActivity already did after receiving NPSSO.
-                     */
+				if (npsso == null) {
+					statusTextView.text =
+						"Could not fetch credentials. Please sign into your account first."
+					Toast.makeText(
+						this@PsnLoginActivity,
+						"Sign in with Sony first, then tap Finalise log in.",
+						Toast.LENGTH_LONG
+					).show()
+					return@launch
+				}
+
+				statusTextView.text = "Finalising login…"
+
+				val exchangeSuccess = withContext(Dispatchers.IO) {
+					tokenManager.saveNpssoToken(npsso)
 					psnTokenManager.exchangeNpssoForTokens(npsso)
 				}
 
@@ -322,7 +232,6 @@ class PsnLoginActivity : AppCompatActivity() {
 				val resultIntent = Intent().apply {
 					putExtra(EXTRA_NPSSO_TOKEN, npsso)
 				}
-
 				setResult(RESULT_LOGIN_SUCCESS, resultIntent)
 				finish()
 			} catch (e: Exception) {
@@ -340,9 +249,36 @@ class PsnLoginActivity : AppCompatActivity() {
 				finalising = false
 				progressBar.visibility = View.GONE
 				finaliseButton.isEnabled = true
-				grabSsoButton.isEnabled = true
 				signInButton.isEnabled = true
 			}
+		}
+	}
+
+	private fun fetchNpssoFromSsoCookie(cookies: String): String? {
+		Log.d(TAG, "Fetching SSO cookie, cookies present=${cookies.isNotBlank()}")
+
+		val headers = mutableMapOf("Accept" to "application/json")
+		if (cookies.isNotBlank()) {
+			headers["Cookie"] = cookies
+		}
+
+		val response = HttpClient.get(
+			url = SONY_SSO_COOKIE_URL,
+			headers = headers
+		)
+
+		Log.d(TAG, "SSO response status: ${response.statusCode}")
+
+		if (response.statusCode != 200) {
+			Log.e(TAG, "SSO cookie endpoint failed: ${response.statusCode}, body: ${response.body.take(200)}")
+			return null
+		}
+
+		return try {
+			JSONObject(response.body).optString("npsso").takeIf { it.isNotBlank() }
+		} catch (e: Exception) {
+			Log.e(TAG, "SSO response parse failed: ${e.message}")
+			null
 		}
 	}
 
@@ -351,6 +287,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		super.onDestroy()
 	}
 
+	@Suppress("OVERRIDE_DEPRECATION")
 	override fun onBackPressed() {
 		setResult(RESULT_LOGIN_CANCELLED)
 		super.onBackPressed()
