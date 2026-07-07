@@ -98,6 +98,7 @@ jobs:
 
             ### Updates
             - Enable NEON SIMD acceleration for GF(2^8) FEC recovery: gf-complete now compiles with ARM_NEON+ARCH_AARCH64 on arm64-v8a, making the Galois-field multiply-region operations used during packet loss recovery execute via NEON vector instructions instead of scalar loops — reduces FEC stall time at 1080p and improves 60fps stability under packet loss
+            - Add max_int field to VIDEO_FRAME_TIMING log: shows peak inter-frame interval per second in ms, distinguishing mild jitter from severe FEC stalls without needing a separate log source
 
             ### Known Issues
             - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.
