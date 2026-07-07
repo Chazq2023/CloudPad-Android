@@ -30,12 +30,14 @@ object PsCloudOwnership
 	fun filterOwnedPs5Games(entitlements: List<Entitlement>): List<Entitlement>
 	{
 		return entitlements.filter { ent ->
-			ent.activeFlag &&
+			val keep = ent.activeFlag &&
 				!ent.productId.startsWith("IP") &&
 				!ent.productId.startsWith("SUB") &&
 				ent.featureType != 0 &&  // DLC/add-ons/themes/avatars
 				ent.featureType != 1 &&  // trials/free-to-play
 				!ent.name.contains("demo", ignoreCase = true)
+			if (!keep) Log.d(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} active=${ent.activeFlag}")
+			keep
 		}
 	}
 
@@ -358,7 +360,22 @@ object PsCloudOwnership
 
 	fun streamPlatform(game: CloudGame): String
 	{
-		val p = game.storeProductId.ifEmpty { game.productId.ifEmpty { game.entitlementId } }
+		// storeProductId is set by disc-upgrade rescue or from ent.productId — highest priority
+		if (game.storeProductId.isNotEmpty())
+		{
+			if (game.storeProductId.contains("PPSA")) return "ps5"
+			if (game.storeProductId.contains("CUSA")) return "ps4"
+		}
+		// entitlementId is the raw PSN license id field — reflects what the user actually owns.
+		// When the catalog game is PS5 (PPSA productId) but the user only has a PS4 license
+		// (CUSA entitlementId), route to PSNOW so Kamaji can stream the PS4 version instead.
+		// Skip this check for disc-upgrades (featureType=5) whose rescue already set storeProductId.
+		if (game.entitlementId.isNotEmpty() && game.featureType != 5)
+		{
+			if (game.entitlementId.contains("PPSA")) return "ps5"
+			if (game.entitlementId.contains("CUSA")) return "ps4"
+		}
+		val p = game.productId
 		return when
 		{
 			p.contains("PPSA") -> "ps5"
@@ -375,9 +392,19 @@ object PsCloudOwnership
 
 	fun streamIdentifier(game: CloudGame): String
 	{
-		val id = if (streamServiceType(game) == "psnow") game.productId.ifEmpty { streamingIdentifier(game) }
+		val svcType = streamServiceType(game)
+		val id = if (svcType == "psnow")
+		{
+			// If routed to PSNOW because the user's PSN license is PS4 (CUSA entitlementId)
+			// but the imagic catalog entry is PS5, send the PS4 entitlement to Kamaji.
+			// This is the GoT scenario: catalog=PPSA03208, ent.id=CUSA32709, storeProductId="".
+			if (game.entitlementId.contains("CUSA", ignoreCase = true) && game.storeProductId.isEmpty())
+				game.entitlementId
+			else
+				game.productId.ifEmpty { streamingIdentifier(game) }
+		}
 		else streamingIdentifier(game)
-		Log.d(TAG, "streamIdentifier '${game.name}': productId=${game.productId} storeProductId=${game.storeProductId} entitlementId=${game.entitlementId} -> $id")
+		Log.d(TAG, "streamIdentifier '${game.name}': productId=${game.productId} storeProductId=${game.storeProductId} entitlementId=${game.entitlementId} -> $id (svc=$svcType)")
 		return id
 	}
 

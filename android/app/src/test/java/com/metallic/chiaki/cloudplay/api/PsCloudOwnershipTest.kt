@@ -152,6 +152,32 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun streamPlatformReturnsPsnowForPs5CatalogWithPs4Entitlement() {
+        // GoT: catalog=PPSA03208 (PS5) but user only has a PS4 license (CUSA entitlementId, empty storeProductId)
+        val game = pscloudGame(
+            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            storeProductId = "",
+            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
+            featureType = 3
+        )
+        assertEquals("ps4", PsCloudOwnership.streamPlatform(game))
+        assertEquals("psnow", PsCloudOwnership.streamServiceType(game))
+    }
+
+    @Test
+    fun streamIdentifierSendsCusaEntitlementIdToPsnowForPs5CatalogGame() {
+        // GoT: when routed to PSNOW because user has PS4 license, send the CUSA entitlementId
+        // to Kamaji — NOT the PS5 catalog productId, which Gaikai would reject
+        val game = pscloudGame(
+            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            storeProductId = "",
+            entitlementId = "EP9000-CUSA32709_00-GHOSTSHIP0000000",
+            featureType = 3
+        )
+        assertEquals("EP9000-CUSA32709_00-GHOSTSHIP0000000", PsCloudOwnership.streamIdentifier(game))
+    }
+
+    @Test
     fun platformTokenDetectsPs5() {
         assertEquals("ps5", PsCloudOwnership.platformToken("PPSA01234_00"))
     }
