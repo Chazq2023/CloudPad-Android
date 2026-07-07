@@ -301,9 +301,9 @@ class PsCloudCatalogService
 			catalog.browseGames,
 			catalog.plusLibrarySupplement,
 			catalog.productIdAliases
-		)
+		).filter { it.platform == "ps5" }
 
-		Log.i(TAG, "  Owned streaming games: ${ownedGames.size}")
+		Log.i(TAG, "  Owned PS5 streaming games: ${ownedGames.size}")
 		return ownedGames
 	}
 
