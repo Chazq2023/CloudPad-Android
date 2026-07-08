@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed CoD MW3, Madden NFL 26, and Riders Republic appearing in the library when they should not: the subscription-list supplement (streamingSupported=False imagic entries) is no longer used for owned-game cross-referencing because it cannot reliably determine PS Cloud streaming eligibility — only the main streaming catalog (streamingSupported=True) is a trustworthy signal
+            - Fixed CoD MW3, Madden NFL 26, and Riders Republic incorrectly appearing in the library: these games appear in PS Plus catalog lists with streamingSupported=false but are not actually streamable via PS Cloud; they are now explicitly excluded from the supplement that rescues genuinely streamable games (HZD Remastered, Returnal) which share the same imagic catalog flags
 
             ### Known Issues
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
