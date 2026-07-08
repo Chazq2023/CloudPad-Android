@@ -97,12 +97,12 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Simplified PSN login: removed the manual SSO cookie grab-and-paste step; tapping Finalise log in now automatically fetches the SSO cookie in the background using an in-app WebView session
-            - Fix logout dialog buttons always showing in pink: dialog button colour now matches the selected app theme (neon blue, green, yellow, or orange)
-
-            ### Known Issues
-            - More games will show as you actually own them, however, these titles aren't part of the streaming library, so they will fail to launch. This is being looked into.
-            - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
+            - Added 5 de-listed games (Destruction AllStars, Divine Knockout, PGA Tour 2K23, WWE 2K22, WWE 2K24) as hardcoded catalog entries: removed from the PS Store but still streamable via PS Cloud for outright owners; Sony's imagic API no longer lists them
+            - Fixed Witcher 3 (GOTY PPSA03977) and Nioh 2 Remastered (PPSA02488) appearing in library but failing to stream: the imagic catalog lists different PPSA numbers than the user's actual owned entitlement; Gaikai validates against what the user owns, so hardcoded entries now use the owned PPSA directly
+            - Fixed Nioh 2 Remastered incorrectly routed to psnow instead of pscloud: PS4 purchase storeProductId (CUSA) was poisoning platform detection; streamPlatform now checks productId+entitlementId PPSA pair first
+            - Fixed Nioh 2 Remastered for non-EU users: when a PS4 purchase (CUSA) entitles a PS5 upgrade (PPSA entitlementId), the user's actual regional PPSA is now sent to Gaikai instead of the hardcoded EU catalog productId
+            - All hardcoded catalog entries match via PPSA stable key so regional variants (EP/UP/JP prefix) resolve globally; streamingIdentifier sends the user's own regional productId to Gaikai when the only difference is the publisher prefix (EP vs UP vs JP)
+            - PS5 Library now always performs a live refresh (no cache) when the app opens, when switching to the Library tab from PS4 Catalog, or when tapping the Library tab while already on it — ensures de-listed owned games appear immediately without requiring a manual refresh
 
             ### APK
             Attached release asset:

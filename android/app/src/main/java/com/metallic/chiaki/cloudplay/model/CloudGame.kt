@@ -14,8 +14,12 @@ data class CloudGame(
 	val platform: String = "ps4", // "ps4", "ps3", or "ps5"
 	val serviceType: String = "psnow", // "psnow" or "pscloud"
 	val conceptUrl: String = "", // URL to add game to library (PS5 games)
+	val conceptId: String = "", // Imagic conceptId for catalog dedupe (PS5 cloud)
 	val isOwned: Boolean = false, // Whether user owns this game (PS5 games)
-	val entitlementId: String = "" // Pre-extracted PSNow streaming entitlement (license_type==4)
+	val entitlementId: String = "", // PSCloud: entitlement id from cross-reference (Qt gameData.id)
+	val storeProductId: String = "", // PSCloud: product_id from entitlements API (stream this, not entitlementId)
+	val plusCatalog: Boolean = false, // In the PS Plus subscription catalog (vs full streamable universe)
+	val featureType: Int = 0 // PSN entitlement feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
 )
 
 /**

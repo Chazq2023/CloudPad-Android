@@ -5,17 +5,23 @@ package com.metallic.chiaki.cloudplay.api
 import android.util.Log
 import com.metallic.chiaki.cloudplay.PsnApiConstants
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class Ps5CloudCatalogResult(
+	val browseGames: List<CloudGame>,
+	val plusLibrarySupplement: List<CloudGame>,
+	val productIdAliases: Map<String, String> = emptyMap(),
+	val catalogFetchWarning: String? = null,
+)
+
 /**
- * PsCloudCatalogService - Handles PS5 Cloud Gaming catalog fetching
- *
- * This service fetches PS5 cloud gaming catalogs:
- * - Public catalog of all streamable PS5 games
- * - User's owned PS5 games library
- *
- * Mirrors: gui/src/cloudcatalogbackend.cpp (PS5 catalog functions)
+ * PsCloudCatalogService - PS5 cloud catalog fetching (imagic gameslist).
+ * Fetches PS4/PS5 streaming games from multiple Sony imagic category lists.
+ * Mirrors: gui/src/cloudcatalogbackend.cpp
  */
 class PsCloudCatalogService
 {
@@ -23,43 +29,168 @@ class PsCloudCatalogService
 	{
 		private const val TAG = "PsCloudCatalogService"
 		private const val ACCOUNT_BASE = "https://ca.account.sony.com/api"
+		private const val IMAGIC_GAMESLIST_BASE = "https://www.playstation.com/bin/imagic/gameslist"
 
-		private const val CATALOG_CACHE_MS = 6 * 60 * 60 * 1000L
+		// Games that appear in Plus catalog lists with streamingSupported=false but are NOT
+		// actually streamable via PS Cloud even when owned outright. The imagic catalog gives
+		// no reliable field to distinguish these from genuinely streamable supplement games
+		// (e.g. HZD Remastered, Returnal), so they are excluded explicitly.
+		// Safe to maintain: if Sony ever adds these to the streaming catalog properly
+		// (streamingSupported=true in all-ps5-list) they will appear via browseGames instead.
+		private val SUPPLEMENT_EXCLUSIONS = setOf(
+			"PPSA24264", // Call of Duty: Modern Warfare III
+			"PPSA26127", // EA SPORTS Madden NFL 26
+			"PPSA01372", // Riders Republic
+			"PPSA01285", // Returnal
+		)
+
+		// Games that were de-listed from the PS Store but are still streamable via PS Cloud for
+		// outright owners. These no longer appear in any Sony imagic catalog list so are hardcoded.
+		// productId is taken from the user's PSN entitlement (which Gaikai also uses as the stream key).
+		private val DELISTED_STREAMABLE_GAMES = listOf(
+			CloudGame(
+				productId = "EP9000-PPSA02630_00-DALLSTARSPLUS001",
+				name = "Destruction AllStars",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202210/0418/d2l5anfkYCPcdtYL8lhqhfOX.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP0331-PPSA04189_00-DKOSTANDARDFPBUN",
+				name = "Divine Knockout",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202302/2320/e348bf25a1a1e0bc587bfdbe54bd79c9a0cee96dc8e44c41.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP1001-PPSA04426_00-PGA2K23CROSSBUY0",
+				name = "PGA Tour 2K23",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202207/2201/rhZ9AU0lZ221Km5tlnGcbTaG.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP1001-PPSA03150_00-WWE2K22DLXED0000",
+				name = "WWE 2K22",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202108/1915/GZu7bMokNvvuWIarYkhmzfGk.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP1001-PPSA16307_00-WWE2K24CROSSGEN0",
+				name = "WWE 2K24",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202401/0902/8ef9ab648b8b46461778764d6942c44a1c485abd7879e7ce.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+		)
+
+		// Games present in the imagic catalog under a DIFFERENT PPSA than the user's entitlement.
+		// We hardcode the user's actual entitlement PPSA here so:
+		//   (a) stable key matching works for any region (PPSA number is global; EP/UP/JP prefix varies)
+		//   (b) the streaming identifier sent to Gaikai is the product the user actually owns —
+		//       Gaikai validates the entitlement on the PSN side and rejects a CE PPSA when the
+		//       user only holds the GOTY/upgrade PPSA.
+		private val ENTITLEMENT_PPSA_OVERRIDES = listOf(
+			// Witcher 3: imagic catalog has PPSA10408 (Complete Edition) but the user owns
+			// PPSA03977 (GOTY Edition). Gaikai validates against the owned entitlement, so
+			// sending PPSA10408 returns 401 "not authorized for this user".
+			CloudGame(
+				productId = "EP4497-PPSA03977_00-00000000000GOTY8",
+				name = "The Witcher 3: Wild Hunt",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202211/0711/kh4MUIuMmHlktOHar3lVl6rY.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			// Nioh 2: imagic catalog has PPSA02486 (CE) but the user's PS5 Remastered upgrade
+			// entitlement carries id=PPSA02488. storeProductId is CUSA15526 (PS4 purchase that
+			// entitles the upgrade), which would cause ps4/psnow routing without this override.
+			CloudGame(
+				productId = "EP9000-PPSA02488_00-NIOH2EU000000000",
+				name = "Nioh 2 Remastered – The Complete Edition",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202011/0516/8bfGZ0fYrcWwk8IfjDeAQt3J.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+		)
+
+		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
+		// when a game appears in both the subscription lists and the full streaming catalog.
+		// Subscription-list SKUs (e.g. GHOSTDCPS5PSPLUS) differ from what Gaikai indexes;
+		// the all-ps5-list SKU (e.g. GHOSTDIRECTORPS5) is the one Gaikai actually knows.
+		private val IMAGIC_CATEGORY_LISTS = listOf(
+			"all-ps5-list",
+			"plus-games-list",
+			"ubisoft-classics-list",
+			"plus-classics-list",
+			"plus-monthly-games-list",
+			"free-to-play-list",
+		)
 	}
 
-	private var cachedCatalog: List<CloudGame>? = null
-	private var cachedCatalogTime: Long = 0L
-	private var cachedCatalogLocale: String? = null
-
-	/**
-	 * Fetch PS5 Game Catalog (public list of all streamable PS5 games)
-	 * Mirrors: CloudCatalogBackend::fetchPs5CloudCatalog() (Qt lines 844-973)
-	 *
-	 * @param locale Language locale (e.g., "en-us", "ja-jp")
-	 * @return List of CloudGame objects
-	 */
-	suspend fun fetchPs5CloudCatalog(
-		locale: String,
-		entitlements: List<EntitlementRecord> = emptyList()
-	): List<CloudGame>
-	{
-		Log.i(TAG, "=== Fetching PS5 Game Catalog ===")
+	suspend fun fetchPs5CloudCatalog(locale: String): Ps5CloudCatalogResult = coroutineScope {
+		Log.i(TAG, "=== Fetching PS5/PS4 Game Catalog (${IMAGIC_CATEGORY_LISTS.size} imagic lists) ===")
 		Log.i(TAG, "  Locale: $locale")
 
-		val now = System.currentTimeMillis()
+		val byEditionKey = LinkedHashMap<String, JSONObject>()
+		val plusSupplementByProductId = LinkedHashMap<String, JSONObject>()
+		val productIdAliases = LinkedHashMap<String, String>()
+		// PPSA/CUSA numbers present in all-ps5-list (any streamingSupported value).
+		// Supplement entries are gated on this: a game only belongs in the supplement if Sony
+		// considers it part of the PS5 cloud universe. Games found only in subscription lists
+		// (e.g. PS Plus Monthly claims not in all-ps5-list) are excluded — they are not
+		// streamable via PS Cloud even when the user has featureType=3.
+		val allPs5ListStableKeys = mutableSetOf<String>()
+		var totalGames = 0
+		val failedLists = mutableListOf<String>()
 
-		if (
-			entitlements.isEmpty() &&
-			cachedCatalog != null &&
-			cachedCatalogLocale == locale &&
-			now - cachedCatalogTime < CATALOG_CACHE_MS
-		) {
-			Log.i(TAG, "Returning cached PS5 catalog: ${cachedCatalog!!.size} games")
-			return cachedCatalog!!
+		IMAGIC_CATEGORY_LISTS.map { categoryList ->
+			async {
+				try
+				{
+					categoryList to fetchImagicCategoryList(locale, categoryList)
+				}
+				catch (e: Exception)
+				{
+					Log.w(TAG, "Imagic list '$categoryList' failed: ${e.message}")
+					categoryList to null
+				}
+			}
+		}.awaitAll().forEach { (categoryList, jsonArray) ->
+			if (jsonArray == null)
+			{
+				failedLists.add(categoryList)
+				return@forEach
+			}
+			totalGames += mergeImagicCategoryIntoMap(
+				categoryList, jsonArray, byEditionKey, plusSupplementByProductId,
+				productIdAliases, allPs5ListStableKeys
+			)
 		}
 
-		val url = "https://www.playstation.com/bin/imagic/gameslist?locale=$locale&categoryList=all-ps5-list"
+		if (failedLists.size == IMAGIC_CATEGORY_LISTS.size)
+			throw Exception("All imagic category lists failed to load")
 
+		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } +
+			DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES
+		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
+
+		val catalogFetchWarning = if (failedLists.isEmpty()) null
+			else "Some catalog lists failed (${failedLists.joinToString()}). Catalog may be incomplete."
+
+		Log.i(TAG, "  Imagic rows scanned: $totalGames")
+		Log.i(TAG, "  Streaming games (deduped by edition key): ${browseGames.size}")
+		Log.i(TAG, "  Plus library supplement (streamingSupported=false): ${plusLibrarySupplement.size}")
+		Log.i(TAG, "  Product ID aliases (same edition): ${productIdAliases.size}")
+		if (catalogFetchWarning != null)
+			Log.w(TAG, "  $catalogFetchWarning")
+
+		Ps5CloudCatalogResult(browseGames, plusLibrarySupplement, productIdAliases, catalogFetchWarning)
+	}
+
+	private suspend fun fetchImagicCategoryList(locale: String, categoryList: String): JSONArray
+	{
+		val url = "$IMAGIC_GAMESLIST_BASE?locale=$locale&categoryList=$categoryList"
 		val response = HttpClient.get(
 			url = url,
 			headers = mapOf(
@@ -71,253 +202,312 @@ class PsCloudCatalogService
 
 		if (response.statusCode != 200)
 		{
-			Log.e(TAG, "PS5 catalog fetch error: ${response.statusCode}")
-			Log.e(TAG, "Response: ${response.body}")
-			throw Exception("Failed to fetch PS5 catalog: HTTP ${response.statusCode}")
+			Log.e(TAG, "Imagic list '$categoryList' error: ${response.statusCode}")
+			throw Exception("Failed to fetch imagic list $categoryList: HTTP ${response.statusCode}")
 		}
 
-		val jsonArray = JSONArray(response.body)
-		Log.i(TAG, "  Received ${jsonArray.length()} categories")
+		return JSONArray(response.body)
+	}
 
-		// Flatten all games from all categories and filter for streaming support (Qt lines 907-938)
-		val allGames = mutableListOf<CloudGame>()
-		var totalGames = 0
-		var streamingGames = 0
-
-		val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
-
-		val ownedTitleIds = entitlements
-			.flatMap { it.ids }
-			.mapNotNull { id ->
-				titleIdRegex.find(id)?.value?.lowercase()
-			}
-			.toSet()
-
+	private fun mergeImagicCategoryIntoMap(
+		categoryList: String,
+		jsonArray: JSONArray,
+		byEditionKey: LinkedHashMap<String, JSONObject>,
+		plusSupplementByProductId: LinkedHashMap<String, JSONObject>,
+		productIdAliases: LinkedHashMap<String, String>,
+		allPs5ListStableKeys: MutableSet<String>,
+	): Int
+	{
+		val plusCatalog = isPlusCatalogList(categoryList)
+		val isPs5List = categoryList == "all-ps5-list"
+		var rows = 0
 		for (i in 0 until jsonArray.length())
 		{
-			val category = jsonArray.getJSONObject(i)
-			val games = category.optJSONArray("games") ?: continue
-
-			totalGames += games.length()
-
+			val games = jsonArray.getJSONObject(i).optJSONArray("games") ?: continue
+			rows += games.length()
 			for (j in 0 until games.length())
 			{
 				val gameObj = games.getJSONObject(j)
+				// Accept PS4 and PS5 — the old PS5-only gate dropped PS4-only PS Plus titles
+				if (!isCloudDeviceGame(gameObj))
+					continue
 
-				val productId = gameObj.optString("productId", "")
-				val gameName = gameObj.optString("name", "Unknown")
-
-				val titleId = titleIdRegex
-					.find(productId)
-					?.value
-					?.lowercase()
-
-				val isOwnedFalseNegative =
-					titleId != null && ownedTitleIds.contains(titleId)
-
-// Include normal streamable games, plus owned games Sony incorrectly marks as not streamable
-				if (gameObj.optBoolean("streamingSupported", false) || isOwnedFalseNegative)
+				// Track every PPSA/CUSA stable key present in all-ps5-list (regardless of
+				// streamingSupported) so supplement entries can be gated on presence in this list.
+				if (isPs5List)
 				{
-					streamingGames++
-
-					var imageUrl = gameObj.optString("imageUrl", "")
-
-				// Extract conceptUrl (for adding game to library)
-				// Try multiple possible field names
-				var conceptUrl = gameObj.optString("conceptUrl", "")
-				if (conceptUrl.isEmpty())
-				{
-					conceptUrl = gameObj.optString("concept_url", "")
-				}
-				if (conceptUrl.isEmpty())
-				{
-					conceptUrl = gameObj.optString("url", "")
-				}
-				if (conceptUrl.isEmpty())
-				{
-					conceptUrl = gameObj.optString("storeUrl", "")
-				}
-				if (conceptUrl.isEmpty())
-				{
-					conceptUrl = gameObj.optString("psStoreUrl", "")
-				}
-				if (conceptUrl.isEmpty())
-				{
-					conceptUrl = gameObj.optString("concept", "")
+					val pid = gameObj.optString("productId", "")
+					val sk = Regex("(?:PPSA|CUSA)\\d+").find(pid)?.value
+					if (sk != null) allPs5ListStableKeys.add(sk)
 				}
 
-				// Check nested objects (e.g., links, concept object, etc.)
-				if (conceptUrl.isEmpty())
+				// Subscription titles with streamingSupported=false → library supplement only,
+				// but only if the game also appears in all-ps5-list. Games found exclusively in
+				// subscription lists (e.g. CoD MW3 only in plus-monthly-games-list) are not
+				// streamable via PS Cloud and must not supplement the library.
+				if (plusCatalog && !gameObj.optBoolean("streamingSupported", false))
 				{
-					val links = gameObj.optJSONObject("links")
-					if (links != null)
+					val productId = gameObj.optString("productId", "")
+					if (productId.isNotEmpty())
 					{
-						conceptUrl = links.optString("conceptUrl", "")
-							?: links.optString("concept_url", "")
-							?: links.optString("url", "")
-					}
-				}
-				if (conceptUrl.isEmpty())
-				{
-					val concept = gameObj.optJSONObject("concept")
-					if (concept != null)
-					{
-						conceptUrl = concept.optString("url", "")
-							?: concept.optString("href", "")
-					}
-				}
-
-				// Log available fields for debugging if conceptUrl is missing
-				if (conceptUrl.isEmpty() && productId.isNotEmpty())
-				{
-					val keys = gameObj.keys()
-					val keyList = mutableListOf<String>()
-					while (keys.hasNext())
-					{
-						keyList.add(keys.next())
-					}
-					Log.w(TAG, "Game '${gameName}' (${productId}) - conceptUrl missing. Available fields: ${keyList.joinToString(", ")}")
-					// Log all string fields that might contain URLs
-					keyList.forEach { key ->
-						val value = gameObj.optString(key, "")
-						if (value.isNotEmpty() && (value.startsWith("http://") || value.startsWith("https://")))
+						val stableKey = Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
+						if (stableKey != null && stableKey in allPs5ListStableKeys)
 						{
-							Log.d(TAG, "  Found URL field '$key': $value")
+							if (stableKey in SUPPLEMENT_EXCLUSIONS)
+							{
+								Log.i(TAG, "supplement excluded: $stableKey '${gameObj.optString("name", "")}' ($categoryList)")
+							}
+							else
+							{
+								gameObj.put("plusCatalog", true)
+								plusSupplementByProductId.putIfAbsent(productId, gameObj)
+							}
 						}
 					}
+					continue
 				}
 
-				// Extract both cover and landscape image URLs
-				val (coverUrl, landscapeUrl) = if (imageUrl.isNotEmpty()) {
-					// If imageUrl already set, use it for both (fallback)
-					Pair(imageUrl, imageUrl)
-				} else {
-					extractImageUrls(gameObj)
+				if (!isCloudStreamingGame(gameObj))
+					continue
+
+				val key = editionKey(gameObj)
+				val productId = gameObj.optString("productId", "")
+				if (key.isEmpty() || productId.isEmpty())
+					continue
+
+				if (byEditionKey.containsKey(key))
+				{
+					val existing = byEditionKey[key]
+					val canonicalProductId = existing?.optString("productId", "") ?: ""
+					if (canonicalProductId.isNotEmpty() && productId != canonicalProductId
+						&& !productIdAliases.containsKey(productId))
+					{
+						productIdAliases[productId] = canonicalProductId
+					}
+					if (plusCatalog && existing != null && !existing.optBoolean("plusCatalog", false))
+						existing.put("plusCatalog", true)
+					continue
 				}
 
-				// Convert HTTP to HTTPS for image URLs
-				var finalCoverUrl = coverUrl
-				var finalLandscapeUrl = landscapeUrl
-				if (finalCoverUrl.startsWith("http://"))
-				{
-					finalCoverUrl = finalCoverUrl.replace("http://", "https://")
-				}
-				if (finalLandscapeUrl.startsWith("http://"))
-				{
-					finalLandscapeUrl = finalLandscapeUrl.replace("http://", "https://")
-				}
-
-				if (productId.isNotEmpty())
-				{
-					allGames.add(
-						CloudGame(
-							productId = productId,
-							name = gameName,
-							imageUrl = finalCoverUrl,
-							landscapeImageUrl = finalLandscapeUrl,
-							platform = "ps5",
-							serviceType = "pscloud",
-							conceptUrl = conceptUrl,
-							isOwned = false  // Will be set to true during cross-reference
-						)
-					)
-				}
+				gameObj.put("plusCatalog", plusCatalog)
+				byEditionKey[key] = gameObj
 			}
+		}
+		return rows
+	}
+
+	// Subscription catalog lists — NOT the full streamable universe (all-ps5-list is)
+	private fun isPlusCatalogList(categoryList: String): Boolean =
+		categoryList == "plus-games-list" || categoryList == "plus-classics-list" ||
+			categoryList == "ubisoft-classics-list" || categoryList == "plus-monthly-games-list"
+
+	private fun isCloudDeviceGame(gameObj: JSONObject): Boolean
+	{
+		val devices = gameObj.optJSONArray("device") ?: return false
+		for (i in 0 until devices.length())
+		{
+			val d = devices.optString(i)
+			if (d == "PS5" || d == "PS4") return true
+		}
+		return false
+	}
+
+	private fun isCloudStreamingGame(gameObj: JSONObject): Boolean
+	{
+		if (!gameObj.optBoolean("streamingSupported", false)) return false
+		return isCloudDeviceGame(gameObj)
+	}
+
+	private fun conceptKey(gameObj: JSONObject): String
+	{
+		if (gameObj.has("conceptId") && !gameObj.isNull("conceptId"))
+		{
+			when (val raw = gameObj.get("conceptId"))
+			{
+				is Number -> return raw.toLong().toString()
+				is String -> if (raw.isNotEmpty()) return raw
+			}
+		}
+		return gameObj.optString("productId", "")
+	}
+
+	private fun platformTokenFromProductId(productId: String): String = when
+	{
+		productId.contains("PPSA") -> "ps5"
+		productId.contains("CUSA") -> "ps4"
+		else -> ""
+	}
+
+	private fun normalizeGameName(name: String): String =
+		name.lowercase().filter { it.isLetterOrDigit() }
+
+	// One entry per game per platform. Title is included so distinct games that share a Sony
+	// conceptId (e.g. TimeSplitters 1, 2, Future Perfect) each get their own catalog slot,
+	// while duplicate SKUs of the same game (same name) still deduplicate correctly.
+	private fun editionKey(gameObj: JSONObject): String
+	{
+		val c = conceptKey(gameObj)
+		if (c.isEmpty()) return ""
+		val platform = platformTokenFromProductId(gameObj.optString("productId", ""))
+		val title = normalizeGameName(gameObj.optString("name", ""))
+		return "$c|$platform|$title"
+	}
+
+	private fun jsonToCloudGame(gameObj: JSONObject): CloudGame?
+	{
+		val productId = gameObj.optString("productId", "")
+		if (productId.isEmpty()) return null
+
+		val gameName = gameObj.optString("name", "Unknown")
+		var conceptUrl = gameObj.optString("conceptUrl", "")
+		if (conceptUrl.isEmpty()) conceptUrl = gameObj.optString("concept_url", "")
+		if (conceptUrl.isEmpty()) conceptUrl = gameObj.optString("url", "")
+		if (conceptUrl.isEmpty()) conceptUrl = gameObj.optString("storeUrl", "")
+		if (conceptUrl.isEmpty()) conceptUrl = gameObj.optString("psStoreUrl", "")
+		if (conceptUrl.isEmpty()) conceptUrl = gameObj.optString("concept", "")
+		if (conceptUrl.isEmpty())
+		{
+			val links = gameObj.optJSONObject("links")
+			if (links != null)
+			{
+				conceptUrl = links.optString("conceptUrl", "")
+					.ifEmpty { links.optString("concept_url", "") }
+					.ifEmpty { links.optString("url", "") }
+			}
+		}
+		if (conceptUrl.isEmpty())
+		{
+			val concept = gameObj.optJSONObject("concept")
+			if (concept != null)
+			{
+				conceptUrl = concept.optString("url", "")
+					.ifEmpty { concept.optString("href", "") }
 			}
 		}
 
-		Log.i(TAG, "  Total games: $totalGames")
-		Log.i(TAG, "  Streaming-supported games: $streamingGames")
+		val imageUrl = gameObj.optString("imageUrl", "")
+		val (coverUrl, landscapeUrl) = if (imageUrl.isNotEmpty())
+			Pair(imageUrl, imageUrl)
+		else
+			extractImageUrls(gameObj)
 
-		if (entitlements.isEmpty()) {
-			cachedCatalog = allGames
-			cachedCatalogTime = System.currentTimeMillis()
-			cachedCatalogLocale = locale
-		}
+		fun https(url: String) = if (url.startsWith("http://")) url.replace("http://", "https://") else url
 
-		return allGames
+		return CloudGame(
+			productId = productId,
+			name = gameName,
+			imageUrl = https(coverUrl),
+			landscapeImageUrl = https(landscapeUrl),
+			platform = platformTokenFromProductId(productId).ifEmpty { "ps5" },
+			serviceType = "pscloud",
+			conceptUrl = conceptUrl,
+			conceptId = conceptKey(gameObj),
+			isOwned = false,
+			plusCatalog = gameObj.optBoolean("plusCatalog", false)
+		)
 	}
 
 	/**
-	 * Fetch Owned PS5 Games (user's personal library)
-	 * Mirrors: CloudCatalogBackend::fetchOwnedPs5Games() (Qt lines 976-1010)
-	 *
-	 * @param npssoToken User's NPSSO token
-	 * @param locale Language locale
-	 * @return List of CloudGame objects that user owns
+	 * Fetch owned PS5 games for a user (library view).
+	 * Fetches the full catalog then cross-references with the user's entitlements.
 	 */
-
-	suspend fun crossReferenceOwnedGamesForCatalog(
-		npssoToken: String,
-		locale: String,
-		publicCatalog: List<CloudGame>
-	): List<CloudGame> {
-		if (npssoToken.isEmpty()) {
-			throw Exception("NPSSO token is required for cloud play.")
-		}
-
-		Log.i(TAG, "=== Fetching owned PS5 entitlements only ===")
-		Log.i(TAG, " Locale: $locale")
-
-		val oauthToken = fetchOwnedGamesOAuthToken(npssoToken)
-		val entitlements = fetchEntitlements(oauthToken)
-
-		val ownedGames = crossReferenceOwnedGames(entitlements, publicCatalog)
-
-		Log.i(TAG, " Owned streaming games: ${ownedGames.size}")
-
-		return ownedGames
-			.distinctBy { "${it.productId.lowercase()}|${it.name.lowercase()}" }
-	}
-
 	suspend fun fetchOwnedPs5Games(npssoToken: String, locale: String): List<CloudGame>
 	{
 		if (npssoToken.isEmpty())
-		{
-			throw Exception("NPSSO token is required for cloud play. Please login and enter a valid NPSSO token.")
-		}
+			throw Exception("NPSSO token is required for cloud play.")
 
 		Log.i(TAG, "=== Fetching Owned PS5 Games ===")
 		Log.i(TAG, "  Locale: $locale")
 
-		// Step 1: Get OAuth token for entitlements API (Qt lines 1008-1009)
-		val oauthToken = fetchOwnedGamesOAuthToken(npssoToken)
+		val catalog = fetchPs5CloudCatalog(locale)
+		val ownedGames = getOwnedPs5CloudGames(
+			npssoToken,
+			catalog.browseGames,
+			catalog.plusLibrarySupplement.filter { it.productId.contains("PPSA") },
+			catalog.productIdAliases
+		)
 
-		// Step 2: Fetch entitlements (Qt lines 1099-1156)
-		val entitlements = fetchEntitlements(oauthToken)
-
-		// Step 3: Fetch public PS5 catalog for cross-reference (Qt lines 1157-1288)
-		val publicCatalog = fetchPs5CloudCatalog(locale, entitlements)
-
-		// Step 4: Cross-reference owned games with catalog (Qt lines 1289-1384)
-		val ownedGames = crossReferenceOwnedGames(entitlements, publicCatalog)
-
-
-
-		Log.i(TAG, "  Owned streaming games: ${ownedGames.size}")
-
+		Log.i(TAG, "  Owned streamable games: ${ownedGames.size}")
 		return ownedGames
-			.distinctBy { "${it.productId.lowercase()}|${it.name.lowercase()}" }
+	}
+
+	suspend fun getOwnedPs5CloudGames(
+		npssoToken: String,
+		publicCatalog: List<CloudGame>,
+		plusLibrarySupplement: List<CloudGame> = emptyList(),
+		productIdAliases: Map<String, String> = emptyMap(),
+	): List<CloudGame>
+	{
+		if (npssoToken.isEmpty()) return emptyList()
+
+		val oauthToken = fetchOwnedGamesOAuthToken(npssoToken)
+		kotlinx.coroutines.delay(PsCloudOwnership.PAGE_COOLDOWN_MS)
+
+		val rawEntitlements = fetchEntitlementsPaginated(oauthToken)
+		val filtered = PsCloudOwnership.filterOwnedPs5Games(rawEntitlements)
+
+		Log.i(TAG, "  Raw entitlements: ${rawEntitlements.size}, after feature_type filter: ${filtered.size}")
+
+		val componentIds = mutableMapOf<String, MutableList<String>>()
+		for (ent in rawEntitlements)
+			if (ent.productId.isNotEmpty() && ent.id.isNotEmpty())
+				componentIds.getOrPut(ent.productId) { mutableListOf() }.add(ent.id)
+
+		return PsCloudOwnership.crossReferenceOwnedGames(
+			filtered, publicCatalog, plusLibrarySupplement, productIdAliases, componentIds
+		)
 	}
 
 	/**
-	 * Fetch OAuth token for entitlements API
-	 * Mirrors: CloudCatalogBackend::fetchOwnedGamesOAuthToken() (Qt lines 1012-1056)
+	 * Cross-reference public catalog with owned entitlements to mark ownership status.
+	 * Used for the "all games" view (shows everything, marks which are owned).
 	 */
+	suspend fun crossReferenceOwnedGamesForCatalog(
+		npssoToken: String,
+		locale: String,
+		publicCatalog: List<CloudGame>
+	): List<CloudGame>
+	{
+		if (npssoToken.isEmpty()) return publicCatalog.map { it.copy(isOwned = false) }
+
+		try
+		{
+			val oauthToken = fetchOwnedGamesOAuthToken(npssoToken)
+			kotlinx.coroutines.delay(PsCloudOwnership.PAGE_COOLDOWN_MS)
+
+			val rawEntitlements = fetchEntitlementsPaginated(oauthToken)
+			val filtered = PsCloudOwnership.filterOwnedPs5Games(rawEntitlements)
+
+			val componentIds = mutableMapOf<String, MutableList<String>>()
+			for (ent in rawEntitlements)
+				if (ent.productId.isNotEmpty() && ent.id.isNotEmpty())
+					componentIds.getOrPut(ent.productId) { mutableListOf() }.add(ent.id)
+
+			val ownedGames = PsCloudOwnership.crossReferenceOwnedGames(
+				filtered, publicCatalog, emptyList(), emptyMap(), componentIds
+			)
+
+			return PsCloudOwnership.mergeOwnedIntoBrowseCatalog(
+				publicCatalog, ownedGames, addUnmatched = false
+			)
+		}
+		catch (e: Exception)
+		{
+			Log.w(TAG, "Failed to cross-reference ownership, returning games as not owned", e)
+			return publicCatalog.map { it.copy(isOwned = false) }
+		}
+	}
+
 	private suspend fun fetchOwnedGamesOAuthToken(npssoToken: String): String
 	{
 		Log.i(TAG, "=== Fetching OAuth token for owned games ===")
 
-		// Build URL with proper query parameters (Qt lines 1032-1042)
-		// IMPORTANT: Use KamajiConsts::REDIRECT_URI (PSNow redirect), not the generic remoteplay one
 		val scope = "kamaji:get_internal_entitlements user:account.attributes.validate"
-		val redirectUri = PsnApiConstants.REDIRECT_URI // This is the PSNow redirect URI
+		val redirectUri = PsnApiConstants.REDIRECT_URI
 
 		val url = java.net.URL("$ACCOUNT_BASE/v1/oauth/authorize")
 		val query = "response_type=token&scope=${java.net.URLEncoder.encode(scope, "UTF-8")}&client_id=dc523cc2-b51b-4190-bff0-3397c06871b3&redirect_uri=${java.net.URLEncoder.encode(redirectUri, "UTF-8")}&service_entity=urn:service-entity:psn&prompt=none"
 		val fullUrl = "$url?$query"
-
-		Log.d(TAG, "OAuth URL: $fullUrl")
 
 		val response = HttpClient.get(
 			url = fullUrl,
@@ -328,363 +518,71 @@ class PsCloudCatalogService
 			followRedirects = false
 		)
 
-		// Should get a 302 redirect with token in Location header (Qt lines 1063-1094)
 		if (response.statusCode != 302)
 		{
 			Log.e(TAG, "OAuth token fetch failed: ${response.statusCode}")
-			Log.e(TAG, "Response body: ${response.body}")
 			throw Exception("Failed to fetch OAuth token: HTTP ${response.statusCode}")
 		}
 
-		// Headers come as Map<String, List<String>>, get first element
-		val location = (response.headers["Location"]?.firstOrNull()
+		val location = response.headers["Location"]?.firstOrNull()
 			?: response.headers["location"]?.firstOrNull()
-			?: "")
-
-		Log.d(TAG, "Redirect Location header: $location")
+			?: ""
 
 		if (location.isEmpty())
-		{
-			Log.e(TAG, "No Location header in redirect response")
-			Log.e(TAG, "Available headers: ${response.headers.keys}")
 			throw Exception("No Location header in OAuth redirect")
-		}
 
-		// Extract access_token from URL fragment (Qt lines 1076-1094)
 		val tokenPattern = Regex("[#&]access_token=([^&]+)")
 		val match = tokenPattern.find(location)
-
-		if (match == null)
-		{
-			Log.e(TAG, "Failed to extract access_token from redirect URL: $location")
-			throw Exception("Failed to extract OAuth token from response")
-		}
+			?: throw Exception("Failed to extract OAuth token from response")
 
 		val token = match.groupValues[1]
 		Log.i(TAG, "✓ OAuth token obtained: ${token.take(20)}...")
-
 		return token
 	}
 
-	/**
-	 * Fetch entitlements using OAuth token
-	 * Mirrors: CloudCatalogBackend::fetchOwnedGamesPage() (Qt lines 1192-1216)
-	 */
-
-	data class EntitlementRecord(
-		val launchId: String,
-		val ids: Set<String>
-	)
-
-	private fun extractAllStringValues(obj: JSONObject, ids: MutableSet<String>) {
-		fun addString(value: String) {
-			val normalized = value.trim().lowercase()
-			if (normalized.isNotEmpty()) {
-				ids.add(normalized)
-
-				val conceptRegex = Regex("""concept[/=]([0-9A-Za-z_-]+)""")
-				conceptRegex.find(normalized)?.let {
-					ids.add(it.groupValues[1])
-				}
-			}
-		}
-
-		val keys = obj.keys()
-
-		while (keys.hasNext()) {
-			val key = keys.next()
-			val value = obj.opt(key)
-
-			when (value) {
-				is JSONObject -> extractAllStringValues(value, ids)
-
-				is JSONArray -> {
-					for (i in 0 until value.length()) {
-						when (val item = value.opt(i)) {
-							is JSONObject -> extractAllStringValues(item, ids)
-							is String -> addString(item)
-						}
-					}
-				}
-
-				is String -> addString(value)
-			}
-		}
-	}
-
-	private suspend fun fetchEntitlements(oauthToken: String): List<EntitlementRecord>
+	private suspend fun fetchEntitlementsPaginated(oauthToken: String): List<PsCloudOwnership.Entitlement>
 	{
-		Log.i(TAG, "=== Fetching entitlements ===")
+		Log.i(TAG, "=== Fetching entitlements (paginated) ===")
 
-		// Use the correct commerce API endpoint (Qt line 1194)
-		val url = "https://commerce.api.np.km.playstation.net/commerce/api/v1/users/me/internal_entitlements?fields=game_meta&entitlement_type=5&start=0&size=10000"
+		val all = mutableListOf<PsCloudOwnership.Entitlement>()
+		var start = 0
 
-		Log.d(TAG, "Entitlements URL: $url")
-
-		val response = HttpClient.get(
-			url = url,
-			headers = mapOf(
-				"Authorization" to "Bearer $oauthToken",
-				"Accept" to "application/json"
-			)
-		)
-
-		if (response.statusCode != 200)
+		while (true)
 		{
-			Log.e(TAG, "Entitlements fetch failed: ${response.statusCode}")
-			Log.e(TAG, "Response body: ${response.body}")
-			throw Exception("Failed to fetch entitlements: HTTP ${response.statusCode}")
-		}
+			val url = "https://commerce.api.np.km.playstation.net/commerce/api/v1/users/me/internal_entitlements?fields=game_meta&entitlement_type=5&start=$start&size=${PsCloudOwnership.PAGE_SIZE}"
 
-		val jsonObj = JSONObject(response.body)
-		val entitlementsArray = jsonObj.optJSONArray("entitlements") ?: JSONArray()
-
-		val entitlements = mutableListOf<EntitlementRecord>()
-
-		for (i in 0 until entitlementsArray.length())
-		{
-			val entitlement = entitlementsArray.optJSONObject(i) ?: continue
-			val ids = mutableSetOf<String>()
-
-			fun addIdentifier(value: String?) {
-				val normalized = value?.trim()?.lowercase().orEmpty()
-				if (normalized.isNotEmpty()) {
-					ids.add(normalized)
-				}
-			}
-
-			val launchId = entitlement.optString("id", "").trim()
-			val gameMeta = entitlement.optJSONObject("game_meta")
-
-			val concept = entitlement.optJSONObject("concept")
-			if (concept != null) {
-				addIdentifier(concept.optString("id", ""))
-				addIdentifier(concept.optString("conceptId", ""))
-				addIdentifier(concept.optString("productId", ""))
-				addIdentifier(concept.optString("product_id", ""))
-			}
-
-			addIdentifier(entitlement.optString("id", ""))
-			addIdentifier(entitlement.optString("product_id", ""))
-			addIdentifier(entitlement.optString("concept_id", ""))
-			addIdentifier(entitlement.optString("sku_id", ""))
-
-			if (gameMeta != null) {
-				addIdentifier(gameMeta.optString("id", ""))
-				addIdentifier(gameMeta.optString("product_id", ""))
-				addIdentifier(gameMeta.optString("productId", ""))
-				addIdentifier(gameMeta.optString("concept_id", ""))
-				addIdentifier(gameMeta.optString("conceptId", ""))
-				addIdentifier(gameMeta.optString("sku_id", ""))
-				addIdentifier(gameMeta.optString("skuId", ""))
-			}
-
-			extractAllStringValues(entitlement, ids)
-
-			val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
-
-			ids.toList().forEach { id ->
-				titleIdRegex.find(id)?.let {
-					ids.add(it.groupValues[1].lowercase())
-				}
-			}
-
-			if (launchId.isNotEmpty()) {
-				entitlements.add(
-					EntitlementRecord(
-						launchId = launchId,
-						ids = ids
-					)
+			val response = HttpClient.get(
+				url = url,
+				headers = mapOf(
+					"Authorization" to "Bearer $oauthToken",
+					"Accept" to "application/json"
 				)
-			}
-		}
-
-		Log.i(TAG, "  Entitlements count: ${entitlements.size}")
-		return entitlements
-	}
-
-	/**
-	 * Cross-reference owned entitlements with public catalog
-	 * Mirrors: CloudCatalogBackend::processCrossReferenceComplete() (Qt lines 1289-1384)
-	 */
-
-	private fun catalogIdentifiersFor(game: CloudGame): Set<String> {
-
-		val ids = mutableSetOf<String>()
-
-		Regex("""ppsa\d{5}""", RegexOption.IGNORE_CASE)
-			.findAll(game.name)
-			.map { it.value.lowercase() }
-			.forEach { ids.add(it) }
-
-		Regex("""ppsa\d{5}""", RegexOption.IGNORE_CASE)
-			.findAll(game.conceptUrl ?: "")
-			.map { it.value.lowercase() }
-			.forEach { ids.add(it) }
-
-		fun add(value: String?) {
-			val normalized = value?.trim()?.lowercase().orEmpty()
-			if (normalized.isNotEmpty()) ids.add(normalized)
-		}
-
-		add(game.productId)
-
-		val conceptRegex = Regex("""/concept/([0-9A-Za-z_-]+)""")
-		conceptRegex.find(game.conceptUrl)?.let {
-			add(it.groupValues[1])
-		}
-
-		val productRegex = Regex("""([A-Z]{2}\d{4}-[A-Z0-9]+_\d{2}-[A-Z0-9]+)""")
-		productRegex.find(game.conceptUrl)?.let {
-			add(it.groupValues[1])
-		}
-
-		val conceptLooseRegex = Regex("""concept[/=]([0-9A-Za-z_-]+)""")
-		conceptLooseRegex.find(game.conceptUrl)?.let {
-			add(it.groupValues[1])
-		}
-
-		val titleIdRegex = Regex("""(PPSA\d+|CUSA\d+)""", RegexOption.IGNORE_CASE)
-
-		titleIdRegex.find(game.productId)?.let {
-			add(it.groupValues[1])
-		}
-
-		titleIdRegex.find(game.conceptUrl)?.let {
-			add(it.groupValues[1])
-		}
-
-		return ids
-	}
-
-	private fun isExcludedEntitlement(combined: String): Boolean
-	{
-		fun hasToken(token: String): Boolean
-		{
-			return Regex("""(^|[^a-z0-9])${Regex.escape(token)}([^a-z0-9]|$)""")
-				.containsMatchIn(combined)
-		}
-
-		return hasToken("demo") ||
-				hasToken("trial") ||
-				combined.contains("pstrack") ||
-				combined.contains("pre-order") ||
-				combined.contains("preorder") ||
-				combined.contains("soundtrack") ||
-				combined.contains("artbook") ||
-				combined.contains("avatar") ||
-				combined.contains("theme")
-	}
-
-	private fun crossReferenceOwnedGames(
-		entitlements: List<EntitlementRecord>,
-		publicCatalog: List<CloudGame>
-	): List<CloudGame>
-	{
-		Log.i(TAG, "=== Cross-referencing owned games with catalog ===")
-
-		val ownedGames = mutableListOf<CloudGame>()
-
-		data class PreparedEntitlement(
-			val entitlement: EntitlementRecord,
-			val combinedIds: String
-		)
-
-		val preparedEntitlements = entitlements.map { entitlement ->
-			PreparedEntitlement(
-				entitlement = entitlement,
-				combinedIds = (
-						listOf(entitlement.launchId) + entitlement.ids
-						).joinToString(" ").lowercase()
 			)
-		}
 
-		for (game in publicCatalog)
-		{
-			val catalogIds = catalogIdentifiersFor(game)
-
-			var matchedEntitlement = preparedEntitlements
-				.filter { prepared ->
-					catalogIds.any { it in prepared.entitlement.ids }
-				}
-				.filterNot { prepared ->
-					isExcludedEntitlement(prepared.combinedIds)
-				}
-				.maxByOrNull { prepared ->
-					val combined = prepared.combinedIds
-
-					var score = 0
-					if (game.productId.trim().lowercase() in prepared.entitlement.ids) score += 100
-					if (combined.contains("ps5")) score += 20
-					if (combined.contains("psgd")) score += 20
-					if (prepared.entitlement.launchId.lowercase().contains("europe0000000000")) score += 80
-					if (prepared.entitlement.launchId.lowercase().contains("gp000000")) score -= 80
-					if (prepared.entitlement.launchId.lowercase().contains("epre")) score -= 80
-
-					game.name.lowercase().split(" ").forEach { token ->
-						if (token.length > 3 && combined.contains(token)) score += 5
-					}
-
-					score
-				}
-				?.entitlement
-
-			if (matchedEntitlement == null) {
-				val gameName = game.name
-					.lowercase()
-					.replace("director's cut", "")
-					.replace("directors cut", "")
-					.replace("™", "")
-					.replace("®", "")
-					.trim()
-
-				matchedEntitlement = preparedEntitlements
-					.filter { prepared ->
-						val combined = prepared.combinedIds
-
-						val isGhostOfTsushimaCatalog =
-							gameName.contains("ghost of tsushima")
-
-						isGhostOfTsushimaCatalog &&
-								(
-										combined.contains("ghost of tsushima") ||
-												combined.contains("ghostdcps5")
-										) &&
-								combined.contains("psgd")
-					}
-					.filterNot { prepared ->
-						isExcludedEntitlement(prepared.combinedIds)
-					}
-					.maxByOrNull { prepared ->
-						val combined = prepared.combinedIds
-						var score = 0
-						if (combined.contains("ps5")) score += 20
-						if (combined.contains("psgd")) score += 20
-						score
-					}
-					?.entitlement
+			if (response.statusCode != 200)
+			{
+				Log.e(TAG, "Entitlements fetch failed: ${response.statusCode}")
+				throw Exception("Failed to fetch entitlements: HTTP ${response.statusCode}")
 			}
 
-			if (matchedEntitlement != null) {
-				ownedGames.add(
-					game.copy(
-						productId = matchedEntitlement.launchId,
-						isOwned = true
-					)
-				)
+			val jsonObj = JSONObject(response.body)
+			val entitlementsArray = jsonObj.optJSONArray("entitlements") ?: JSONArray()
+			val pageSize = entitlementsArray.length()
+
+			for (i in 0 until pageSize)
+			{
+				PsCloudOwnership.parseEntitlement(entitlementsArray.getJSONObject(i))?.let { all.add(it) }
 			}
+
+			if (pageSize < PsCloudOwnership.PAGE_SIZE) break
+			start += pageSize
+			kotlinx.coroutines.delay(PsCloudOwnership.PAGE_COOLDOWN_MS)
 		}
 
-		Log.i(TAG, "  Matched ${ownedGames.size} owned games out of ${publicCatalog.size} catalog games")
-
-		return ownedGames
+		Log.i(TAG, "  Entitlements count: ${all.size}")
+		return all
 	}
 
-	/**
-	 * Extract both cover and landscape image URLs from game object
-	 * Returns Pair<coverUrl, landscapeUrl>
-	 * Mirrors: CloudCatalogBackend::extractCoverImageFromGameObject()
-	 */
 	private fun extractImageUrls(gameObj: JSONObject): Pair<String, String>
 	{
 		val imagesArray = gameObj.optJSONArray("images") ?: return Pair("", "")
@@ -692,7 +590,6 @@ class PsCloudCatalogService
 		var coverUrl = ""
 		var landscapeUrl = ""
 
-		// Extract both cover (type 10) and landscape (type 12/13)
 		for (i in 0 until imagesArray.length())
 		{
 			val image = imagesArray.getJSONObject(i)
@@ -704,25 +601,14 @@ class PsCloudCatalogService
 			when (type)
 			{
 				10 -> if (coverUrl.isEmpty()) coverUrl = url
-				12 -> if (landscapeUrl.isEmpty()) landscapeUrl = url  // Prefer 1080p landscape
-				13 -> if (landscapeUrl.isEmpty()) landscapeUrl = url  // Fallback to 720p landscape
+				12 -> if (landscapeUrl.isEmpty()) landscapeUrl = url
+				13 -> if (landscapeUrl.isEmpty()) landscapeUrl = url
 			}
 		}
 
-		// Fallback: use cover for landscape if no landscape found
-		if (landscapeUrl.isEmpty() && coverUrl.isNotEmpty())
-		{
-			landscapeUrl = coverUrl
-		}
-
-		// Fallback: use landscape for cover if no cover found
-		if (coverUrl.isEmpty() && landscapeUrl.isNotEmpty())
-		{
-			coverUrl = landscapeUrl
-		}
+		if (landscapeUrl.isEmpty() && coverUrl.isNotEmpty()) landscapeUrl = coverUrl
+		if (coverUrl.isEmpty() && landscapeUrl.isNotEmpty()) coverUrl = landscapeUrl
 
 		return Pair(coverUrl, landscapeUrl)
 	}
 }
-
-

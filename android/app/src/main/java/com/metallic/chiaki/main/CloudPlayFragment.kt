@@ -37,6 +37,7 @@ import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.pylux.stream.R
 import com.metallic.chiaki.cloudplay.PsnLoginActivity
 import com.metallic.chiaki.cloudplay.api.CloudStreamingBackend
+import com.metallic.chiaki.cloudplay.api.PsCloudOwnership
 import com.metallic.chiaki.cloudplay.model.CloudError
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.common.Preferences
@@ -639,7 +640,7 @@ class CloudPlayFragment : Fragment() {
         updateFilterButtonText()
         updateFavoritesIcon()
 
-        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
     }
 
     private fun updateOwnedToggleButton() {
@@ -1065,18 +1066,6 @@ class CloudPlayFragment : Fragment() {
                 else -> filteredGames
             }
 
-            sortedGames
-                .filter {
-                    it.name.contains("Demon", ignoreCase = true) ||
-                            it.productId.contains("PPSA01341", ignoreCase = true)
-                }
-                .forEach {
-                    Log.i(
-                        "DEMON DEBUG UI",
-                        "name=${it.name}, productId=${it.productId}, platform=${it.platform}, serviceType=${it.serviceType}, isOwned=${it.isOwned}, conceptUrl=${it.conceptUrl}"
-                    )
-                }
-
             adapter.games = sortedGames
             updateEmptyState(sortedGames.isEmpty())
             updateFastScrollerVisibility()
@@ -1437,12 +1426,12 @@ class CloudPlayFragment : Fragment() {
             try {
                 val backend = CloudStreamingBackend(requireContext(), viewModel.preferences)
                 val result = backend.startCompleteCloudSession(
-                    serviceType = game.serviceType,
-                    gameIdentifier = game.productId,
+                    serviceType = PsCloudOwnership.streamServiceType(game),
+                    gameIdentifier = PsCloudOwnership.streamIdentifier(game),
                     gameName = game.name,
                     npssoToken = npssoToken,
                     ownedEntitlementId = game.entitlementId,
-                    ownedPlatform = game.platform,
+                    ownedPlatform = PsCloudOwnership.streamPlatform(game),
                     onProgress = { message ->
                         requireActivity().runOnUiThread {
                             allocationProgressTextView?.text = message
