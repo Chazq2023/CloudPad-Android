@@ -41,6 +41,7 @@ class PsCloudCatalogService
 			"PPSA24264", // Call of Duty: Modern Warfare III
 			"PPSA26127", // EA SPORTS Madden NFL 26
 			"PPSA01372", // Riders Republic
+			"PPSA01285", // Returnal
 		)
 
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
@@ -179,11 +180,17 @@ class PsCloudCatalogService
 					if (productId.isNotEmpty())
 					{
 						val stableKey = Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
-						if (stableKey != null && stableKey in allPs5ListStableKeys
-							&& stableKey !in SUPPLEMENT_EXCLUSIONS)
+						if (stableKey != null && stableKey in allPs5ListStableKeys)
 						{
-							gameObj.put("plusCatalog", true)
-							plusSupplementByProductId.putIfAbsent(productId, gameObj)
+							if (stableKey in SUPPLEMENT_EXCLUSIONS)
+							{
+								Log.i(TAG, "supplement excluded: $stableKey '${gameObj.optString("name", "")}' ($categoryList)")
+							}
+							else
+							{
+								gameObj.put("plusCatalog", true)
+								plusSupplementByProductId.putIfAbsent(productId, gameObj)
+							}
 						}
 					}
 					continue
