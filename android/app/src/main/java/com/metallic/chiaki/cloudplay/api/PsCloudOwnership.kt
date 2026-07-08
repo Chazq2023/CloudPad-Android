@@ -31,18 +31,19 @@ object PsCloudOwnership
 	fun filterOwnedPs5Games(entitlements: List<Entitlement>): List<Entitlement>
 	{
 		return entitlements.filter { ent ->
-			// featureType 0 = DLC/add-ons/themes/avatars — never streamable games
-			// featureType 1 (PS Plus subscription access) is intentionally kept: the catalog
-			// cross-reference naturally filters out anything not in the streaming catalog,
-			// and subscription entitlements carry the Gaikai streaming key in their id field.
-			// Trials and demos are excluded by name, packageType (PSGT), or sku_type (GAME_TRIAL).
+			// featureType=1 = PS Plus subscription access. Only keep if the id ends with 16 digits
+			// (Gaikai streaming hash format: EP...-PPSA...-0978938405039882). Game Trials arrive as
+			// featureType=1 with a standard productId-format id (no hash), so this excludes them.
+			val isGaikaiSubscription = ent.featureType != 1 ||
+				(ent.id.length >= 16 && ent.id.takeLast(16).all { it.isDigit() })
 			val keep = ent.activeFlag &&
 				ent.featureType != 0 &&
+				isGaikaiSubscription &&
 				!ent.packageType.endsWith("GT", ignoreCase = true) &&
 				!ent.skuType.contains("trial", ignoreCase = true) &&
 				!ent.name.contains(Regex("\\bdemo\\b", RegexOption.IGNORE_CASE)) &&
 				!ent.name.contains(Regex("\\btrial\\b", RegexOption.IGNORE_CASE))
-			if (keep) Log.d(TAG, "filter: kept '${ent.name}' productId=${ent.productId} skuType=${ent.skuType} packageType=${ent.packageType} featureType=${ent.featureType}")
+			if (keep) Log.d(TAG, "filter: kept '${ent.name}' id=${ent.id} productId=${ent.productId} skuType=${ent.skuType} packageType=${ent.packageType} featureType=${ent.featureType}")
 			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} skuType=${ent.skuType} active=${ent.activeFlag}")
 			keep
 		}

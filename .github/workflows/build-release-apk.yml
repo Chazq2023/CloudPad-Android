@@ -97,13 +97,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed catalog ordering: all-ps5-list is now processed first so Gaikai-compatible productIds always win over subscription-list SKUs
-            - Disc-upgrade detection now uses featureType=5 instead of title-ID comparison
-            - PSCLOUD retry: if Gaikai rejects the primary entitlement ID, the app automatically retries with the raw ent.id; fixes games like FF7 Rebirth
-            - Fixed Ghost of Tsushima (PSCLOUD/PS5 version): PS Plus subscription entitlements (featureType=1) are now included in cross-referencing so their Gaikai streaming key is used as the pscloud retry ID
-            - Fixed library showing only 1 of 3 TimeSplitters titles (and similar grouped games): stable-key cross-reference now fires before conceptId so each game matches its own catalog entry; dedup key includes catalog productId so games sharing a Sony conceptId each get a separate library slot
-            - Fixed Demon's Souls and Horizon Zero Dawn Remastered missing: stable key bridges bare "PPSA01350_00" entitlement format to full "EP...-PPSA01350_00-..." imagic catalog format
-            - Fixed Avatar: Frontiers of Pandora game trial appearing in library: PS Plus Game Trials (packageType=PSGT) are now excluded
+            - Fixed TimeSplitters: all 3 titles (TimeSplitters, TimeSplitters 2, Future Perfect) now appear separately; Sony assigns them the same conceptId, so the imagic catalog entry now uses a normalised game title as a secondary key to keep them distinct
+            - Fixed Avatar: Frontiers of Pandora Game Trial appearing in library: PS Plus Game Trials (featureType=1) are now excluded unless their id carries a 16-digit Gaikai streaming hash, which only genuine PS Plus subscription access entitlements have
+            - Fixed Demon's Souls missing: "demo" substring filter now uses word-boundary match so "Demon's Souls" is no longer incorrectly excluded
 
             ### Known Issues
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.

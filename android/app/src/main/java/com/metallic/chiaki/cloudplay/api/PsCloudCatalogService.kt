@@ -223,12 +223,19 @@ class PsCloudCatalogService
 		else -> ""
 	}
 
-	// One entry per game per platform: cross-gen PS4/PS5 editions each get their own card
+	private fun normalizeGameName(name: String): String =
+		name.lowercase().filter { it.isLetterOrDigit() }
+
+	// One entry per game per platform. Title is included so distinct games that share a Sony
+	// conceptId (e.g. TimeSplitters 1, 2, Future Perfect) each get their own catalog slot,
+	// while duplicate SKUs of the same game (same name) still deduplicate correctly.
 	private fun editionKey(gameObj: JSONObject): String
 	{
 		val c = conceptKey(gameObj)
 		if (c.isEmpty()) return ""
-		return c + "|" + platformTokenFromProductId(gameObj.optString("productId", ""))
+		val platform = platformTokenFromProductId(gameObj.optString("productId", ""))
+		val title = normalizeGameName(gameObj.optString("name", ""))
+		return "$c|$platform|$title"
 	}
 
 	private fun jsonToCloudGame(gameObj: JSONObject): CloudGame?
