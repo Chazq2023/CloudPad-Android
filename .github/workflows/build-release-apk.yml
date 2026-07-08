@@ -97,9 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed games that should not appear (e.g. Madden NFL 26, Riders Republic): subscription-access entitlements (featureType=1, e.g. EA Play, Ubisoft+ Classics) no longer match supplement entries; only outright owners (featureType=3) do
-            - Fixed games that should not appear (e.g. CoD MW3): games only found in PS Plus Monthly lists but absent from all-ps5-list are now excluded from the supplement entirely — they are not streamable via PS Cloud
-            - Horizon Zero Dawn Remastered (owned outright, featureType=3) continues to resolve correctly through both fixes
+            - Fixed CoD MW3, Madden NFL 26, and Riders Republic appearing in the library when they should not: the subscription-list supplement (streamingSupported=False imagic entries) is no longer used for owned-game cross-referencing because it cannot reliably determine PS Cloud streaming eligibility — only the main streaming catalog (streamingSupported=True) is a trustworthy signal
 
             ### Known Issues
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
