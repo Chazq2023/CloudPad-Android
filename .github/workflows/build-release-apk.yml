@@ -97,10 +97,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed TimeSplitters: all 3 titles (TimeSplitters, TimeSplitters 2, Future Perfect) now appear separately; Sony assigns them the same conceptId, so the imagic catalog entry now uses a normalised game title as a secondary key to keep them distinct
-            - Game Trials (featureType=1) are kept in the library — they are valid streaming entries on PS Portal
-            - Fixed Demon's Souls missing: "demo" substring filter now uses word-boundary match so "Demon's Souls" is no longer incorrectly excluded
-            - Fixed Horizon Zero Dawn Remastered missing from owned library: the plus-library supplement (subscription titles with streamingSupported=false) is now passed to the owned-game cross-reference, filtered to PS5 (PPSA) titles only so no PS4 games are introduced
+            - Fixed games that should not appear (e.g. Madden NFL 26, Riders Republic): subscription-access entitlements (featureType=1, e.g. EA Play, Ubisoft+ Classics) no longer match supplement entries; only outright owners (featureType=3) do
+            - Fixed games that should not appear (e.g. CoD MW3): games only found in PS Plus Monthly lists but absent from all-ps5-list are now excluded from the supplement entirely — they are not streamable via PS Cloud
+            - Horizon Zero Dawn Remastered (owned outright, featureType=3) continues to resolve correctly through both fixes
 
             ### Known Issues
             - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
