@@ -44,6 +44,57 @@ class PsCloudCatalogService
 			"PPSA01285", // Returnal
 		)
 
+		// Games that were de-listed from the PS Store but are still streamable via PS Cloud for
+		// outright owners. These no longer appear in any Sony imagic catalog list so are hardcoded.
+		// productId is taken from the user's PSN entitlement (which Gaikai also uses as the stream key).
+		private val DELISTED_STREAMABLE_GAMES = listOf(
+			CloudGame(
+				productId = "EP9000-PPSA02630_00-DALLSTARSPLUS001",
+				name = "Destruction AllStars",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202210/0418/d2l5anfkYCPcdtYL8lhqhfOX.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP0331-PPSA04189_00-DKOSTANDARDFPBUN",
+				name = "Divine Knockout",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202302/2320/e348bf25a1a1e0bc587bfdbe54bd79c9a0cee96dc8e44c41.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP1001-PPSA04426_00-PGA2K23CROSSBUY0",
+				name = "PGA Tour 2K23",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202207/2201/rhZ9AU0lZ221Km5tlnGcbTaG.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP1001-PPSA03150_00-WWE2K22DLXED0000",
+				name = "WWE 2K22",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202108/1915/GZu7bMokNvvuWIarYkhmzfGk.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			CloudGame(
+				productId = "EP1001-PPSA16307_00-WWE2K24CROSSGEN0",
+				name = "WWE 2K24",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202401/0902/8ef9ab648b8b46461778764d6942c44a1c485abd7879e7ce.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+		)
+
+		// Hardcoded productId aliases for games where the user's entitlement productId uses a
+		// different PPSA stable key than the imagic streaming catalog entry.
+		// Key = entitlement productId, Value = canonical catalog productId.
+		private val MANUAL_PRODUCT_ID_ALIASES = mapOf(
+			// Witcher 3 GOTY Edition (entitlement PPSA03977) → Complete Edition in streaming catalog (PPSA10408)
+			"EP4497-PPSA03977_00-00000000000GOTY8" to "EP4497-PPSA10408_00-00000000000000N1",
+			// Nioh 2 PS4/PS5 upgrade entitlement (CUSA15526) → Nioh 2 Complete Edition in streaming catalog (PPSA02486)
+			"EP9000-CUSA15526_00-NIOH2EU100000000" to "EP9000-PPSA02486_00-NIOH2CE000000000",
+		)
+
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
 		// when a game appears in both the subscription lists and the full streaming catalog.
 		// Subscription-list SKUs (e.g. GHOSTDCPS5PSPLUS) differ from what Gaikai indexes;
@@ -101,7 +152,10 @@ class PsCloudCatalogService
 		if (failedLists.size == IMAGIC_CATEGORY_LISTS.size)
 			throw Exception("All imagic category lists failed to load")
 
-		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) }
+		for ((alias, canonical) in MANUAL_PRODUCT_ID_ALIASES)
+			productIdAliases.putIfAbsent(alias, canonical)
+
+		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } + DELISTED_STREAMABLE_GAMES
 		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
 
 		val catalogFetchWarning = if (failedLists.isEmpty()) null
