@@ -101,6 +101,8 @@ object PsCloudOwnership
 
 		fun emit(meta: CloudGame, ent: Entitlement)
 		{
+			val src = if (meta.plusCatalog) "supplement" else "browse"
+			Log.i(TAG, "crossRef match [$src]: '${meta.name}' featureType=${ent.featureType} skuType=${ent.skuType} packageType=${ent.packageType} entPid=${ent.productId} entId=${ent.id} catalogPid=${meta.productId}")
 			val game = meta.copy(
 				name = meta.name.ifEmpty { ent.name },
 				isOwned = true,
