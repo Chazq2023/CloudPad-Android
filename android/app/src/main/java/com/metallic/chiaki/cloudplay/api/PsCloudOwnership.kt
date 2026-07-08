@@ -403,6 +403,11 @@ object PsCloudOwnership
 
 	fun streamPlatform(game: CloudGame): String
 	{
+		// If the catalog productId and the user's entitlement id are both PPSA (PS5), treat as
+		// ps5 even when storeProductId is CUSA. This handles PS4 purchases (CUSA) that entitle a
+		// PS5 Remastered upgrade (PPSA) — e.g. Nioh 2 — where storeProductId would otherwise
+		// poison the platform detection and send the session down the psnow path instead.
+		if (game.productId.contains("PPSA") && game.entitlementId.contains("PPSA")) return "ps5"
 		val p = game.storeProductId.ifEmpty { game.productId.ifEmpty { game.entitlementId } }
 		return when
 		{

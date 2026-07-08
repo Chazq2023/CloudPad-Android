@@ -85,14 +85,33 @@ class PsCloudCatalogService
 			),
 		)
 
-		// Hardcoded productId aliases for games where the user's entitlement productId uses a
-		// different PPSA stable key than the imagic streaming catalog entry.
-		// Key = entitlement productId, Value = canonical catalog productId.
-		private val MANUAL_PRODUCT_ID_ALIASES = mapOf(
-			// Witcher 3 GOTY Edition (entitlement PPSA03977) → Complete Edition in streaming catalog (PPSA10408)
-			"EP4497-PPSA03977_00-00000000000GOTY8" to "EP4497-PPSA10408_00-00000000000000N1",
-			// Nioh 2 PS4/PS5 upgrade entitlement (CUSA15526) → Nioh 2 Complete Edition in streaming catalog (PPSA02486)
-			"EP9000-CUSA15526_00-NIOH2EU100000000" to "EP9000-PPSA02486_00-NIOH2CE000000000",
+		// Games present in the imagic catalog under a DIFFERENT PPSA than the user's entitlement.
+		// We hardcode the user's actual entitlement PPSA here so:
+		//   (a) stable key matching works for any region (PPSA number is global; EP/UP/JP prefix varies)
+		//   (b) the streaming identifier sent to Gaikai is the product the user actually owns —
+		//       Gaikai validates the entitlement on the PSN side and rejects a CE PPSA when the
+		//       user only holds the GOTY/upgrade PPSA.
+		private val ENTITLEMENT_PPSA_OVERRIDES = listOf(
+			// Witcher 3: imagic catalog has PPSA10408 (Complete Edition) but the user owns
+			// PPSA03977 (GOTY Edition). Gaikai validates against the owned entitlement, so
+			// sending PPSA10408 returns 401 "not authorized for this user".
+			CloudGame(
+				productId = "EP4497-PPSA03977_00-00000000000GOTY8",
+				name = "The Witcher 3: Wild Hunt",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202211/0711/kh4MUIuMmHlktOHar3lVl6rY.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+			// Nioh 2: imagic catalog has PPSA02486 (CE) but the user's PS5 Remastered upgrade
+			// entitlement carries id=PPSA02488. storeProductId is CUSA15526 (PS4 purchase that
+			// entitles the upgrade), which would cause ps4/psnow routing without this override.
+			CloudGame(
+				productId = "EP9000-PPSA02488_00-NIOH2EU000000000",
+				name = "Nioh 2 Remastered – The Complete Edition",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202011/0516/8bfGZ0fYrcWwk8IfjDeAQt3J.png",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
 		)
 
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
@@ -152,10 +171,8 @@ class PsCloudCatalogService
 		if (failedLists.size == IMAGIC_CATEGORY_LISTS.size)
 			throw Exception("All imagic category lists failed to load")
 
-		for ((alias, canonical) in MANUAL_PRODUCT_ID_ALIASES)
-			productIdAliases.putIfAbsent(alias, canonical)
-
-		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } + DELISTED_STREAMABLE_GAMES
+		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } +
+			DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES
 		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
 
 		val catalogFetchWarning = if (failedLists.isEmpty()) null

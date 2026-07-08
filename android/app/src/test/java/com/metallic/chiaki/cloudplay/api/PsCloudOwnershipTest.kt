@@ -283,6 +283,42 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun remasteredUpgradeWithCusaStoreProductIdRoutesPscloud() {
+        // Nioh 2 Remastered: the PS4 purchase (CUSA15526) entitles a PS5 Remastered upgrade
+        // whose entitlement id is PPSA02488. storeProductId is CUSA so streamPlatform must not
+        // fall through to ps4/psnow — the PPSA productId + PPSA entitlementId wins.
+        val game = CloudGame(
+            productId = "EP9000-PPSA02488_00-NIOH2EU000000000",
+            name = "Nioh 2 Remastered",
+            imageUrl = "",
+            serviceType = "pscloud",
+            storeProductId = "EP9000-CUSA15526_00-NIOH2EU100000000",
+            entitlementId = "EP9000-PPSA02488_00-NIOH2EU000000000",
+            featureType = 3
+        )
+        assertEquals("ps5", PsCloudOwnership.streamPlatform(game))
+        assertEquals("pscloud", PsCloudOwnership.streamServiceType(game))
+        assertEquals("EP9000-PPSA02488_00-NIOH2EU000000000", PsCloudOwnership.streamingIdentifier(game))
+    }
+
+    @Test
+    fun ps4OnlyPurchaseStillRoutesPsnow() {
+        // GoT PS4-only purchase matched via conceptId to a PS5 catalog entry. The entitlementId
+        // is CUSA (PS4 purchase id) so streamPlatform must not treat this as ps5 — psnow is correct.
+        val game = CloudGame(
+            productId = "EP9000-PPSA03208_00-GHOSTDIRECTORPS5",
+            name = "Ghost of Tsushima",
+            imageUrl = "",
+            serviceType = "pscloud",
+            storeProductId = "EP9000-CUSA15439_00-GHOSTOFTSUSHIMAA",
+            entitlementId = "EP9000-CUSA15439_00-GHOSTOFTSUSHIMAA",
+            featureType = 3
+        )
+        assertEquals("ps4", PsCloudOwnership.streamPlatform(game))
+        assertEquals("psnow", PsCloudOwnership.streamServiceType(game))
+    }
+
+    @Test
     fun platformTokenDetectsPs5() {
         assertEquals("ps5", PsCloudOwnership.platformToken("PPSA01234_00"))
     }
