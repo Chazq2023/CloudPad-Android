@@ -54,22 +54,9 @@ class PsCloudOwnershipTest {
 
     @Test
     fun gameTrialBySkuTypeIsFilteredOut() {
-        // Redundant but retained: sku_type="GAME_TRIAL" is caught by the skuType check even
-        // if the id somehow passed the Gaikai hash check.
+        // PSN entitlements with sku_type="GAME_TRIAL" are excluded (different from Game Trials
+        // added via PS Store, which are valid streaming entries and should pass through).
         val ents = listOf(entitlement(name = "Avatar: Frontiers of Pandora", featureType = 1, skuType = "GAME_TRIAL"))
-        assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
-    }
-
-    @Test
-    fun gameTrialWithoutGaikaiHashIsFilteredOut() {
-        // PSN Game Trials (featureType=1) carry a standard productId-format id, not a 16-digit
-        // Gaikai streaming hash. Avatar: Frontiers of Pandora is a real example of this.
-        val ents = listOf(entitlement(
-            id = "EP0001-PPSA01575_00-AVATAR2GAME00001",
-            productId = "EP0001-PPSA01575_00-AVATAR2GAME00001",
-            name = "Avatar: Frontiers of Pandora",
-            featureType = 1
-        ))
         assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
     }
 
@@ -99,13 +86,9 @@ class PsCloudOwnershipTest {
 
     @Test
     fun subscriptionEntitlementsWithFeatureType1PassThrough() {
-        // PS Plus subscription access entitlements carry the Gaikai streaming hash in their id
-        // (16 digits at the end). These must pass so the pscloud retry can use the Gaikai key.
-        val ents = listOf(entitlement(
-            id = "EP9000-PPSA05031_00-0978938405039882",
-            name = "Ghost of Tsushima Director's Cut",
-            featureType = 1
-        ))
+        // PS Plus subscription access entitlements and Game Trials (both featureType=1) must
+        // pass through — Game Trials are valid streaming entries on the PS Portal.
+        val ents = listOf(entitlement(name = "Ghost of Tsushima Director's Cut", featureType = 1))
         assertEquals(1, PsCloudOwnership.filterOwnedPs5Games(ents).size)
     }
 
@@ -124,7 +107,7 @@ class PsCloudOwnershipTest {
             entitlement(id = "E2", productId = "PPSA00001_01", featureType = 0),   // DLC → filtered
             entitlement(id = "E3", productId = "PPSA00002_00", featureType = 3, activeFlag = false),  // inactive → filtered
             entitlement(id = "E4", productId = "IP9000-GAME", featureType = 3),   // IP prefix → now kept
-            entitlement(id = "E5", productId = "PPSA00003_00", featureType = 1, name = "My Game Trial"),  // featureType=1 without Gaikai hash → filtered
+            entitlement(id = "E5", productId = "PPSA00003_00", featureType = 1, name = "My Game Trial"),  // trial name → filtered
         )
         val filtered = PsCloudOwnership.filterOwnedPs5Games(ents)
         assertEquals(2, filtered.size)

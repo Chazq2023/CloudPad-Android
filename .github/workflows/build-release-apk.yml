@@ -98,7 +98,7 @@ jobs:
 
             ### Updates
             - Fixed TimeSplitters: all 3 titles (TimeSplitters, TimeSplitters 2, Future Perfect) now appear separately; Sony assigns them the same conceptId, so the imagic catalog entry now uses a normalised game title as a secondary key to keep them distinct
-            - Fixed Avatar: Frontiers of Pandora Game Trial appearing in library: PS Plus Game Trials (featureType=1) are now excluded unless their id carries a 16-digit Gaikai streaming hash, which only genuine PS Plus subscription access entitlements have
+            - Game Trials (featureType=1) are kept in the library — they are valid streaming entries on PS Portal
             - Fixed Demon's Souls missing: "demo" substring filter now uses word-boundary match so "Demon's Souls" is no longer incorrectly excluded
             - Fixed Horizon Zero Dawn Remastered missing from owned library: the plus-library supplement (subscription titles with streamingSupported=false) is now passed to the owned-game cross-reference, filtered to PS5 (PPSA) titles only so no PS4 games are introduced
 

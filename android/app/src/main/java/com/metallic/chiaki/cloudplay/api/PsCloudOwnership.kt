@@ -31,14 +31,12 @@ object PsCloudOwnership
 	fun filterOwnedPs5Games(entitlements: List<Entitlement>): List<Entitlement>
 	{
 		return entitlements.filter { ent ->
-			// featureType=1 = PS Plus subscription access. Only keep if the id ends with 16 digits
-			// (Gaikai streaming hash format: EP...-PPSA...-0978938405039882). Game Trials arrive as
-			// featureType=1 with a standard productId-format id (no hash), so this excludes them.
-			val isGaikaiSubscription = ent.featureType != 1 ||
-				(ent.id.length >= 16 && ent.id.takeLast(16).all { it.isDigit() })
+			// featureType 0 = DLC/add-ons/themes/avatars — never streamable games
+			// featureType 1 (PS Plus subscription access and Game Trials) is intentionally kept:
+			// Game Trials are valid streaming entries and the cross-reference naturally filters
+			// out anything not in the streaming catalog.
 			val keep = ent.activeFlag &&
 				ent.featureType != 0 &&
-				isGaikaiSubscription &&
 				!ent.packageType.endsWith("GT", ignoreCase = true) &&
 				!ent.skuType.contains("trial", ignoreCase = true) &&
 				!ent.name.contains(Regex("\\bdemo\\b", RegexOption.IGNORE_CASE)) &&
