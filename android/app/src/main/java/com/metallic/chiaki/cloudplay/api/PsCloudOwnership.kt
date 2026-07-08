@@ -38,9 +38,9 @@ object PsCloudOwnership
 			val keep = ent.activeFlag &&
 				ent.featureType != 0 &&
 				!ent.packageType.endsWith("GT", ignoreCase = true) &&
-				!ent.name.contains("demo", ignoreCase = true) &&
-				!ent.name.contains("trial", ignoreCase = true)
-			if (keep) Log.d(TAG, "filter: kept '${ent.name}' packageType=${ent.packageType} featureType=${ent.featureType}")
+				!ent.name.contains(Regex("\\bdemo\\b", RegexOption.IGNORE_CASE)) &&
+				!ent.name.contains(Regex("\\btrial\\b", RegexOption.IGNORE_CASE))
+			if (keep) Log.d(TAG, "filter: kept '${ent.name}' productId=${ent.productId} packageType=${ent.packageType} featureType=${ent.featureType}")
 			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} active=${ent.activeFlag}")
 			keep
 		}
@@ -178,7 +178,7 @@ object PsCloudOwnership
 				emit(siblingMeta, ent)
 			}
 			if (byKey.size == preEmitSize)
-				Log.d(TAG, "crossRef miss: '${ent.name}' productId=${ent.productId} conceptId=${ent.conceptId} id=${ent.id}")
+				Log.i(TAG, "crossRef miss: '${ent.name}' productId=${ent.productId} conceptId=${ent.conceptId} id=${ent.id}")
 		}
 
 		// Disc-upgrade rescue: feature_type 5 = PS4-disc -> PS5 disc upgrade that Gaikai won't stream.

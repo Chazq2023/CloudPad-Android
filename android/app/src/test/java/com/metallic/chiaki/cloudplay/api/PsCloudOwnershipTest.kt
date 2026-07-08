@@ -38,6 +38,13 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun demonsSoulsIsNotFilteredByDemoSubstring() {
+        // "Demon's Souls" starts with "Demo" but "demo" must match as a whole word only
+        val ents = listOf(entitlement(name = "Demon's Souls", featureType = 3))
+        assertEquals(1, PsCloudOwnership.filterOwnedPs5Games(ents).size)
+    }
+
+    @Test
     fun gameTrialByPackageTypeGtIsFilteredOut() {
         // PS Plus Game Trials carry packageType="PSGT" without "trial" in the display name,
         // so the name filter alone is insufficient (e.g. "Avatar: Frontiers of Pandora")
