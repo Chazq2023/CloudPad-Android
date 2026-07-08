@@ -404,6 +404,10 @@ object PsCloudOwnership
 					game.storeProductId != game.productId &&
 					game.storeProductId.drop(2) == game.productId.drop(2))
 					return game.storeProductId
+				// PS4 purchase (CUSA) that entitles a free PS5 upgrade (PPSA): entitlementId carries
+				// the user's actual regional PPSA, not the hardcoded EU catalog productId.
+				if (game.storeProductId.contains("CUSA") && game.entitlementId.contains("PPSA"))
+					return game.entitlementId
 				return game.productId
 			}
 			if (game.storeProductId.isNotEmpty()) return game.storeProductId

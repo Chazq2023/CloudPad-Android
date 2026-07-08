@@ -306,6 +306,23 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun streamingIdentifierUsesEntitlementIdForCusaToPs5Upgrade() {
+        // Non-EU user: PS4 purchase (CUSA storeProductId) entitles a PS5 upgrade (PPSA entitlementId).
+        // Catalog productId is a hardcoded EU PPSA; user's entitlementId is their regional PPSA.
+        // Gaikai validates against what the user actually owns, so entitlementId must win.
+        val game = CloudGame(
+            productId = "EP9000-PPSA02488_00-NIOH2EU000000000",
+            name = "Nioh 2 Remastered",
+            imageUrl = "",
+            serviceType = "pscloud",
+            storeProductId = "UP9000-CUSA15526_00-NIOH2US000000000",
+            entitlementId = "UP9000-PPSA02488_00-NIOH2US000000001",
+            featureType = 3
+        )
+        assertEquals("UP9000-PPSA02488_00-NIOH2US000000001", PsCloudOwnership.streamingIdentifier(game))
+    }
+
+    @Test
     fun remasteredUpgradeWithCusaStoreProductIdRoutesPscloud() {
         // Nioh 2 Remastered: the PS4 purchase (CUSA15526) entitles a PS5 Remastered upgrade
         // whose entitlement id is PPSA02488. storeProductId is CUSA so streamPlatform must not
