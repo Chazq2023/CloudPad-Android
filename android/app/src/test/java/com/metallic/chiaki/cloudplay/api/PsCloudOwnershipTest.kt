@@ -14,7 +14,8 @@ class PsCloudOwnershipTest {
         packageType: String = "PSGD",
         name: String = "Test Game",
         conceptId: String = "",
-        featureType: Int = 3
+        featureType: Int = 3,
+        skuType: String = ""
     ) = PsCloudOwnership.Entitlement(
         id = id,
         productId = productId,
@@ -22,7 +23,8 @@ class PsCloudOwnershipTest {
         packageType = packageType,
         name = name,
         conceptId = conceptId,
-        featureType = featureType
+        featureType = featureType,
+        skuType = skuType
     )
 
     @Test
@@ -46,9 +48,15 @@ class PsCloudOwnershipTest {
 
     @Test
     fun gameTrialByPackageTypeGtIsFilteredOut() {
-        // PS Plus Game Trials carry packageType="PSGT" without "trial" in the display name,
-        // so the name filter alone is insufficient (e.g. "Avatar: Frontiers of Pandora")
         val ents = listOf(entitlement(name = "Avatar: Frontiers of Pandora", packageType = "PSGT", featureType = 1))
+        assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
+    }
+
+    @Test
+    fun gameTrialBySkuTypeIsFilteredOut() {
+        // PSN Game Trials added via PS Store use packageType=PSGD (indistinguishable from
+        // a PS Plus subscription game) but carry sku_type="GAME_TRIAL" in the entitlement JSON
+        val ents = listOf(entitlement(name = "Avatar: Frontiers of Pandora", featureType = 1, skuType = "GAME_TRIAL"))
         assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
     }
 

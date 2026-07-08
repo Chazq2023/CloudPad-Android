@@ -19,7 +19,8 @@ object PsCloudOwnership
 		val packageType: String,
 		val name: String,
 		val conceptId: String,
-		val featureType: Int   // PSN feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
+		val featureType: Int,   // PSN feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
+		val skuType: String = ""  // PSN sku_type: "GAME_TRIAL" for limited-play game trials
 	)
 
 	private data class CatalogIndex(
@@ -34,14 +35,15 @@ object PsCloudOwnership
 			// featureType 1 (PS Plus subscription access) is intentionally kept: the catalog
 			// cross-reference naturally filters out anything not in the streaming catalog,
 			// and subscription entitlements carry the Gaikai streaming key in their id field.
-			// Trials and demos are excluded by name or packageType (PSGT = PS Plus Game Trial).
+			// Trials and demos are excluded by name, packageType (PSGT), or sku_type (GAME_TRIAL).
 			val keep = ent.activeFlag &&
 				ent.featureType != 0 &&
 				!ent.packageType.endsWith("GT", ignoreCase = true) &&
+				!ent.skuType.contains("trial", ignoreCase = true) &&
 				!ent.name.contains(Regex("\\bdemo\\b", RegexOption.IGNORE_CASE)) &&
 				!ent.name.contains(Regex("\\btrial\\b", RegexOption.IGNORE_CASE))
-			if (keep) Log.d(TAG, "filter: kept '${ent.name}' productId=${ent.productId} packageType=${ent.packageType} featureType=${ent.featureType}")
-			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} active=${ent.activeFlag}")
+			if (keep) Log.d(TAG, "filter: kept '${ent.name}' productId=${ent.productId} skuType=${ent.skuType} packageType=${ent.packageType} featureType=${ent.featureType}")
+			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} skuType=${ent.skuType} active=${ent.activeFlag}")
 			keep
 		}
 	}
@@ -62,6 +64,8 @@ object PsCloudOwnership
 		val conceptId = conceptIdString(gameMeta.opt("conceptId"))
 			.ifEmpty { conceptIdString(gameMeta.opt("concept_id")) }
 			.ifEmpty { conceptIdString(obj.opt("conceptId")) }
+		val skuType = obj.optString("sku_type", "")
+			.ifEmpty { gameMeta.optString("sku_type", "") }
 		return Entitlement(
 			id = id,
 			productId = obj.optString("product_id", ""),
@@ -69,7 +73,8 @@ object PsCloudOwnership
 			packageType = gameMeta.optString("package_type", ""),
 			name = name,
 			conceptId = conceptId,
-			featureType = obj.optInt("feature_type", 0)
+			featureType = obj.optInt("feature_type", 0),
+			skuType = skuType
 		)
 	}
 
