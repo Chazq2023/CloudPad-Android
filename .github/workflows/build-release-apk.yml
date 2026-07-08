@@ -104,9 +104,6 @@ jobs:
             - All hardcoded catalog entries match via PPSA stable key so regional variants (EP/UP/JP prefix) resolve globally; streamingIdentifier sends the user's own regional productId to Gaikai when the only difference is the publisher prefix (EP vs UP vs JP)
             - PS5 Library now always performs a live refresh (no cache) when the app opens, when switching to the Library tab from PS4 Catalog, or when tapping the Library tab while already on it — ensures de-listed owned games appear immediately without requiring a manual refresh
 
-            ### Known Issues
-            - 1080p seems to cause microstutter, this is being looked into. If you are experiencing this issue, use 720p for now.
-
             ### APK
             Attached release asset:
             `cloudpad-android.apk`
