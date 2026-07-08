@@ -640,7 +640,7 @@ class CloudPlayFragment : Fragment() {
         updateFilterButtonText()
         updateFavoritesIcon()
 
-        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true)
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
     }
 
     private fun updateOwnedToggleButton() {
