@@ -40,7 +40,8 @@ object PsCloudOwnership
 				!ent.packageType.endsWith("GT", ignoreCase = true) &&
 				!ent.name.contains("demo", ignoreCase = true) &&
 				!ent.name.contains("trial", ignoreCase = true)
-			if (!keep) Log.d(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} active=${ent.activeFlag}")
+			if (keep) Log.d(TAG, "filter: kept '${ent.name}' packageType=${ent.packageType} featureType=${ent.featureType}")
+			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} active=${ent.activeFlag}")
 			keep
 		}
 	}
@@ -128,6 +129,20 @@ object PsCloudOwnership
 					catalogMap[ent.productId]
 				ent.id.isNotEmpty() && catalogMap.containsKey(ent.id) ->
 					catalogMap[ent.id]
+				// Stable key (PPSA/CUSA number) before conceptId: bridges format gaps between the
+				// bare "PPSA12345_00" entitlement format and the full "EP...-PPSA12345_00-..." catalog
+				// format, and ensures distinct games that share a conceptId (e.g. TimeSplitters 1/2/FP)
+				// each match their own catalog entry rather than all collapsing to the first one.
+				stable != null && !skipStableDemo && browseStableKey.containsKey(stable) ->
+					browseStableKey[stable]
+				entStable != null && !skipStableDemo && browseStableKey.containsKey(entStable) ->
+					browseStableKey[entStable]
+				stable != null && !skipStableDemo && supplementStableKey.containsKey(stable) ->
+					supplementStableKey[stable]
+				entStable != null && !skipStableDemo && supplementStableKey.containsKey(entStable) ->
+					supplementStableKey[entStable]
+				// conceptId as fallback: handles entitlements with empty/bare productIds that
+				// can't match via stable key (e.g. GoT PS4 purchase → GoT PS5 catalog entry)
 				ent.conceptId.isNotEmpty() && browseByConcept.containsKey(ent.conceptId) ->
 					browseByConcept[ent.conceptId]
 				ent.conceptId.isNotEmpty() && supplementByConcept.containsKey(ent.conceptId) ->
@@ -135,14 +150,6 @@ object PsCloudOwnership
 				ent.productId.isNotEmpty() && ent.id == ent.productId
 					&& supplementMap.containsKey(ent.productId) ->
 					supplementMap[ent.productId]
-				stable != null && !skipStableDemo && browseStableKey.containsKey(stable) ->
-					browseStableKey[stable]
-				stable != null && !skipStableDemo && supplementStableKey.containsKey(stable) ->
-					supplementStableKey[stable]
-				entStable != null && !skipStableDemo && browseStableKey.containsKey(entStable) ->
-					browseStableKey[entStable]
-				entStable != null && !skipStableDemo && supplementStableKey.containsKey(entStable) ->
-					supplementStableKey[entStable]
 				else -> null
 			}
 
@@ -224,13 +231,14 @@ object PsCloudOwnership
 		return byKey.values.toList()
 	}
 
-	// Edition identity: conceptId only (no platform suffix) so a PS Plus subscription
-	// entitlement (PPSA ent.productId, featureType=1) and a PS4 purchase (empty ent.productId)
-	// for the same game compete in the same slot. The higher-ranked entitlement wins, which
-	// ensures the streaming entitlement's Gaikai key (ent.id) is used for the pscloud retry.
+	// Dedup key: conceptId + catalog productId so that (a) two entitlements that both resolve
+	// to the same catalog entry compete in one slot (GoT PS4 purchase and GoT PS5 subscription
+	// both land on the GoT PS5 catalog entry → same key → PPSA subscription wins), while
+	// (b) distinct games sharing a conceptId (TimeSplitters 1/2/FP) each get their own slot
+	// because they resolve to different catalog entries with different productIds.
 	private fun ownedDedupeKey(meta: CloudGame, ent: Entitlement): String
 	{
-		if (meta.conceptId.isNotEmpty()) return "c:${meta.conceptId}"
+		if (meta.conceptId.isNotEmpty()) return "c:${meta.conceptId}:${meta.productId}"
 		if (meta.productId.isNotEmpty()) return "p:${meta.productId}"
 		if (ent.id.isNotEmpty()) return "e:${ent.id}"
 		return "u:${meta.productId}:${ent.id}"

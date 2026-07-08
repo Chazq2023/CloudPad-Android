@@ -191,6 +191,27 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun crossReferenceKeepsSeparateGamesWithSharedConceptId() {
+        // TimeSplitters 1, 2, and FP share a conceptId in Sony's data.
+        // Each must resolve to its own catalog entry via stable key (PPSA number) rather
+        // than all collapsing to the first conceptId match.
+        val ts1 = CloudGame(productId = "EP0082-PPSA11111_00-TIMESPLIT1", name = "TimeSplitters", imageUrl = "", serviceType = "pscloud", conceptId = "9000001")
+        val ts2 = CloudGame(productId = "EP0082-PPSA22222_00-TIMESPLIT2", name = "TimeSplitters 2", imageUrl = "", serviceType = "pscloud", conceptId = "9000001")
+        val tsFP = CloudGame(productId = "EP0082-PPSA33333_00-TIMESPLITFP", name = "TimeSplitters: Future Perfect", imageUrl = "", serviceType = "pscloud", conceptId = "9000001")
+        val ent1 = entitlement(id = "E1", productId = "PPSA11111_00", name = "TimeSplitters", conceptId = "9000001", featureType = 1)
+        val ent2 = entitlement(id = "E2", productId = "PPSA22222_00", name = "TimeSplitters 2", conceptId = "9000001", featureType = 1)
+        val entFP = entitlement(id = "E3", productId = "PPSA33333_00", name = "TimeSplitters: Future Perfect", conceptId = "9000001", featureType = 1)
+        val result = PsCloudOwnership.crossReferenceOwnedGames(
+            filteredEntitlements = listOf(ent1, ent2, entFP),
+            publicCatalog = listOf(ts1, ts2, tsFP)
+        )
+        assertEquals(3, result.size)
+        assertTrue(result.any { it.productId == "EP0082-PPSA11111_00-TIMESPLIT1" })
+        assertTrue(result.any { it.productId == "EP0082-PPSA22222_00-TIMESPLIT2" })
+        assertTrue(result.any { it.productId == "EP0082-PPSA33333_00-TIMESPLITFP" })
+    }
+
+    @Test
     fun platformTokenDetectsPs5() {
         assertEquals("ps5", PsCloudOwnership.platformToken("PPSA01234_00"))
     }
