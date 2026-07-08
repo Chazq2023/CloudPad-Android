@@ -308,7 +308,7 @@ class PsCloudCatalogService
 		val ownedGames = getOwnedPs5CloudGames(
 			npssoToken,
 			catalog.browseGames,
-			catalog.plusLibrarySupplement,
+			catalog.plusLibrarySupplement.filter { it.productId.contains("PPSA") },
 			catalog.productIdAliases
 		)
 
