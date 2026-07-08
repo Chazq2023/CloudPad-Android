@@ -329,10 +329,15 @@ class PsCloudCatalogService
 		Log.i(TAG, "  Locale: $locale")
 
 		val catalog = fetchPs5CloudCatalog(locale)
+		// Supplement (streamingSupported=False games from subscription lists) is intentionally
+		// NOT passed here. These games have no streaming eligibility signal we can verify from
+		// the imagic catalog — even owned (featureType=3) copies of supplement games are not
+		// streamable via PS Cloud. Only games in the browse catalog (streamingSupported=True in
+		// all-ps5-list) are reliable streaming candidates.
 		val ownedGames = getOwnedPs5CloudGames(
 			npssoToken,
 			catalog.browseGames,
-			catalog.plusLibrarySupplement.filter { it.productId.contains("PPSA") },
+			emptyList(),
 			catalog.productIdAliases
 		)
 
