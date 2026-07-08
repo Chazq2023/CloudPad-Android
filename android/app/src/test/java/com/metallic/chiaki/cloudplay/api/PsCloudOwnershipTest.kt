@@ -227,6 +227,62 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun supplementMatchRequiresFeatureType3() {
+        // Games in the supplement (streamingSupported=false in all-ps5-list) must only
+        // appear for outright owners (featureType=3). Subscription access (featureType=1,
+        // e.g. EA Play, Ubisoft+ Classics) must not match supplement entries.
+        val supplementGame = CloudGame(
+            productId = "UP0006-PPSA26127_00-MADDENNFL26GAME0",
+            name = "Madden NFL 26",
+            imageUrl = "",
+            serviceType = "pscloud",
+            conceptId = "10009999",
+            plusCatalog = true
+        )
+        val ownedEnt = entitlement(
+            id = "E1",
+            productId = "PPSA26127_00",
+            name = "Madden NFL 26",
+            conceptId = "10009999",
+            featureType = 3
+        )
+        val result = PsCloudOwnership.crossReferenceOwnedGames(
+            filteredEntitlements = listOf(ownedEnt),
+            publicCatalog = emptyList(),
+            plusLibrarySupplement = listOf(supplementGame)
+        )
+        assertEquals(1, result.size)
+        assertEquals("UP0006-PPSA26127_00-MADDENNFL26GAME0", result[0].productId)
+    }
+
+    @Test
+    fun supplementDoesNotMatchFeatureType1() {
+        // EA Play / Ubisoft+ Classics subscription access (featureType=1) must NOT match
+        // supplement entries. These games are not streamable via PS Cloud for subscribers.
+        val supplementGame = CloudGame(
+            productId = "UP0006-PPSA26127_00-MADDENNFL26GAME0",
+            name = "Madden NFL 26",
+            imageUrl = "",
+            serviceType = "pscloud",
+            conceptId = "10009999",
+            plusCatalog = true
+        )
+        val subscriptionEnt = entitlement(
+            id = "E1",
+            productId = "PPSA26127_00",
+            name = "Madden NFL 26",
+            conceptId = "10009999",
+            featureType = 1
+        )
+        val result = PsCloudOwnership.crossReferenceOwnedGames(
+            filteredEntitlements = listOf(subscriptionEnt),
+            publicCatalog = emptyList(),
+            plusLibrarySupplement = listOf(supplementGame)
+        )
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
     fun platformTokenDetectsPs5() {
         assertEquals("ps5", PsCloudOwnership.platformToken("PPSA01234_00"))
     }

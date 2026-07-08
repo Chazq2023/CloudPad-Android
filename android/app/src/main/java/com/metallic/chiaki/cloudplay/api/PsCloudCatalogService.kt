@@ -52,6 +52,12 @@ class PsCloudCatalogService
 		val byEditionKey = LinkedHashMap<String, JSONObject>()
 		val plusSupplementByProductId = LinkedHashMap<String, JSONObject>()
 		val productIdAliases = LinkedHashMap<String, String>()
+		// PPSA/CUSA numbers present in all-ps5-list (any streamingSupported value).
+		// Supplement entries are gated on this: a game only belongs in the supplement if Sony
+		// considers it part of the PS5 cloud universe. Games found only in subscription lists
+		// (e.g. PS Plus Monthly claims not in all-ps5-list) are excluded — they are not
+		// streamable via PS Cloud even when the user has featureType=3.
+		val allPs5ListStableKeys = mutableSetOf<String>()
 		var totalGames = 0
 		val failedLists = mutableListOf<String>()
 
@@ -74,7 +80,8 @@ class PsCloudCatalogService
 				return@forEach
 			}
 			totalGames += mergeImagicCategoryIntoMap(
-				categoryList, jsonArray, byEditionKey, plusSupplementByProductId, productIdAliases
+				categoryList, jsonArray, byEditionKey, plusSupplementByProductId,
+				productIdAliases, allPs5ListStableKeys
 			)
 		}
 
@@ -124,9 +131,11 @@ class PsCloudCatalogService
 		byEditionKey: LinkedHashMap<String, JSONObject>,
 		plusSupplementByProductId: LinkedHashMap<String, JSONObject>,
 		productIdAliases: LinkedHashMap<String, String>,
+		allPs5ListStableKeys: MutableSet<String>,
 	): Int
 	{
 		val plusCatalog = isPlusCatalogList(categoryList)
+		val isPs5List = categoryList == "all-ps5-list"
 		var rows = 0
 		for (i in 0 until jsonArray.length())
 		{
@@ -139,15 +148,30 @@ class PsCloudCatalogService
 				if (!isCloudDeviceGame(gameObj))
 					continue
 
-				// Subscription titles with streamingSupported=false → library supplement only.
-				// They can still be streamed by subscribers but don't appear in the browse catalog.
+				// Track every PPSA/CUSA stable key present in all-ps5-list (regardless of
+				// streamingSupported) so supplement entries can be gated on presence in this list.
+				if (isPs5List)
+				{
+					val pid = gameObj.optString("productId", "")
+					val sk = Regex("(?:PPSA|CUSA)\\d+").find(pid)?.value
+					if (sk != null) allPs5ListStableKeys.add(sk)
+				}
+
+				// Subscription titles with streamingSupported=false → library supplement only,
+				// but only if the game also appears in all-ps5-list. Games found exclusively in
+				// subscription lists (e.g. CoD MW3 only in plus-monthly-games-list) are not
+				// streamable via PS Cloud and must not supplement the library.
 				if (plusCatalog && !gameObj.optBoolean("streamingSupported", false))
 				{
 					val productId = gameObj.optString("productId", "")
 					if (productId.isNotEmpty())
 					{
-						gameObj.put("plusCatalog", true)
-						plusSupplementByProductId.putIfAbsent(productId, gameObj)
+						val stableKey = Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
+						if (stableKey != null && stableKey in allPs5ListStableKeys)
+						{
+							gameObj.put("plusCatalog", true)
+							plusSupplementByProductId.putIfAbsent(productId, gameObj)
+						}
 					}
 					continue
 				}

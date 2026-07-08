@@ -141,17 +141,21 @@ object PsCloudOwnership
 					browseStableKey[stable]
 				entStable != null && !skipStableDemo && browseStableKey.containsKey(entStable) ->
 					browseStableKey[entStable]
-				stable != null && !skipStableDemo && supplementStableKey.containsKey(stable) ->
+				// Supplement branches are restricted to featureType=3 (full game owned).
+				// featureType=1 subscription access (EA Play, Ubisoft+ Classics, etc.) must not
+				// match supplement entries — those games are not streamable via PS Cloud for
+				// subscribers, only for outright owners.
+				stable != null && !skipStableDemo && ent.featureType == 3 && supplementStableKey.containsKey(stable) ->
 					supplementStableKey[stable]
-				entStable != null && !skipStableDemo && supplementStableKey.containsKey(entStable) ->
+				entStable != null && !skipStableDemo && ent.featureType == 3 && supplementStableKey.containsKey(entStable) ->
 					supplementStableKey[entStable]
 				// conceptId as fallback: handles entitlements with empty/bare productIds that
 				// can't match via stable key (e.g. GoT PS4 purchase → GoT PS5 catalog entry)
 				ent.conceptId.isNotEmpty() && browseByConcept.containsKey(ent.conceptId) ->
 					browseByConcept[ent.conceptId]
-				ent.conceptId.isNotEmpty() && supplementByConcept.containsKey(ent.conceptId) ->
+				ent.conceptId.isNotEmpty() && ent.featureType == 3 && supplementByConcept.containsKey(ent.conceptId) ->
 					supplementByConcept[ent.conceptId]
-				ent.productId.isNotEmpty() && ent.id == ent.productId
+				ent.productId.isNotEmpty() && ent.id == ent.productId && ent.featureType == 3
 					&& supplementMap.containsKey(ent.productId) ->
 					supplementMap[ent.productId]
 				else -> null
@@ -182,7 +186,7 @@ object PsCloudOwnership
 				emit(siblingMeta, ent)
 			}
 			if (byKey.size == preEmitSize)
-				Log.i(TAG, "crossRef miss: '${ent.name}' productId=${ent.productId} conceptId=${ent.conceptId} id=${ent.id}")
+				Log.i(TAG, "crossRef miss: '${ent.name}' productId=${ent.productId} conceptId=${ent.conceptId} id=${ent.id} featureType=${ent.featureType}")
 		}
 
 		// Disc-upgrade rescue: feature_type 5 = PS4-disc -> PS5 disc upgrade that Gaikai won't stream.
