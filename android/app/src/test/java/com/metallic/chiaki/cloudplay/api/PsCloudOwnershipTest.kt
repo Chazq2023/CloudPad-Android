@@ -283,6 +283,29 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun streamingIdentifierUsesRegionalStoreProductIdForNonEuUser() {
+        // US user owns UP-prefix variant of a game whose catalog entry is hardcoded with EP prefix.
+        // The two productIds are identical except the first two chars (regional publisher code).
+        // We must send the user's own UP productId to Gaikai so their entitlement validates.
+        val game = pscloudGame(
+            productId = "EP9000-PPSA02630_00-DALLSTARSPLUS001",
+            storeProductId = "UP9000-PPSA02630_00-DALLSTARSPLUS001"
+        )
+        assertEquals("UP9000-PPSA02630_00-DALLSTARSPLUS001", PsCloudOwnership.streamingIdentifier(game))
+    }
+
+    @Test
+    fun streamingIdentifierKeepsCatalogProductIdWhenSuffixAlsoDiffers() {
+        // storeProductId shares the same PPSA but has a different suffix — not a pure regional
+        // prefix swap, so the catalog productId wins (avoids changing behaviour for normal games).
+        val game = pscloudGame(
+            productId = "EP0082-PPSA08668_00-CATALOGID00000",
+            storeProductId = "EP0082-PPSA08668_00-0978938405039882"
+        )
+        assertEquals("EP0082-PPSA08668_00-CATALOGID00000", PsCloudOwnership.streamingIdentifier(game))
+    }
+
+    @Test
     fun remasteredUpgradeWithCusaStoreProductIdRoutesPscloud() {
         // Nioh 2 Remastered: the PS4 purchase (CUSA15526) entitles a PS5 Remastered upgrade
         // whose entitlement id is PPSA02488. storeProductId is CUSA so streamPlatform must not

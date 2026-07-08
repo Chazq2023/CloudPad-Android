@@ -382,10 +382,14 @@ object PsCloudOwnership
 	}
 
 	// For pscloud: Gaikai identifies games by their catalog productId (from the imagic list).
-	// Exception: disc-upgrade rescue (featureType=5) replaces storeProductId with the owned
-	// full-game edition. The catalog holds the disc-upgrade SKU which Gaikai won't stream;
-	// use storeProductId in that case. For all other feature types (including games with
-	// two legitimately different PS5 SKUs like Ghost of Tsushima), the catalog productId wins.
+	// Exception 1: disc-upgrade rescue (featureType=5) uses storeProductId — the catalog holds
+	// the disc-upgrade SKU which Gaikai won't stream; the owned full-game edition is correct.
+	// Exception 2: regional prefix variant — when storeProductId is identical to productId except
+	// for the two-char regional publisher prefix (EP/UP/JP), use storeProductId. Hardcoded catalog
+	// entries use EU (EP) productIds; a US user's storeProductId carries UP prefix for the same
+	// suffix and that's what Gaikai validates against their PSN entitlement. When PPSA numbers
+	// differ (GoT subscription PPSA05031 vs retail PPSA03208), drop(2) won't match so the catalog
+	// productId still wins — that is a deliberate SKU preference, not a regional variant.
 	fun streamingIdentifier(game: CloudGame): String
 	{
 		if (game.serviceType.equals("pscloud", ignoreCase = true))
@@ -394,7 +398,14 @@ object PsCloudOwnership
 				game.storeProductId.isNotEmpty() &&
 				game.storeProductId != game.productId)
 				return game.storeProductId
-			if (game.productId.isNotEmpty()) return game.productId
+			if (game.productId.isNotEmpty())
+			{
+				if (game.storeProductId.isNotEmpty() &&
+					game.storeProductId != game.productId &&
+					game.storeProductId.drop(2) == game.productId.drop(2))
+					return game.storeProductId
+				return game.productId
+			}
 			if (game.storeProductId.isNotEmpty()) return game.storeProductId
 			if (game.entitlementId.isNotEmpty()) return game.entitlementId
 		}
