@@ -34,12 +34,13 @@ object PsCloudOwnership
 			// featureType 1 (PS Plus subscription access) is intentionally kept: the catalog
 			// cross-reference naturally filters out anything not in the streaming catalog,
 			// and subscription entitlements carry the Gaikai streaming key in their id field.
-			// Trials and demos are excluded by name instead of featureType.
+			// Trials and demos are excluded by name or packageType (PSGT = PS Plus Game Trial).
 			val keep = ent.activeFlag &&
 				ent.featureType != 0 &&
+				!ent.packageType.endsWith("GT", ignoreCase = true) &&
 				!ent.name.contains("demo", ignoreCase = true) &&
 				!ent.name.contains("trial", ignoreCase = true)
-			if (!keep) Log.d(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} active=${ent.activeFlag}")
+			if (!keep) Log.d(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} active=${ent.activeFlag}")
 			keep
 		}
 	}
@@ -152,6 +153,7 @@ object PsCloudOwnership
 			}
 
 			val seenPids = mutableSetOf<String>()
+			val preEmitSize = byKey.size
 			for (siblingId in componentIdsByProductId[ent.productId] ?: emptyList())
 			{
 				val siblingMeta = when
@@ -168,6 +170,8 @@ object PsCloudOwnership
 				seenPids.add(siblingMeta.productId)
 				emit(siblingMeta, ent)
 			}
+			if (byKey.size == preEmitSize)
+				Log.d(TAG, "crossRef miss: '${ent.name}' productId=${ent.productId} conceptId=${ent.conceptId} id=${ent.id}")
 		}
 
 		// Disc-upgrade rescue: feature_type 5 = PS4-disc -> PS5 disc upgrade that Gaikai won't stream.
@@ -280,6 +284,11 @@ object PsCloudOwnership
 	private fun productIdStableKey(productId: String): String?
 	{
 		if (productId.isEmpty()) return null
+		// PPSA/CUSA number is stable across PSN product ID formats:
+		// entitlement API returns "PPSA01147_00", imagic catalog has "EP9000-PPSA01147_00-SUFFIX".
+		// Both extract to "PPSA01147", enabling cross-reference matches for games like Demon's Souls.
+		val titleId = Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
+		if (titleId != null) return titleId
 		val tokens = mutableListOf<String>()
 		for (dashPart in productId.split('-'))
 			for (token in dashPart.split('_'))

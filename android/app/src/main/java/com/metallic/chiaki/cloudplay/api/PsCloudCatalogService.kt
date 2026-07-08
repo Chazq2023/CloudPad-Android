@@ -303,9 +303,9 @@ class PsCloudCatalogService
 			catalog.browseGames,
 			emptyList(),  // supplement excluded: supplement games may not be in Gaikai's backend
 			catalog.productIdAliases
-		).filter { it.platform == "ps5" }
+		)
 
-		Log.i(TAG, "  Owned PS5 streaming games: ${ownedGames.size}")
+		Log.i(TAG, "  Owned streamable games: ${ownedGames.size}")
 		return ownedGames
 	}
 

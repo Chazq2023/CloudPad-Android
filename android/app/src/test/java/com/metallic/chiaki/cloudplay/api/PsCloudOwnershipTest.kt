@@ -38,6 +38,14 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun gameTrialByPackageTypeGtIsFilteredOut() {
+        // PS Plus Game Trials carry packageType="PSGT" without "trial" in the display name,
+        // so the name filter alone is insufficient (e.g. "Avatar: Frontiers of Pandora")
+        val ents = listOf(entitlement(name = "Avatar: Frontiers of Pandora", packageType = "PSGT", featureType = 1))
+        assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
+    }
+
+    @Test
     fun demoEntitlementsAreFilteredOut() {
         val ents = listOf(entitlement(name = "My Game Demo", featureType = 3))
         assertTrue(PsCloudOwnership.filterOwnedPs5Games(ents).isEmpty())
@@ -154,6 +162,32 @@ class PsCloudOwnershipTest {
             serviceType = "psnow"
         )
         assertEquals("CUSA12345_00-MYGAME", PsCloudOwnership.streamingIdentifier(game))
+    }
+
+    @Test
+    fun crossReferenceMatchesBareSkuToFullEpFormatCatalogEntry() {
+        // PSN entitlement API returns bare "PPSA01350_00" but imagic catalog has
+        // "EP0036-PPSA01350_00-DEMONSSOULSPS5" — the stable key must bridge the gap.
+        val catalogGame = CloudGame(
+            productId = "EP0036-PPSA01350_00-DEMONSSOULSPS5",
+            name = "Demon's Souls",
+            imageUrl = "",
+            serviceType = "pscloud",
+            conceptId = "10001234"
+        )
+        val ent = entitlement(
+            id = "EP0036-PPSA01350_00-0123456789012345",
+            productId = "PPSA01350_00",
+            name = "Demon's Souls",
+            conceptId = "10001234",
+            featureType = 1
+        )
+        val result = PsCloudOwnership.crossReferenceOwnedGames(
+            filteredEntitlements = listOf(ent),
+            publicCatalog = listOf(catalogGame)
+        )
+        assertEquals(1, result.size)
+        assertEquals("EP0036-PPSA01350_00-DEMONSSOULSPS5", result[0].productId)
     }
 
     @Test
