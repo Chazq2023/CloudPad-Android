@@ -241,23 +241,7 @@ class CloudStreamingBackend(
 				isCancelled = isCancelled
 			)
 
-			var allocationResult = gaikaiStreaming.startAllocationFlow(finalEntitlementId)
-
-			// PSCLOUD: noGameForEntitlementId can be transient (Gaikai cold-start for de-listed
-			// or infrequently-accessed games). Retry up to twice before surfacing the error —
-			// equivalent to the user hitting refresh, which resolves it.
-			if (!allocationResult.success &&
-				serviceType == "pscloud" &&
-				isEntitlementRejectedError(allocationResult.message))
-			{
-				for (attempt in 1..2)
-				{
-					Log.w(TAG, "PSCLOUD: noGameForEntitlementId (attempt $attempt/2); retrying in 2s...")
-					kotlinx.coroutines.delay(2000L)
-					allocationResult = gaikaiStreaming.startAllocationFlow(finalEntitlementId)
-					if (allocationResult.success) break
-				}
-			}
+			val allocationResult = gaikaiStreaming.startAllocationFlow(finalEntitlementId)
 
 			if (!allocationResult.success)
 			{
