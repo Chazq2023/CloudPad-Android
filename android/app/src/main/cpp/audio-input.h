@@ -14,9 +14,12 @@ extern "C" {
 
 void *android_chiaki_audio_input_new(ChiakiLog *log);
 void android_chiaki_audio_input_free(void *audio_input);
-// Starts mic capture and encoding (idempotent). Returns false on failure, e.g. missing RECORD_AUDIO permission.
+// Opens and starts the mic capture stream + encode thread (idempotent). Returns false on
+// failure, e.g. missing RECORD_AUDIO permission.
 bool android_chiaki_audio_input_start(void *audio_input, ChiakiOpusEncoder *encoder);
-void android_chiaki_audio_input_set_muted(void *audio_input, bool muted);
+// Stops and closes the capture stream (idempotent), releasing the mic hardware/OS recording
+// indicator. android_chiaki_audio_input_start() can be called again later to resume.
+void android_chiaki_audio_input_stop(void *audio_input);
 
 #ifdef __cplusplus
 }

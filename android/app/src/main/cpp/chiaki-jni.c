@@ -874,7 +874,12 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetMicrophoneMuted)(JNIEnv *env, jobject o
 	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
 	if(!session)
 		return;
-	android_chiaki_audio_input_set_muted(session->audio_input, (bool)muted);
+	// Muting fully stops the capture stream (releasing the mic/OS recording indicator)
+	// rather than just discarding frames; unmuting restarts it if it isn't already running.
+	if(muted)
+		android_chiaki_audio_input_stop(session->audio_input);
+	else
+		android_chiaki_audio_input_start(session->audio_input, &session->mic_opus_encoder);
 	chiaki_session_toggle_microphone(&session->session, (bool)muted);
 }
 

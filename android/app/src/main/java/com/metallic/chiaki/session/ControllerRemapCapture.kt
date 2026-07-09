@@ -28,6 +28,23 @@ class ControllerRemapCapture(
 
 	val isListening: Boolean get() = listeningForAction != null
 
+	companion object {
+		/**
+		 * Actions that must always be captured as a plain analog axis. Many controllers emit
+		 * a synthetic digital KeyEvent (e.g. KEYCODE_BUTTON_L2/R2, or a DPAD-emulation keycode
+		 * for stick tilts) alongside the analog MotionEvent for the very same physical trigger
+		 * or stick push. Without this, that stray KeyEvent gets recorded as a "modifier" and the
+		 * following MotionEvent gets combined into a bogus Combo instead of a clean AxisDirection.
+		 */
+		private val analogOnlyActions = setOf(
+			ControllerAction.L2, ControllerAction.R2,
+			ControllerAction.LEFT_STICK_UP, ControllerAction.LEFT_STICK_DOWN,
+			ControllerAction.LEFT_STICK_LEFT, ControllerAction.LEFT_STICK_RIGHT,
+			ControllerAction.RIGHT_STICK_UP, ControllerAction.RIGHT_STICK_DOWN,
+			ControllerAction.RIGHT_STICK_LEFT, ControllerAction.RIGHT_STICK_RIGHT
+		)
+	}
+
 	private inner class InputCaptureDialog : AlertDialog(context) {
 		override fun dispatchKeyEvent(event: KeyEvent): Boolean {
 			if (listeningForAction != null && handleCaptureKeyEvent(event)) return true
@@ -74,6 +91,10 @@ class ControllerRemapCapture(
 			}
 			return true
 		}
+
+		// Analog-only actions (triggers, stick tilts) must never treat a KeyEvent as a
+		// modifier/trigger — only the corresponding MotionEvent axis should be captured.
+		if (listeningForAction in analogOnlyActions) return true
 
 		when (event.action) {
 			KeyEvent.ACTION_DOWN -> {

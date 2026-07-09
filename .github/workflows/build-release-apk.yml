@@ -106,6 +106,11 @@ jobs:
             - Fixed a crash launching any game while the default Neon Pink theme was selected, caused by the new Quick Settings panel referencing a theme colour attribute the stream screen's theme didn't declare for that colour
             - Window Size icons in the Quick Settings panel are now white by default, with the selected option shown in the theme colour so the current selection stands out clearly
             - Remap Controller section headers (e.g. LEFT STICK, RIGHT STICK) and the current-mapping text now use the theme colour; action names (e.g. "Left Stick Up") stay a fixed white for readability
+            - Fixed the console/game never recognising the microphone as enabled: the STREAMINFO capability the app announced to the console had a malformed audio format (this was a bug in the shared cross-platform protocol library, not Android-specific)
+            - Fixed the microphone not actually turning off when disabled — the app now genuinely stops the mic capture stream instead of just muting the outgoing audio, which should also release the OS mic/recording indicator
+            - Added voice-communication audio routing (MODE_IN_COMMUNICATION) while the mic is active, to better prefer a connected headset's microphone over the phone's built-in one
+            - Fixed controller remapping capturing a spurious combo (e.g. R2 + Axis RTRIGGER) instead of a clean analog input when mapping L2/R2 or an analog stick direction — some controllers send both a digital button event and an analog axis event for the same physical trigger/stick push
+            - Fixed the Quick Settings panel occasionally failing to reopen after being closed and reopened in quick succession
 
             ### APK
             Attached release asset:

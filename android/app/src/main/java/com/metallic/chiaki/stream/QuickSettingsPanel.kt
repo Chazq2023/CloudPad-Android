@@ -131,6 +131,10 @@ class QuickSettingsPanel(
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 
 		val root = panel.root
+		// Cancel any in-flight close animation first — otherwise a rapid open/close/open in
+		// quick succession can leave a stale onAnimationEnd callback pending, which would hide
+		// the panel again right after this reopens it (it looked like the panel "got stuck").
+		root.animate().cancel()
 		root.isVisible = true
 		root.translationX = if(root.width > 0) root.width.toFloat() else 320f
 		root.animate().translationX(0f).setDuration(220L).setListener(null).start()
@@ -146,12 +150,16 @@ class QuickSettingsPanel(
 		}
 		isOpen = false
 		val root = panel.root
+		root.animate().cancel()
 		root.animate().translationX(root.width.toFloat()).setDuration(220L)
 			.setListener(object: AnimatorListenerAdapter()
 			{
 				override fun onAnimationEnd(animation: Animator)
 				{
-					root.isVisible = false
+					// Guard against a stale callback firing after a subsequent open() call
+					// already flipped the panel back to open.
+					if(!isOpen)
+						root.isVisible = false
 				}
 			}).start()
 	}

@@ -47,9 +47,10 @@ struct AudioInput
 	AudioBuffer buf;
 	ChiakiOpusEncoder *opus_encoder = nullptr;
 
-	std::atomic<bool> muted{true};
+	// Single source of truth for "capture stream + encode thread are active". Toggling this
+	// off actually stops and closes the Oboe stream (rather than just dropping frames), so
+	// disabling the mic in the app also releases the OS mic/recording indicator.
 	std::atomic<bool> running{false};
-	std::atomic<bool> started{false};
 	std::thread encode_thread;
 	std::mutex cv_mutex;
 	std::condition_variable cv;
@@ -72,10 +73,6 @@ static void android_chiaki_audio_input_encode_thread(AudioInput *ai)
 			continue;
 		}
 
-		// Don't bother encoding/sending while muted, matching the desktop client's mic mute behavior.
-		if(ai->muted.load())
-			continue;
-
 		for(size_t i = 0; i < MIC_FRAME_SIZE; i++)
 		{
 			stereo_frame[2 * i] = mono_frame[i];
@@ -93,18 +90,25 @@ extern "C" void *android_chiaki_audio_input_new(ChiakiLog *log)
 	return r;
 }
 
-extern "C" void android_chiaki_audio_input_free(void *audio_input)
+static void android_chiaki_audio_input_stop_internal(AudioInput *ai)
 {
-	if(!audio_input)
+	if(!ai->running.load())
 		return;
-	auto ai = reinterpret_cast<AudioInput *>(audio_input);
 
 	ai->running = false;
 	ai->cv.notify_all();
 	if(ai->encode_thread.joinable())
 		ai->encode_thread.join();
 
-	ai->stream = nullptr;
+	ai->stream = nullptr; // ManagedStream: resetting stops+closes the underlying Oboe stream
+}
+
+extern "C" void android_chiaki_audio_input_free(void *audio_input)
+{
+	if(!audio_input)
+		return;
+	auto ai = reinterpret_cast<AudioInput *>(audio_input);
+	android_chiaki_audio_input_stop_internal(ai);
 	delete ai;
 }
 
@@ -113,11 +117,10 @@ extern "C" bool android_chiaki_audio_input_start(void *audio_input, ChiakiOpusEn
 	if(!audio_input)
 		return false;
 	auto ai = reinterpret_cast<AudioInput *>(audio_input);
-	if(ai->started.load())
+	if(ai->running.load())
 		return true;
 
 	ai->opus_encoder = encoder;
-	ai->muted = true;
 
 	oboe::AudioStreamBuilder builder;
 	builder.setDirection(oboe::Direction::Input)
@@ -146,16 +149,17 @@ extern "C" bool android_chiaki_audio_input_start(void *audio_input, ChiakiOpusEn
 
 	ai->running = true;
 	ai->encode_thread = std::thread(android_chiaki_audio_input_encode_thread, ai);
-	ai->started = true;
 	CHIAKI_LOGI(ai->log, "Audio Input started Oboe capture stream");
 	return true;
 }
 
-extern "C" void android_chiaki_audio_input_set_muted(void *audio_input, bool muted)
+extern "C" void android_chiaki_audio_input_stop(void *audio_input)
 {
 	if(!audio_input)
 		return;
-	reinterpret_cast<AudioInput *>(audio_input)->muted = muted;
+	auto ai = reinterpret_cast<AudioInput *>(audio_input);
+	android_chiaki_audio_input_stop_internal(ai);
+	CHIAKI_LOGI(ai->log, "Audio Input stopped Oboe capture stream");
 }
 
 oboe::DataCallbackResult AudioInputCallback::onAudioReady(oboe::AudioStream *stream, void *audio_data, int32_t num_frames)
