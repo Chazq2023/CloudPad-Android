@@ -77,7 +77,6 @@
             android:paddingBottom="16dp">
 
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsStatsRow" />
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMicRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsOscRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsTouchpadRow" />
 

@@ -137,8 +137,6 @@ private class ChiakiNative
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
-		@JvmStatic external fun sessionConnectMicrophone(ptr: Long): Boolean
-		@JvmStatic external fun sessionSetMicrophoneMuted(ptr: Long, muted: Boolean)
 
 		@JvmStatic external fun sessionGetMetrics(ptr: Long): SessionMetrics?
 		@JvmStatic external fun discoveryServiceCreate(result: CreateResult, options: DiscoveryServiceOptions, javaService: DiscoveryService)
@@ -583,13 +581,6 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun setLoginPin(pin: String)
 	{
 		ChiakiNative.sessionSetLoginPin(nativePtr, pin)
-	}
-
-	fun connectMicrophone(): Boolean = ChiakiNative.sessionConnectMicrophone(nativePtr)
-
-	fun setMicrophoneMuted(muted: Boolean)
-	{
-		ChiakiNative.sessionSetMicrophoneMuted(nativePtr, muted)
 	}
 
 	fun getMetrics(): SessionMetrics? {

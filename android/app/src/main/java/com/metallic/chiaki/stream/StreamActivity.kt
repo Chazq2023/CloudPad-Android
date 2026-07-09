@@ -98,7 +98,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		window.decorView.setOnSystemUiVisibilityChangeListener(this)
 
 		// Quick Settings panel — replaces the old bottom overlay bar entirely. Disconnect,
-		// Stats, Microphone, On-Screen Controls, Touchpad Only and Window Size all live here
+		// Stats, On-Screen Controls, Touchpad Only and Window Size all live here
 		// now; pressing back opens it, Save applies the staged changes, pressing back again
 		// discards them. Motion/Touch Haptics/PiP/Remap Controller behave as before.
 		quickSettingsPanel = QuickSettingsPanel(

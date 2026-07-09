@@ -2,9 +2,7 @@
 
 package com.metallic.chiaki.stream
 
-import android.Manifest
 import android.app.Dialog
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.util.Log
@@ -13,7 +11,6 @@ import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Window
 import android.view.WindowManager
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.metallic.chiaki.common.Preferences
@@ -29,8 +26,8 @@ import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
 
 /**
  * In-stream "Quick Settings" slide-in panel. Opened by pressing back (replacing the old
- * bottom overlay bar entirely). Disconnect, Stats, Microphone, On-Screen Controls,
- * Touchpad Only and Window Size are staged here: switching them only updates the panel's
+ * bottom overlay bar entirely). Disconnect, Stats, On-Screen Controls, Touchpad Only and
+ * Window Size are staged here: switching them only updates the panel's
  * own UI state, and is only applied (via [onSaveClicked]) when Save is pressed — pressing
  * back again while the panel is open discards any changes. Motion, Touch Haptics and
  * Picture-in-Picture remain live (applied immediately, as before). Remap Controller edits
@@ -112,7 +109,6 @@ class QuickSettingsPanel(
 		panel.quickSettingsRemapRecyclerView.adapter = remapAdapter
 
 		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_stats_title)
-		panel.quickSettingsMicRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_mic_enabled_title)
 		panel.quickSettingsOscRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_osc_title)
 		panel.quickSettingsTouchpadRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_touchpad_title)
 		panel.quickSettingsMotionRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_motion_enabled_title)
@@ -154,17 +150,13 @@ class QuickSettingsPanel(
 		if(isOpen) return
 		isOpen = true
 
-		// Stats / On-Screen Controls / Touchpad Only / Microphone / Window Size are staged:
-		// (re)seed every time the panel opens from the current live values, so a previously
-		// discarded edit never leaks into the next time the panel is shown.
+		// Stats / On-Screen Controls / Touchpad Only / Window Size are staged: (re)seed every
+		// time the panel opens from the current live values, so a previously discarded edit
+		// never leaks into the next time the panel is shown.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked = viewModel.showPerformanceOverlay.value ?: false
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = viewModel.onScreenControlsEnabled.value ?: false
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = viewModel.touchpadOnlyEnabled.value ?: false
 		panel.quickSettingsDisplayModeToggle.check(buttonIdFor(getDisplayMode()))
-
-		val micPermissionGranted = ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-		panel.quickSettingsMicRow.quickSettingsRowSwitch.isEnabled = micPermissionGranted
-		panel.quickSettingsMicRow.quickSettingsRowSwitch.isChecked = micPermissionGranted && (viewModel.micEnabled.value ?: false)
 
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.isChecked = preferences.motionEnabled
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
@@ -178,7 +170,7 @@ class QuickSettingsPanel(
 			.start()
 	}
 
-	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Mic/Window Size) edits. */
+	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Window Size) edits. */
 	fun discardAndClose()
 	{
 		Log.w("QuickSettingsPanel", "discardAndClose() called, isOpen=$isOpen", Exception("call site"))
@@ -208,8 +200,6 @@ class QuickSettingsPanel(
 		viewModel.setShowPerformanceOverlay(panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked)
 		viewModel.setOnScreenControlsEnabled(panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked)
 		viewModel.setTouchpadOnlyEnabled(panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked)
-		if(panel.quickSettingsMicRow.quickSettingsRowSwitch.isEnabled)
-			viewModel.setMicEnabled(panel.quickSettingsMicRow.quickSettingsRowSwitch.isChecked)
 		onSaveDisplayMode(TransformMode.fromButton(panel.quickSettingsDisplayModeToggle.checkedButtonId))
 
 		// The one setting that's deferred until Save: rebuild StreamInput's mapping lookup

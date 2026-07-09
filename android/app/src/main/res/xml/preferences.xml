@@ -66,12 +66,6 @@
             app:icon="@drawable/ic_button_haptic" />
 
         <SwitchPreference
-            app:key="@string/preferences_mic_enabled_key"
-            app:title="@string/preferences_mic_enabled_title"
-            app:summary="@string/preferences_mic_enabled_summary"
-            app:icon="@drawable/ic_mic" />
-
-        <SwitchPreference
             app:key="@string/preferences_pip_enabled_key"
             app:title="@string/preferences_pip_enabled_title"
             app:summary="@string/preferences_pip_enabled_summary"

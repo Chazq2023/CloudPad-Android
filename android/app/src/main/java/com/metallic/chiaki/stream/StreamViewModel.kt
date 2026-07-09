@@ -3,8 +3,6 @@
 package com.metallic.chiaki.stream
 
 import android.app.Application
-import android.content.Context
-import android.media.AudioManager
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -46,14 +44,8 @@ class StreamViewModel(
 	private var _showPerformanceOverlay = MutableLiveData(preferences.showPerformanceOverlay)
 	val showPerformanceOverlay: LiveData<Boolean> get() = _showPerformanceOverlay
 
-	private var _micEnabled = MutableLiveData(preferences.micEnabled)
-	val micEnabled: LiveData<Boolean> get() = _micEnabled
-
 	private var _overlayData = MutableLiveData<OverlayData>()
 	val overlayData: LiveData<OverlayData> get() = _overlayData
-
-	private val audioManager = application.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
-	private var savedAudioMode: Int? = null
 
 	private var metricsDisposable: Disposable? = null
 
@@ -137,37 +129,6 @@ class StreamViewModel(
 		session.state.observeForever { state ->
 			if (state is StreamStateConnected) {
 				startMetricsPolling()
-				applyMicState()
-			}
-		}
-	}
-
-	private fun applyMicState() {
-		if (_micEnabled.value == true) {
-			if (session.setMicrophoneMuted(false))
-				updateAudioRoutingForMic(true)
-			else
-				_micEnabled.postValue(false)
-		}
-	}
-
-	/**
-	 * Oboe's VoiceCommunication input preset only fully takes effect (e.g. preferring a
-	 * connected headset's mic over the phone's built-in one) when the app is also in
-	 * MODE_IN_COMMUNICATION — without this, mic capture can silently stay on the wrong
-	 * input device. Restores whatever mode was active before once the mic is turned off.
-	 */
-	private fun updateAudioRoutingForMic(active: Boolean) {
-		val am = audioManager ?: return
-		if (active) {
-			if (savedAudioMode == null) {
-				savedAudioMode = am.mode
-				am.mode = AudioManager.MODE_IN_COMMUNICATION
-			}
-		} else {
-			savedAudioMode?.let {
-				am.mode = it
-				savedAudioMode = null
 			}
 		}
 	}
@@ -175,7 +136,6 @@ class StreamViewModel(
 	override fun onCleared() {
 		super.onCleared()
 		stopMetricsPolling()
-		updateAudioRoutingForMic(false)
 		session.shutdown()
 	}
 
@@ -192,16 +152,5 @@ class StreamViewModel(
 	fun setShowPerformanceOverlay(show: Boolean) {
 		preferences.showPerformanceOverlay = show
 		_showPerformanceOverlay.value = show
-	}
-
-	fun setMicEnabled(enabled: Boolean) {
-		preferences.micEnabled = enabled
-		_micEnabled.value = enabled
-		if (session.state.value is StreamStateConnected) {
-			if (session.setMicrophoneMuted(!enabled))
-				updateAudioRoutingForMic(enabled)
-			else
-				_micEnabled.value = false
-		}
 	}
 }

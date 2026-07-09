@@ -37,8 +37,6 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	 *  recreated, and setSurface(null) blocks on the native decoder. */
 	var skipNativeSurfaceCleanup = false
 
-	private var micConnected = false
-
 	init
 	{
 		input.controllerStateChangedCallback = {
@@ -75,29 +73,7 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			holepunchSession = null
 		}
 		_state.value = StreamStateIdle
-		micConnected = false
 		//surfaceTexture?.release()
-	}
-
-	/**
-	 * @return false if the microphone could not be connected/started (e.g. missing permission),
-	 * true otherwise (including when there is no active session yet).
-	 */
-	fun setMicrophoneMuted(muted: Boolean): Boolean
-	{
-		val s = session ?: return true
-		if(!muted && !micConnected)
-		{
-			if(!s.connectMicrophone())
-			{
-				Log.w("StreamSession", "setMicrophoneMuted: failed to connect/start microphone capture")
-				return false
-			}
-			micConnected = true
-			Log.i("StreamSession", "setMicrophoneMuted: microphone connected")
-		}
-		s.setMicrophoneMuted(muted)
-		return true
 	}
 
 	fun pause()

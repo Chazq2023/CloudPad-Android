@@ -23,14 +23,10 @@
 #include <netdb.h>
 #include <sys/socket.h>
 
-#include <chiaki/opusencoder.h>
-#include <chiaki/audio.h>
-
 #include "video-decoder.h"
 #include "audio-decoder.h"
 #include "opus-decoder.h"
 #include "audio-output.h"
-#include "audio-input.h"
 #include "log.h"
 #include "chiaki-jni.h"
 
@@ -265,10 +261,6 @@ typedef struct android_chiaki_session_t
 	AndroidChiakiOpusDecoder opus_decoder;
 	bool use_opus_decoder; // true for PSCloud, false for PSNow/Remote Play
 	void *audio_output;
-
-	ChiakiOpusEncoder mic_opus_encoder;
-	void *audio_input;
-	bool mic_connect_sent; // guards chiaki_session_connect_microphone() to once per session
 } AndroidChiakiSession;
 
 static uint64_t android_chiaki_now_ms()
@@ -642,9 +634,6 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	}
 
 	session->audio_output = android_chiaki_audio_output_new(log);
-	chiaki_opus_encoder_init(&session->mic_opus_encoder, log);
-	session->audio_input = android_chiaki_audio_input_new(log);
-	session->mic_connect_sent = false;
 
 	if(session->use_opus_decoder)
 	{
@@ -667,8 +656,6 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 		else
 			android_chiaki_audio_decoder_fini(&session->audio_decoder);
 		android_chiaki_audio_output_free(session->audio_output);
-		android_chiaki_audio_input_free(session->audio_input);
-		chiaki_opus_encoder_fini(&session->mic_opus_encoder);
 		free(session);
 		session = NULL;
 		goto beach;
@@ -735,10 +722,6 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 		android_chiaki_audio_decoder_get_sink(&session->audio_decoder, &audio_sink);
 	chiaki_session_set_audio_sink(&session->session, &audio_sink);
 
-	ChiakiAudioHeader mic_audio_header;
-	chiaki_audio_header_set(&mic_audio_header, 2, 16, 48000, 480); // channels, bits, rate, frame_size
-	chiaki_opus_encoder_header(&mic_audio_header, &session->mic_opus_encoder, &session->session);
-
 beach:
 	if(!session && log)
 	{
@@ -764,8 +747,6 @@ JNIEXPORT void JNICALL JNI_FCN(sessionFree)(JNIEnv *env, jobject obj, jlong ptr)
 	else
 		android_chiaki_audio_decoder_fini(&session->audio_decoder);
 	android_chiaki_audio_output_free(session->audio_output);
-	android_chiaki_audio_input_free(session->audio_input); // joins encode thread before the encoder is torn down
-	chiaki_opus_encoder_fini(&session->mic_opus_encoder);
 	E->DeleteGlobalRef(env, session->java_session);
 	E->DeleteGlobalRef(env, session->java_session_class);
 	E->DeleteGlobalRef(env, session->java_target_class);
@@ -852,35 +833,6 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetLoginPin)(JNIEnv *env, jobject obj, jlo
 	const char *pin = E->GetStringUTFChars(env, pin_java, NULL);
 	chiaki_session_set_login_pin(&session->session, (const uint8_t *)pin, strlen(pin));
 	E->ReleaseStringUTFChars(env, pin_java, pin);
-}
-
-JNIEXPORT jboolean JNICALL JNI_FCN(sessionConnectMicrophone)(JNIEnv *env, jobject obj, jlong ptr)
-{
-	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
-	if(!session)
-		return JNI_FALSE;
-	if(!android_chiaki_audio_input_start(session->audio_input, &session->mic_opus_encoder))
-		return JNI_FALSE;
-	if(!session->mic_connect_sent)
-	{
-		chiaki_session_connect_microphone(&session->session);
-		session->mic_connect_sent = true;
-	}
-	return JNI_TRUE;
-}
-
-JNIEXPORT void JNICALL JNI_FCN(sessionSetMicrophoneMuted)(JNIEnv *env, jobject obj, jlong ptr, jboolean muted)
-{
-	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
-	if(!session)
-		return;
-	// Muting fully stops the capture stream (releasing the mic/OS recording indicator)
-	// rather than just discarding frames; unmuting restarts it if it isn't already running.
-	if(muted)
-		android_chiaki_audio_input_stop(session->audio_input);
-	else
-		android_chiaki_audio_input_start(session->audio_input, &session->mic_opus_encoder);
-	chiaki_session_toggle_microphone(&session->session, (bool)muted);
 }
 
 JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, jlong ptr)

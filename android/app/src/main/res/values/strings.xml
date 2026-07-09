@@ -146,9 +146,6 @@
     <string name="preferences_motion_enabled_summary">Use device\'s motion sensors for controller motion</string>
     <string name="preferences_button_haptic_enabled_title">Touch Haptics</string>
     <string name="preferences_button_haptic_enabled_summary">Vibrate the phone on touchscreen button presses</string>
-    <string name="preferences_mic_enabled_title">Microphone</string>
-    <string name="preferences_mic_enabled_summary">Send microphone audio during Remote Play / party chat</string>
-    <string name="mic_permission_denied">Microphone permission is required to enable this</string>
     <string name="quick_settings_title">Quick Settings</string>
     <string name="quick_settings_close">Close</string>
     <string name="quick_settings_save">Save</string>
@@ -266,7 +263,6 @@
     <string name="preferences_touchpad_only_enabled_key">touchpad_only_enabled</string>
     <string name="preferences_motion_enabled_key">motion_enabled</string>
     <string name="preferences_button_haptic_enabled_key">button_haptic_enabled</string>
-    <string name="preferences_mic_enabled_key">mic_enabled</string>
     <string name="preferences_log_verbose_key">log_verbose</string>
     <string name="preferences_import_settings_key">import_settings</string>
     <string name="preferences_export_settings_key">export_settings</string>

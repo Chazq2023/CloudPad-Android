@@ -2,16 +2,12 @@
 
 package com.metallic.chiaki.settings
 
-import android.Manifest
 import android.app.Activity
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Bundle
 import android.text.InputType
 import android.widget.Toast
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.*
@@ -34,7 +30,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.logVerboseKey -> preferences.logVerbose
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
-		preferences.micEnabledKey -> preferences.micEnabled
 		preferences.pipEnabledKey -> preferences.pipEnabled
 		else -> defValue
 	}
@@ -46,7 +41,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.logVerboseKey -> preferences.logVerbose = value
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
-			preferences.micEnabledKey -> preferences.micEnabled = value
 			preferences.pipEnabledKey -> preferences.pipEnabled = value
 		}
 	}
@@ -116,25 +110,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 
 	private var disposable = CompositeDisposable()
 	private var exportDisposable = CompositeDisposable().also { it.addTo(disposable) }
-
-	private val micPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-		onMicPermissionResult(granted)
-	}
-
-	private fun onMicPermissionResult(granted: Boolean)
-	{
-		val context = context ?: return
-		val micPreference = preferenceScreen?.findPreference<SwitchPreference>(getString(R.string.preferences_mic_enabled_key))
-		if(granted)
-		{
-			Preferences(context).micEnabled = true
-			micPreference?.isChecked = true
-		}
-		else
-		{
-			Toast.makeText(context, R.string.mic_permission_denied, Toast.LENGTH_SHORT).show()
-		}
-	}
 
 	override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?)
 	{
@@ -234,23 +209,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 				preferences.setThemeColour(newValue as? String ?: "pink")
 				requireActivity().recreate()
 				true
-			}
-
-		// Microphone: gate enabling behind the RECORD_AUDIO runtime permission.
-		// Denying/pending the permission vetoes the switch flip; onMicPermissionResult
-		// flips it (and writes the preference) once the permission is actually granted.
-		preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_mic_enabled_key))
-			?.setOnPreferenceChangeListener { _, newValue ->
-				val enabling = newValue as? Boolean ?: false
-				if(!enabling)
-					true
-				else if(ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
-					true
-				else
-				{
-					micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-					false
-				}
 			}
 	}
 
