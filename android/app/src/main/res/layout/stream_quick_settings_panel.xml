@@ -61,91 +61,132 @@
         android:layout_marginTop="12dp"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsDisconnectButton" />
 
+    <!-- Left-hand tab rail: Controller Mapping / General Settings -->
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/quickSettingsTabToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        app:singleSelection="true"
+        app:selectionRequired="true"
+        app:checkedButton="@id/quickSettingsTabGeneral"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsSaveButton">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabController"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/controller_remap_preference_title"
+            app:icon="@drawable/ic_gamepad" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabGeneral"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/quick_settings_title"
+            app:icon="@drawable/ic_settings" />
+
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
     <!-- Scrollable body -->
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
         app:layout_constraintBottom_toTopOf="@id/quickSettingsSaveButton"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabToggle"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="16dp">
+            android:layout_height="wrap_content">
 
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsStatsRow" />
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsOscRow" />
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsTouchpadRow" />
-
-            <TextView
-                style="@style/QuickSettingsSectionLabel"
-                android:text="@string/quick_settings_window_size" />
-
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/quickSettingsDisplayModeToggle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginBottom="8dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:checkedButton="@id/quickSettingsDisplayModeNormal">
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:id="@+id/quickSettingsDisplayModeNormal"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    app:icon="@drawable/ic_display_normal"
-                    app:iconTint="@color/quick_settings_display_mode_tint"
-                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:id="@+id/quickSettingsDisplayModeZoom"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    app:icon="@drawable/ic_display_zoom"
-                    app:iconTint="@color/quick_settings_display_mode_tint"
-                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:id="@+id/quickSettingsDisplayModeStretch"
-                    android:layout_width="60dp"
-                    android:layout_height="wrap_content"
-                    app:icon="@drawable/ic_display_stretch"
-                    app:iconTint="@color/quick_settings_display_mode_tint"
-                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
-
-            </com.google.android.material.button.MaterialButtonToggleGroup>
-
-            <com.google.android.material.divider.MaterialDivider
+            <!-- Controller tab: remap list -->
+            <LinearLayout
+                android:id="@+id/quickSettingsControllerSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
+                android:orientation="vertical"
+                android:paddingBottom="16dp">
 
-            <TextView
-                style="@style/QuickSettingsSectionLabel"
-                android:text="@string/controller_remap_preference_title" />
+                <TextView
+                    style="@style/QuickSettingsSectionLabel"
+                    android:text="@string/controller_remap_preference_title" />
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/quickSettingsRemapRecyclerView"
-                android:layout_width="match_parent"
-                android:layout_height="320dp"
-                android:nestedScrollingEnabled="true" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/quickSettingsRemapRecyclerView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="false" />
 
-            <com.google.android.material.divider.MaterialDivider
+            </LinearLayout>
+
+            <!-- General tab: everything else -->
+            <LinearLayout
+                android:id="@+id/quickSettingsGeneralSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
+                android:orientation="vertical"
+                android:paddingBottom="16dp">
 
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMotionRow" />
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
+                <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsStatsRow" />
+                <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsOscRow" />
+                <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsTouchpadRow" />
 
-        </LinearLayout>
+                <TextView
+                    style="@style/QuickSettingsSectionLabel"
+                    android:text="@string/quick_settings_window_size" />
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/quickSettingsDisplayModeToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_marginBottom="8dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true"
+                    app:checkedButton="@id/quickSettingsDisplayModeNormal">
+
+                    <com.google.android.material.button.MaterialButton
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:id="@+id/quickSettingsDisplayModeNormal"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        app:icon="@drawable/ic_display_normal"
+                        app:iconTint="@color/quick_settings_display_mode_tint"
+                        app:strokeColor="@color/quick_settings_display_mode_tint"/>
+                    <com.google.android.material.button.MaterialButton
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:id="@+id/quickSettingsDisplayModeZoom"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        app:icon="@drawable/ic_display_zoom"
+                        app:iconTint="@color/quick_settings_display_mode_tint"
+                        app:strokeColor="@color/quick_settings_display_mode_tint"/>
+                    <com.google.android.material.button.MaterialButton
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:id="@+id/quickSettingsDisplayModeStretch"
+                        android:layout_width="60dp"
+                        android:layout_height="wrap_content"
+                        app:icon="@drawable/ic_display_stretch"
+                        app:iconTint="@color/quick_settings_display_mode_tint"
+                        app:strokeColor="@color/quick_settings_display_mode_tint"/>
+
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp" />
+
+                <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMotionRow" />
+                <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
+                <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
+
+            </LinearLayout>
+
+        </FrameLayout>
 
     </ScrollView>
 

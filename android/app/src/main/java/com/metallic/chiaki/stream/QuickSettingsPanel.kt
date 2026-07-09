@@ -8,6 +8,7 @@ import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,13 +26,16 @@ import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
 
 /**
  * In-stream "Quick Settings" slide-in panel. Opened by pressing back (replacing the old
- * bottom overlay bar entirely). Disconnect, Stats, On-Screen Controls, Touchpad Only and
- * Window Size are staged here: switching them only updates the panel's
- * own UI state, and is only applied (via [onSaveClicked]) when Save is pressed — pressing
- * back again while the panel is open discards any changes. Motion, Touch Haptics and
- * Picture-in-Picture remain live (applied immediately, as before). Remap Controller edits
- * persist immediately but only take effect on the live session once Save reloads
- * [StreamInput]'s mapping tables.
+ * bottom overlay bar entirely). Disconnect stays pinned at the top regardless of tab. Below
+ * it, a left-hand tab rail splits the scrollable body into two sections, only one of which
+ * is visible at a time: a Controller tab (Remap Controller) and a General tab (Stats,
+ * On-Screen Controls, Touchpad Only, Window Size, Motion, Touch Haptics, Picture-in-Picture).
+ * Stats, On-Screen Controls, Touchpad Only and Window Size are staged: switching them only
+ * updates the panel's own UI state, and is only applied (via [onSaveClicked]) when Save is
+ * pressed — pressing back again while the panel is open discards any changes. Motion, Touch
+ * Haptics and Picture-in-Picture remain live (applied immediately, as before). Remap
+ * Controller edits persist immediately but only take effect on the live session once Save
+ * reloads [StreamInput]'s mapping tables.
  *
  * Hosted in its own [Dialog] (a separate window) rather than a View inside
  * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
@@ -139,8 +143,25 @@ class QuickSettingsPanel(
 		panel.quickSettingsDisconnectButton.setOnClickListener { activity.finish() }
 		panel.quickSettingsSaveButton.setOnClickListener { onSaveClicked() }
 
+		// Left-hand tab rail: Controller Mapping / General Settings. Only one section is
+		// visible at a time; the toggle group's own checked-state colouring (theme colour
+		// when selected, white otherwise) is handled entirely by QuickSettingsTabButton's
+		// icon/stroke colour selector, so this listener only needs to swap section visibility.
+		panel.quickSettingsTabToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+			if(!isChecked) return@addOnButtonCheckedListener
+			showTab(checkedId)
+		}
+		showTab(panel.quickSettingsTabToggle.checkedButtonId)
+
 		// Start off-screen (closed).
 		panel.root.translationX = panelWidthPx
+	}
+
+	private fun showTab(checkedButtonId: Int)
+	{
+		val showController = checkedButtonId == R.id.quickSettingsTabController
+		panel.quickSettingsControllerSection.visibility = if(showController) View.VISIBLE else View.GONE
+		panel.quickSettingsGeneralSection.visibility = if(showController) View.GONE else View.VISIBLE
 	}
 
 	fun open()
