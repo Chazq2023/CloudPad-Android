@@ -1011,6 +1011,7 @@ static void stream_connection_takion_data_expect_streaminfo(ChiakiStreamConnecti
 		CHIAKI_LOGE(stream_connection->log, "StreamConnection failed to enable microphone input");
 		goto error;
 	}
+	CHIAKI_LOGI(stream_connection->log, "StreamConnection sent microphone capability STREAMINFO successfully");
 
 	// stream_connection->state_mutex is expected to be locked by the caller of this function
 	stream_connection->state_finished = true;
