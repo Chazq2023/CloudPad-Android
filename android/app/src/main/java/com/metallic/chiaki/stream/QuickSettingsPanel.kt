@@ -161,7 +161,7 @@ class QuickSettingsPanel(
 	{
 		val showController = checkedButtonId == R.id.quickSettingsTabController
 		panel.quickSettingsControllerSection.visibility = if(showController) View.VISIBLE else View.GONE
-		panel.quickSettingsGeneralSection.visibility = if(showController) View.GONE else View.VISIBLE
+		panel.quickSettingsGeneralScroll.visibility = if(showController) View.GONE else View.VISIBLE
 	}
 
 	fun open()
