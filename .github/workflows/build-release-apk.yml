@@ -112,6 +112,7 @@ jobs:
             - Fixed controller remapping capturing a spurious combo (e.g. R2 + Axis RTRIGGER) instead of a clean analog input when mapping L2/R2 or an analog stick direction — some controllers send both a digital button event and an analog axis event for the same physical trigger/stick push
             - Fixed the Quick Settings panel getting stuck off-screen on reopen: it's no longer toggled GONE/VISIBLE (which could conflict with the video surface's own rendering layer) — it now stays permanently visible and only ever slides via a position transform
             - Fixed the panel's reopen animation completing internally (confirmed via logging) without the screen visually updating, by forcing a hardware layer + explicit redraw during the slide animation to work around a rendering conflict with the video surface underneath it
+            - Moved the Quick Settings panel into its own window (Dialog) instead of a View sharing the activity's window with the video surface — logging showed the previous approaches all left the panel's internal state correct while the screen didn't reflect it, pointing to a same-window compositing issue that a separate window sidesteps entirely
 
             ### APK
             Attached release asset:

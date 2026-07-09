@@ -46,14 +46,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <!-- Always VISIBLE; QuickSettingsPanel moves it on/off-screen via translationX only,
-         so it's never toggled GONE (avoids a SurfaceView-recompositing glitch where a view
-         re-shown after GONE can get stuck un-rendered). -->
-    <include
-        android:id="@+id/quickSettingsPanel"
-        layout="@layout/stream_quick_settings_panel"
-        android:layout_width="320dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="end"/>
+    <!-- Quick Settings is its own Dialog window now (see QuickSettingsPanel.kt), not an
+         in-window View — sharing a window with the continuously-updating video SurfaceView
+         proved unreliable to animate/composite correctly even with visibility and hardware-
+         layer workarounds. A separate window is composited above the activity deterministically. -->
 
 </FrameLayout>

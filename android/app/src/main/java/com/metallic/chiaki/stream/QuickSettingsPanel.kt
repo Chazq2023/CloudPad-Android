@@ -3,11 +3,16 @@
 package com.metallic.chiaki.stream
 
 import android.Manifest
+import android.app.Dialog
 import android.content.pm.PackageManager
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.Log
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
-import android.view.View
+import android.view.Window
+import android.view.WindowManager
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
@@ -20,6 +25,7 @@ import com.metallic.chiaki.settings.RemapAdapter
 import com.metallic.chiaki.settings.RemapItem
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityStreamBinding
+import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
 
 /**
  * In-stream "Quick Settings" slide-in panel. Opened by pressing back (replacing the old
@@ -30,6 +36,14 @@ import com.pylux.stream.databinding.ActivityStreamBinding
  * Picture-in-Picture remain live (applied immediately, as before). Remap Controller edits
  * persist immediately but only take effect on the live session once Save reloads
  * [StreamInput]'s mapping tables.
+ *
+ * Hosted in its own [Dialog] (a separate window) rather than a View inside
+ * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
+ * which continuously receives new decoded frames — animating/toggling a plain View there
+ * proved unreliable to composite correctly (confirmed via logging: the animation completed
+ * with the correct end state, but nothing visibly updated), even after forcing a hardware
+ * layer. A separate window is composited above the activity deterministically by the OS,
+ * sidestepping that whole class of problem.
  */
 class QuickSettingsPanel(
 	private val activity: StreamActivity,
@@ -40,16 +54,30 @@ class QuickSettingsPanel(
 	private val getDisplayMode: () -> TransformMode,
 	private val onSaveDisplayMode: (TransformMode) -> Unit
 ) {
-	private val panel = binding.quickSettingsPanel
+	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater)
 	private val snackbarAnchor = binding.root
-
-	// The panel is kept permanently View.VISIBLE and only ever moved via translationX — never
-	// toggled GONE/VISIBLE. Toggling visibility on a view overlapping a SurfaceView (the video
-	// surface, which composites on its own layer) can leave the view stuck un-rendered until
-	// something forces a full window redraw (e.g. pulling down the notification shade) — this
-	// sidesteps that entirely, since translationX is a pure render-time transform that doesn't
-	// remove the view from the layout/draw tree.
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
+
+	private val dialog: Dialog = Dialog(activity).apply {
+		requestWindowFeature(Window.FEATURE_NO_TITLE)
+		setContentView(panel.root)
+		setCancelable(false)
+		setCanceledOnTouchOutside(false)
+		window?.apply {
+			setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+			setDimAmount(0f)
+			setLayout(panelWidthPx.toInt(), WindowManager.LayoutParams.MATCH_PARENT)
+			setGravity(Gravity.END)
+		}
+		setOnKeyListener { _, keyCode, event ->
+			if(keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP)
+			{
+				discardAndClose()
+				true
+			}
+			else false
+		}
+	}
 
 	private val currentMapping: MutableMap<ControllerAction, PhysicalInput> =
 		PhysicalInput.resolveMapping(preferences.loadControllerMapping()).toMutableMap()
@@ -62,7 +90,8 @@ class QuickSettingsPanel(
 
 	/** True only while actively listening for the next remap input. StreamActivity checks
 	 *  this before forwarding key/motion events to the live game, so a button press made
-	 *  while remapping isn't also sent to the console. */
+	 *  while remapping isn't also sent to the console. Kept even though the panel's own
+	 *  Dialog window already naturally intercepts input ahead of the activity while shown. */
 	val isCapturingInput: Boolean get() = capture.isListening
 
 	init {
@@ -115,13 +144,13 @@ class QuickSettingsPanel(
 		panel.quickSettingsDisconnectButton.setOnClickListener { activity.finish() }
 		panel.quickSettingsSaveButton.setOnClickListener { onSaveClicked() }
 
-		// Start off-screen (closed) without ever having gone through a GONE state.
+		// Start off-screen (closed).
 		panel.root.translationX = panelWidthPx
 	}
 
 	fun open()
 	{
-		Log.i("QuickSettingsPanel", "open() called, isOpen=$isOpen, translationX=${panel.root.translationX}")
+		Log.i("QuickSettingsPanel", "open() called, isOpen=$isOpen")
 		if(isOpen) return
 		isOpen = true
 
@@ -141,54 +170,34 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 
-		animateTranslationTo(0f) { Log.i("QuickSettingsPanel", "open animation ended: translationX=${panel.root.translationX}, isOpen=$isOpen") }
+		panel.root.translationX = panelWidthPx
+		if(!dialog.isShowing) dialog.show()
+		panel.root.animate().cancel()
+		panel.root.animate().translationX(0f).setDuration(220L)
+			.withEndAction { Log.i("QuickSettingsPanel", "open animation ended: translationX=${panel.root.translationX}, isOpen=$isOpen") }
+			.start()
 	}
 
 	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Mic/Window Size) edits. */
 	fun discardAndClose()
 	{
-		// Logging the stack trace here (not just a message) so logcat reveals exactly which
-		// caller (back-press, Save, PiP entry, etc.) triggered this — needed to track down
-		// reports of the panel appearing to open then immediately close again.
 		Log.w("QuickSettingsPanel", "discardAndClose() called, isOpen=$isOpen", Exception("call site"))
 		if(!isOpen)
 		{
-			panel.root.translationX = panelWidthPx
+			if(dialog.isShowing) dialog.dismiss()
 			return
 		}
 		isOpen = false
-		animateTranslationTo(panelWidthPx)
+		panel.root.animate().cancel()
+		panel.root.animate().translationX(panelWidthPx).setDuration(220L)
+			.withEndAction { if(dialog.isShowing) dialog.dismiss() }
+			.start()
 	}
 
 	fun toggle()
 	{
 		Log.i("QuickSettingsPanel", "toggle() called, isOpen=$isOpen")
 		if(isOpen) discardAndClose() else open()
-	}
-
-	/**
-	 * Slides the panel to [targetX]. The panel sits above a SurfaceView (the video surface,
-	 * which composites on its own hardware layer); a transform-only change on a plain view can
-	 * occasionally fail to trigger a proper recomposite against it, leaving the animation's
-	 * *state* correct (translationX/isOpen end up right) while the actual displayed frame
-	 * doesn't move — confirmed via logging where the animation completed successfully but
-	 * nothing visibly appeared. Forcing a hardware layer for the duration of the animation,
-	 * plus an explicit invalidate() on every frame, is the standard fix for this class of
-	 * SurfaceView/compositing issue.
-	 */
-	private fun animateTranslationTo(targetX: Float, onEnd: (() -> Unit)? = null)
-	{
-		val root = panel.root
-		root.animate().cancel()
-		root.setLayerType(View.LAYER_TYPE_HARDWARE, null)
-		root.animate().translationX(targetX).setDuration(220L)
-			.setUpdateListener { root.invalidate() }
-			.withEndAction {
-				root.setLayerType(View.LAYER_TYPE_NONE, null)
-				root.invalidate()
-				onEnd?.invoke()
-			}
-			.start()
 	}
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)

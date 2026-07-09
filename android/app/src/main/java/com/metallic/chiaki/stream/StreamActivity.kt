@@ -146,10 +146,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			}
 		})
 
-		if (isTv()) {
-			// On TV: the Quick Settings panel isn't reachable (no back-toggle interaction model)
-			binding.quickSettingsPanel.root.isGone = true
-		}
+		// On TV, the Quick Settings panel is simply never shown — the back-press handler's
+		// isTv() branch below never calls quickSettingsPanel.toggle()/open().
 
 	}
 
