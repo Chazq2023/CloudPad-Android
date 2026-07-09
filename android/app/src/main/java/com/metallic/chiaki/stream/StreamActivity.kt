@@ -118,6 +118,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		// toggle the Quick Settings panel (open if closed, discard-and-close if open).
 		onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
+				Log.i("StreamActivity", "handleOnBackPressed: isTv=${isTv()}")
 				if (isTv()) {
 					alertDialogBuilder()
 						.setMessage("Disconnect from stream?")

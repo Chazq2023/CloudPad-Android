@@ -4,6 +4,7 @@ package com.metallic.chiaki.stream
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.core.content.ContextCompat
@@ -119,6 +120,7 @@ class QuickSettingsPanel(
 
 	fun open()
 	{
+		Log.i("QuickSettingsPanel", "open() called, isOpen=$isOpen, translationX=${panel.root.translationX}")
 		if(isOpen) return
 		isOpen = true
 
@@ -139,12 +141,18 @@ class QuickSettingsPanel(
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 
 		panel.root.animate().cancel()
-		panel.root.animate().translationX(0f).setDuration(220L).start()
+		panel.root.animate().translationX(0f).setDuration(220L)
+			.withEndAction { Log.i("QuickSettingsPanel", "open animation ended: translationX=${panel.root.translationX}, isOpen=$isOpen") }
+			.start()
 	}
 
 	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Mic/Window Size) edits. */
 	fun discardAndClose()
 	{
+		// Logging the stack trace here (not just a message) so logcat reveals exactly which
+		// caller (back-press, Save, PiP entry, etc.) triggered this — needed to track down
+		// reports of the panel appearing to open then immediately close again.
+		Log.w("QuickSettingsPanel", "discardAndClose() called, isOpen=$isOpen", Exception("call site"))
 		if(!isOpen)
 		{
 			panel.root.translationX = panelWidthPx
@@ -155,7 +163,11 @@ class QuickSettingsPanel(
 		panel.root.animate().translationX(panelWidthPx).setDuration(220L).start()
 	}
 
-	fun toggle() = if(isOpen) discardAndClose() else open()
+	fun toggle()
+	{
+		Log.i("QuickSettingsPanel", "toggle() called, isOpen=$isOpen")
+		if(isOpen) discardAndClose() else open()
+	}
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)
 	fun handleCaptureMotionEvent(event: MotionEvent): Boolean = capture.handleCaptureMotionEvent(event)
