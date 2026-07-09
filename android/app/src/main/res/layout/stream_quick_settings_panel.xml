@@ -61,7 +61,7 @@
         android:layout_marginTop="12dp"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsDisconnectButton" />
 
-    <!-- Left-hand tab rail: Controller Mapping / General Settings -->
+    <!-- Left-hand tab rail: General Settings / Controller Mapping -->
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/quickSettingsTabToggle"
         android:layout_width="wrap_content"
@@ -76,16 +76,16 @@
         app:layout_constraintBottom_toTopOf="@id/quickSettingsSaveButton">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/quickSettingsTabController"
-            style="@style/QuickSettingsTabButton"
-            android:contentDescription="@string/controller_remap_preference_title"
-            app:icon="@drawable/ic_gamepad" />
-
-        <com.google.android.material.button.MaterialButton
             android:id="@+id/quickSettingsTabGeneral"
             style="@style/QuickSettingsTabButton"
             android:contentDescription="@string/quick_settings_title"
             app:icon="@drawable/ic_settings" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabController"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/controller_remap_preference_title"
+            app:icon="@drawable/ic_gamepad" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
