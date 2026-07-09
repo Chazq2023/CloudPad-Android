@@ -97,6 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
+            - Removed the Save button from Quick Settings: every setting (Performance Overlay, On-Screen Controls, Touchpad Only, Window Size, controller remapping) now applies and takes effect on the live stream the instant you change it, instead of waiting to be saved
+            - Renamed "Stats" to "Performance Overlay" in Quick Settings, and shrank the row label text slightly so longer titles like this fit cleanly next to their switch
             - Swapped the Quick Settings panel's tab order: the cog (general settings) icon is now on top, with the controller (remap) icon below it
             - Fixed the Quick Settings panel's new Controller tab not showing every controller mapping: the remap list was sized wrap_content inside a shared scroll view, which doesn't reliably measure a RecyclerView's full content once it switches from hidden to visible — it now gets its own bounded area with internal scrolling, the same approach the full-screen Remap Controller screen already used successfully
             - Split the Quick Settings panel into two tabs on the left-hand side: a controller icon for Remap Controller, and a cog icon for everything else (Stats, On-Screen Controls, Touchpad Only, Window Size, Motion, Touch Haptics, Picture-in-Picture); Disconnect stays pinned at the top regardless of tab. The active tab is highlighted in the app's theme colour, matching the rest of the panel

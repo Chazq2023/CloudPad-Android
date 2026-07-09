@@ -12,7 +12,6 @@ import android.view.View
 import android.view.Window
 import android.view.WindowManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.session.ControllerAction
 import com.metallic.chiaki.session.ControllerRemapCapture
@@ -21,21 +20,19 @@ import com.metallic.chiaki.session.StreamInput
 import com.metallic.chiaki.settings.RemapAdapter
 import com.metallic.chiaki.settings.RemapItem
 import com.pylux.stream.R
-import com.pylux.stream.databinding.ActivityStreamBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
 
 /**
  * In-stream "Quick Settings" slide-in panel. Opened by pressing back (replacing the old
  * bottom overlay bar entirely). Disconnect stays pinned at the top regardless of tab. Below
  * it, a left-hand tab rail splits the scrollable body into two sections, only one of which
- * is visible at a time: a Controller tab (Remap Controller) and a General tab (Stats,
- * On-Screen Controls, Touchpad Only, Window Size, Motion, Touch Haptics, Picture-in-Picture).
- * Stats, On-Screen Controls, Touchpad Only and Window Size are staged: switching them only
- * updates the panel's own UI state, and is only applied (via [onSaveClicked]) when Save is
- * pressed — pressing back again while the panel is open discards any changes. Motion, Touch
- * Haptics and Picture-in-Picture remain live (applied immediately, as before). Remap
- * Controller edits persist immediately but only take effect on the live session once Save
- * reloads [StreamInput]'s mapping tables.
+ * is visible at a time: a Controller tab (Remap Controller) and a General tab (Performance
+ * Overlay, On-Screen Controls, Touchpad Only, Window Size, Motion, Touch Haptics,
+ * Picture-in-Picture). There is no Save button — every control applies immediately: switches
+ * write straight to [viewModel]/[preferences] and apply live in the same listener that flips
+ * them, the Window Size toggle calls [onDisplayModeChanged] as soon as a button is checked, and
+ * remap edits both persist immediately and call [StreamInput.reloadMapping] right away so the
+ * live session picks up the new mapping without waiting for anything else.
  *
  * Hosted in its own [Dialog] (a separate window) rather than a View inside
  * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
@@ -47,15 +44,13 @@ import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
  */
 class QuickSettingsPanel(
 	private val activity: StreamActivity,
-	binding: ActivityStreamBinding,
 	private val preferences: Preferences,
 	private val streamInput: StreamInput,
 	private val viewModel: StreamViewModel,
 	private val getDisplayMode: () -> TransformMode,
-	private val onSaveDisplayMode: (TransformMode) -> Unit
+	private val onDisplayModeChanged: (TransformMode) -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater)
-	private val snackbarAnchor = binding.root
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
 
 	private val dialog: Dialog = Dialog(activity).apply {
@@ -72,7 +67,7 @@ class QuickSettingsPanel(
 		setOnKeyListener { _, keyCode, event ->
 			if(keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP)
 			{
-				discardAndClose()
+				close()
 				true
 			}
 			else false
@@ -111,23 +106,26 @@ class QuickSettingsPanel(
 		panel.quickSettingsRemapRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsRemapRecyclerView.adapter = remapAdapter
 
-		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_stats_title)
+		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_performance_overlay_title)
 		panel.quickSettingsOscRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_osc_title)
 		panel.quickSettingsTouchpadRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_touchpad_title)
 		panel.quickSettingsMotionRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_motion_enabled_title)
 		panel.quickSettingsHapticsRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_button_haptic_enabled_title)
 		panel.quickSettingsPipRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_pip_enabled_title)
 
-		// On-Screen Controls / Touchpad Only are mutually exclusive within the panel's own
-		// staged switches — this enforcement is immediate UI behaviour, independent of Save.
+		// Every switch applies immediately — there's no Save button. On-Screen Controls /
+		// Touchpad Only additionally stay mutually exclusive with each other.
+		panel.quickSettingsStatsRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
+			viewModel.setShowPerformanceOverlay(isChecked)
+		}
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = false
+			viewModel.setOnScreenControlsEnabled(checked)
 		}
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = false
+			viewModel.setTouchpadOnlyEnabled(checked)
 		}
-
-		// Motion / Touch Haptics / Picture-in-Picture keep their existing live-apply behaviour.
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			preferences.motionEnabled = isChecked
 			streamInput.setMotionEnabled(isChecked)
@@ -139,9 +137,14 @@ class QuickSettingsPanel(
 			preferences.pipEnabled = isChecked
 		}
 
-		panel.quickSettingsCloseButton.setOnClickListener { discardAndClose() }
+		// Window Size applies immediately too, as soon as a new option is checked.
+		panel.quickSettingsDisplayModeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+			if(!isChecked) return@addOnButtonCheckedListener
+			onDisplayModeChanged(TransformMode.fromButton(checkedId))
+		}
+
+		panel.quickSettingsCloseButton.setOnClickListener { close() }
 		panel.quickSettingsDisconnectButton.setOnClickListener { activity.finish() }
-		panel.quickSettingsSaveButton.setOnClickListener { onSaveClicked() }
 
 		// Left-hand tab rail: Controller Mapping / General Settings. Only one section is
 		// visible at a time; the toggle group's own checked-state colouring (theme colour
@@ -169,9 +172,9 @@ class QuickSettingsPanel(
 		if(isOpen) return
 		isOpen = true
 
-		// Stats / On-Screen Controls / Touchpad Only / Window Size are staged: (re)seed every
-		// time the panel opens from the current live values, so a previously discarded edit
-		// never leaks into the next time the panel is shown.
+		// Re-sync every switch/toggle to the current live value each time the panel opens —
+		// state can change elsewhere while it's closed (e.g. PiP forces On-Screen Controls
+		// and Touchpad Only off), so the panel must not show stale state from last time.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked = viewModel.showPerformanceOverlay.value ?: false
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = viewModel.onScreenControlsEnabled.value ?: false
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = viewModel.touchpadOnlyEnabled.value ?: false
@@ -187,8 +190,7 @@ class QuickSettingsPanel(
 		panel.root.animate().translationX(0f).setDuration(220L).start()
 	}
 
-	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Window Size) edits. */
-	fun discardAndClose()
+	fun close()
 	{
 		if(!isOpen)
 		{
@@ -204,26 +206,11 @@ class QuickSettingsPanel(
 
 	fun toggle()
 	{
-		if(isOpen) discardAndClose() else open()
+		if(isOpen) close() else open()
 	}
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)
 	fun handleCaptureMotionEvent(event: MotionEvent): Boolean = capture.handleCaptureMotionEvent(event)
-
-	private fun onSaveClicked()
-	{
-		viewModel.setShowPerformanceOverlay(panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked)
-		viewModel.setOnScreenControlsEnabled(panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked)
-		viewModel.setTouchpadOnlyEnabled(panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked)
-		onSaveDisplayMode(TransformMode.fromButton(panel.quickSettingsDisplayModeToggle.checkedButtonId))
-
-		// The one setting that's deferred until Save: rebuild StreamInput's mapping lookup
-		// tables so the live session picks up remap edits immediately.
-		streamInput.reloadMapping()
-
-		Snackbar.make(snackbarAnchor, R.string.quick_settings_saved, Snackbar.LENGTH_SHORT).show()
-		discardAndClose()
-	}
 
 	private fun buttonIdFor(mode: TransformMode) = when(mode)
 	{
@@ -236,6 +223,9 @@ class QuickSettingsPanel(
 	{
 		preferences.saveControllerMapping(currentMapping)
 		remapAdapter.updateItems(buildRemapItems())
+		// Rebuild StreamInput's mapping lookup tables immediately so the live session picks
+		// up the edit right away — there's no Save button to defer this to any more.
+		streamInput.reloadMapping()
 	}
 
 	private fun buildRemapItems(): List<RemapItem>

@@ -14,9 +14,10 @@
         android:id="@+id/quickSettingsRowLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
         android:layout_weight="1"
         android:textColor="?attr/pyluxAccent"
-        android:textSize="15sp" />
+        android:textSize="13sp" />
 
     <com.google.android.material.switchmaterial.SwitchMaterial
         android:id="@+id/quickSettingsRowSwitch"

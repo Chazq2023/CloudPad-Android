@@ -98,17 +98,16 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		window.decorView.setOnSystemUiVisibilityChangeListener(this)
 
 		// Quick Settings panel — replaces the old bottom overlay bar entirely. Disconnect,
-		// Stats, On-Screen Controls, Touchpad Only and Window Size all live here
-		// now; pressing back opens it, Save applies the staged changes, pressing back again
-		// discards them. Motion/Touch Haptics/PiP/Remap Controller behave as before.
+		// Performance Overlay, On-Screen Controls, Touchpad Only and Window Size all live
+		// here now; pressing back opens/closes it. There's no Save button — every control
+		// applies immediately. Motion/Touch Haptics/PiP/Remap Controller behave as before.
 		quickSettingsPanel = QuickSettingsPanel(
 			activity = this,
-			binding = binding,
 			preferences = viewModel.preferences,
 			streamInput = viewModel.input,
 			viewModel = viewModel,
 			getDisplayMode = { currentDisplayMode },
-			onSaveDisplayMode = { mode ->
+			onDisplayModeChanged = { mode ->
 				currentDisplayMode = mode
 				adjustStreamViewAspect()
 			}
@@ -282,7 +281,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			savedOnScreenControlsEnabled = viewModel.onScreenControlsEnabled.value ?: false
 			savedTouchpadOnlyEnabled = viewModel.touchpadOnlyEnabled.value ?: false
 
-			quickSettingsPanel.discardAndClose()
+			quickSettingsPanel.close()
 			viewModel.setOnScreenControlsEnabled(false)
 			viewModel.setTouchpadOnlyEnabled(false)
 			binding.progressBar.isGone = true
