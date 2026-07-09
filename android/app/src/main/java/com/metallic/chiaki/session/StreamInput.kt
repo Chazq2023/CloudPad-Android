@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.ControllerState
+import kotlin.math.pow
 
 class StreamInput(
 	val context: Context,
@@ -553,6 +554,10 @@ class StreamInput(
 		fun Float.signedAxis() = (this * Short.MAX_VALUE).toInt().toShort()
 		fun Float.unsignedAxis() = (this * UByte.MAX_VALUE.toFloat()).toUInt().toUByte()
 		fun Float.coerceSigned() = coerceIn(-1f, 1f)
+		// Front-loads L2/R2 response so a partial squeeze reaches a meaningful analog value
+		// sooner instead of tracking raw travel linearly (which felt like it needed a near-full
+		// press before anything registered), while still reaching maximum at a full press.
+		fun Float.triggerResponseCurve() = if(this <= 0f) 0f else pow(0.6f)
 
 		// L2/R2 travel is reported on different axis codes depending on the controller's
 		// driver: Xbox-style pads use AXIS_LTRIGGER/AXIS_RTRIGGER, while DualShock/DualSense
@@ -641,8 +646,8 @@ class StreamInput(
 		motionControllerState.leftY = leftY.coerceSigned().signedAxis()
 		motionControllerState.rightX = rightX.coerceSigned().signedAxis()
 		motionControllerState.rightY = rightY.coerceSigned().signedAxis()
-		motionControllerState.l2State = l2.coerceIn(0f, 1f).unsignedAxis()
-		motionControllerState.r2State = r2.coerceIn(0f, 1f).unsignedAxis()
+		motionControllerState.l2State = l2.coerceIn(0f, 1f).triggerResponseCurve().unsignedAxis()
+		motionControllerState.r2State = r2.coerceIn(0f, 1f).triggerResponseCurve().unsignedAxis()
 
 		controllerStateUpdated()
 		return true
