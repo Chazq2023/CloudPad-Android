@@ -97,9 +97,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
+            - Fixed L2/R2 not responding to a gradual squeeze (only registering once fully pressed): DualShock/DualSense controllers report trigger travel on a different axis code (AXIS_BRAKE/AXIS_GAS) than the one the app was reading (AXIS_LTRIGGER/AXIS_RTRIGGER), so no analog data was ever seen for those pads — the app now checks both axis codes and uses whichever the connected controller actually populates, restoring true analog trigger pressure for racing games and similar
             - Removed the Microphone feature entirely (Settings toggle, in-stream toggle and native capture pipeline): PS Cloud Play sessions never establish the console control connection the mic signal relies on, so it could never actually reach the console/cloud backend for this app's use case
             - Quick Settings panel now lists Disconnect, Stats, On-Screen Controls, Touchpad Only and Window Size only; Disconnect stays pinned at the top, the rest remain staged (only applied on Save, discarded on back) with On-Screen Controls and Touchpad Only still mutually exclusive
-            - Fixed controller remapping capturing a spurious combo (e.g. R2 + Axis RTRIGGER) instead of a clean analog input when mapping L2/R2 or an analog stick direction — some controllers send both a digital button event and an analog axis event for the same physical trigger/stick push
 
             ### APK
             Attached release asset:

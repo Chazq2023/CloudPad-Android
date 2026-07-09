@@ -554,11 +554,23 @@ class StreamInput(
 		fun Float.unsignedAxis() = (this * UByte.MAX_VALUE.toFloat()).toUInt().toUByte()
 		fun Float.coerceSigned() = coerceIn(-1f, 1f)
 
+		// L2/R2 travel is reported on different axis codes depending on the controller's
+		// driver: Xbox-style pads use AXIS_LTRIGGER/AXIS_RTRIGGER, while DualShock/DualSense
+		// pads commonly report the same physical trigger via AXIS_BRAKE/AXIS_GAS instead.
+		// Checking both and taking whichever is populated means the default mapping gets
+		// a genuine analog reading regardless of which axis the connected pad actually uses.
+		fun MotionEvent.resolvedAxisValue(axis: Int): Float = when(axis)
+		{
+			MotionEvent.AXIS_LTRIGGER -> maxOf(getAxisValue(axis), getAxisValue(MotionEvent.AXIS_BRAKE))
+			MotionEvent.AXIS_RTRIGGER -> maxOf(getAxisValue(axis), getAxisValue(MotionEvent.AXIS_GAS))
+			else -> getAxisValue(axis)
+		}
+
 		// Update last-known axis values for combo edge detection
 		for(combo in comboEntries)
 		{
 			if(combo.trigger is PhysicalInput.AxisDirection)
-				lastAxisValues[combo.trigger.axis] = event.getAxisValue(combo.trigger.axis)
+				lastAxisValues[combo.trigger.axis] = event.resolvedAxisValue(combo.trigger.axis)
 		}
 
 		// Combo axis triggers (modifier held + axis movement)
@@ -568,7 +580,7 @@ class StreamInput(
 			{
 				if(combo.trigger !is PhysicalInput.AxisDirection) continue
 				if(combo.modifierKeyCode !in heldModifiers) continue
-				val rawValue = event.getAxisValue(combo.trigger.axis)
+				val rawValue = event.resolvedAxisValue(combo.trigger.axis)
 				val dirValue = if(combo.trigger.positive) maxOf(0f, rawValue) else maxOf(0f, -rawValue)
 				if(dirValue > 0.5f)
 				{
@@ -594,7 +606,7 @@ class StreamInput(
 		for((action, axis, positive) in singleAxisMappings)
 		{
 			if((axis to positive) in triggeredComboAxes) continue
-			val rawValue = event.getAxisValue(axis)
+			val rawValue = event.resolvedAxisValue(axis)
 			val dirValue = if(positive) maxOf(0f, rawValue) else maxOf(0f, -rawValue)
 			when(action)
 			{

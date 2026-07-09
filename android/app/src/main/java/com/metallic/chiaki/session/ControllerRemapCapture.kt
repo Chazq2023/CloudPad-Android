@@ -133,7 +133,11 @@ class ControllerRemapCapture(
 		val axes = listOf(
 			MotionEvent.AXIS_X, MotionEvent.AXIS_Y,
 			MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ,
+			// L2/R2 travel is reported via AXIS_LTRIGGER/AXIS_RTRIGGER on Xbox-style pads,
+			// but via AXIS_BRAKE/AXIS_GAS on DualShock/DualSense pads — scan both so capture
+			// works regardless of which axis the connected controller actually populates.
 			MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_RTRIGGER,
+			MotionEvent.AXIS_BRAKE, MotionEvent.AXIS_GAS,
 			MotionEvent.AXIS_HAT_X, MotionEvent.AXIS_HAT_Y
 		)
 		for (axis in axes) {
