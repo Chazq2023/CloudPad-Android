@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
@@ -140,10 +141,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 
-		panel.root.animate().cancel()
-		panel.root.animate().translationX(0f).setDuration(220L)
-			.withEndAction { Log.i("QuickSettingsPanel", "open animation ended: translationX=${panel.root.translationX}, isOpen=$isOpen") }
-			.start()
+		animateTranslationTo(0f) { Log.i("QuickSettingsPanel", "open animation ended: translationX=${panel.root.translationX}, isOpen=$isOpen") }
 	}
 
 	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Mic/Window Size) edits. */
@@ -159,14 +157,38 @@ class QuickSettingsPanel(
 			return
 		}
 		isOpen = false
-		panel.root.animate().cancel()
-		panel.root.animate().translationX(panelWidthPx).setDuration(220L).start()
+		animateTranslationTo(panelWidthPx)
 	}
 
 	fun toggle()
 	{
 		Log.i("QuickSettingsPanel", "toggle() called, isOpen=$isOpen")
 		if(isOpen) discardAndClose() else open()
+	}
+
+	/**
+	 * Slides the panel to [targetX]. The panel sits above a SurfaceView (the video surface,
+	 * which composites on its own hardware layer); a transform-only change on a plain view can
+	 * occasionally fail to trigger a proper recomposite against it, leaving the animation's
+	 * *state* correct (translationX/isOpen end up right) while the actual displayed frame
+	 * doesn't move — confirmed via logging where the animation completed successfully but
+	 * nothing visibly appeared. Forcing a hardware layer for the duration of the animation,
+	 * plus an explicit invalidate() on every frame, is the standard fix for this class of
+	 * SurfaceView/compositing issue.
+	 */
+	private fun animateTranslationTo(targetX: Float, onEnd: (() -> Unit)? = null)
+	{
+		val root = panel.root
+		root.animate().cancel()
+		root.setLayerType(View.LAYER_TYPE_HARDWARE, null)
+		root.animate().translationX(targetX).setDuration(220L)
+			.setUpdateListener { root.invalidate() }
+			.withEndAction {
+				root.setLayerType(View.LAYER_TYPE_NONE, null)
+				root.invalidate()
+				onEnd?.invoke()
+			}
+			.start()
 	}
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)
