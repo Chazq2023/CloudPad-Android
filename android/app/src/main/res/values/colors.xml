@@ -7,9 +7,7 @@
     <color name="accent">#FF149D</color>
     <color name="accent_light">#FF4FBE</color>
 
-    <color name="stream_text">@android:color/white</color>
     <color name="stream_background">@android:color/black</color>
-    <color name="stream_overlay_background">#77000000</color>
     <color name="stream_panel_background">#F0121212</color>
 
     <color name="floating_action_button_speed_dial_background">#FF149D</color>

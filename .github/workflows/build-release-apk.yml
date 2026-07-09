@@ -98,10 +98,11 @@ jobs:
 
             ### Updates
             - Added a Microphone setting (off by default) that streams real mic audio to the console for Remote Play/party voice chat, using native Oboe capture + the existing Opus encoder pipeline already used by other Chiaki platforms; requests the RECORD_AUDIO permission only from the Settings screen so it never interrupts an active stream
-            - Added a matching microphone toggle to the in-stream overlay, wired the same way as the existing performance-overlay toggle
-            - Added a cog icon to the in-stream overlay that opens a new Quick Settings slide-in panel without pausing or disconnecting the stream, covering Theme Colour, Remap Controller, Motion, Touch Haptics and Picture-in-Picture
-            - Motion, Touch Haptics and Picture-in-Picture toggles in the new panel take effect immediately on a live stream; Theme Colour and Remap Controller changes save immediately, with the controller remap taking effect on the current stream once Save is pressed
-            - Extracted the controller remap "listen for next input" logic into a shared component so it's used identically by both the full-screen Settings > Remap Controller screen and the new in-stream panel
+            - Replaced the in-stream bottom overlay bar entirely with a Quick Settings slide-in panel, opened by pressing back: Disconnect, Stats, Microphone, On-Screen Controls, Touchpad Only and Window Size all now live there
+            - Disconnect is pinned at the top of the panel (always visible, doesn't scroll); Stats, Microphone, On-Screen Controls, Touchpad Only and Window Size are staged — changes only take effect when Save is pressed, and are discarded if you press back again instead; On-Screen Controls and Touchpad Only remain mutually exclusive
+            - Quick Settings panel text now follows the app's selected theme colour, matching the rest of the app; removed the Theme Colour picker from the panel (still changeable from Settings)
+            - Motion, Touch Haptics and Picture-in-Picture toggles in the panel still take effect immediately on the live stream; Remap Controller edits save immediately and take effect on the current stream once Save is pressed
+            - Extracted the controller remap "listen for next input" logic into a shared component so it's used identically by both the full-screen Settings > Remap Controller screen and the in-stream panel
 
             ### APK
             Attached release asset:

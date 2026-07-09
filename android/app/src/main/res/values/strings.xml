@@ -153,6 +153,10 @@
     <string name="quick_settings_close">Close</string>
     <string name="quick_settings_save">Save</string>
     <string name="quick_settings_saved">Settings saved</string>
+    <string name="quick_settings_stats_title">Stats</string>
+    <string name="quick_settings_osc_title">On-Screen Controls</string>
+    <string name="quick_settings_touchpad_title">Touchpad Only</string>
+    <string name="quick_settings_window_size">Window Size</string>
     <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %s with ID %s?</string>
     <string name="alert_message_delete_manual_host">Are you sure you want to delete the console entry for %s?</string>
     <string name="action_keep">Keep</string>

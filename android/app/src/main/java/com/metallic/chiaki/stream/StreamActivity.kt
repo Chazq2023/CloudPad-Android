@@ -2,14 +2,10 @@
 
 package com.metallic.chiaki.stream
 
-import android.Manifest
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
 import android.app.PictureInPictureParams
-import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Matrix
 import android.os.*
@@ -18,7 +14,6 @@ import android.util.Rational
 import android.view.*
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -75,6 +70,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	/** [SystemClock.elapsedRealtime] when this session entered [StreamStateConnected]; 0 if not connected. */
 	private var connectedAtElapsedRealtime: Long = 0L
 
+	/** Currently-applied window size / display mode. Only changes when the Quick Settings
+	 *  panel's Save button is pressed — the panel's own toggle group is staged separately. */
+	private var currentDisplayMode: TransformMode = TransformMode.FIT
+
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
 		val prefs = Preferences(this)
@@ -98,65 +97,25 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		setContentView(binding.root)
 		window.decorView.setOnSystemUiVisibilityChangeListener(this)
 
-		viewModel.onScreenControlsEnabled.observe(this, Observer {
-			if(binding.onScreenControlsSwitch.isChecked != it)
-				binding.onScreenControlsSwitch.isChecked = it
-			if(binding.onScreenControlsSwitch.isChecked)
-				binding.touchpadOnlySwitch.isChecked = false
-		})
-		binding.onScreenControlsSwitch.setOnCheckedChangeListener { _, isChecked ->
-			viewModel.setOnScreenControlsEnabled(isChecked)
-			showOverlay()
-		}
+		// Quick Settings panel — replaces the old bottom overlay bar entirely. Disconnect,
+		// Stats, Microphone, On-Screen Controls, Touchpad Only and Window Size all live here
+		// now; pressing back opens it, Save applies the staged changes, pressing back again
+		// discards them. Motion/Touch Haptics/PiP/Remap Controller behave as before.
+		quickSettingsPanel = QuickSettingsPanel(
+			activity = this,
+			binding = binding,
+			preferences = viewModel.preferences,
+			streamInput = viewModel.input,
+			viewModel = viewModel,
+			getDisplayMode = { currentDisplayMode },
+			onSaveDisplayMode = { mode ->
+				currentDisplayMode = mode
+				adjustStreamViewAspect()
+			}
+		)
 
-		viewModel.touchpadOnlyEnabled.observe(this, Observer {
-			if(binding.touchpadOnlySwitch.isChecked != it)
-				binding.touchpadOnlySwitch.isChecked = it
-			if(binding.touchpadOnlySwitch.isChecked)
-				binding.onScreenControlsSwitch.isChecked = false
-		})
-		binding.touchpadOnlySwitch.setOnCheckedChangeListener { _, isChecked ->
-			viewModel.setTouchpadOnlyEnabled(isChecked)
-			showOverlay()
-		}
-
-		binding.displayModeToggle.addOnButtonCheckedListener { _, _, _ ->
-			adjustStreamViewAspect()
-			showOverlay()
-		}
-
-		// Disconnect button to exit stream
-		binding.disconnectButton.setOnClickListener {
-			finish()
-		}
-
-		// Performance overlay toggle button
-		binding.performanceOverlayToggle.setOnClickListener {
-			viewModel.setShowPerformanceOverlay(!(viewModel.showPerformanceOverlay.value ?: false))
-			showOverlay()
-		}
-
-		viewModel.showPerformanceOverlay.observe(this, Observer { show ->
-			binding.performanceOverlayToggle.isChecked = show
-		})
-
-		// Microphone toggle
-		binding.micToggle.setOnClickListener {
-			viewModel.setMicEnabled(!(viewModel.micEnabled.value ?: false))
-			showOverlay()
-		}
-		viewModel.micEnabled.observe(this, Observer { enabled ->
-			binding.micToggle.isChecked = enabled
-		})
-
-		// Quick Settings panel (Theme Colour, Remap Controller, Motion, Touch Haptics, PiP)
-		quickSettingsPanel = QuickSettingsPanel(this, binding, viewModel.preferences, viewModel.input)
-		binding.quickSettingsButton.setOnClickListener {
-			quickSettingsPanel.toggle()
-			showOverlay()
-		}
-
-		// Handle back button — on TV show a disconnect confirmation dialog; on touch show the overlay
+		// Handle back button — on TV show a disconnect confirmation dialog; on touch,
+		// toggle the Quick Settings panel (open if closed, discard-and-close if open).
 		onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
 				if (isTv()) {
@@ -166,7 +125,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 						.setNegativeButton("Cancel", null)
 						.show()
 				} else {
-					showOverlay()
+					quickSettingsPanel.toggle()
 				}
 			}
 		})
@@ -187,8 +146,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		})
 
 		if (isTv()) {
-			// On TV: hide the touch-oriented overlay and controls permanently
-			binding.overlay.isGone = true
+			// On TV: the Quick Settings panel isn't reachable (no back-toggle interaction model)
+			binding.quickSettingsPanel.root.isGone = true
 		}
 
 	}
@@ -219,13 +178,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		activityStopped = false
 		Log.i("StreamActivity", "onResume: pip=$isInPictureInPictureMode session=${viewModel.session.session != null}")
 		hideSystemUI()
-
-		// Reflect current RECORD_AUDIO permission state; this never itself requests the
-		// permission (that only happens proactively from Settings, never mid-stream).
-		val micPermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-		binding.micToggle.isEnabled = micPermissionGranted
-		if (!micPermissionGranted)
-			binding.micToggle.isChecked = false
 
 		viewModel.session.resume()
 	}
@@ -331,7 +283,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			savedOnScreenControlsEnabled = viewModel.onScreenControlsEnabled.value ?: false
 			savedTouchpadOnlyEnabled = viewModel.touchpadOnlyEnabled.value ?: false
 
-			hideOverlay()
+			quickSettingsPanel.discardAndClose()
 			viewModel.setOnScreenControlsEnabled(false)
 			viewModel.setTouchpadOnlyEnabled(false)
 			binding.progressBar.isGone = true
@@ -349,7 +301,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			{
 				viewModel.setOnScreenControlsEnabled(savedOnScreenControlsEnabled)
 				viewModel.setTouchpadOnlyEnabled(savedTouchpadOnlyEnabled)
-				hideOverlay()
 				hideSystemUI()
 			}
 		}
@@ -365,49 +316,15 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private val hideSystemUIRunnable = Runnable { hideSystemUI() }
 
-	private val hideOverlayRunnable = Runnable { hideOverlay() }
-
 	override fun onSystemUiVisibilityChange(visibility: Int)
 	{
+		// If the system bars become visible (e.g. an edge swipe in immersive mode),
+		// re-hide them again after a short delay.
 		if(visibility and View.SYSTEM_UI_FLAG_FULLSCREEN == 0)
-			showOverlay()
-		else
-			hideOverlay()
-	}
-
-	private fun showOverlay()
-	{
-		if (isTv()) return
-
-		binding.overlay.isVisible = true
-		binding.overlay.animate()
-			.alpha(1.0f)
-			.setListener(object: AnimatorListenerAdapter()
-			{
-				override fun onAnimationEnd(animation: Animator)
-				{
-					binding.overlay.alpha = 1.0f
-				}
-			})
-
-		uiVisibilityHandler.removeCallbacks(hideSystemUIRunnable)
-		uiVisibilityHandler.removeCallbacks(hideOverlayRunnable)
-
-		uiVisibilityHandler.postDelayed(hideSystemUIRunnable, HIDE_UI_TIMEOUT_MS)
-		uiVisibilityHandler.postDelayed(hideOverlayRunnable, HIDE_UI_TIMEOUT_MS)
-	}
-
-	private fun hideOverlay()
-	{
-		binding.overlay.animate()
-			.alpha(0.0f)
-			.setListener(object: AnimatorListenerAdapter()
-			{
-				override fun onAnimationEnd(animation: Animator)
-				{
-					binding.overlay.isGone = true
-				}
-			})
+		{
+			uiVisibilityHandler.removeCallbacks(hideSystemUIRunnable)
+			uiVisibilityHandler.postDelayed(hideSystemUIRunnable, HIDE_UI_TIMEOUT_MS)
+		}
 	}
 
 	override fun onWindowFocusChanged(hasFocus: Boolean)
@@ -559,7 +476,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private fun adjustTextureViewAspect(textureView: TextureView)
 	{
 		val trans = TextureViewTransform(viewModel.session.connectInfo.videoProfile, textureView)
-		val resolution = trans.resolutionFor(TransformMode.fromButton(binding.displayModeToggle.checkedButtonId))
+		val resolution = trans.resolutionFor(currentDisplayMode)
 		Matrix().also {
 			textureView.getTransform(it)
 			it.setScale(resolution.width / trans.viewWidth, resolution.height / trans.viewHeight)
@@ -572,7 +489,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	{
 		val videoProfile = viewModel.session.connectInfo.videoProfile
 		binding.aspectRatioLayout.aspectRatio = videoProfile.width.toFloat() / videoProfile.height.toFloat()
-		binding.aspectRatioLayout.mode = TransformMode.fromButton(binding.displayModeToggle.checkedButtonId)
+		binding.aspectRatioLayout.mode = currentDisplayMode
 	}
 
 	private fun adjustStreamViewAspect() = adjustSurfaceViewAspect()
@@ -603,8 +520,8 @@ enum class TransformMode
 		fun fromButton(displayModeButtonId: Int)
 			= when (displayModeButtonId)
 			{
-				R.id.display_mode_stretch_button -> STRETCH
-				R.id.display_mode_zoom_button -> ZOOM
+				R.id.quickSettingsDisplayModeStretch -> STRETCH
+				R.id.quickSettingsDisplayModeZoom -> ZOOM
 				else -> FIT
 			}
 	}

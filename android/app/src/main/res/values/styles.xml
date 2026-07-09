@@ -323,6 +323,6 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.1</item>
-        <item name="android:textColor">@color/stream_text</item>
+        <item name="android:textColor">?attr/pyluxAccent</item>
     </style>
 </resources>
