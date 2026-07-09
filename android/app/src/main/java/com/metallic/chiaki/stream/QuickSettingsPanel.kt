@@ -3,13 +3,10 @@
 package com.metallic.chiaki.stream
 
 import android.Manifest
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.content.pm.PackageManager
 import android.view.KeyEvent
 import android.view.MotionEvent
 import androidx.core.content.ContextCompat
-import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import com.metallic.chiaki.common.Preferences
@@ -43,6 +40,14 @@ class QuickSettingsPanel(
 ) {
 	private val panel = binding.quickSettingsPanel
 	private val snackbarAnchor = binding.root
+
+	// The panel is kept permanently View.VISIBLE and only ever moved via translationX — never
+	// toggled GONE/VISIBLE. Toggling visibility on a view overlapping a SurfaceView (the video
+	// surface, which composites on its own layer) can leave the view stuck un-rendered until
+	// something forces a full window redraw (e.g. pulling down the notification shade) — this
+	// sidesteps that entirely, since translationX is a pure render-time transform that doesn't
+	// remove the view from the layout/draw tree.
+	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
 
 	private val currentMapping: MutableMap<ControllerAction, PhysicalInput> =
 		PhysicalInput.resolveMapping(preferences.loadControllerMapping()).toMutableMap()
@@ -107,6 +112,9 @@ class QuickSettingsPanel(
 		panel.quickSettingsCloseButton.setOnClickListener { discardAndClose() }
 		panel.quickSettingsDisconnectButton.setOnClickListener { activity.finish() }
 		panel.quickSettingsSaveButton.setOnClickListener { onSaveClicked() }
+
+		// Start off-screen (closed) without ever having gone through a GONE state.
+		panel.root.translationX = panelWidthPx
 	}
 
 	fun open()
@@ -130,14 +138,8 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 
-		val root = panel.root
-		// Cancel any in-flight close animation first — otherwise a rapid open/close/open in
-		// quick succession can leave a stale onAnimationEnd callback pending, which would hide
-		// the panel again right after this reopens it (it looked like the panel "got stuck").
-		root.animate().cancel()
-		root.isVisible = true
-		root.translationX = if(root.width > 0) root.width.toFloat() else 320f
-		root.animate().translationX(0f).setDuration(220L).setListener(null).start()
+		panel.root.animate().cancel()
+		panel.root.animate().translationX(0f).setDuration(220L).start()
 	}
 
 	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Mic/Window Size) edits. */
@@ -145,23 +147,12 @@ class QuickSettingsPanel(
 	{
 		if(!isOpen)
 		{
-			panel.root.isVisible = false
+			panel.root.translationX = panelWidthPx
 			return
 		}
 		isOpen = false
-		val root = panel.root
-		root.animate().cancel()
-		root.animate().translationX(root.width.toFloat()).setDuration(220L)
-			.setListener(object: AnimatorListenerAdapter()
-			{
-				override fun onAnimationEnd(animation: Animator)
-				{
-					// Guard against a stale callback firing after a subsequent open() call
-					// already flipped the panel back to open.
-					if(!isOpen)
-						root.isVisible = false
-				}
-			}).start()
+		panel.root.animate().cancel()
+		panel.root.animate().translationX(panelWidthPx).setDuration(220L).start()
 	}
 
 	fun toggle() = if(isOpen) discardAndClose() else open()

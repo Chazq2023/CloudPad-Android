@@ -110,7 +110,7 @@ jobs:
             - Fixed the microphone not actually turning off when disabled — the app now genuinely stops the mic capture stream instead of just muting the outgoing audio, which should also release the OS mic/recording indicator
             - Added voice-communication audio routing (MODE_IN_COMMUNICATION) while the mic is active, to better prefer a connected headset's microphone over the phone's built-in one
             - Fixed controller remapping capturing a spurious combo (e.g. R2 + Axis RTRIGGER) instead of a clean analog input when mapping L2/R2 or an analog stick direction — some controllers send both a digital button event and an analog axis event for the same physical trigger/stick push
-            - Fixed the Quick Settings panel occasionally failing to reopen after being closed and reopened in quick succession
+            - Fixed the Quick Settings panel getting stuck off-screen on reopen: it's no longer toggled GONE/VISIBLE (which could conflict with the video surface's own rendering layer) — it now stays permanently visible and only ever slides via a position transform
 
             ### APK
             Attached release asset:

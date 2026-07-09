@@ -46,12 +46,14 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
+    <!-- Always VISIBLE; QuickSettingsPanel moves it on/off-screen via translationX only,
+         so it's never toggled GONE (avoids a SurfaceView-recompositing glitch where a view
+         re-shown after GONE can get stuck un-rendered). -->
     <include
         android:id="@+id/quickSettingsPanel"
         layout="@layout/stream_quick_settings_panel"
         android:layout_width="320dp"
         android:layout_height="match_parent"
-        android:layout_gravity="end"
-        android:visibility="gone"/>
+        android:layout_gravity="end"/>
 
 </FrameLayout>
