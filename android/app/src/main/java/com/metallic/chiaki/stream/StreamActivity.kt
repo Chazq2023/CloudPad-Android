@@ -2,12 +2,14 @@
 
 package com.metallic.chiaki.stream
 
+import android.Manifest
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
 import android.app.PictureInPictureParams
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Matrix
 import android.os.*
@@ -16,6 +18,7 @@ import android.util.Rational
 import android.view.*
 import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -55,6 +58,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private lateinit var viewModel: StreamViewModel
 	private lateinit var binding: ActivityStreamBinding
+	private lateinit var quickSettingsPanel: QuickSettingsPanel
 
 	private val uiVisibilityHandler = Handler()
 
@@ -136,6 +140,22 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			binding.performanceOverlayToggle.isChecked = show
 		})
 
+		// Microphone toggle
+		binding.micToggle.setOnClickListener {
+			viewModel.setMicEnabled(!(viewModel.micEnabled.value ?: false))
+			showOverlay()
+		}
+		viewModel.micEnabled.observe(this, Observer { enabled ->
+			binding.micToggle.isChecked = enabled
+		})
+
+		// Quick Settings panel (Theme Colour, Remap Controller, Motion, Touch Haptics, PiP)
+		quickSettingsPanel = QuickSettingsPanel(this, binding, viewModel.preferences, viewModel.input)
+		binding.quickSettingsButton.setOnClickListener {
+			quickSettingsPanel.toggle()
+			showOverlay()
+		}
+
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch show the overlay
 		onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
@@ -199,6 +219,13 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		activityStopped = false
 		Log.i("StreamActivity", "onResume: pip=$isInPictureInPictureMode session=${viewModel.session.session != null}")
 		hideSystemUI()
+
+		// Reflect current RECORD_AUDIO permission state; this never itself requests the
+		// permission (that only happens proactively from Settings, never mid-stream).
+		val micPermissionGranted = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+		binding.micToggle.isEnabled = micPermissionGranted
+		if (!micPermissionGranted)
+			binding.micToggle.isChecked = false
 
 		viewModel.session.resume()
 	}
@@ -550,8 +577,19 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private fun adjustStreamViewAspect() = adjustSurfaceViewAspect()
 
-	override fun dispatchKeyEvent(event: KeyEvent) = viewModel.input.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
-	override fun onGenericMotionEvent(event: MotionEvent) = viewModel.input.onGenericMotionEvent(event) || super.onGenericMotionEvent(event)
+	override fun dispatchKeyEvent(event: KeyEvent): Boolean
+	{
+		if(quickSettingsPanel.isCapturingInput && quickSettingsPanel.handleCaptureKeyEvent(event))
+			return true
+		return viewModel.input.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
+	}
+
+	override fun onGenericMotionEvent(event: MotionEvent): Boolean
+	{
+		if(quickSettingsPanel.isCapturingInput && quickSettingsPanel.handleCaptureMotionEvent(event))
+			return true
+		return viewModel.input.onGenericMotionEvent(event) || super.onGenericMotionEvent(event)
+	}
 }
 
 enum class TransformMode

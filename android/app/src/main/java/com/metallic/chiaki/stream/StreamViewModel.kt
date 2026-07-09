@@ -44,6 +44,9 @@ class StreamViewModel(
 	private var _showPerformanceOverlay = MutableLiveData(preferences.showPerformanceOverlay)
 	val showPerformanceOverlay: LiveData<Boolean> get() = _showPerformanceOverlay
 
+	private var _micEnabled = MutableLiveData(preferences.micEnabled)
+	val micEnabled: LiveData<Boolean> get() = _micEnabled
+
 	private var _overlayData = MutableLiveData<OverlayData>()
 	val overlayData: LiveData<OverlayData> get() = _overlayData
 
@@ -129,7 +132,15 @@ class StreamViewModel(
 		session.state.observeForever { state ->
 			if (state is StreamStateConnected) {
 				startMetricsPolling()
+				applyMicState()
 			}
+		}
+	}
+
+	private fun applyMicState() {
+		if (_micEnabled.value == true) {
+			if (!session.setMicrophoneMuted(false))
+				_micEnabled.postValue(false)
 		}
 	}
 
@@ -152,5 +163,14 @@ class StreamViewModel(
 	fun setShowPerformanceOverlay(show: Boolean) {
 		preferences.showPerformanceOverlay = show
 		_showPerformanceOverlay.value = show
+	}
+
+	fun setMicEnabled(enabled: Boolean) {
+		preferences.micEnabled = enabled
+		_micEnabled.value = enabled
+		if (session.state.value is StreamStateConnected) {
+			if (!session.setMicrophoneMuted(!enabled))
+				_micEnabled.value = false
+		}
 	}
 }

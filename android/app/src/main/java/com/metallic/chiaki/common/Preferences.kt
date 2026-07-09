@@ -103,6 +103,11 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(buttonHapticEnabledKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(buttonHapticEnabledKey, value).apply() }
 
+	val micEnabledKey get() = resources.getString(R.string.preferences_mic_enabled_key)
+	var micEnabled
+		get() = sharedPreferences.getBoolean(micEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(micEnabledKey, value).apply() }
+
 	val logVerboseKey get() = resources.getString(R.string.preferences_log_verbose_key)
 	var logVerbose
 		get() = sharedPreferences.getBoolean(logVerboseKey, false)
