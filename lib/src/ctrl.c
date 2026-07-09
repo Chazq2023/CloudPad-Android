@@ -652,6 +652,28 @@ CHIAKI_EXPORT ChiakiErrorCode ctrl_message_toggle_microphone(ChiakiCtrl *ctrl, b
 	return CHIAKI_ERR_SUCCESS;
 }
 
+// Queued (thread-safe) equivalents for use by application code (chiaki_session_connect_microphone/
+// chiaki_session_toggle_microphone), which may be called from any thread — ctrl_message_send()
+// above mutates ctrl->crypt_counter_local and writes to the socket without any locking, safe only
+// because its only other caller (ctrl_enable_features(), via ctrl_message_received()) always runs
+// on the ctrl thread itself. Calling it directly from another thread races with the ctrl thread's
+// own sends, corrupting the encryption counter and/or message framing for every ctrl message from
+// that point on — which silently breaks the mic (and anything else on the ctrl channel) without
+// any visible error, since the stream/controller channels are unaffected.
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_connect_microphone(ChiakiCtrl *ctrl)
+{
+	uint8_t connect[2] = {0x00, 0x00};
+	return chiaki_ctrl_send_message(ctrl, CTRL_MESSAGE_TYPE_MIC_CONNECT, connect, 0x2);
+}
+
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_toggle_microphone(ChiakiCtrl *ctrl, bool muted)
+{
+	uint8_t toggle[0x4] = {0, 1, 1, 89};
+	if(muted)
+		toggle[2] = 0;
+	return chiaki_ctrl_send_message(ctrl, CTRL_MESSAGE_TYPE_MIC_TOGGLE, toggle, 0x4);
+}
+
 CHIAKI_EXPORT ChiakiErrorCode ctrl_message_set_fallback_session_id(ChiakiCtrl *ctrl)
 {
 	char fallback_session_id[80];

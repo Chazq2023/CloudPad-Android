@@ -1345,15 +1345,18 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_session_goto_bed(ChiakiSession *session)
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_toggle_microphone(ChiakiSession *session, bool muted)
 {
+	// Application-facing API: may be called from any thread (e.g. Android's UI thread), so
+	// this goes through the thread-safe queued path rather than ctrl_message_toggle_microphone
+	// directly — see the comment on chiaki_ctrl_toggle_microphone for why.
 	ChiakiErrorCode err;
-	err = ctrl_message_toggle_microphone(&session->ctrl, muted);
+	err = chiaki_ctrl_toggle_microphone(&session->ctrl, muted);
 	return err;
 }
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_session_connect_microphone(ChiakiSession *session)
 {
 	ChiakiErrorCode err;
-	err = ctrl_message_connect_microphone(&session->ctrl);
+	err = chiaki_ctrl_connect_microphone(&session->ctrl);
 	return err;
 }
 

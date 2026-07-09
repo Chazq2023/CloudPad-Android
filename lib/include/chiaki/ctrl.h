@@ -67,6 +67,13 @@ CHIAKI_EXPORT void chiaki_ctrl_fini(ChiakiCtrl *ctrl);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_send_message(ChiakiCtrl *ctrl, uint16_t type, const uint8_t *payload, size_t payload_size);
 CHIAKI_EXPORT ChiakiErrorCode ctrl_message_toggle_microphone(ChiakiCtrl *ctrl, bool muted);
 CHIAKI_EXPORT ChiakiErrorCode ctrl_message_connect_microphone(ChiakiCtrl *ctrl);
+// Thread-safe (queued via chiaki_ctrl_send_message) equivalents of the two functions above,
+// safe to call from an application thread other than the ctrl thread — see chiaki_ctrl_goto_bed
+// for the same pattern. ctrl_message_toggle_microphone/connect_microphone themselves must stay
+// as direct sends: ctrl_enable_features() calls them from within the ctrl thread while it
+// already holds ctrl->notif_mutex, so routing those through the queue would deadlock.
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_toggle_microphone(ChiakiCtrl *ctrl, bool muted);
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_connect_microphone(ChiakiCtrl *ctrl);
 CHIAKI_EXPORT void chiaki_ctrl_set_login_pin(ChiakiCtrl *ctrl, const uint8_t *pin, size_t pin_size);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_goto_bed(ChiakiCtrl *ctrl);
 CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_keyboard_set_text(ChiakiCtrl *ctrl, const char* text);
