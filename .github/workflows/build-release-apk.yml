@@ -103,6 +103,7 @@ jobs:
             - Quick Settings panel text now follows the app's selected theme colour, matching the rest of the app; removed the Theme Colour picker from the panel (still changeable from Settings)
             - Motion, Touch Haptics and Picture-in-Picture toggles in the panel still take effect immediately on the live stream; Remap Controller edits save immediately and take effect on the current stream once Save is pressed
             - Extracted the controller remap "listen for next input" logic into a shared component so it's used identically by both the full-screen Settings > Remap Controller screen and the in-stream panel
+            - Fixed a crash launching any game while the default Neon Pink theme was selected, caused by the new Quick Settings panel referencing a theme colour attribute the stream screen's theme didn't declare for that colour
 
             ### APK
             Attached release asset:
