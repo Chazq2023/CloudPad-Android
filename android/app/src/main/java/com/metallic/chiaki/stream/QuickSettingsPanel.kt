@@ -24,11 +24,12 @@ import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
 
 /**
  * In-stream "Quick Settings" slide-in panel. Opened by pressing back (replacing the old
- * bottom overlay bar entirely). Disconnect stays pinned at the top regardless of tab. Below
- * it, a left-hand tab rail splits the scrollable body into two sections, only one of which
- * is visible at a time: a Controller tab (Remap Controller) and a General tab (Performance
- * Overlay, On-Screen Controls, Touchpad Only, Window Size, Motion, Touch Haptics,
- * Picture-in-Picture). There is no Save button — every control applies immediately: switches
+ * bottom overlay bar entirely). A left-hand tab rail splits the scrollable body into two
+ * sections, only one of which is visible at a time: a Controller tab (Remap Controller) and
+ * a General tab (Performance Overlay, On-Screen Controls, Touchpad Only, Window Size, Motion,
+ * Touch Haptics, Picture-in-Picture). Disconnect is the power icon pinned bottom-left below
+ * the tab rail, always tinted with the app's theme colour regardless of tab. There is no
+ * Save button — every control applies immediately: switches
  * write straight to [viewModel]/[preferences] and apply live in the same listener that flips
  * them, the Window Size toggle calls [onDisplayModeChanged] as soon as a button is checked, and
  * remap edits both persist immediately and call [StreamInput.reloadMapping] right away so the

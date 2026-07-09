@@ -36,30 +36,29 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/quickSettingsDisconnectButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="0dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="8dp"
-        android:insetTop="0dp"
-        android:insetBottom="0dp"
-        android:minHeight="0dp"
-        android:text="@string/stream_disconnect_button"
-        android:textColor="?attr/pyluxAccent"
-        app:strokeColor="?attr/pyluxAccent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/quickSettingsTitle" />
-
     <com.google.android.material.divider.MaterialDivider
         android:id="@+id/quickSettingsHeaderDivider"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        app:layout_constraintTop_toBottomOf="@id/quickSettingsDisconnectButton" />
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsTitle" />
+
+    <!-- Bottom-left disconnect (power) button. Always tinted with the app's theme colour —
+         unlike the tab rail below, it isn't a toggle with a selected/unselected state, so it
+         uses ?attr/pyluxAccent directly rather than the checked-state colour selector. -->
+    <ImageButton
+        android:id="@+id/quickSettingsDisconnectButton"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/stream_disconnect_button"
+        android:padding="10dp"
+        android:src="@drawable/ic_power"
+        android:tint="?attr/pyluxAccent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- Left-hand tab rail: General Settings / Controller Mapping -->
     <com.google.android.material.button.MaterialButtonToggleGroup
@@ -73,7 +72,7 @@
         app:checkedButton="@id/quickSettingsTabGeneral"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
-        app:layout_constraintBottom_toBottomOf="parent">
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/quickSettingsTabGeneral"

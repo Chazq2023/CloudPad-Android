@@ -97,6 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
+            - Changed the Quick Settings Disconnect button to a power icon pinned bottom-left, always tinted with the app's current theme colour (Pink/Blue/Green/Yellow/Orange), instead of a text button at the top
             - Removed the Save button from Quick Settings: every setting (Performance Overlay, On-Screen Controls, Touchpad Only, Window Size, controller remapping) now applies and takes effect on the live stream the instant you change it, instead of waiting to be saved
             - Renamed "Stats" to "Performance Overlay" in Quick Settings, and shrank the row label text slightly so longer titles like this fit cleanly next to their switch
             - Swapped the Quick Settings panel's tab order: the cog (general settings) icon is now on top, with the controller (remap) icon below it
