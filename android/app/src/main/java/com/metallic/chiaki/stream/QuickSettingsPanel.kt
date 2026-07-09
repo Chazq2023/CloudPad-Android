@@ -51,11 +51,9 @@ import org.json.JSONArray
  * waiting for anything else.
  *
  * The Session tab's settings are baked into the stream at connect time (video profile / cloud
- * allocation), so changing them here can't take effect live — a conditional Refresh action
- * (a circular-arrows icon, appearing below the tab rail only once a Session-tab value differs
- * from what the stream actually connected with) calls [onRefreshRequested] to reconnect/
- * reallocate with the new values. It disappears again after a successful refresh, since that
- * always replaces this whole panel with a fresh instance (see [StreamActivity]).
+ * allocation), so changing them here can't take effect live — a permanent Refresh action (a
+ * circular-arrows icon, just above the power button) calls [onRefreshRequested] to reconnect/
+ * reallocate with whatever the Session tab's values currently are.
  *
  * Hosted in its own [Dialog] (a separate window) rather than a View inside
  * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
@@ -105,48 +103,6 @@ class QuickSettingsPanel(
 	private val capture: ControllerRemapCapture
 
 	private val sessionType: StreamSessionType = viewModel.connectInfo.sessionType
-
-	/** Snapshot of whichever settings the Session tab exposes for [sessionType], captured once
-	 *  here — i.e. before any row below can edit them — so it reflects exactly what the stream
-	 *  actually connected with. [updateRefreshVisibility] compares the live values against this
-	 *  to decide whether the conditional refresh action should be shown. */
-	private data class SessionSnapshot(
-		val remoteResolution: String? = null,
-		val remoteFps: String? = null,
-		val remoteBitrate: Int? = null,
-		val remoteCodec: String? = null,
-		val cloudResolution: Int? = null,
-		val cloudDatacenter: String? = null,
-		val cloudBitrate: Int? = null
-	)
-
-	private fun captureSessionSnapshot(): SessionSnapshot = when(sessionType)
-	{
-		StreamSessionType.REMOTE_PLAY -> SessionSnapshot(
-			remoteResolution = preferences.resolution.value,
-			remoteFps = preferences.fps.value,
-			remoteBitrate = preferences.bitrate,
-			remoteCodec = preferences.codec.value
-		)
-		StreamSessionType.CATALOG_PSNOW -> SessionSnapshot(
-			cloudResolution = preferences.getCloudResolutionPsnow(),
-			cloudDatacenter = preferences.getCloudDatacenterPsnow(),
-			cloudBitrate = preferences.getCloudBitratePsnow()
-		)
-		StreamSessionType.LIBRARY_PSCLOUD -> SessionSnapshot(
-			cloudResolution = preferences.getCloudResolutionPscloud(),
-			cloudDatacenter = preferences.getCloudDatacenterPscloud(),
-			cloudBitrate = preferences.getCloudBitratePscloud()
-		)
-	}
-
-	private val sessionBaselineSnapshot: SessionSnapshot = captureSessionSnapshot()
-
-	private fun updateRefreshVisibility()
-	{
-		panel.quickSettingsRefreshButton.visibility =
-			if(captureSessionSnapshot() != sessionBaselineSnapshot) View.VISIBLE else View.GONE
-	}
 
 	var isOpen = false
 		private set
@@ -268,7 +224,6 @@ class QuickSettingsPanel(
 			currentValue = preferences.resolution.value
 		) { value ->
 			Preferences.resolutionAll.firstOrNull { it.value == value }?.let { preferences.resolution = it }
-			updateRefreshVisibility()
 		}
 
 		addDropdownRow(
@@ -278,7 +233,6 @@ class QuickSettingsPanel(
 			currentValue = preferences.fps.value
 		) { value ->
 			Preferences.fpsAll.firstOrNull { it.value == value }?.let { preferences.fps = it }
-			updateRefreshVisibility()
 		}
 
 		addEditTextRow(
@@ -287,7 +241,6 @@ class QuickSettingsPanel(
 			currentValue = preferences.bitrate
 		) { value ->
 			preferences.bitrate = value
-			updateRefreshVisibility()
 		}
 
 		addDropdownRow(
@@ -297,7 +250,6 @@ class QuickSettingsPanel(
 			currentValue = preferences.codec.value
 		) { value ->
 			Preferences.codecAll.firstOrNull { it.value == value }?.let { preferences.codec = it }
-			updateRefreshVisibility()
 		}
 	}
 
@@ -322,7 +274,6 @@ class QuickSettingsPanel(
 		) { value ->
 			val intValue = value.toIntOrNull() ?: return@addDropdownRow
 			if(isLibrary) preferences.setCloudResolutionPscloud(intValue) else preferences.setCloudResolutionPsnow(intValue)
-			updateRefreshVisibility()
 		}
 
 		val (dcEntries, dcValues) = datacenterEntries(
@@ -335,7 +286,6 @@ class QuickSettingsPanel(
 			dcEntries, dcValues, currentDc
 		) { value ->
 			if(isLibrary) preferences.setCloudDatacenterPscloud(value) else preferences.setCloudDatacenterPsnow(value)
-			updateRefreshVisibility()
 		}
 
 		val bitrateSummaryRes = if(isLibrary) R.string.preferences_cloud_bitrate_pscloud_summary else R.string.preferences_cloud_bitrate_psnow_summary
@@ -345,7 +295,6 @@ class QuickSettingsPanel(
 			min = 2, max = 200, currentValue = currentBitrateMbps
 		) { valueMbps ->
 			if(isLibrary) preferences.setCloudBitratePscloud(valueMbps * 1000) else preferences.setCloudBitratePsnow(valueMbps * 1000)
-			updateRefreshVisibility()
 		}
 	}
 

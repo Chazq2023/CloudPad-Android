@@ -58,16 +58,14 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Conditional refresh action, shown only once a session-tab setting has changed since
-         the stream was last (re)connected. Not part of the tab toggle group below — pressing
-         it fires a one-shot refresh rather than switching to a content section. GONE by
-         default; when hidden, the tab toggle group's bottom constraint reclaims its space. -->
+    <!-- Refresh action, always present just above the power (Disconnect) button. Not part of
+         the tab toggle group below — pressing it fires a one-shot refresh rather than
+         switching to a content section. -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/quickSettingsRefreshButton"
         style="@style/QuickSettingsTabButton"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="8dp"
-        android:visibility="gone"
         android:contentDescription="@string/quick_settings_refresh"
         app:icon="@drawable/ic_refresh"
         app:iconTint="?attr/pyluxAccent"
