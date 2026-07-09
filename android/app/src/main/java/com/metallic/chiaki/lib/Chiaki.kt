@@ -82,6 +82,12 @@ data class ConnectInfo(
 	val cloudMtuIn: Int = 0,
 	val cloudMtuOut: Int = 0,
 	val cloudRttUs: Long = 0L,
+	// Identifies the game this cloud session is streaming, kept alongside the (short-lived)
+	// allocation fields above so an in-stream "refresh" can re-run the same allocation flow
+	// for the same game later, without needing to go back through the Catalog/Library screen.
+	val cloudGameIdentifier: String? = null,
+	val cloudGameName: String? = null,
+	val cloudOwnedEntitlementId: String? = null,
 	// PSN Remote Play fields (for holepunch connections)
 	val duid: String? = null,
 	val psnToken: String? = null,
@@ -89,6 +95,18 @@ data class ConnectInfo(
 	val holepunchSessionPtr: Long = 0L,
 	val autoRegist: Boolean = false // true for PSN auto-registration via holepunch
 ): Parcelable
+
+/** Which of the three session flows a [ConnectInfo] represents. There's no explicit flag for
+ *  this on the wire — it's inferred the same way [com.metallic.chiaki.stream.StreamViewModel]
+ *  already does for its connection header text. */
+enum class StreamSessionType { REMOTE_PLAY, CATALOG_PSNOW, LIBRARY_PSCLOUD }
+
+val ConnectInfo.sessionType: StreamSessionType get() = when
+{
+	cloudSessionId.isNullOrBlank() -> StreamSessionType.REMOTE_PLAY
+	serviceType == "pscloud" -> StreamSessionType.LIBRARY_PSCLOUD
+	else -> StreamSessionType.CATALOG_PSNOW
+}
 
 /** Device info returned by PSN holepunch device listing */
 data class PsnDevice(

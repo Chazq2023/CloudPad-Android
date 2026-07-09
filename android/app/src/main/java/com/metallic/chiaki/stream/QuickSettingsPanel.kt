@@ -11,8 +11,16 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.Window
 import android.view.WindowManager
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.LinearLayout
+import android.widget.SeekBar
+import android.widget.TextView
+import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.lib.StreamSessionType
+import com.metallic.chiaki.lib.sessionType
 import com.metallic.chiaki.session.ControllerAction
 import com.metallic.chiaki.session.ControllerRemapCapture
 import com.metallic.chiaki.session.PhysicalInput
@@ -20,20 +28,34 @@ import com.metallic.chiaki.session.StreamInput
 import com.metallic.chiaki.settings.RemapAdapter
 import com.metallic.chiaki.settings.RemapItem
 import com.pylux.stream.R
+import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
+import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
+import com.pylux.stream.databinding.ItemQuickSettingsSeekbarBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
+import org.json.JSONArray
 
 /**
  * In-stream "Quick Settings" slide-in panel. Opened by pressing back (replacing the old
- * bottom overlay bar entirely). A left-hand tab rail splits the scrollable body into two
- * sections, only one of which is visible at a time: a Controller tab (Remap Controller) and
- * a General tab (Performance Overlay, On-Screen Controls, Touchpad Only, Window Size, Motion,
- * Touch Haptics, Picture-in-Picture). Disconnect is the power icon pinned bottom-left below
- * the tab rail, always tinted with the app's theme colour regardless of tab. There is no
- * Save button — every control applies immediately: switches
- * write straight to [viewModel]/[preferences] and apply live in the same listener that flips
- * them, the Window Size toggle calls [onDisplayModeChanged] as soon as a button is checked, and
- * remap edits both persist immediately and call [StreamInput.reloadMapping] right away so the
- * live session picks up the new mapping without waiting for anything else.
+ * bottom overlay bar entirely). A left-hand tab rail splits the scrollable body into three
+ * sections, only one of which is visible at a time: a General tab (Performance Overlay,
+ * On-Screen Controls, Touchpad Only, Window Size, Motion, Touch Haptics, Picture-in-Picture),
+ * a Controller tab (Remap Controller), and a Session tab whose content depends on the current
+ * [StreamSessionType] — Remote Play/Resolution/FPS/Bitrate/Codec, Game Catalog, or Game
+ * Library streaming settings, built at construction time since the type never changes during
+ * one Activity's lifetime. Disconnect is the power icon pinned bottom-left below the tab rail,
+ * always tinted with the app's theme colour regardless of tab. There is no Save button — every
+ * control applies immediately: switches write straight to [viewModel]/[preferences] and apply
+ * live in the same listener that flips them, the Window Size toggle calls [onDisplayModeChanged]
+ * as soon as a button is checked, and remap edits both persist immediately and call
+ * [StreamInput.reloadMapping] right away so the live session picks up the new mapping without
+ * waiting for anything else.
+ *
+ * The Session tab's settings are baked into the stream at connect time (video profile / cloud
+ * allocation), so changing them here can't take effect live — a conditional Refresh action
+ * (a circular-arrows icon, appearing below the tab rail only once a Session-tab value differs
+ * from what the stream actually connected with) calls [onRefreshRequested] to reconnect/
+ * reallocate with the new values. It disappears again after a successful refresh, since that
+ * always replaces this whole panel with a fresh instance (see [StreamActivity]).
  *
  * Hosted in its own [Dialog] (a separate window) rather than a View inside
  * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
@@ -49,7 +71,8 @@ class QuickSettingsPanel(
 	private val streamInput: StreamInput,
 	private val viewModel: StreamViewModel,
 	private val getDisplayMode: () -> TransformMode,
-	private val onDisplayModeChanged: (TransformMode) -> Unit
+	private val onDisplayModeChanged: (TransformMode) -> Unit,
+	private val onRefreshRequested: () -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater)
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
@@ -80,6 +103,50 @@ class QuickSettingsPanel(
 
 	private val remapAdapter: RemapAdapter
 	private val capture: ControllerRemapCapture
+
+	private val sessionType: StreamSessionType = viewModel.connectInfo.sessionType
+
+	/** Snapshot of whichever settings the Session tab exposes for [sessionType], captured once
+	 *  here — i.e. before any row below can edit them — so it reflects exactly what the stream
+	 *  actually connected with. [updateRefreshVisibility] compares the live values against this
+	 *  to decide whether the conditional refresh action should be shown. */
+	private data class SessionSnapshot(
+		val remoteResolution: String? = null,
+		val remoteFps: String? = null,
+		val remoteBitrate: Int? = null,
+		val remoteCodec: String? = null,
+		val cloudResolution: Int? = null,
+		val cloudDatacenter: String? = null,
+		val cloudBitrate: Int? = null
+	)
+
+	private fun captureSessionSnapshot(): SessionSnapshot = when(sessionType)
+	{
+		StreamSessionType.REMOTE_PLAY -> SessionSnapshot(
+			remoteResolution = preferences.resolution.value,
+			remoteFps = preferences.fps.value,
+			remoteBitrate = preferences.bitrate,
+			remoteCodec = preferences.codec.value
+		)
+		StreamSessionType.CATALOG_PSNOW -> SessionSnapshot(
+			cloudResolution = preferences.getCloudResolutionPsnow(),
+			cloudDatacenter = preferences.getCloudDatacenterPsnow(),
+			cloudBitrate = preferences.getCloudBitratePsnow()
+		)
+		StreamSessionType.LIBRARY_PSCLOUD -> SessionSnapshot(
+			cloudResolution = preferences.getCloudResolutionPscloud(),
+			cloudDatacenter = preferences.getCloudDatacenterPscloud(),
+			cloudBitrate = preferences.getCloudBitratePscloud()
+		)
+	}
+
+	private val sessionBaselineSnapshot: SessionSnapshot = captureSessionSnapshot()
+
+	private fun updateRefreshVisibility()
+	{
+		panel.quickSettingsRefreshButton.visibility =
+			if(captureSessionSnapshot() != sessionBaselineSnapshot) View.VISIBLE else View.GONE
+	}
 
 	var isOpen = false
 		private set
@@ -146,11 +213,15 @@ class QuickSettingsPanel(
 
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
 		panel.quickSettingsDisconnectButton.setOnClickListener { activity.finish() }
+		panel.quickSettingsRefreshButton.setOnClickListener { onRefreshRequested() }
 
-		// Left-hand tab rail: Controller Mapping / General Settings. Only one section is
-		// visible at a time; the toggle group's own checked-state colouring (theme colour
-		// when selected, white otherwise) is handled entirely by QuickSettingsTabButton's
-		// icon/stroke colour selector, so this listener only needs to swap section visibility.
+		buildSessionSettingsTab()
+
+		// Left-hand tab rail: General Settings / Controller Mapping / Session Settings. Only
+		// one section is visible at a time; the toggle group's own checked-state colouring
+		// (theme colour when selected, white otherwise) is handled entirely by
+		// QuickSettingsTabButton's icon/stroke colour selector, so this listener only needs
+		// to swap section visibility.
 		panel.quickSettingsTabToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
 			if(!isChecked) return@addOnButtonCheckedListener
 			showTab(checkedId)
@@ -163,9 +234,218 @@ class QuickSettingsPanel(
 
 	private fun showTab(checkedButtonId: Int)
 	{
-		val showController = checkedButtonId == R.id.quickSettingsTabController
-		panel.quickSettingsControllerSection.visibility = if(showController) View.VISIBLE else View.GONE
-		panel.quickSettingsGeneralScroll.visibility = if(showController) View.GONE else View.VISIBLE
+		panel.quickSettingsControllerSection.visibility =
+			if(checkedButtonId == R.id.quickSettingsTabController) View.VISIBLE else View.GONE
+		panel.quickSettingsGeneralScroll.visibility =
+			if(checkedButtonId == R.id.quickSettingsTabGeneral) View.VISIBLE else View.GONE
+		panel.quickSettingsSessionScroll.visibility =
+			if(checkedButtonId == R.id.quickSettingsTabSession) View.VISIBLE else View.GONE
+	}
+
+	// ---- Session tab: content depends on sessionType, built once (it never changes during
+	// this Activity's lifetime — a refresh always creates a brand new Activity/Panel instance
+	// with its own fresh baseline snapshot) ----
+
+	private fun buildSessionSettingsTab()
+	{
+		val container = panel.quickSettingsSessionRows
+		when(sessionType)
+		{
+			StreamSessionType.REMOTE_PLAY -> buildRemotePlayRows(container)
+			StreamSessionType.CATALOG_PSNOW -> buildCloudRows(container, isLibrary = false)
+			StreamSessionType.LIBRARY_PSCLOUD -> buildCloudRows(container, isLibrary = true)
+		}
+	}
+
+	private fun buildRemotePlayRows(container: LinearLayout)
+	{
+		addSectionLabel(container, R.string.preferences_category_title_stream)
+
+		addDropdownRow(
+			container, R.string.preferences_resolution_title,
+			entries = Preferences.resolutionAll.map { activity.getString(it.title) },
+			values = Preferences.resolutionAll.map { it.value },
+			currentValue = preferences.resolution.value
+		) { value ->
+			Preferences.resolutionAll.firstOrNull { it.value == value }?.let { preferences.resolution = it }
+			updateRefreshVisibility()
+		}
+
+		addDropdownRow(
+			container, R.string.preferences_fps_title,
+			entries = Preferences.fpsAll.map { activity.getString(it.title) },
+			values = Preferences.fpsAll.map { it.value },
+			currentValue = preferences.fps.value
+		) { value ->
+			Preferences.fpsAll.firstOrNull { it.value == value }?.let { preferences.fps = it }
+			updateRefreshVisibility()
+		}
+
+		addEditTextRow(
+			container, R.string.preferences_bitrate_title,
+			hint = activity.getString(R.string.preferences_bitrate_auto, preferences.bitrateAuto),
+			currentValue = preferences.bitrate
+		) { value ->
+			preferences.bitrate = value
+			updateRefreshVisibility()
+		}
+
+		addDropdownRow(
+			container, R.string.preferences_codec_title,
+			entries = Preferences.codecAll.map { activity.getString(it.title) },
+			values = Preferences.codecAll.map { it.value },
+			currentValue = preferences.codec.value
+		) { value ->
+			Preferences.codecAll.firstOrNull { it.value == value }?.let { preferences.codec = it }
+			updateRefreshVisibility()
+		}
+	}
+
+	private fun buildCloudRows(container: LinearLayout, isLibrary: Boolean)
+	{
+		addSectionLabel(
+			container,
+			if(isLibrary) R.string.preferences_category_title_game_library else R.string.preferences_category_title_game_catalog
+		)
+
+		val resEntries = activity.resources.getStringArray(
+			if(isLibrary) R.array.cloud_resolution_pscloud_entries else R.array.cloud_resolution_psnow_entries
+		).toList()
+		val resValues = activity.resources.getStringArray(
+			if(isLibrary) R.array.cloud_resolution_pscloud_values else R.array.cloud_resolution_psnow_values
+		).toList()
+		val currentRes = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow()
+		addDropdownRow(
+			container,
+			if(isLibrary) R.string.preferences_cloud_resolution_pscloud_title else R.string.preferences_cloud_resolution_psnow_title,
+			resEntries, resValues, currentRes.toString()
+		) { value ->
+			val intValue = value.toIntOrNull() ?: return@addDropdownRow
+			if(isLibrary) preferences.setCloudResolutionPscloud(intValue) else preferences.setCloudResolutionPsnow(intValue)
+			updateRefreshVisibility()
+		}
+
+		val (dcEntries, dcValues) = datacenterEntries(
+			if(isLibrary) preferences.getCloudDatacentersJsonPscloud() else preferences.getCloudDatacentersJsonPsnow()
+		)
+		val currentDc = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow()
+		addDropdownRow(
+			container,
+			if(isLibrary) R.string.preferences_cloud_datacenter_pscloud_title else R.string.preferences_cloud_datacenter_psnow_title,
+			dcEntries, dcValues, currentDc
+		) { value ->
+			if(isLibrary) preferences.setCloudDatacenterPscloud(value) else preferences.setCloudDatacenterPsnow(value)
+			updateRefreshVisibility()
+		}
+
+		val bitrateSummaryRes = if(isLibrary) R.string.preferences_cloud_bitrate_pscloud_summary else R.string.preferences_cloud_bitrate_psnow_summary
+		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
+		addSeekBarRow(
+			container, bitrateSummaryRes,
+			min = 2, max = 200, currentValue = currentBitrateMbps
+		) { valueMbps ->
+			if(isLibrary) preferences.setCloudBitratePscloud(valueMbps * 1000) else preferences.setCloudBitratePsnow(valueMbps * 1000)
+			updateRefreshVisibility()
+		}
+	}
+
+	/** Mirrors SettingsFragment's populateCloudDatacenterPreference: "Auto" is always the first
+	 *  option, followed by each pinged datacenter as "name (RTTms)". */
+	private fun datacenterEntries(json: String): Pair<List<String>, List<String>>
+	{
+		val entries = mutableListOf("Auto (Best Ping)")
+		val values = mutableListOf("Auto")
+		if(json.isNotEmpty())
+		{
+			runCatching {
+				val datacenters = JSONArray(json)
+				for(i in 0 until datacenters.length())
+				{
+					val dc = datacenters.getJSONObject(i)
+					val name = dc.optString("dataCenter", "")
+					val rtt = dc.optInt("rtt", 0)
+					if(name.isNotEmpty())
+					{
+						entries.add(if(rtt in 1..998) "$name (${rtt}ms)" else name)
+						values.add(name)
+					}
+				}
+			}
+		}
+		return entries to values
+	}
+
+	private fun addSectionLabel(container: LinearLayout, textRes: Int)
+	{
+		val label = activity.layoutInflater.inflate(R.layout.item_quick_settings_section_label, container, false) as TextView
+		label.text = activity.getString(textRes)
+		container.addView(label)
+	}
+
+	private fun addDropdownRow(
+		container: LinearLayout,
+		labelRes: Int,
+		entries: List<String>,
+		values: List<String>,
+		currentValue: String,
+		onSelected: (String) -> Unit
+	)
+	{
+		val row = ItemQuickSettingsDropdownBinding.inflate(activity.layoutInflater, container, true)
+		row.quickSettingsDropdownLabel.text = activity.getString(labelRes)
+		row.quickSettingsDropdownSpinner.adapter =
+			ArrayAdapter(activity, android.R.layout.simple_spinner_item, entries).apply {
+				setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+			}
+		row.quickSettingsDropdownSpinner.setSelection(values.indexOf(currentValue).coerceAtLeast(0), false)
+		row.quickSettingsDropdownSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener
+		{
+			override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) =
+				onSelected(values[position])
+			override fun onNothingSelected(parent: AdapterView<*>?) {}
+		}
+	}
+
+	private fun addSeekBarRow(
+		container: LinearLayout,
+		summaryRes: Int,
+		min: Int,
+		max: Int,
+		currentValue: Int,
+		onChanged: (Int) -> Unit
+	)
+	{
+		val row = ItemQuickSettingsSeekbarBinding.inflate(activity.layoutInflater, container, true)
+		fun updateLabel(value: Int) { row.quickSettingsSeekBarLabel.text = activity.getString(summaryRes, value) }
+		row.quickSettingsSeekBar.max = max - min
+		row.quickSettingsSeekBar.progress = (currentValue - min).coerceIn(0, max - min)
+		updateLabel(currentValue)
+		row.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
+		{
+			override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean)
+			{
+				val value = progress + min
+				updateLabel(value)
+				if(fromUser) onChanged(value)
+			}
+			override fun onStartTrackingTouch(seekBar: SeekBar) {}
+			override fun onStopTrackingTouch(seekBar: SeekBar) {}
+		})
+	}
+
+	private fun addEditTextRow(
+		container: LinearLayout,
+		labelRes: Int,
+		hint: String,
+		currentValue: Int?,
+		onChanged: (Int?) -> Unit
+	)
+	{
+		val row = ItemQuickSettingsEdittextBinding.inflate(activity.layoutInflater, container, true)
+		row.quickSettingsEditTextLabel.text = activity.getString(labelRes)
+		row.quickSettingsEditText.hint = hint
+		row.quickSettingsEditText.setText(currentValue?.toString() ?: "")
+		row.quickSettingsEditText.doAfterTextChanged { text -> onChanged(text?.toString()?.toIntOrNull()) }
 	}
 
 	fun open()

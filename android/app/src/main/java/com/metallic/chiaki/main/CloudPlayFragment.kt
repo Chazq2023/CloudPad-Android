@@ -1441,7 +1441,7 @@ class CloudPlayFragment : Fragment() {
                 )
 
                 result.onSuccess { session ->
-                    launchCloudStream(session)
+                    launchCloudStream(session, PsCloudOwnership.streamIdentifier(game))
                 }
 
                 result.onFailure { error ->
@@ -1585,91 +1585,12 @@ class CloudPlayFragment : Fragment() {
     /**
      * Launch StreamActivity with cloud stream session
      */
-    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession) {
+    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession, gameIdentifier: String) {
 
-        // Set codec based on service type (Qt lines 344-353):
-        // - PSCLOUD: H.265/HEVC
-        // - PSNOW: H.264
-        val codec = if (session.serviceType == "pscloud") {
-            com.metallic.chiaki.lib.Codec.CODEC_H265
-        } else {
-            com.metallic.chiaki.lib.Codec.CODEC_H264
-        }
-
-        // Get resolution and bitrate from preferences based on service type
-        val resolutionValue = if (session.serviceType == "pscloud") {
-            preferences.getCloudResolutionPscloud()
-        } else {
-            preferences.getCloudResolutionPsnow()
-        }
-
-        val cloudBitrate = if (session.serviceType == "pscloud") {
-            preferences.getCloudBitratePscloud()
-        } else {
-            preferences.getCloudBitratePsnow()
-        }
-
-        // Create video profile based on resolution
-        val videoProfile = when (resolutionValue) {
-            720 -> com.metallic.chiaki.lib.ConnectVideoProfile(
-                width = 1280,
-                height = 720,
-                maxFPS = 60,
-                bitrate = cloudBitrate,
-                codec = codec
-            )
-
-            1080 -> com.metallic.chiaki.lib.ConnectVideoProfile(
-                width = 1920,
-                height = 1080,
-                maxFPS = 60,
-                bitrate = cloudBitrate,
-                codec = codec
-            )
-
-            1440 -> com.metallic.chiaki.lib.ConnectVideoProfile(
-                width = 2560,
-                height = 1440,
-                maxFPS = 60,
-                bitrate = cloudBitrate,
-                codec = codec
-            )
-
-            2160 -> com.metallic.chiaki.lib.ConnectVideoProfile(
-                width = 3840,
-                height = 2160,
-                maxFPS = 60,
-                bitrate = cloudBitrate,
-                codec = codec
-            )
-
-            else -> com.metallic.chiaki.lib.ConnectVideoProfile(
-                width = 1280,
-                height = 720,
-                maxFPS = 60,
-                bitrate = cloudBitrate,
-                codec = codec
-            )
-        }
-
-        // Create ConnectInfo with cloud parameters
-        val connectInfo = com.metallic.chiaki.lib.ConnectInfo(
-            ps5 = session.platform == "ps5",
-            host = session.serverIp,  // Cloud mode: Just the IP address (port is in cloudPort)
-            registKey = ByteArray(0x10),  // Empty for cloud (not used)
-            morning = ByteArray(0x10),  // Empty for cloud (not used)
-            videoProfile = videoProfile,
-            serviceType = session.serviceType,
-            cloudGamePlatform = session.platform,
-            cloudLaunchSpec = session.launchSpec,
-            cloudHandshakeKey = session.handshakeKey,
-            cloudSessionId = session.sessionId,
-            cloudPort = session.serverPort,
-            cloudPsnWrapperType = session.psnWrapperType,
-            cloudMtuIn = session.mtuIn,
-            cloudMtuOut = session.mtuOut,
-            cloudRttUs = session.rttMs.toLong() * 1000L  // Convert ms to microseconds
-        )
+        // ConnectInfo building (codec/resolution/bitrate selection) lives in
+        // CloudConnectInfoBuilder so the in-stream Quick Settings "refresh" action can build
+        // an identical ConnectInfo when re-allocating a session for the same game later.
+        val connectInfo = com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder.build(session, preferences, gameIdentifier)
 
         // Launch StreamActivity
         val intent = android.content.Intent(

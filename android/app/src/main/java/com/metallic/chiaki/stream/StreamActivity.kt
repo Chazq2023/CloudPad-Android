@@ -6,6 +6,7 @@ import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
 import android.app.PictureInPictureParams
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Matrix
 import android.os.*
@@ -25,6 +26,8 @@ import com.metallic.chiaki.common.ext.viewModelFactory
 import com.pylux.stream.databinding.ActivityStreamBinding
 import com.metallic.chiaki.lib.ConnectInfo
 import com.metallic.chiaki.lib.ConnectVideoProfile
+import com.metallic.chiaki.lib.StreamSessionType
+import com.metallic.chiaki.lib.sessionType
 import com.metallic.chiaki.session.StreamStateConnected
 import com.metallic.chiaki.session.StreamStateConnecting
 import com.metallic.chiaki.session.StreamStateCreateError
@@ -110,7 +113,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			onDisplayModeChanged = { mode ->
 				currentDisplayMode = mode
 				adjustStreamViewAspect()
-			}
+			},
+			onRefreshRequested = { performRefresh() }
 		)
 
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch,
@@ -310,6 +314,44 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	{
 		viewModel.session.shutdown()
 		viewModel.session.resume()
+	}
+
+	/** Called from the Quick Settings panel's conditional Refresh action. Remote Play just
+	 *  needs a fresh video profile (no network round trip); Catalog/Library sessions need a
+	 *  brand new cloud allocation for resolution/bitrate/datacenter changes to actually take
+	 *  effect, since those are baked into the session at allocation time. Either way, success
+	 *  replaces this whole Activity (and with it, the panel and its refresh-dirty tracking)
+	 *  rather than trying to mutate the live session in place. */
+	private fun performRefresh()
+	{
+		when(viewModel.connectInfo.sessionType)
+		{
+			StreamSessionType.REMOTE_PLAY -> relaunch(viewModel.refreshedRemotePlayConnectInfo())
+			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD ->
+			{
+				binding.progressBar.isVisible = true
+				viewModel.refreshCloudSession { result ->
+					result.onSuccess { relaunch(it) }
+					result.onFailure { error ->
+						binding.progressBar.isGone = true
+						Log.w("StreamActivity", "performRefresh: cloud refresh failed", error)
+						alertDialogBuilder()
+							.setTitle(R.string.quick_settings_refresh_failed_title)
+							.setMessage(error.message ?: getString(R.string.quick_settings_refresh_failed_generic))
+							.setPositiveButton(android.R.string.ok, null)
+							.show()
+					}
+				}
+			}
+		}
+	}
+
+	private fun relaunch(newConnectInfo: ConnectInfo)
+	{
+		val intent = Intent(this, StreamActivity::class.java)
+		intent.putExtra(EXTRA_CONNECT_INFO, newConnectInfo)
+		startActivity(intent)
+		finish()
 	}
 
 	private val hideSystemUIRunnable = Runnable { hideSystemUI() }

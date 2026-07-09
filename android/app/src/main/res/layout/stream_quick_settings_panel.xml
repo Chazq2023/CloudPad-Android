@@ -46,21 +46,36 @@
     <!-- Bottom-left disconnect (power) button. Always tinted with the app's theme colour —
          unlike the tab rail below, it isn't a toggle with a selected/unselected state, so it
          uses ?attr/pyluxAccent directly rather than the checked-state colour selector. -->
-    <ImageButton
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/quickSettingsDisconnectButton"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        style="@style/QuickSettingsTabButton"
         android:layout_marginStart="8dp"
         android:layout_marginBottom="8dp"
-        android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/stream_disconnect_button"
-        android:padding="10dp"
-        android:src="@drawable/ic_power"
-        android:tint="?attr/pyluxAccent"
+        app:icon="@drawable/ic_power"
+        app:iconTint="?attr/pyluxAccent"
+        app:strokeColor="?attr/pyluxAccent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
-    <!-- Left-hand tab rail: General Settings / Controller Mapping -->
+    <!-- Conditional refresh action, shown only once a session-tab setting has changed since
+         the stream was last (re)connected. Not part of the tab toggle group below — pressing
+         it fires a one-shot refresh rather than switching to a content section. GONE by
+         default; when hidden, the tab toggle group's bottom constraint reclaims its space. -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/quickSettingsRefreshButton"
+        style="@style/QuickSettingsTabButton"
+        android:layout_marginStart="8dp"
+        android:layout_marginBottom="8dp"
+        android:visibility="gone"
+        android:contentDescription="@string/quick_settings_refresh"
+        app:icon="@drawable/ic_refresh"
+        app:iconTint="?attr/pyluxAccent"
+        app:strokeColor="?attr/pyluxAccent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton" />
+
+    <!-- Left-hand tab rail: General Settings / Controller Mapping / (dynamic) Session Settings -->
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/quickSettingsTabToggle"
         android:layout_width="wrap_content"
@@ -72,7 +87,7 @@
         app:checkedButton="@id/quickSettingsTabGeneral"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
-        app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton">
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsRefreshButton">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/quickSettingsTabGeneral"
@@ -85,6 +100,12 @@
             style="@style/QuickSettingsTabButton"
             android:contentDescription="@string/controller_remap_preference_title"
             app:icon="@drawable/ic_gamepad" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabSession"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/quick_settings_session_tab_description"
+            app:icon="@drawable/ic_resolution" />
 
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
@@ -200,6 +221,28 @@
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
 
         </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Session tab: content depends on whether this is a Remote Play, Game Catalog (PS3/PS4)
+         or Game Library (PS5) session — rows are inflated at runtime by QuickSettingsPanel
+         since the widget set genuinely differs per session type, not just its labels. -->
+    <ScrollView
+        android:id="@+id/quickSettingsSessionScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/quickSettingsSessionRows"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp" />
 
     </ScrollView>
 
