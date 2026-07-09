@@ -101,24 +101,24 @@
                     android:layout_width="60dp"
                     android:layout_height="wrap_content"
                     app:icon="@drawable/ic_display_normal"
-                    app:iconTint="?attr/pyluxAccent"
-                    app:strokeColor="?attr/pyluxAccent"/>
+                    app:iconTint="@color/quick_settings_display_mode_tint"
+                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
                 <com.google.android.material.button.MaterialButton
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:id="@+id/quickSettingsDisplayModeZoom"
                     android:layout_width="60dp"
                     android:layout_height="wrap_content"
                     app:icon="@drawable/ic_display_zoom"
-                    app:iconTint="?attr/pyluxAccent"
-                    app:strokeColor="?attr/pyluxAccent"/>
+                    app:iconTint="@color/quick_settings_display_mode_tint"
+                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
                 <com.google.android.material.button.MaterialButton
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:id="@+id/quickSettingsDisplayModeStretch"
                     android:layout_width="60dp"
                     android:layout_height="wrap_content"
                     app:icon="@drawable/ic_display_stretch"
-                    app:iconTint="?attr/pyluxAccent"
-                    app:strokeColor="?attr/pyluxAccent"/>
+                    app:iconTint="@color/quick_settings_display_mode_tint"
+                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
 
             </com.google.android.material.button.MaterialButtonToggleGroup>
 

@@ -18,7 +18,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textSize="15sp"
-        android:textColor="?attr/colorOnSurface"/>
+        android:textColor="@android:color/white"/>
 
     <TextView
         android:id="@+id/currentMapping"
@@ -26,7 +26,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:textSize="13sp"
-        android:textColor="?attr/colorSecondary"
+        android:textColor="?attr/pyluxAccent"
         android:maxLines="1"/>
 
 </LinearLayout>

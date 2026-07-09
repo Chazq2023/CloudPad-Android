@@ -104,6 +104,8 @@ jobs:
             - Motion, Touch Haptics and Picture-in-Picture toggles in the panel still take effect immediately on the live stream; Remap Controller edits save immediately and take effect on the current stream once Save is pressed
             - Extracted the controller remap "listen for next input" logic into a shared component so it's used identically by both the full-screen Settings > Remap Controller screen and the in-stream panel
             - Fixed a crash launching any game while the default Neon Pink theme was selected, caused by the new Quick Settings panel referencing a theme colour attribute the stream screen's theme didn't declare for that colour
+            - Window Size icons in the Quick Settings panel are now white by default, with the selected option shown in the theme colour so the current selection stands out clearly
+            - Remap Controller section headers (e.g. LEFT STICK, RIGHT STICK) and the current-mapping text now use the theme colour; action names (e.g. "Left Stick Up") stay a fixed white for readability
 
             ### APK
             Attached release asset:
