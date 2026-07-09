@@ -5,7 +5,6 @@ package com.metallic.chiaki.stream
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -146,7 +145,6 @@ class QuickSettingsPanel(
 
 	fun open()
 	{
-		Log.i("QuickSettingsPanel", "open() called, isOpen=$isOpen")
 		if(isOpen) return
 		isOpen = true
 
@@ -165,15 +163,12 @@ class QuickSettingsPanel(
 		panel.root.translationX = panelWidthPx
 		if(!dialog.isShowing) dialog.show()
 		panel.root.animate().cancel()
-		panel.root.animate().translationX(0f).setDuration(220L)
-			.withEndAction { Log.i("QuickSettingsPanel", "open animation ended: translationX=${panel.root.translationX}, isOpen=$isOpen") }
-			.start()
+		panel.root.animate().translationX(0f).setDuration(220L).start()
 	}
 
 	/** Hides the panel without applying any staged (Stats/OSC/Touchpad/Window Size) edits. */
 	fun discardAndClose()
 	{
-		Log.w("QuickSettingsPanel", "discardAndClose() called, isOpen=$isOpen", Exception("call site"))
 		if(!isOpen)
 		{
 			if(dialog.isShowing) dialog.dismiss()
@@ -188,7 +183,6 @@ class QuickSettingsPanel(
 
 	fun toggle()
 	{
-		Log.i("QuickSettingsPanel", "toggle() called, isOpen=$isOpen")
 		if(isOpen) discardAndClose() else open()
 	}
 
