@@ -264,6 +264,10 @@
         <item name="android:windowBackground">@color/stream_background</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>
+        <!-- StreamActivity only calls setTheme() to AppTheme.<colour> for non-pink themes
+             (see StreamActivity.onCreate) — this manifest-declared theme stays active for
+             the default pink colour, so it needs its own pyluxAccent matching AppTheme's. -->
+        <item name="pyluxAccent">@color/accent</item>
     </style>
 
     <style name="TabTextAppearance" parent="TextAppearance.Design.Tab">
