@@ -266,8 +266,18 @@
         <item name="android:windowTranslucentNavigation">true</item>
         <!-- StreamActivity only calls setTheme() to AppTheme.<colour> for non-pink themes
              (see StreamActivity.onCreate) — this manifest-declared theme stays active for
-             the default pink colour, so it needs its own pyluxAccent matching AppTheme's. -->
+             the default pink colour, so it needs its own pyluxAccent* attrs matching AppTheme's
+             (all of them, not just pyluxAccent — a missing one crashes inflation outright with
+             an unresolved ?attr reference, rather than just rendering wrong). -->
         <item name="pyluxAccent">@color/accent</item>
+        <item name="pyluxAccentLight">@color/accent_light</item>
+        <item name="pyluxAccentA12">@color/accent_pink_a12</item>
+        <item name="pyluxAccentA20">@color/accent_pink_a20</item>
+        <item name="pyluxAccentA25">@color/accent_pink_a25</item>
+        <item name="pyluxAccentA30">@color/accent_pink_a30</item>
+        <item name="pyluxAccentA50">@color/accent_pink_a50</item>
+        <item name="pyluxAccentA70">@color/accent_pink_a70</item>
+        <item name="pyluxAccentA80">@color/accent_pink_a80</item>
     </style>
 
     <style name="TabTextAppearance" parent="TextAppearance.Design.Tab">
