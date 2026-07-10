@@ -31,6 +31,12 @@ class TouchpadView @JvmOverloads constructor(
 	private val drawableIdle: Drawable?
 	private val drawablePressed: Drawable?
 
+	/** When true, the idle/pressed drawable is always drawn instead of only while actively
+	 *  touched — used on a dual-screen device's second-screen touchpad, which is the only
+	 *  thing shown there and so should stay visible rather than touch-to-reveal. */
+	var alwaysVisible: Boolean = false
+		set(value) { field = value; invalidate() }
+
 	private val state: ControllerState = ControllerState()
 
 	inner class Touch(
@@ -88,7 +94,7 @@ class TouchpadView @JvmOverloads constructor(
 	override fun onDraw(canvas: Canvas)
 	{
 		super.onDraw(canvas)
-		if(pointerTouches.values.find { !it.lifted } == null)
+		if(!alwaysVisible && pointerTouches.values.find { !it.lifted } == null)
 			return
 		val drawable = if(state.buttons and ControllerState.BUTTON_TOUCHPAD != 0U) drawablePressed else drawableIdle
 		drawable?.setBounds(paddingLeft, paddingTop, width - paddingRight, height - paddingBottom)

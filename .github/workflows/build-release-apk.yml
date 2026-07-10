@@ -97,10 +97,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a Microphone (Remote Play only) toggle, above Motion in Settings and in the Quick Settings General tab, that sends your device's mic audio to the console during a Remote Play session
-            - Requests the Android microphone permission the first time the toggle is turned on, in both Settings and Quick Settings
-            - Fixed the Microphone toggle being backwards in Quick Settings (turning it on was muting the console-side mic, and vice versa)
-            - Fixed enabling the Microphone toggle in Settings causing Remote Play connections to fail outright ("Ctrl has failed") by deferring mic activation until the stream is actually connected
+            - Added dual-screen support: on devices with a real secondary display (e.g. an LG Dual Screen accessory), a persistent touchpad now shows on the second screen, controlled by the existing "Touchpad Only" toggle in Quick Settings
+            - "Touchpad Only" now defaults to on for dual-screen devices (including foldables whose hinge is detected as separating) and stays off by default everywhere else, until you explicitly change it yourself
+            - On dual-screen devices, "On-Screen Controls" and "Touchpad Only" are no longer mutually exclusive, since the touchpad now lives on the second screen instead of overlaying the main one
 
             ### APK
             Attached release asset:

@@ -93,6 +93,11 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(touchpadOnlyEnabledKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(touchpadOnlyEnabledKey, value).apply() }
 
+	/** False until the user has actually flipped the "Touchpad Only" switch at least once —
+	 *  while false, [StreamViewModel] defaults it to on for dual-screen devices instead of
+	 *  using the fixed `false` above. */
+	fun isTouchpadOnlyExplicitlySet(): Boolean = sharedPreferences.contains(touchpadOnlyEnabledKey)
+
 	val micEnabledKey get() = resources.getString(R.string.preferences_microphone_enabled_key)
 	var micEnabled
 		get() = sharedPreferences.getBoolean(micEnabledKey, false)

@@ -8,6 +8,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.metallic.chiaki.common.LogManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.secondaryPresentationDisplay
 import com.metallic.chiaki.lib.*
 import com.metallic.chiaki.session.StreamInput
 import com.metallic.chiaki.session.StreamSession
@@ -38,7 +39,13 @@ class StreamViewModel(
 	private var _onScreenControlsEnabled = MutableLiveData(preferences.onScreenControlsEnabled)
 	val onScreenControlsEnabled: LiveData<Boolean> get() = _onScreenControlsEnabled
 
-	private var _touchpadOnlyEnabled = MutableLiveData(preferences.touchpadOnlyEnabled)
+	private var _touchpadOnlyEnabled = MutableLiveData(
+		TouchpadOnlyDefault.resolve(
+			explicitlySet = preferences.isTouchpadOnlyExplicitlySet(),
+			storedValue = preferences.touchpadOnlyEnabled,
+			isDualScreen = application.secondaryPresentationDisplay() != null
+		)
+	)
 	val touchpadOnlyEnabled: LiveData<Boolean> get() = _touchpadOnlyEnabled
 
 	private var _showPerformanceOverlay = MutableLiveData(preferences.showPerformanceOverlay)
@@ -147,6 +154,18 @@ class StreamViewModel(
 	fun setTouchpadOnlyEnabled(enabled: Boolean) {
 		preferences.touchpadOnlyEnabled = enabled
 		_touchpadOnlyEnabled.value = enabled
+	}
+
+	/** Called when [DualScreenController] reports a change to its dual-screen signal (secondary
+	 *  display attached/detached, or a foldable's hinge starts/stops separating). A no-op once
+	 *  the user has explicitly set "Touchpad Only" themselves — this only ever adjusts the
+	 *  still-default value. */
+	fun updateTouchpadOnlyDefault(isDualScreen: Boolean) {
+		_touchpadOnlyEnabled.value = TouchpadOnlyDefault.resolve(
+			explicitlySet = preferences.isTouchpadOnlyExplicitlySet(),
+			storedValue = preferences.touchpadOnlyEnabled,
+			isDualScreen = isDualScreen
+		)
 	}
 
 	fun setShowPerformanceOverlay(show: Boolean) {

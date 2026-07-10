@@ -142,16 +142,19 @@ class QuickSettingsPanel(
 		panel.quickSettingsPipRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_pip_enabled_title)
 
 		// Every switch applies immediately — there's no Save button. On-Screen Controls /
-		// Touchpad Only additionally stay mutually exclusive with each other.
+		// Touchpad Only additionally stay mutually exclusive with each other, since both would
+		// otherwise fight for the same main-screen overlay — except on a dual-screen device,
+		// where Touchpad Only instead lives on the secondary display and can happily coexist
+		// with on-screen buttons on the main screen.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			viewModel.setShowPerformanceOverlay(isChecked)
 		}
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
-			if(checked) panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = false
+			if(checked && !activity.hasSecondaryTouchpadDisplay) panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setOnScreenControlsEnabled(checked)
 		}
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
-			if(checked) panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = false
+			if(checked && !activity.hasSecondaryTouchpadDisplay) panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setTouchpadOnlyEnabled(checked)
 		}
 		panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch.setOnCheckedChangeListener { switchView, isChecked ->

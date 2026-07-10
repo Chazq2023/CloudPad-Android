@@ -57,6 +57,20 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private lateinit var binding: ActivityStreamBinding
 	private lateinit var quickSettingsPanel: QuickSettingsPanel
 
+	private lateinit var dualScreenController: DualScreenController
+	private var touchpadPresentation: TouchpadPresentation? = null
+	private val secondScreenDisposable = CompositeDisposable()
+
+	/** Whether a real secondary [android.view.Display] is currently available to present the
+	 *  touchpad on. While true, the main screen's touch-to-reveal touchpad overlay stands down
+	 *  and On-Screen Controls / Touchpad Only stop being mutually exclusive (see
+	 *  [touchpadOnlyMainScreenVisible] and [QuickSettingsPanel]'s switch listeners). */
+	val hasSecondaryTouchpadDisplay: Boolean get() = dualScreenController.secondaryDisplay.value != null
+
+	/** Main-screen [TouchpadOnlyFragment] should only show when the toggle is on AND there's no
+	 *  secondary display to show the persistent touchpad on instead. */
+	private lateinit var touchpadOnlyMainScreenVisible: MediatorLiveData<Boolean>
+
 	/** Result callback for the most recent [micPermissionLauncher] request, invoked with the
 	 *  grant result then cleared. Must be registered before STARTED, hence a class field. */
 	private var pendingMicPermissionCallback: ((Boolean) -> Unit)? = null
@@ -102,9 +116,24 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 		viewModel.input.observe(this)
 
+		// Must exist before setContentView(): inflating the <fragment> tags below synchronously
+		// calls onAttachFragment(), which reads touchpadOnlyMainScreenVisible.
+		dualScreenController = DualScreenController(this)
+		touchpadOnlyMainScreenVisible = MediatorLiveData<Boolean>().apply {
+			fun recompute() {
+				value = (viewModel.touchpadOnlyEnabled.value ?: false) && !hasSecondaryTouchpadDisplay
+			}
+			addSource(viewModel.touchpadOnlyEnabled) { recompute() }
+			addSource(dualScreenController.secondaryDisplay) { recompute() }
+		}
+
 		binding = ActivityStreamBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 		window.decorView.setOnSystemUiVisibilityChangeListener(this)
+
+		dualScreenController.start(this)
+		dualScreenController.secondaryDisplay.observe(this, Observer { display -> updateSecondScreenPresentation(display) })
+		dualScreenController.isDualScreen.observe(this, Observer { isDualScreen -> viewModel.updateTouchpadOnlyDefault(isDualScreen) })
 
 		// Quick Settings panel — replaces the old bottom overlay bar entirely. Disconnect,
 		// Performance Overlay, On-Screen Controls, Touchpad Only and Window Size all live
@@ -180,7 +209,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				.addTo(controlsDisposable)
 			fragment.onScreenControlsEnabled = viewModel.onScreenControlsEnabled
 			if(fragment is TouchpadOnlyFragment)
-				fragment.touchpadOnlyEnabled = viewModel.touchpadOnlyEnabled
+				fragment.touchpadOnlyEnabled = touchpadOnlyMainScreenVisible
 		}
 	}
 
@@ -223,6 +252,29 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		flushStreamTimeSegment()
 		controlsDisposable.dispose()
 		uiVisibilityHandler.removeCallbacksAndMessages(null)
+		secondScreenDisposable.dispose()
+		touchpadPresentation?.dismiss()
+		touchpadPresentation = null
+		dualScreenController.stop()
+	}
+
+	/** Creates/tears down [TouchpadPresentation] as the secondary display comes and goes (e.g.
+	 *  an LG Dual Screen accessory attached/detached mid-session). The presentation itself stays
+	 *  up regardless of the "Touchpad Only" toggle — see [TouchpadPresentation] doc. */
+	private fun updateSecondScreenPresentation(display: Display?)
+	{
+		secondScreenDisposable.clear()
+		touchpadPresentation?.dismiss()
+		touchpadPresentation = null
+
+		if(display == null) return
+
+		val presentation = TouchpadPresentation(this, display, viewModel.touchpadOnlyEnabled)
+		presentation.show()
+		presentation.controllerState
+			.subscribe { viewModel.input.touchControllerState = it }
+			.addTo(secondScreenDisposable)
+		touchpadPresentation = presentation
 	}
 
 	override fun onConfigurationChanged(newConfig: Configuration)
