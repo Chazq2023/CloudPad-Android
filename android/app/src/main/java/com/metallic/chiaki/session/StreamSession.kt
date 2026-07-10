@@ -55,6 +55,8 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	/** Whether connectMicrophone() has been sent for the current native session (once per
 	 *  session — subsequent on/off just mutes/unmutes, mirroring the Qt desktop client). */
 	private var micConnected = false
+	/** True only from CHIAKI_EVENT_CONNECTED until shutdown() — see setMicrophoneEnabled. */
+	private var sessionConnected = false
 
 	init
 	{
@@ -64,15 +66,33 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	}
 
 	/** Live-toggles mic capture for an already-running stream, e.g. from the in-stream Quick
-	 *  Settings panel or automatically on connect if the setting was already enabled. No-ops
-	 *  outside Remote Play sessions, without an active session, or without RECORD_AUDIO granted
-	 *  (permission must already have been requested by the caller — this only defends against
-	 *  it having been revoked since, or being called too early). */
+	 *  Settings panel or automatically once CHIAKI_EVENT_CONNECTED fires if the setting was
+	 *  already enabled. No-ops outside Remote Play sessions, without an active session, before
+	 *  the session has fully connected, or without RECORD_AUDIO granted (permission must
+	 *  already have been requested by the caller — this only defends against it having been
+	 *  revoked since, or being called too early).
+	 *
+	 *  The "before fully connected" guard matters even for the disable path: connectMicrophone()/
+	 *  toggleMicrophone() go through chiaki_ctrl's thread-safe queued send path, which wakes the
+	 *  ctrl thread by signaling the same notif_pipe that ctrl_connect() blocks on while the
+	 *  initial TCP handshake to the console is still in flight (lib/src/ctrl.c). Signaling it
+	 *  during that window is indistinguishable from a cancellation and aborts the control
+	 *  connection outright ("Ctrl has failed while waiting for ctrl startup") — confirmed
+	 *  on-device. The Quick Settings panel has no gating that prevents it being opened and its
+	 *  mic row toggled while still in StreamStateConnecting, so this can't just be the caller's
+	 *  responsibility — it's safe to call this no-op path repeatedly since the preference is
+	 *  still recorded by the caller either way and gets picked up by the CHIAKI_EVENT_CONNECTED
+	 *  auto-enable once the session is actually ready. */
 	fun setMicrophoneEnabled(enabled: Boolean)
 	{
 		val session = session ?: return
 		if(!input.isRemotePlay)
 			return
+		if(!sessionConnected)
+		{
+			Log.w("StreamSession", "setMicrophoneEnabled($enabled) called before the session finished connecting; ignoring")
+			return
+		}
 		if(enabled)
 		{
 			if(ContextCompat.checkSelfPermission(input.context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
@@ -85,12 +105,17 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				session.connectMicrophone()
 				micConnected = true
 			}
-			session.toggleMicrophone(false)
+			// chiaki_ctrl's mic toggle wire encoding is inverted from what its `muted`
+			// parameter name suggests (confirmed on-device: passing false here actually
+			// muted the console-side mic, true unmuted it) — ctrl.c's own toggle log line
+			// has the same inversion. Compensating here rather than in the shared native
+			// library, which other platforms may already work around in their own way.
+			session.toggleMicrophone(true)
 			startMicCapture(session)
 		}
 		else
 		{
-			session.toggleMicrophone(true)
+			session.toggleMicrophone(false)
 			stopMicCapture()
 		}
 	}
@@ -177,6 +202,7 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 		// sendMicFrame() call could race the native free.
 		stopMicCapture()
 		micConnected = false
+		sessionConnected = false
 		// If a native Session was created with a holepunch pointer, the Session owns it
 		// and will free it in chiaki_session_fini(). Don't double-free.
 		if(session != null)
@@ -318,8 +344,6 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				if(surface != null)
 					session.setSurface(surface)
 				this.session = session
-				if(input.preferences.micEnabled)
-					setMicrophoneEnabled(true)
 			}
 			catch(e: CreateError)
 			{
@@ -353,8 +377,6 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				if(surface != null)
 					session.setSurface(surface)
 				this.session = session
-				if(input.preferences.micEnabled)
-					setMicrophoneEnabled(true)
 			}
 			catch(e: CreateError)
 			{
@@ -382,6 +404,9 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			is ConnectedEvent -> {
 				Log.i("StreamSession", "EVENT: Connected!")
 				_state.postValue(StreamStateConnected)
+				sessionConnected = true
+				if(input.preferences.micEnabled)
+					setMicrophoneEnabled(true)
 			}
 			is QuitEvent -> {
 				Log.i("StreamSession", "EVENT: Quit reason=${event.reason} str=${event.reasonString}")
