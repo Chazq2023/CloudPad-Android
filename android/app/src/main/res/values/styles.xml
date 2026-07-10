@@ -327,7 +327,7 @@
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">true</item>
         <item name="android:letterSpacing">0.1</item>
-        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColor">?attr/pyluxAccent</item>
     </style>
 
     <style name="QuickSettingsTabButton" parent="Widget.MaterialComponents.Button.OutlinedButton">

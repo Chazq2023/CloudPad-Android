@@ -342,8 +342,13 @@ class QuickSettingsPanel(
 	{
 		val row = ItemQuickSettingsDropdownBinding.inflate(activity.layoutInflater, container, true)
 		row.quickSettingsDropdownLabel.text = activity.getString(labelRes)
+		// The closed spinner's text needs its own white-text layout — StreamTheme is a Light
+		// MaterialComponents theme, so the system default item layout renders near-black text
+		// that's unreadable against this dark panel. The dropdown list popup keeps the system
+		// default layout, since that popup already renders on a light background where dark
+		// text is legible.
 		row.quickSettingsDropdownSpinner.adapter =
-			ArrayAdapter(activity, android.R.layout.simple_spinner_item, entries).apply {
+			ArrayAdapter(activity, R.layout.item_quick_settings_spinner_item, entries).apply {
 				setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
 			}
 		row.quickSettingsDropdownSpinner.setSelection(values.indexOf(currentValue).coerceAtLeast(0), false)

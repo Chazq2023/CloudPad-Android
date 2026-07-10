@@ -26,6 +26,39 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"/>
 
+    <!-- Shown for the duration of a Quick Settings Refresh: from the moment it's pressed
+         (this Activity, about to finish) through to the replacement StreamActivity reaching
+         StreamStateConnected (see StreamActivity.EXTRA_IS_REFRESH / isRefreshLaunch) — a plain
+         spinner alone doesn't explain why the stream just went black for a while. -->
+    <LinearLayout
+        android:id="@+id/refreshOverlay"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:id="@+id/refreshOverlaySpinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="?attr/pyluxAccent"/>
+
+        <TextView
+            android:id="@+id/refreshOverlayText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:gravity="center"
+            android:text="@string/quick_settings_refresh_in_progress_message"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"/>
+
+    </LinearLayout>
+
     <com.metallic.chiaki.stream.PerformanceOverlayView
         android:id="@+id/performanceOverlay"
         android:layout_width="wrap_content"

@@ -51,6 +51,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	companion object
 	{
 		const val EXTRA_CONNECT_INFO = "connect_info"
+		/** Set by [relaunch] when it's replacing this Activity as part of a Quick Settings
+		 *  Refresh, so the new instance knows to keep showing [ActivityStreamBinding.refreshOverlay]
+		 *  (rather than the plain [ActivityStreamBinding.progressBar]) through its own connect
+		 *  phase, for a continuous "refreshing" message across the Activity swap. */
+		private const val EXTRA_IS_REFRESH = "is_refresh"
 		private const val HIDE_UI_TIMEOUT_MS = 4000L
 	}
 
@@ -77,6 +82,12 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  panel's Save button is pressed — the panel's own toggle group is staged separately. */
 	private var currentDisplayMode: TransformMode = TransformMode.FIT
 
+	/** True when this Activity instance was started by [relaunch] as part of a Quick Settings
+	 *  Refresh (see [EXTRA_IS_REFRESH]). Drives [stateChanged] to keep showing
+	 *  [ActivityStreamBinding.refreshOverlay] through this Activity's own connect phase, instead
+	 *  of the plain [ActivityStreamBinding.progressBar], until [StreamStateConnected]. */
+	private var isRefreshLaunch = false
+
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
 		val prefs = Preferences(this)
@@ -89,6 +100,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			finish()
 			return
 		}
+		isRefreshLaunch = intent.getBooleanExtra(EXTRA_IS_REFRESH, false)
 
 		viewModel = ViewModelProvider(this, viewModelFactory {
 			StreamViewModel(application, connectInfo)
@@ -338,7 +350,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private fun performRefresh()
 	{
 		isRefreshing = true
-		binding.progressBar.isVisible = true
+		binding.refreshOverlay.isVisible = true
 		viewModel.session.shutdown {
 			when(viewModel.connectInfo.sessionType)
 			{
@@ -349,7 +361,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 						result.onSuccess { relaunch(it) }
 						result.onFailure { error ->
 							isRefreshing = false
-							binding.progressBar.isGone = true
+							binding.refreshOverlay.isGone = true
 							Log.w("StreamActivity", "performRefresh: cloud refresh failed", error)
 							alertDialogBuilder()
 								.setTitle(R.string.quick_settings_refresh_failed_title)
@@ -367,6 +379,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	{
 		val intent = Intent(this, StreamActivity::class.java)
 		intent.putExtra(EXTRA_CONNECT_INFO, newConnectInfo)
+		intent.putExtra(EXTRA_IS_REFRESH, true)
 		startActivity(intent)
 		finish()
 	}
@@ -422,7 +435,13 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private fun stateChanged(state: StreamState)
 	{
 		Log.i("StreamActivity", "stateChanged: $state pip=$isInPictureInPictureMode")
-		binding.progressBar.visibility = if(state == StreamStateConnecting) View.VISIBLE else View.GONE
+		// A refresh-launched Activity shows refreshOverlay instead of the plain progressBar for
+		// its whole connect phase (not just StreamStateConnecting) — the "refreshing" message
+		// should stay up from the moment the old Activity finished until this one is actually
+		// connected, not flash away and back during any brief intermediate state.
+		binding.progressBar.visibility = if(state == StreamStateConnecting && !isRefreshLaunch) View.VISIBLE else View.GONE
+		if(isRefreshLaunch)
+			binding.refreshOverlay.isVisible = state != StreamStateConnected
 
 		when(state)
 		{
