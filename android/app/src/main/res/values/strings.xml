@@ -142,6 +142,9 @@
     <string name="preferences_pip_enabled_summary">Enable PiP mode when minimizing during streaming (Android 8.0+)</string>
     <string name="preferences_swap_cross_moon_title">Swap Cross/Moon and Box/Pyramid Buttons</string>
     <string name="preferences_swap_cross_moon_summary">Swap face buttons if default mapping is incorrect (e.g. for 8BitDo controllers)</string>
+    <string name="preferences_microphone_enabled_title">Microphone (Remote Play only)</string>
+    <string name="preferences_microphone_enabled_summary">Send your device\'s microphone audio to the console during Remote Play</string>
+    <string name="preferences_microphone_permission_denied">Microphone permission is required to use this feature</string>
     <string name="preferences_motion_enabled_title">Motion</string>
     <string name="preferences_motion_enabled_summary">Use device\'s motion sensors for controller motion</string>
     <string name="preferences_button_haptic_enabled_title">Touch Haptics</string>
@@ -261,6 +264,7 @@
     <string name="preferences_discovery_enabled_key">discovery_enabled</string>
     <string name="preferences_on_screen_controls_enabled_key">on_screen_controls_enabled</string>
     <string name="preferences_touchpad_only_enabled_key">touchpad_only_enabled</string>
+    <string name="preferences_microphone_enabled_key">microphone_enabled</string>
     <string name="preferences_motion_enabled_key">motion_enabled</string>
     <string name="preferences_button_haptic_enabled_key">button_haptic_enabled</string>
     <string name="preferences_log_verbose_key">log_verbose</string>

@@ -220,6 +220,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp" />
 
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMicrophoneRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMotionRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />

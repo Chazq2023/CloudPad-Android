@@ -2,9 +2,15 @@
 
 package com.metallic.chiaki.session
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
 import android.util.Log
 import android.view.*
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.metallic.chiaki.common.LogManager
@@ -37,6 +43,21 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	 *  recreated, and setSurface(null) blocks on the native decoder. */
 	var skipNativeSurfaceCleanup = false
 
+	// ---- Microphone (Remote Play only) ----
+	// The console only accepts mic audio in a fixed 2ch/16-bit/48000Hz/480-samples-per-frame
+	// format (see the matching header set up natively in chiaki-jni.c's sessionCreate), so
+	// capture is mono at 48kHz and each sample is duplicated into an interleaved stereo frame.
+	private val micSampleRate = 48000
+	private val micSamplesPerFrame = 480
+	private var audioRecord: AudioRecord? = null
+	private var micThread: Thread? = null
+	@Volatile private var micThreadRunning = false
+	/** Whether connectMicrophone() has been sent for the current native session (once per
+	 *  session — subsequent on/off just mutes/unmutes, mirroring the Qt desktop client). */
+	private var micConnected = false
+	/** True only from CHIAKI_EVENT_CONNECTED until shutdown() — see setMicrophoneEnabled. */
+	private var sessionConnected = false
+
 	init
 	{
 		input.controllerStateChangedCallback = {
@@ -44,9 +65,144 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 		}
 	}
 
+	/** Live-toggles mic capture for an already-running stream, e.g. from the in-stream Quick
+	 *  Settings panel or automatically once CHIAKI_EVENT_CONNECTED fires if the setting was
+	 *  already enabled. No-ops outside Remote Play sessions, without an active session, before
+	 *  the session has fully connected, or without RECORD_AUDIO granted (permission must
+	 *  already have been requested by the caller — this only defends against it having been
+	 *  revoked since, or being called too early).
+	 *
+	 *  The "before fully connected" guard matters even for the disable path: connectMicrophone()/
+	 *  toggleMicrophone() go through chiaki_ctrl's thread-safe queued send path, which wakes the
+	 *  ctrl thread by signaling the same notif_pipe that ctrl_connect() blocks on while the
+	 *  initial TCP handshake to the console is still in flight (lib/src/ctrl.c). Signaling it
+	 *  during that window is indistinguishable from a cancellation and aborts the control
+	 *  connection outright ("Ctrl has failed while waiting for ctrl startup") — confirmed
+	 *  on-device. The Quick Settings panel has no gating that prevents it being opened and its
+	 *  mic row toggled while still in StreamStateConnecting, so this can't just be the caller's
+	 *  responsibility — it's safe to call this no-op path repeatedly since the preference is
+	 *  still recorded by the caller either way and gets picked up by the CHIAKI_EVENT_CONNECTED
+	 *  auto-enable once the session is actually ready. */
+	fun setMicrophoneEnabled(enabled: Boolean)
+	{
+		val session = session ?: return
+		if(!input.isRemotePlay)
+			return
+		if(!sessionConnected)
+		{
+			Log.w("StreamSession", "setMicrophoneEnabled($enabled) called before the session finished connecting; ignoring")
+			return
+		}
+		if(enabled)
+		{
+			if(ContextCompat.checkSelfPermission(input.context, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
+			{
+				Log.w("StreamSession", "setMicrophoneEnabled(true) but RECORD_AUDIO is not granted")
+				return
+			}
+			if(!micConnected)
+			{
+				session.connectMicrophone()
+				micConnected = true
+			}
+			// chiaki_ctrl's mic toggle wire encoding is inverted from what its `muted`
+			// parameter name suggests (confirmed on-device: passing false here actually
+			// muted the console-side mic, true unmuted it) — ctrl.c's own toggle log line
+			// has the same inversion. Compensating here rather than in the shared native
+			// library, which other platforms may already work around in their own way.
+			session.toggleMicrophone(true)
+			startMicCapture(session)
+		}
+		else
+		{
+			session.toggleMicrophone(false)
+			stopMicCapture()
+		}
+	}
+
+	private fun startMicCapture(nativeSession: Session)
+	{
+		if(micThreadRunning)
+			return
+
+		val minBufBytes = AudioRecord.getMinBufferSize(micSampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
+		if(minBufBytes <= 0)
+		{
+			Log.e("StreamSession", "Mic capture: getMinBufferSize failed ($minBufBytes)")
+			return
+		}
+		val bufferSizeBytes = maxOf(minBufBytes, micSamplesPerFrame * 2 * 4)
+
+		fun openAudioRecord(source: Int) = try
+		{
+			AudioRecord(source, micSampleRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSizeBytes)
+		}
+		catch(e: SecurityException)
+		{
+			Log.e("StreamSession", "Mic capture: failed to create AudioRecord", e)
+			null
+		}
+
+		var record = openAudioRecord(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
+		if(record == null || record.state != AudioRecord.STATE_INITIALIZED)
+		{
+			record?.release()
+			record = openAudioRecord(MediaRecorder.AudioSource.MIC)
+		}
+		if(record == null || record.state != AudioRecord.STATE_INITIALIZED)
+		{
+			Log.e("StreamSession", "Mic capture: AudioRecord failed to initialize")
+			record?.release()
+			return
+		}
+
+		audioRecord = record
+		micThreadRunning = true
+		record.startRecording()
+		micThread = Thread {
+			val monoBuf = ShortArray(micSamplesPerFrame)
+			val stereoBuf = ShortArray(micSamplesPerFrame * 2)
+			while(micThreadRunning)
+			{
+				val read = record.read(monoBuf, 0, micSamplesPerFrame)
+				if(read <= 0)
+					continue
+				for(i in 0 until read)
+				{
+					stereoBuf[i * 2] = monoBuf[i]
+					stereoBuf[i * 2 + 1] = monoBuf[i]
+				}
+				if(read == micSamplesPerFrame)
+					nativeSession.sendMicFrame(stereoBuf)
+			}
+		}.apply {
+			name = "MicCapture"
+			start()
+		}
+	}
+
+	private fun stopMicCapture()
+	{
+		micThreadRunning = false
+		// Stop the record first to unblock a pending read() — joining before this can hang.
+		audioRecord?.let {
+			try { it.stop() } catch(e: Exception) { Log.w("StreamSession", "Mic capture: stop failed", e) }
+		}
+		micThread?.join(500)
+		micThread = null
+		audioRecord?.release()
+		audioRecord = null
+	}
+
 	fun shutdown()
 	{
 		Log.i("StreamSession", "shutdown: session=${session != null}")
+		// Mic capture thread must be fully joined before the native session pointer can be
+		// freed below (on the background dispose thread) — otherwise a concurrent
+		// sendMicFrame() call could race the native free.
+		stopMicCapture()
+		micConnected = false
+		sessionConnected = false
 		// If a native Session was created with a holepunch pointer, the Session owns it
 		// and will free it in chiaki_session_fini(). Don't double-free.
 		if(session != null)
@@ -248,6 +404,9 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			is ConnectedEvent -> {
 				Log.i("StreamSession", "EVENT: Connected!")
 				_state.postValue(StreamStateConnected)
+				sessionConnected = true
+				if(input.preferences.micEnabled)
+					setMicrophoneEnabled(true)
 			}
 			is QuitEvent -> {
 				Log.i("StreamSession", "EVENT: Quit reason=${event.reason} str=${event.reasonString}")

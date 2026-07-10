@@ -2,7 +2,9 @@
 
 package com.metallic.chiaki.stream
 
+import android.Manifest
 import android.app.Dialog
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.view.Gravity
@@ -16,6 +18,7 @@ import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
@@ -69,7 +72,8 @@ class QuickSettingsPanel(
 	private val streamInput: StreamInput,
 	private val viewModel: StreamViewModel,
 	private val getDisplayMode: () -> TransformMode,
-	private val onDisplayModeChanged: (TransformMode) -> Unit
+	private val onDisplayModeChanged: (TransformMode) -> Unit,
+	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater)
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
@@ -132,6 +136,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_performance_overlay_title)
 		panel.quickSettingsOscRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_osc_title)
 		panel.quickSettingsTouchpadRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_touchpad_title)
+		panel.quickSettingsMicrophoneRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_microphone_enabled_title)
 		panel.quickSettingsMotionRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_motion_enabled_title)
 		panel.quickSettingsHapticsRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_button_haptic_enabled_title)
 		panel.quickSettingsPipRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_pip_enabled_title)
@@ -148,6 +153,30 @@ class QuickSettingsPanel(
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setTouchpadOnlyEnabled(checked)
+		}
+		panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch.setOnCheckedChangeListener { switchView, isChecked ->
+			// The switch already visually reflects isChecked before this listener runs.
+			// On the permission-request path, leave it as-is (optimistic) and only snap it
+			// back off on denial — flipping it here too would re-trigger this same listener.
+			if(isChecked && ContextCompat.checkSelfPermission(activity, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED)
+			{
+				requestMicPermission { granted ->
+					if(granted)
+					{
+						preferences.micEnabled = true
+						viewModel.session.setMicrophoneEnabled(true)
+					}
+					else
+					{
+						switchView.isChecked = false
+					}
+				}
+			}
+			else
+			{
+				preferences.micEnabled = isChecked
+				viewModel.session.setMicrophoneEnabled(isChecked)
+			}
 		}
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			preferences.motionEnabled = isChecked
@@ -412,6 +441,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = viewModel.touchpadOnlyEnabled.value ?: false
 		panel.quickSettingsDisplayModeToggle.check(buttonIdFor(getDisplayMode()))
 
+		panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch.isChecked = preferences.micEnabled
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.isChecked = preferences.motionEnabled
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled

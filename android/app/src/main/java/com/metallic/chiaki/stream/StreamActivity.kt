@@ -5,6 +5,7 @@ package com.metallic.chiaki.stream
 import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
+import android.Manifest
 import android.app.PictureInPictureParams
 import android.content.res.Configuration
 import android.graphics.Matrix
@@ -13,6 +14,7 @@ import android.util.Log
 import android.util.Rational
 import android.view.*
 import android.widget.EditText
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -54,6 +56,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private lateinit var viewModel: StreamViewModel
 	private lateinit var binding: ActivityStreamBinding
 	private lateinit var quickSettingsPanel: QuickSettingsPanel
+
+	/** Result callback for the most recent [micPermissionLauncher] request, invoked with the
+	 *  grant result then cleared. Must be registered before STARTED, hence a class field. */
+	private var pendingMicPermissionCallback: ((Boolean) -> Unit)? = null
+	private val micPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+		pendingMicPermissionCallback?.invoke(granted)
+		pendingMicPermissionCallback = null
+	}
 
 	private val uiVisibilityHandler = Handler()
 
@@ -109,6 +119,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			onDisplayModeChanged = { mode ->
 				currentDisplayMode = mode
 				adjustStreamViewAspect()
+			},
+			requestMicPermission = { onResult ->
+				pendingMicPermissionCallback = onResult
+				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 			}
 		)
 

@@ -12,6 +12,7 @@
 #include <chiaki/senkusha.h>
 #include <chiaki/remote/holepunch.h>
 #include <chiaki/base64.h>
+#include <chiaki/opusencoder.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -261,6 +262,7 @@ typedef struct android_chiaki_session_t
 	AndroidChiakiOpusDecoder opus_decoder;
 	bool use_opus_decoder; // true for PSCloud, false for PSNow/Remote Play
 	void *audio_output;
+	ChiakiOpusEncoder opus_encoder; // mic input: encodes captured PCM to Opus and sends it to the console
 } AndroidChiakiSession;
 
 static uint64_t android_chiaki_now_ms()
@@ -661,6 +663,15 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 		goto beach;
 	}
 
+	// Mic input: the console only accepts the mic capability announced during the STREAMINFO
+	// handshake (see stream_connection_enable_microphone) with this exact fixed format —
+	// 2 channels, 16-bit, 48000 Hz, 480 samples (10ms) per frame — so the opus encoder used
+	// to send mic audio must be initialized with a matching header or the console rejects it.
+	chiaki_opus_encoder_init(&session->opus_encoder, log);
+	ChiakiAudioHeader mic_audio_header;
+	chiaki_audio_header_set(&mic_audio_header, 2, 16, 48000, 480);
+	chiaki_opus_encoder_header(&mic_audio_header, &session->opus_encoder, &session->session);
+
 	session->java_session = E->NewGlobalRef(env, java_session);
 	session->java_session_class = E->NewGlobalRef(env, E->GetObjectClass(env, session->java_session));
 	session->java_session_event_connected_meth = E->GetMethodID(env, session->java_session_class, "eventConnected", "()V");
@@ -740,6 +751,7 @@ JNIEXPORT void JNICALL JNI_FCN(sessionFree)(JNIEnv *env, jobject obj, jlong ptr)
 	if(!session)
 		return;
 	CHIAKI_LOGI(session->log, "Shutting down JNI Session");
+	chiaki_opus_encoder_fini(&session->opus_encoder);
 	chiaki_session_fini(&session->session);
 	android_chiaki_video_decoder_fini(&session->video_decoder);
 	if(session->use_opus_decoder)
@@ -825,6 +837,34 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetControllerState)(JNIEnv *env, jobject o
 	controller_state.orient_z = E->GetFloatField(env, controller_state_java, session->java_controller_state_orient_z);
 	controller_state.orient_w = E->GetFloatField(env, controller_state_java, session->java_controller_state_orient_w);
 	chiaki_session_set_controller_state(&session->session, &controller_state);
+}
+
+JNIEXPORT void JNICALL JNI_FCN(sessionConnectMicrophone)(JNIEnv *env, jobject obj, jlong ptr)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return;
+	chiaki_session_connect_microphone(&session->session);
+}
+
+JNIEXPORT void JNICALL JNI_FCN(sessionToggleMicrophone)(JNIEnv *env, jobject obj, jlong ptr, jboolean muted)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return;
+	chiaki_session_toggle_microphone(&session->session, muted);
+}
+
+JNIEXPORT void JNICALL JNI_FCN(sessionSendMicFrame)(JNIEnv *env, jobject obj, jlong ptr, jshortArray pcm)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return;
+	jshort *elems = E->GetShortArrayElements(env, pcm, NULL);
+	if(!elems)
+		return;
+	chiaki_opus_encoder_frame((int16_t *)elems, &session->opus_encoder);
+	E->ReleaseShortArrayElements(env, pcm, elems, JNI_ABORT);
 }
 
 JNIEXPORT void JNICALL JNI_FCN(sessionSetLoginPin)(JNIEnv *env, jobject obj, jlong ptr, jstring pin_java)

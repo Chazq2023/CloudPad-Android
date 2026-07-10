@@ -54,6 +54,12 @@
             app:icon="@drawable/ic_gamepad" />
 
         <SwitchPreference
+            app:key="@string/preferences_microphone_enabled_key"
+            app:title="@string/preferences_microphone_enabled_title"
+            app:summary="@string/preferences_microphone_enabled_summary"
+            app:icon="@drawable/ic_microphone" />
+
+        <SwitchPreference
             app:key="@string/preferences_motion_enabled_key"
             app:title="@string/preferences_motion_enabled_title"
             app:summary="@string/preferences_motion_enabled_summary"
