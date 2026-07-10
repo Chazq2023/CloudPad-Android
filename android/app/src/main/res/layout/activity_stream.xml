@@ -45,13 +45,19 @@
             android:layout_height="wrap_content"
             android:indeterminateTint="?attr/pyluxAccent"/>
 
+        <!-- Rounded theme-coloured pill, matching the selected-tab treatment on the main
+             library screen (see cloud_tab_selected.xml / the PS5 Library tab) — plain white
+             text directly over the stream's paused frame can be hard to read depending on
+             what's on screen at the time. -->
         <TextView
             android:id="@+id/refreshOverlayText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:layout_marginStart="32dp"
-            android:layout_marginEnd="32dp"
+            android:maxWidth="260dp"
+            android:background="@drawable/cloud_tab_selected"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="12dp"
             android:gravity="center"
             android:text="@string/quick_settings_refresh_in_progress_message"
             android:textColor="@android:color/white"

@@ -97,8 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a themed spinner with a "Please wait, the stream is currently being refreshed" message that stays up for the whole duration of a Quick Settings Refresh (from closing the old session through reconnecting/reallocating a new one) and disappears once the stream is connected again
-            - Fixed the Session tab's dropdown values (Resolution, Datacenter, etc.) rendering in near-black, unreadable text against the dark panel
+            - Put the Quick Settings Refresh "please wait" message in a rounded theme-coloured pill (matching the selected-tab style on the main library screen) instead of plain text, so it stays legible over whatever's on screen when the stream pauses
+            - Reverted the Session tab's row labels ("Resolution", "Data Center", etc.) back to the app's theme colour — only the dropdown's selected value text needed to change (it was rendering unreadably dark), not the labels above it
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 
