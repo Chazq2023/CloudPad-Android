@@ -83,8 +83,8 @@ sealed class PhysicalInput {
             ControllerAction.TOUCHPAD_SWIPE_DOWN to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_A)),
             ControllerAction.TOUCHPAD_SWIPE_LEFT to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_X)),
             ControllerAction.TOUCHPAD_SWIPE_RIGHT to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_B)),
-            // PS Home: hold START + press SELECT
-            ControllerAction.HOME to Combo(KeyEvent.KEYCODE_BUTTON_START, Button(KeyEvent.KEYCODE_BUTTON_SELECT)),
+            // PS Home: hold SELECT + press START
+            ControllerAction.HOME to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_START)),
         )
 
         fun mappingToJson(mapping: Map<ControllerAction, PhysicalInput>): String {

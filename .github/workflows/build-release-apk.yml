@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Changed the default controller mapping for Left/Right Touchpad Click from Select + L2/R2 to Select + L1/R1 (applies on first install and after Restore Defaults)
+            - Changed the default controller mapping for PS Home from hold Start + press Select to hold Select + press Start (applies on first install and after Restore Defaults)
             - Reworded the Session tab's notice at the bottom to say the stream needs to be restarted (not refreshed) for changes there to take effect, matching the removal above
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
