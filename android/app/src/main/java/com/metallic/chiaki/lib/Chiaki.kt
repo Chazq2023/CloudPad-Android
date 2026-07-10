@@ -146,7 +146,6 @@ private class ChiakiNative
 		@JvmStatic external fun errorCodeToString(value: Int): String
 		@JvmStatic external fun quitReasonToString(value: Int): String
 		@JvmStatic external fun quitReasonIsError(value: Int): Boolean
-		@JvmStatic external fun quitReasonIsRpInUse(value: Int): Boolean
 		@JvmStatic external fun videoProfilePreset(resolutionPreset: Int, fpsPreset: Int, codec: Codec): ConnectVideoProfile
 		@JvmStatic external fun sessionCreate(result: CreateResult, connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean, javaSession: Session)
 		@JvmStatic external fun sessionFree(ptr: Long)
@@ -508,11 +507,6 @@ class QuitReason(val value: Int)
 	override fun toString() = ChiakiNative.quitReasonToString(value)
 
 	val isError = ChiakiNative.quitReasonIsError(value)
-
-	/** True for CHIAKI_QUIT_REASON_SESSION_REQUEST_RP_IN_USE — the console reports it still
-	 *  considers a Remote Play session active, typically because its own session slot hasn't
-	 *  been freed yet following a very recent disconnect from this same client. */
-	val isConsoleInUse = ChiakiNative.quitReasonIsRpInUse(value)
 }
 
 sealed class Event
@@ -548,34 +542,13 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun start() = ErrorCode(ChiakiNative.sessionStart(nativePtr))
 	fun stop() = ErrorCode(ChiakiNative.sessionStop(nativePtr))
 
-	/** Waits only for the native session thread to exit — ctrl/stream-connection teardown,
-	 *  which is what the console/cloud backend actually observes as "disconnected". Unlike
-	 *  [dispose], this never touches the video decoder, so unlike [freeResources] it can't
-	 *  block on native MediaCodec teardown (which this codebase elsewhere notes can be very
-	 *  slow). Callers that just need to know the old session is gone before starting a new one
-	 *  (e.g. Quick Settings Refresh) should wait on this alone rather than the full [dispose]. */
-	fun join()
+	fun dispose()
 	{
 		if(nativePtr == 0L)
 			return
 		ChiakiNative.sessionJoin(nativePtr)
-	}
-
-	/** Frees the native session's resources (audio/video decoder teardown, chiaki_session_fini).
-	 *  Must be called after [join]. This is the potentially-slow part — safe to run
-	 *  fire-and-forget on a background thread since nothing needs to wait on it finishing. */
-	fun freeResources()
-	{
-		if(nativePtr == 0L)
-			return
 		ChiakiNative.sessionFree(nativePtr)
 		nativePtr = 0L
-	}
-
-	fun dispose()
-	{
-		join()
-		freeResources()
 	}
 
 	private fun event(event: Event)

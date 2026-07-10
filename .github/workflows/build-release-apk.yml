@@ -97,7 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed Quick Settings Refresh on Remote Play still occasionally hitting "Remote Play on console already in use" despite the previous fixed delay: the console's own session-slot cleanup isn't a fixed length of time, so a single short wait wasn't reliable — Refresh now detects that specific error and automatically retries a few times with a growing delay, all still under the same "please wait" spinner, instead of dropping you into the manual reconnect dialog
+            - Removed the Quick Settings Refresh feature entirely (the refresh icon, its "please wait" overlay, and the reconnect/reallocate logic behind it) — it added more complexity and edge cases than it was worth
+            - Reworded the Session tab's notice at the bottom to say the stream needs to be restarted (not refreshed) for changes there to take effect, matching the removal above
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 

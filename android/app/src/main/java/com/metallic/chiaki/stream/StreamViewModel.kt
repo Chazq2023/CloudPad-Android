@@ -6,8 +6,6 @@ import android.app.Application
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder
 import com.metallic.chiaki.common.LogManager
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.*
@@ -17,7 +15,6 @@ import com.metallic.chiaki.session.StreamStateConnected
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.math.sqrt
 
@@ -155,19 +152,5 @@ class StreamViewModel(
 	fun setShowPerformanceOverlay(show: Boolean) {
 		preferences.showPerformanceOverlay = show
 		_showPerformanceOverlay.value = show
-	}
-
-	/** Rebuilds this Remote Play session's [ConnectInfo] with a fresh video profile read from
-	 *  current preferences (resolution/fps/bitrate/codec) — host/registKey/morning and the PSN
-	 *  holepunch fields are unchanged, since only the video profile can meaningfully change. */
-	fun refreshedRemotePlayConnectInfo(): ConnectInfo = connectInfo.copy(videoProfile = preferences.videoProfile)
-
-	/** Re-runs the cloud allocation flow for the same game this (Catalog/Library) session is
-	 *  streaming, so a fresh resolution/bitrate/datacenter selection actually takes effect —
-	 *  those are baked into the session at allocation time, unlike Remote Play's video profile. */
-	fun refreshCloudSession(onResult: (Result<ConnectInfo>) -> Unit) {
-		viewModelScope.launch {
-			onResult(CloudConnectInfoBuilder.refresh(application, preferences, connectInfo))
-		}
 	}
 }

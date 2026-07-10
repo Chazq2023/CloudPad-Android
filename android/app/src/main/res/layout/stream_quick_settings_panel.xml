@@ -64,10 +64,6 @@
          unlike the tab rail below, it isn't a toggle with a selected/unselected state, so it
          uses ?attr/pyluxAccent directly rather than the checked-state colour selector. -->
 
-    <!-- Refresh action, always present just above the power (Disconnect) button. Not part of
-         the tab toggle group below — pressing it fires a one-shot refresh rather than
-         switching to a content section. -->
-
     <!-- Left-hand tab rail: General Settings / Controller Mapping / (dynamic) Session Settings -->
 
     <com.google.android.material.button.MaterialButton
@@ -78,18 +74,6 @@
         app:icon="@drawable/ic_power"
         app:iconTint="?attr/pyluxAccent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@id/quickSettingsTabToggle"
-        app:layout_constraintEnd_toEndOf="@id/quickSettingsTabToggle"
-        app:strokeColor="?attr/pyluxAccent" />
-
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/quickSettingsRefreshButton"
-        style="@style/QuickSettingsTabButton"
-        android:layout_marginBottom="8dp"
-        android:contentDescription="@string/quick_settings_refresh"
-        app:icon="@drawable/ic_refresh"
-        app:iconTint="?attr/pyluxAccent"
-        app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton"
         app:layout_constraintStart_toStartOf="@id/quickSettingsTabToggle"
         app:layout_constraintEnd_toEndOf="@id/quickSettingsTabToggle"
         app:strokeColor="?attr/pyluxAccent" />
@@ -106,7 +90,7 @@
         app:checkedButton="@id/quickSettingsTabGeneral"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
-        app:layout_constraintBottom_toTopOf="@id/quickSettingsRefreshButton">
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/quickSettingsTabGeneral"
@@ -272,7 +256,7 @@
                  runtime) — always sits below whatever rows got added, since it's a sibling
                  after quickSettingsSessionRows rather than a child of it. -->
             <TextView
-                android:id="@+id/quickSettingsSessionRefreshNotice"
+                android:id="@+id/quickSettingsSessionRestartNotice"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingStart="16dp"
@@ -280,7 +264,7 @@
                 android:paddingTop="16dp"
                 android:paddingBottom="16dp"
                 android:gravity="center"
-                android:text="@string/quick_settings_session_refresh_notice"
+                android:text="@string/quick_settings_session_restart_notice"
                 android:textColor="@android:color/white"
                 android:textSize="12sp" />
 

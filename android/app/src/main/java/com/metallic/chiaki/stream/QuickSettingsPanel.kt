@@ -51,9 +51,9 @@ import org.json.JSONArray
  * waiting for anything else.
  *
  * The Session tab's settings are baked into the stream at connect time (video profile / cloud
- * allocation), so changing them here can't take effect live — a permanent Refresh action (a
- * circular-arrows icon, just above the power button) calls [onRefreshRequested] to reconnect/
- * reallocate with whatever the Session tab's values currently are.
+ * allocation), so changing them here can't take effect live on the current stream — a static
+ * notice at the bottom of that tab tells the user as much, and that restarting the stream is
+ * required for changes there to take effect.
  *
  * Hosted in its own [Dialog] (a separate window) rather than a View inside
  * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
@@ -69,8 +69,7 @@ class QuickSettingsPanel(
 	private val streamInput: StreamInput,
 	private val viewModel: StreamViewModel,
 	private val getDisplayMode: () -> TransformMode,
-	private val onDisplayModeChanged: (TransformMode) -> Unit,
-	private val onRefreshRequested: () -> Unit
+	private val onDisplayModeChanged: (TransformMode) -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater)
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
@@ -169,7 +168,6 @@ class QuickSettingsPanel(
 
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
 		panel.quickSettingsDisconnectButton.setOnClickListener { dismissImmediately(); activity.finish() }
-		panel.quickSettingsRefreshButton.setOnClickListener { dismissImmediately(); onRefreshRequested() }
 
 		buildSessionSettingsTab()
 
@@ -199,8 +197,7 @@ class QuickSettingsPanel(
 	}
 
 	// ---- Session tab: content depends on sessionType, built once (it never changes during
-	// this Activity's lifetime — a refresh always creates a brand new Activity/Panel instance
-	// with its own fresh baseline snapshot) ----
+	// this Activity's lifetime) ----
 
 	private fun buildSessionSettingsTab()
 	{
@@ -444,11 +441,11 @@ class QuickSettingsPanel(
 		if(isOpen) close() else open()
 	}
 
-	/** Used ahead of actions that finish the hosting Activity (Disconnect, Refresh) instead of
-	 *  [close]'s animated dismiss: the Dialog is created with the Activity as its context, so if
-	 *  the Activity finishes while it's still showing, Android throws a WindowLeaked crash — an
-	 *  animated close's dialog.dismiss() only runs 220ms later via withEndAction, which isn't
-	 *  soon enough when the caller finishes right after. This dismisses synchronously first. */
+	/** Used ahead of Disconnect instead of [close]'s animated dismiss: the Dialog is created with
+	 *  the Activity as its context, so if the Activity finishes while it's still showing, Android
+	 *  throws a WindowLeaked crash — an animated close's dialog.dismiss() only runs 220ms later
+	 *  via withEndAction, which isn't soon enough when the caller finishes right after. This
+	 *  dismisses synchronously first. */
 	private fun dismissImmediately()
 	{
 		isOpen = false
