@@ -97,7 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed a crash on opening a Remote Play stream (with the default Pink theme): the Quick Settings Session tab's Bitrate field referenced a themed colour that only existed for the other theme colours, not Pink's own stream theme
+            - Added a theme-coloured horizontal bar above the Quick Settings tab rail, meeting the left-edge bar and spanning the full width of the panel
+            - Extended the tab rail's right-hand divider so its top now meets the new horizontal bar and its bottom reaches all the way to the bottom of the panel, matching the left-edge bar's full-height treatment
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 
