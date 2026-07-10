@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Removed the Quick Settings Refresh feature entirely (the refresh icon, its "please wait" overlay, and the reconnect/reallocate logic behind it) — it added more complexity and edge cases than it was worth
+            - Fixed the Quick Settings panel not filling the full screen on any non-Pink theme (Blue/Green/Yellow/Orange), leaving a gap at the bottom: only the Pink theme carried the window flags needed to extend behind the system navigation bar, so switching themes was silently losing that on the stream screen
             - Reworded the Session tab's notice at the bottom to say the stream needs to be restarted (not refreshed) for changes there to take effect, matching the removal above
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them

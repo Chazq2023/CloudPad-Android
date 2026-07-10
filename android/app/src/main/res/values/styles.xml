@@ -280,6 +280,77 @@
         <item name="pyluxAccentA80">@color/accent_pink_a80</item>
     </style>
 
+    <!-- Non-pink StreamActivity theme colours. StreamActivity used to setTheme() straight to
+         AppTheme.<colour> for these, but AppTheme never sets windowTranslucentStatus/
+         windowTranslucentNavigation (only StreamTheme does) — those flags are what let the
+         stream screen's window extend behind the system nav bar, so switching to a non-pink
+         theme was leaving a nav-bar-sized gap at the bottom that only the Pink/StreamTheme path
+         didn't have. These extend StreamTheme itself (for those flags and windowBackground)
+         and just swap in each colour's accent attrs, mirroring AppTheme.<colour>. -->
+    <style name="StreamTheme.Blue" parent="StreamTheme">
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="colorPrimaryDark">@color/primary_dark_blue</item>
+        <item name="colorAccent">@color/accent_blue</item>
+        <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Blue</item>
+        <item name="pyluxAccent">@color/accent_blue</item>
+        <item name="pyluxAccentLight">@color/accent_light_blue</item>
+        <item name="pyluxAccentA12">@color/accent_blue_a12</item>
+        <item name="pyluxAccentA20">@color/accent_blue_a20</item>
+        <item name="pyluxAccentA25">@color/accent_blue_a25</item>
+        <item name="pyluxAccentA30">@color/accent_blue_a30</item>
+        <item name="pyluxAccentA50">@color/accent_blue_a50</item>
+        <item name="pyluxAccentA70">@color/accent_blue_a70</item>
+        <item name="pyluxAccentA80">@color/accent_blue_a80</item>
+    </style>
+
+    <style name="StreamTheme.Green" parent="StreamTheme">
+        <item name="colorPrimary">@color/primary_green</item>
+        <item name="colorPrimaryDark">@color/primary_dark_green</item>
+        <item name="colorAccent">@color/accent_green</item>
+        <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Green</item>
+        <item name="pyluxAccent">@color/accent_green</item>
+        <item name="pyluxAccentLight">@color/accent_light_green</item>
+        <item name="pyluxAccentA12">@color/accent_green_a12</item>
+        <item name="pyluxAccentA20">@color/accent_green_a20</item>
+        <item name="pyluxAccentA25">@color/accent_green_a25</item>
+        <item name="pyluxAccentA30">@color/accent_green_a30</item>
+        <item name="pyluxAccentA50">@color/accent_green_a50</item>
+        <item name="pyluxAccentA70">@color/accent_green_a70</item>
+        <item name="pyluxAccentA80">@color/accent_green_a80</item>
+    </style>
+
+    <style name="StreamTheme.Yellow" parent="StreamTheme">
+        <item name="colorPrimary">@color/primary_yellow</item>
+        <item name="colorPrimaryDark">@color/primary_dark_yellow</item>
+        <item name="colorAccent">@color/accent_yellow</item>
+        <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Yellow</item>
+        <item name="pyluxAccent">@color/accent_yellow</item>
+        <item name="pyluxAccentLight">@color/accent_light_yellow</item>
+        <item name="pyluxAccentA12">@color/accent_yellow_a12</item>
+        <item name="pyluxAccentA20">@color/accent_yellow_a20</item>
+        <item name="pyluxAccentA25">@color/accent_yellow_a25</item>
+        <item name="pyluxAccentA30">@color/accent_yellow_a30</item>
+        <item name="pyluxAccentA50">@color/accent_yellow_a50</item>
+        <item name="pyluxAccentA70">@color/accent_yellow_a70</item>
+        <item name="pyluxAccentA80">@color/accent_yellow_a80</item>
+    </style>
+
+    <style name="StreamTheme.Orange" parent="StreamTheme">
+        <item name="colorPrimary">@color/primary_orange</item>
+        <item name="colorPrimaryDark">@color/primary_dark_orange</item>
+        <item name="colorAccent">@color/accent_orange</item>
+        <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Orange</item>
+        <item name="pyluxAccent">@color/accent_orange</item>
+        <item name="pyluxAccentLight">@color/accent_light_orange</item>
+        <item name="pyluxAccentA12">@color/accent_orange_a12</item>
+        <item name="pyluxAccentA20">@color/accent_orange_a20</item>
+        <item name="pyluxAccentA25">@color/accent_orange_a25</item>
+        <item name="pyluxAccentA30">@color/accent_orange_a30</item>
+        <item name="pyluxAccentA50">@color/accent_orange_a50</item>
+        <item name="pyluxAccentA70">@color/accent_orange_a70</item>
+        <item name="pyluxAccentA80">@color/accent_orange_a80</item>
+    </style>
+
     <style name="TabTextAppearance" parent="TextAppearance.Design.Tab">
         <item name="android:textSize">14sp</item>
         <item name="android:textStyle">bold</item>
