@@ -557,7 +557,7 @@ class StreamInput(
 		// Front-loads L2/R2 response so a partial squeeze reaches a meaningful analog value
 		// sooner instead of tracking raw travel linearly (which felt like it needed a near-full
 		// press before anything registered), while still reaching maximum at a full press.
-		fun Float.triggerResponseCurve() = if(this <= 0f) 0f else pow(0.6f)
+		fun Float.triggerResponseCurve() = if(this <= 0f) 0f else pow(0.4f)
 
 		// L2/R2 travel is reported on different axis codes depending on the controller's
 		// driver: Xbox-style pads use AXIS_LTRIGGER/AXIS_RTRIGGER, while DualShock/DualSense

@@ -97,6 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
+            - Made L2/R2 triggers engage even earlier in the squeeze: strengthened the response curve (previously boosted early travel to the power of 0.6, now 0.4) so a light press reaches a meaningful analog value sooner
             - Made the Quick Settings refresh icon (just above the power button) always present instead of only appearing after a Session-tab setting changed
             - Added a rounded, theme-coloured border around the Quick Settings power (Disconnect) button, matching the tab icons above it
             - Added a new dynamic third tab to Quick Settings (a monitor icon, below the controller tab) showing the settings relevant to the current session — Resolution/FPS/Bitrate/Codec for Remote Play, or Resolution/Datacenter/Bitrate for whichever of Game Catalog (PS3/PS4) or Game Library (PS5) is actually running. Tapping the refresh icon reconnects (Remote Play) or fully re-allocates a fresh cloud session for the same game (Game Catalog/Library) so changes to those settings actually take effect, since they're baked in at connect/allocation time rather than adjustable live
