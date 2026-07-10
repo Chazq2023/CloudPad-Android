@@ -56,13 +56,22 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		 *  (rather than the plain [ActivityStreamBinding.progressBar]) through its own connect
 		 *  phase, for a continuous "refreshing" message across the Activity swap. */
 		private const val EXTRA_IS_REFRESH = "is_refresh"
+		/** How many times [relaunch] has already retried this refresh after the console reported
+		 *  itself still in use (see [QuitReason.isConsoleInUse]) — carried across each retry's
+		 *  Activity swap so the count keeps climbing instead of resetting. 0 on the first
+		 *  attempt. */
+		private const val EXTRA_REFRESH_RETRY_COUNT = "refresh_retry_count"
 		private const val HIDE_UI_TIMEOUT_MS = 4000L
-		/** Grace period before reconnecting a refreshed Remote Play session. The console can
-		 *  still report "already in use" for a brief window after our own teardown completes —
-		 *  our side closing the connection isn't the same instant the console's own session
-		 *  slot is freed. Cloud sessions don't need this: reallocating goes through a fresh
-		 *  server-side allocation rather than reconnecting to the same physical console. */
-		private const val REMOTE_PLAY_REFRESH_RECONNECT_DELAY_MS = 2000L
+		/** Base grace period before (re)connecting a refreshed Remote Play session, scaled up by
+		 *  attempt number. The console can still report "already in use" for a while after our
+		 *  own teardown completes — our side closing the connection isn't the same instant the
+		 *  console's own session slot is freed, and that window isn't fixed-length, so a single
+		 *  short delay isn't reliable. Cloud sessions don't need this: reallocating goes through
+		 *  a fresh server-side allocation rather than reconnecting to the same physical console. */
+		private const val REMOTE_PLAY_REFRESH_RECONNECT_DELAY_MS = 3000L
+		/** Automatic retries after an "already in use" quit on a refreshed Remote Play
+		 *  connection, before giving up and showing the normal quit-reason dialog. */
+		private const val MAX_REFRESH_RETRIES = 3
 	}
 
 	private lateinit var viewModel: StreamViewModel
@@ -94,6 +103,9 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  of the plain [ActivityStreamBinding.progressBar], until [StreamStateConnected]. */
 	private var isRefreshLaunch = false
 
+	/** See [EXTRA_REFRESH_RETRY_COUNT]. */
+	private var refreshRetryCount = 0
+
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
 		val prefs = Preferences(this)
@@ -107,6 +119,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			return
 		}
 		isRefreshLaunch = intent.getBooleanExtra(EXTRA_IS_REFRESH, false)
+		refreshRetryCount = intent.getIntExtra(EXTRA_REFRESH_RETRY_COUNT, 0)
 
 		viewModel = ViewModelProvider(this, viewModelFactory {
 			StreamViewModel(application, connectInfo)
@@ -385,11 +398,12 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		}
 	}
 
-	private fun relaunch(newConnectInfo: ConnectInfo)
+	private fun relaunch(newConnectInfo: ConnectInfo, refreshRetryCount: Int = 0)
 	{
 		val intent = Intent(this, StreamActivity::class.java)
 		intent.putExtra(EXTRA_CONNECT_INFO, newConnectInfo)
 		intent.putExtra(EXTRA_IS_REFRESH, true)
+		intent.putExtra(EXTRA_REFRESH_RETRY_COUNT, refreshRetryCount)
 		startActivity(intent)
 		finish()
 	}
@@ -482,7 +496,23 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				}
 				else if(dialogContents != StreamQuitDialog)
 				{
-					if(state.reason.isError)
+					if(isRefreshLaunch && state.reason.isConsoleInUse && refreshRetryCount < MAX_REFRESH_RETRIES)
+					{
+						// The console hasn't freed its Remote Play session slot from the previous
+						// (just-closed) connection yet. Retry automatically with a growing delay
+						// instead of dropping the user into the manual reconnect dialog below —
+						// refreshOverlay stays up throughout (see the isRefreshLaunch visibility
+						// rule above) so this is invisible to the user as anything other than a
+						// slightly longer wait.
+						val nextRetry = refreshRetryCount + 1
+						val delayMs = REMOTE_PLAY_REFRESH_RECONNECT_DELAY_MS * (nextRetry + 1)
+						Log.w("StreamActivity", "stateChanged: console still in use after refresh (retry $refreshRetryCount/$MAX_REFRESH_RETRIES) — retrying in ${delayMs}ms")
+						Handler(Looper.getMainLooper()).postDelayed(
+							{ relaunch(viewModel.refreshedRemotePlayConnectInfo(), refreshRetryCount = nextRetry) },
+							delayMs
+						)
+					}
+					else if(state.reason.isError)
 					{
 						dialog?.dismiss()
 						val reasonStr = state.reasonString

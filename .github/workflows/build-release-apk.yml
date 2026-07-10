@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed Quick Settings Refresh on Remote Play hitting a "Remote Play on console already in use" error and dropping to the reconnect dialog instead of reconnecting cleanly: the console needs a brief moment after our side closes the old connection before it actually frees up the session, so Refresh now waits a couple of seconds before reconnecting instead of reconnecting instantly (Game Catalog/Library refresh is unaffected — that already worked correctly)
+            - Fixed Quick Settings Refresh on Remote Play still occasionally hitting "Remote Play on console already in use" despite the previous fixed delay: the console's own session-slot cleanup isn't a fixed length of time, so a single short wait wasn't reliable — Refresh now detects that specific error and automatically retries a few times with a growing delay, all still under the same "please wait" spinner, instead of dropping you into the manual reconnect dialog
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 
