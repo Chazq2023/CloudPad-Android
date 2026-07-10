@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed the Session tab's dropdown arrows rendering black and hard to see against the dark panel — now white, matching the rest of that tab's text
+            - Changed the Bitrate slider's background track in the Quick Settings Session tab from black to white, so it's visible alongside the theme-coloured filled portion
             - Reworded the Session tab's notice at the bottom to say the stream needs to be restarted (not refreshed) for changes there to take effect, matching the removal above
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
