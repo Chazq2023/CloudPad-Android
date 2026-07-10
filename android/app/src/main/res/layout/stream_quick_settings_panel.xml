@@ -56,25 +56,25 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/quickSettingsDisconnectButton"
         style="@style/QuickSettingsTabButton"
-        android:layout_marginStart="4dp"
         android:layout_marginBottom="16dp"
         android:contentDescription="@string/stream_disconnect_button"
         app:icon="@drawable/ic_power"
         app:iconTint="?attr/pyluxAccent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@id/quickSettingsTabToggle"
+        app:layout_constraintEnd_toEndOf="@id/quickSettingsTabToggle"
         app:strokeColor="?attr/pyluxAccent" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/quickSettingsRefreshButton"
         style="@style/QuickSettingsTabButton"
-        android:layout_marginStart="4dp"
         android:layout_marginBottom="8dp"
         android:contentDescription="@string/quick_settings_refresh"
         app:icon="@drawable/ic_refresh"
         app:iconTint="?attr/pyluxAccent"
         app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toStartOf="@id/quickSettingsTabToggle"
+        app:layout_constraintEnd_toEndOf="@id/quickSettingsTabToggle"
         app:strokeColor="?attr/pyluxAccent" />
 
     <com.google.android.material.button.MaterialButtonToggleGroup

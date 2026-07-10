@@ -18,7 +18,9 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:textSize="15sp"
-        android:textColor="@android:color/white"/>
+        android:textColor="@android:color/white"
+        android:maxLines="1"
+        android:ellipsize="end"/>
 
     <TextView
         android:id="@+id/currentMapping"
@@ -27,6 +29,8 @@
         android:layout_marginStart="8dp"
         android:textSize="13sp"
         android:textColor="?attr/pyluxAccent"
-        android:maxLines="1"/>
+        android:maxWidth="110dp"
+        android:maxLines="1"
+        android:ellipsize="end"/>
 
 </LinearLayout>

@@ -316,30 +316,36 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		viewModel.session.resume()
 	}
 
-	/** Called from the Quick Settings panel's conditional Refresh action. Remote Play just
-	 *  needs a fresh video profile (no network round trip); Catalog/Library sessions need a
-	 *  brand new cloud allocation for resolution/bitrate/datacenter changes to actually take
-	 *  effect, since those are baked into the session at allocation time. Either way, success
-	 *  replaces this whole Activity (and with it, the panel and its refresh-dirty tracking)
-	 *  rather than trying to mutate the live session in place. */
+	/** Called from the Quick Settings panel's Refresh action. Fully closes the current session
+	 *  first and waits for that teardown to actually complete — [StreamSession.shutdown]'s
+	 *  [Session.stop] call alone only signals the native session to stop; the console/cloud
+	 *  backend doesn't see the disconnect until the background dispose/join finishes. Only once
+	 *  that's done do we reconnect (Remote Play, just needs a fresh video profile) or reallocate
+	 *  (Catalog/Library, need a brand new cloud allocation for resolution/bitrate/datacenter
+	 *  changes to take effect, since those are baked in at allocation time) — otherwise the new
+	 *  session can race the old one still holding its server-side slot open. Either way, success
+	 *  replaces this whole Activity (and with it, the panel) with a genuinely new session rather
+	 *  than trying to mutate the live one in place. */
 	private fun performRefresh()
 	{
-		when(viewModel.connectInfo.sessionType)
-		{
-			StreamSessionType.REMOTE_PLAY -> relaunch(viewModel.refreshedRemotePlayConnectInfo())
-			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD ->
+		binding.progressBar.isVisible = true
+		viewModel.session.shutdown {
+			when(viewModel.connectInfo.sessionType)
 			{
-				binding.progressBar.isVisible = true
-				viewModel.refreshCloudSession { result ->
-					result.onSuccess { relaunch(it) }
-					result.onFailure { error ->
-						binding.progressBar.isGone = true
-						Log.w("StreamActivity", "performRefresh: cloud refresh failed", error)
-						alertDialogBuilder()
-							.setTitle(R.string.quick_settings_refresh_failed_title)
-							.setMessage(error.message ?: getString(R.string.quick_settings_refresh_failed_generic))
-							.setPositiveButton(android.R.string.ok, null)
-							.show()
+				StreamSessionType.REMOTE_PLAY -> relaunch(viewModel.refreshedRemotePlayConnectInfo())
+				StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD ->
+				{
+					viewModel.refreshCloudSession { result ->
+						result.onSuccess { relaunch(it) }
+						result.onFailure { error ->
+							binding.progressBar.isGone = true
+							Log.w("StreamActivity", "performRefresh: cloud refresh failed", error)
+							alertDialogBuilder()
+								.setTitle(R.string.quick_settings_refresh_failed_title)
+								.setMessage(error.message ?: getString(R.string.quick_settings_refresh_failed_generic))
+								.setPositiveButton(android.R.string.ok, null)
+								.show()
+						}
 					}
 				}
 			}

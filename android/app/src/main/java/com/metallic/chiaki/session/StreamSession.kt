@@ -3,6 +3,8 @@
 package com.metallic.chiaki.session
 
 import android.graphics.SurfaceTexture
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.*
 import androidx.lifecycle.LiveData
@@ -44,7 +46,16 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 		}
 	}
 
-	fun shutdown()
+	/** [onDisposed], if given, fires on the main thread once the native session (or holepunch
+	 *  session) has fully torn down — i.e. the console/cloud backend has actually seen the
+	 *  disconnect, not just that [Session.stop] has been signalled. [Session.stop] only sets a
+	 *  flag; the real teardown (closing the ctrl/stream connection) happens asynchronously on
+	 *  the native session thread and is only guaranteed complete once [Session.dispose] (which
+	 *  joins that thread) returns. Callers that need to start a brand new session afterward
+	 *  (e.g. Quick Settings' Refresh) must wait for this callback rather than assuming
+	 *  [shutdown] itself is enough — starting a new session before the old one is actually
+	 *  disposed can race with the server-side session slot still being held open. */
+	fun shutdown(onDisposed: (() -> Unit)? = null)
 	{
 		Log.i("StreamSession", "shutdown: session=${session != null}")
 		// If a native Session was created with a holepunch pointer, the Session owns it
@@ -58,6 +69,7 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			Thread {
 				sessionToDispose?.dispose()
 				Log.i("StreamSession", "Session disposed on background thread")
+				onDisposed?.let { Handler(Looper.getMainLooper()).post(it) }
 			}.start()
 			session = null
 			holepunchSession = null // consumed by native Session
@@ -69,6 +81,7 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			Thread {
 				hpSessionToFini?.fini()
 				Log.i("StreamSession", "Holepunch session finalized on background thread")
+				onDisposed?.let { Handler(Looper.getMainLooper()).post(it) }
 			}.start()
 			holepunchSession = null
 		}
