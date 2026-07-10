@@ -157,6 +157,7 @@
     <string name="quick_settings_refresh_failed_title">Refresh Failed</string>
     <string name="quick_settings_refresh_failed_generic">Could not refresh the stream. Please try again.</string>
     <string name="quick_settings_refresh_in_progress_message">Please wait, the stream is currently being refreshed, this can take a few minutes</string>
+    <string name="quick_settings_session_refresh_notice">Any changes in this section will require you to refresh the stream, otherwise they will not take effect</string>
     <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %s with ID %s?</string>
     <string name="alert_message_delete_manual_host">Are you sure you want to delete the console entry for %s?</string>
     <string name="action_keep">Keep</string>

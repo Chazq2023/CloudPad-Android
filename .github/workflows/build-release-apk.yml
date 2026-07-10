@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a theme-coloured border around the Quick Settings Refresh "please wait" pill — it only had a translucent fill before, so it didn't clearly read as Pink/Blue/Green/Yellow/Orange depending on the active theme
+            - Added a note at the bottom of the Quick Settings Session tab explaining that changes there need a Refresh to actually take effect
             - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 

@@ -239,11 +239,33 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:id="@+id/quickSettingsSessionRows"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="16dp" />
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/quickSettingsSessionRows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- Static, unlike the rows above it (which QuickSettingsPanel inflates at
+                 runtime) — always sits below whatever rows got added, since it's a sibling
+                 after quickSettingsSessionRows rather than a child of it. -->
+            <TextView
+                android:id="@+id/quickSettingsSessionRefreshNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:gravity="center"
+                android:text="@string/quick_settings_session_refresh_notice"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+        </LinearLayout>
 
     </ScrollView>
 
