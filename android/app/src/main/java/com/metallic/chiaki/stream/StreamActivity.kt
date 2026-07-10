@@ -57,6 +57,12 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		 *  phase, for a continuous "refreshing" message across the Activity swap. */
 		private const val EXTRA_IS_REFRESH = "is_refresh"
 		private const val HIDE_UI_TIMEOUT_MS = 4000L
+		/** Grace period before reconnecting a refreshed Remote Play session. The console can
+		 *  still report "already in use" for a brief window after our own teardown completes —
+		 *  our side closing the connection isn't the same instant the console's own session
+		 *  slot is freed. Cloud sessions don't need this: reallocating goes through a fresh
+		 *  server-side allocation rather than reconnecting to the same physical console. */
+		private const val REMOTE_PLAY_REFRESH_RECONNECT_DELAY_MS = 2000L
 	}
 
 	private lateinit var viewModel: StreamViewModel
@@ -354,7 +360,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		viewModel.session.shutdown {
 			when(viewModel.connectInfo.sessionType)
 			{
-				StreamSessionType.REMOTE_PLAY -> relaunch(viewModel.refreshedRemotePlayConnectInfo())
+				StreamSessionType.REMOTE_PLAY ->
+					Handler(Looper.getMainLooper()).postDelayed(
+						{ relaunch(viewModel.refreshedRemotePlayConnectInfo()) },
+						REMOTE_PLAY_REFRESH_RECONNECT_DELAY_MS
+					)
 				StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD ->
 				{
 					viewModel.refreshCloudSession { result ->
