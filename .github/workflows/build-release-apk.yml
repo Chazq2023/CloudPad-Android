@@ -97,8 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed Quick Settings Refresh appearing to hang after closing the stream: it was waiting on the old session's video decoder to fully release its hardware resources before reconnecting, which can take far longer than the network disconnect itself — it now only waits for the network side to close (the part the console/cloud backend actually needs), so reconnecting/reallocating starts right away
-            - Made the Session tab's headings and setting labels a fixed white, no longer following the theme colour
+            - Fixed Quick Settings Refresh just closing the stream and dropping back to the library instead of reconnecting: closing the old session for Refresh fires the same "session ended" event as a normal disconnect, which was immediately finishing the stream screen before Refresh's own reconnect/reallocate logic got a chance to run — that auto-finish is now suppressed specifically while a refresh is in progress
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 
             ### APK

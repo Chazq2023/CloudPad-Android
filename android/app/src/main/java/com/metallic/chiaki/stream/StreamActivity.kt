@@ -316,11 +316,20 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		viewModel.session.resume()
 	}
 
+	/** True while a Quick Settings Refresh is in flight. [Session.stop] (called by
+	 *  [StreamSession.shutdown] below) makes the native session quit with a non-error reason,
+	 *  same as any other clean disconnect — which [stateChanged]'s [StreamStateQuit] handling
+	 *  would otherwise treat as "the user disconnected" and immediately [finish] the Activity,
+	 *  racing (and always winning against) this function's own async relaunch below. Checked in
+	 *  [stateChanged] to suppress that so Refresh actually gets to relaunch instead of just
+	 *  closing the stream and dropping back to whatever launched it. */
+	private var isRefreshing = false
+
 	/** Called from the Quick Settings panel's Refresh action. Fully closes the current session
 	 *  first and waits for that teardown to actually complete — [StreamSession.shutdown]'s
 	 *  [Session.stop] call alone only signals the native session to stop; the console/cloud
-	 *  backend doesn't see the disconnect until the background dispose/join finishes. Only once
-	 *  that's done do we reconnect (Remote Play, just needs a fresh video profile) or reallocate
+	 *  backend doesn't see the disconnect until the background join finishes. Only once that's
+	 *  done do we reconnect (Remote Play, just needs a fresh video profile) or reallocate
 	 *  (Catalog/Library, need a brand new cloud allocation for resolution/bitrate/datacenter
 	 *  changes to take effect, since those are baked in at allocation time) — otherwise the new
 	 *  session can race the old one still holding its server-side slot open. Either way, success
@@ -328,6 +337,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  than trying to mutate the live one in place. */
 	private fun performRefresh()
 	{
+		isRefreshing = true
 		binding.progressBar.isVisible = true
 		viewModel.session.shutdown {
 			when(viewModel.connectInfo.sessionType)
@@ -338,6 +348,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 					viewModel.refreshCloudSession { result ->
 						result.onSuccess { relaunch(it) }
 						result.onFailure { error ->
+							isRefreshing = false
 							binding.progressBar.isGone = true
 							Log.w("StreamActivity", "performRefresh: cloud refresh failed", error)
 							alertDialogBuilder()
@@ -433,7 +444,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			is StreamStateQuit ->
 			{
 				flushStreamTimeSegment()
-				if(dialogContents != StreamQuitDialog)
+				if(isRefreshing)
+				{
+					// This quit was caused by our own Session.stop() in performRefresh(), not a
+					// real disconnect — its own async flow (waiting on the network teardown,
+					// then reconnecting/reallocating) owns what happens next, not this dialog/
+					// finish() logic.
+				}
+				else if(dialogContents != StreamQuitDialog)
 				{
 					if(state.reason.isError)
 					{
