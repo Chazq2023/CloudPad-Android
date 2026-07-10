@@ -97,8 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed Quick Settings Refresh and Disconnect potentially crashing: both finished the stream screen while its own Quick Settings panel (a separate popup window) was still showing, which Android treats as a leaked window — both now close the panel synchronously first
-            - Fixed the Controller tab's "Left/Right TouchPad Click" and "TouchPad Swipe" rows being truncated with "…" in the narrower Quick Settings panel: the mapping name now sits on its own line above the assigned button instead of squeezed alongside it, so the full label always fits
+            - Fixed Quick Settings Refresh appearing to hang after closing the stream: it was waiting on the old session's video decoder to fully release its hardware resources before reconnecting, which can take far longer than the network disconnect itself — it now only waits for the network side to close (the part the console/cloud backend actually needs), so reconnecting/reallocating starts right away
+            - Made the Session tab's headings and setting labels a fixed white, no longer following the theme colour
             - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
 
             ### APK

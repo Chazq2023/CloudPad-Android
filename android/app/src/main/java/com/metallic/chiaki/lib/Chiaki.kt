@@ -542,13 +542,34 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun start() = ErrorCode(ChiakiNative.sessionStart(nativePtr))
 	fun stop() = ErrorCode(ChiakiNative.sessionStop(nativePtr))
 
-	fun dispose()
+	/** Waits only for the native session thread to exit — ctrl/stream-connection teardown,
+	 *  which is what the console/cloud backend actually observes as "disconnected". Unlike
+	 *  [dispose], this never touches the video decoder, so unlike [freeResources] it can't
+	 *  block on native MediaCodec teardown (which this codebase elsewhere notes can be very
+	 *  slow). Callers that just need to know the old session is gone before starting a new one
+	 *  (e.g. Quick Settings Refresh) should wait on this alone rather than the full [dispose]. */
+	fun join()
 	{
 		if(nativePtr == 0L)
 			return
 		ChiakiNative.sessionJoin(nativePtr)
+	}
+
+	/** Frees the native session's resources (audio/video decoder teardown, chiaki_session_fini).
+	 *  Must be called after [join]. This is the potentially-slow part — safe to run
+	 *  fire-and-forget on a background thread since nothing needs to wait on it finishing. */
+	fun freeResources()
+	{
+		if(nativePtr == 0L)
+			return
 		ChiakiNative.sessionFree(nativePtr)
 		nativePtr = 0L
+	}
+
+	fun dispose()
+	{
+		join()
+		freeResources()
 	}
 
 	private fun event(event: Event)

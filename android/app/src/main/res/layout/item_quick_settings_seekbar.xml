@@ -13,7 +13,7 @@
         android:id="@+id/quickSettingsSeekBarLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="?attr/pyluxAccent"
+        android:textColor="@android:color/white"
         android:textSize="13sp" />
 
     <SeekBar

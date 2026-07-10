@@ -47,14 +47,21 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	}
 
 	/** [onDisposed], if given, fires on the main thread once the native session (or holepunch
-	 *  session) has fully torn down — i.e. the console/cloud backend has actually seen the
-	 *  disconnect, not just that [Session.stop] has been signalled. [Session.stop] only sets a
-	 *  flag; the real teardown (closing the ctrl/stream connection) happens asynchronously on
-	 *  the native session thread and is only guaranteed complete once [Session.dispose] (which
-	 *  joins that thread) returns. Callers that need to start a brand new session afterward
-	 *  (e.g. Quick Settings' Refresh) must wait for this callback rather than assuming
-	 *  [shutdown] itself is enough — starting a new session before the old one is actually
-	 *  disposed can race with the server-side session slot still being held open. */
+	 *  session) has fully torn down its ctrl/stream connection — i.e. the console/cloud backend
+	 *  has actually seen the disconnect, not just that [Session.stop] has been signalled.
+	 *  [Session.stop] only sets a flag; the real network teardown happens asynchronously on the
+	 *  native session thread and is only guaranteed complete once [Session.join] returns.
+	 *  Callers that need to start a brand new session afterward (e.g. Quick Settings' Refresh)
+	 *  must wait for this callback rather than assuming [shutdown] itself is enough — starting a
+	 *  new session before the old one's network connection is actually closed can race with the
+	 *  server-side session slot still being held open.
+	 *
+	 *  This deliberately waits on [Session.join] alone, not the full [Session.dispose] —
+	 *  freeing the native session also tears down the video decoder, which can block far longer
+	 *  than the network teardown (native MediaCodec shutdown; see the video decoder's own
+	 *  comments). That resource cleanup still happens, just afterward and without anything
+	 *  waiting on it, so it can't make [onDisposed] (and whatever reconnect/reallocate flow is
+	 *  waiting on it) hang. */
 	fun shutdown(onDisposed: (() -> Unit)? = null)
 	{
 		Log.i("StreamSession", "shutdown: session=${session != null}")
@@ -64,12 +71,15 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 		{
 			val sessionToDispose = session
 			session?.stop()
-			// Move blocking dispose() call to background thread to prevent ANR
-			// (dispose can block for 10+ seconds on network timeouts during holepunch cleanup)
+			// Move blocking join()/freeResources() calls to background thread to prevent ANR
+			// (network teardown can block for 10+ seconds on timeouts during holepunch cleanup,
+			// and video decoder teardown separately can block for its own reasons — see above).
 			Thread {
-				sessionToDispose?.dispose()
-				Log.i("StreamSession", "Session disposed on background thread")
+				sessionToDispose?.join()
+				Log.i("StreamSession", "Session joined on background thread")
 				onDisposed?.let { Handler(Looper.getMainLooper()).post(it) }
+				sessionToDispose?.freeResources()
+				Log.i("StreamSession", "Session resources freed on background thread")
 			}.start()
 			session = null
 			holepunchSession = null // consumed by native Session
