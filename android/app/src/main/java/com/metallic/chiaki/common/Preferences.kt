@@ -93,6 +93,11 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(touchpadOnlyEnabledKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(touchpadOnlyEnabledKey, value).apply() }
 
+	val micEnabledKey get() = resources.getString(R.string.preferences_microphone_enabled_key)
+	var micEnabled
+		get() = sharedPreferences.getBoolean(micEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(micEnabledKey, value).apply() }
+
 	val motionEnabledKey get() = resources.getString(R.string.preferences_motion_enabled_key)
 	var motionEnabled
 		get() = sharedPreferences.getBoolean(motionEnabledKey, false)

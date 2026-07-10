@@ -97,10 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Changed the Bitrate slider's background track in the Quick Settings Session tab from black to white, so it's visible alongside the theme-coloured filled portion
-            - Reworded the Session tab's notice at the bottom to say the stream needs to be restarted (not refreshed) for changes there to take effect, matching the removal above
-            - Fixed the Session tab's headings reverting to white instead of staying the app's theme colour — only the row labels/values below them should be white, not the section headings
-            - Fixed the Quick Settings power (Disconnect) and refresh buttons not lining up with, or matching the size of, the tab icons above them
+            - Added a Microphone (Remote Play only) toggle, above Motion in Settings and in the Quick Settings General tab, that sends your device's mic audio to the console during a Remote Play session
+            - Requests the Android microphone permission the first time the toggle is turned on, in both Settings and Quick Settings
 
             ### APK
             Attached release asset:
