@@ -11,5 +11,5 @@
     android:textSize="12sp"
     android:textStyle="bold"
     android:textAllCaps="true"
-    android:textColor="?attr/colorSecondary"
+    android:textColor="?attr/pyluxAccent"
     android:letterSpacing="0.1"/>

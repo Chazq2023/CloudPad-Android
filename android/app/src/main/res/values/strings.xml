@@ -146,6 +146,14 @@
     <string name="preferences_motion_enabled_summary">Use device\'s motion sensors for controller motion</string>
     <string name="preferences_button_haptic_enabled_title">Touch Haptics</string>
     <string name="preferences_button_haptic_enabled_summary">Vibrate the phone on touchscreen button presses</string>
+    <string name="quick_settings_title">Quick Settings</string>
+    <string name="quick_settings_close">Close</string>
+    <string name="quick_settings_performance_overlay_title">Performance Overlay</string>
+    <string name="quick_settings_osc_title">On-Screen Controls</string>
+    <string name="quick_settings_touchpad_title">Touchpad Only</string>
+    <string name="quick_settings_window_size">Window Size</string>
+    <string name="quick_settings_session_tab_description">Session Settings</string>
+    <string name="quick_settings_session_restart_notice">Any changes in this section will require you to restart the stream, otherwise they will not take effect</string>
     <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %s with ID %s?</string>
     <string name="alert_message_delete_manual_host">Are you sure you want to delete the console entry for %s?</string>
     <string name="action_keep">Keep</string>

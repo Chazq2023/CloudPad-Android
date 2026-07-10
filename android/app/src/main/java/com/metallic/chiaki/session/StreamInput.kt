@@ -11,6 +11,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.ControllerState
+import kotlin.math.pow
 
 class StreamInput(
 	val context: Context,
@@ -62,34 +63,14 @@ class StreamInput(
 
 	// ---- Mapping lookup structures ----
 
-	private val activeMapping: Map<ControllerAction, PhysicalInput> = run {
-		PhysicalInput.resolveMapping(preferences.loadControllerMapping())
-	}
-
-	private val singleKeyToActions: Map<Int, List<ControllerAction>> =
-		activeMapping.entries
-			.filter { it.value is PhysicalInput.Button }
-			.groupBy(
-				keySelector = { (it.value as PhysicalInput.Button).keyCode },
-				valueTransform = { it.key }
-			)
-
-	private val singleAxisMappings: List<Triple<ControllerAction, Int, Boolean>> =
-		activeMapping.entries
-			.filter { it.value is PhysicalInput.AxisDirection }
-			.map { val ax = it.value as PhysicalInput.AxisDirection; Triple(it.key, ax.axis, ax.positive) }
+	private var activeMapping: Map<ControllerAction, PhysicalInput> = emptyMap()
+	private var singleKeyToActions: Map<Int, List<ControllerAction>> = emptyMap()
+	private var singleAxisMappings: List<Triple<ControllerAction, Int, Boolean>> = emptyList()
 
 	data class ComboEntry(val modifierKeyCode: Int, val trigger: PhysicalInput, val action: ControllerAction)
 
-	private val comboEntries: List<ComboEntry> =
-		activeMapping.entries
-			.filter { it.value is PhysicalInput.Combo }
-			.map { (action, input) ->
-				val combo = input as PhysicalInput.Combo
-				ComboEntry(combo.modifierKeyCode, combo.trigger, action)
-			}
-
-	private val comboModifierKeyCodes: Set<Int> = comboEntries.map { it.modifierKeyCode }.toSet()
+	private var comboEntries: List<ComboEntry> = emptyList()
+	private var comboModifierKeyCodes: Set<Int> = emptySet()
 
 	// ---- Combo runtime state ----
 
@@ -99,6 +80,51 @@ class StreamInput(
 	// Last-known values for axes used as combo triggers — used to ignore axes that were
 	// already above threshold when the modifier key was pressed (e.g. L2 drift at rest).
 	private val lastAxisValues = mutableMapOf<Int, Float>()
+
+	init { reloadMapping() }
+
+	/**
+	 * Rebuilds the mapping lookup tables from the currently-saved controller mapping.
+	 * Called once at construction, and again from the in-stream Quick Settings panel's
+	 * Save button after a remap edit, so a live session picks up the new mapping without
+	 * needing to reconnect.
+	 */
+	fun reloadMapping()
+	{
+		activeMapping = PhysicalInput.resolveMapping(preferences.loadControllerMapping())
+
+		singleKeyToActions = activeMapping.entries
+			.filter { it.value is PhysicalInput.Button }
+			.groupBy(
+				keySelector = { (it.value as PhysicalInput.Button).keyCode },
+				valueTransform = { it.key }
+			)
+
+		singleAxisMappings = activeMapping.entries
+			.filter { it.value is PhysicalInput.AxisDirection }
+			.map { val ax = it.value as PhysicalInput.AxisDirection; Triple(it.key, ax.axis, ax.positive) }
+
+		comboEntries = activeMapping.entries
+			.filter { it.value is PhysicalInput.Combo }
+			.map { (action, input) ->
+				val combo = input as PhysicalInput.Combo
+				ComboEntry(combo.modifierKeyCode, combo.trigger, action)
+			}
+
+		comboModifierKeyCodes = comboEntries.map { it.modifierKeyCode }.toSet()
+
+		// Defensive: drop any in-flight held-key/combo runtime state referencing the old
+		// mapping, to avoid a "stuck button" if a physical key held during remapping no
+		// longer maps to anything.
+		heldModifiers.clear()
+		activeComboActions.clear()
+		triggeredComboAxes.clear()
+		lastAxisValues.clear()
+		keyControllerState.buttons = 0U
+		keyControllerState.l2State = 0U
+		keyControllerState.r2State = 0U
+		controllerStateUpdated()
+	}
 
 	// ---- Sensor / lifecycle ----
 
@@ -156,10 +182,47 @@ class StreamInput(
 		}
 	}
 
+	private var lifecycleOwnerRef: LifecycleOwner? = null
+	private var motionObserverAdded = false
+
 	fun observe(lifecycleOwner: LifecycleOwner)
 	{
+		lifecycleOwnerRef = lifecycleOwner
 		if(preferences.motionEnabled)
-			lifecycleOwner.lifecycle.addObserver(motionLifecycleObserver)
+			enableMotion()
+	}
+
+	/** Live-toggles motion sensor input for an already-running stream, e.g. from the
+	 *  in-stream Quick Settings panel, without needing to reconnect. */
+	fun setMotionEnabled(enabled: Boolean)
+	{
+		if(enabled) enableMotion() else disableMotion()
+	}
+
+	private fun enableMotion()
+	{
+		val owner = lifecycleOwnerRef ?: return
+		if(motionObserverAdded) return
+		owner.lifecycle.addObserver(motionLifecycleObserver)
+		motionObserverAdded = true
+	}
+
+	private fun disableMotion()
+	{
+		val owner = lifecycleOwnerRef ?: return
+		if(!motionObserverAdded) return
+		owner.lifecycle.removeObserver(motionLifecycleObserver)
+		motionObserverAdded = false
+
+		// Lifecycle.removeObserver() doesn't synthesize an ON_PAUSE call, so the sensor
+		// listener must be unregistered explicitly here, otherwise motion data keeps
+		// streaming (or sticks at its last reading) after being "disabled".
+		val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+		sensorManager.unregisterListener(sensorEventListener)
+		motionControllerState.accelX = 0f; motionControllerState.accelY = 0f; motionControllerState.accelZ = 0f
+		motionControllerState.gyroX = 0f; motionControllerState.gyroY = 0f; motionControllerState.gyroZ = 0f
+		motionControllerState.orientX = 0f; motionControllerState.orientY = 0f; motionControllerState.orientZ = 0f; motionControllerState.orientW = 0f
+		controllerStateUpdated()
 	}
 
 	private fun controllerStateUpdated()
@@ -491,12 +554,28 @@ class StreamInput(
 		fun Float.signedAxis() = (this * Short.MAX_VALUE).toInt().toShort()
 		fun Float.unsignedAxis() = (this * UByte.MAX_VALUE.toFloat()).toUInt().toUByte()
 		fun Float.coerceSigned() = coerceIn(-1f, 1f)
+		// Front-loads L2/R2 response so a partial squeeze reaches a meaningful analog value
+		// sooner instead of tracking raw travel linearly (which felt like it needed a near-full
+		// press before anything registered), while still reaching maximum at a full press.
+		fun Float.triggerResponseCurve() = if(this <= 0f) 0f else pow(0.4f)
+
+		// L2/R2 travel is reported on different axis codes depending on the controller's
+		// driver: Xbox-style pads use AXIS_LTRIGGER/AXIS_RTRIGGER, while DualShock/DualSense
+		// pads commonly report the same physical trigger via AXIS_BRAKE/AXIS_GAS instead.
+		// Checking both and taking whichever is populated means the default mapping gets
+		// a genuine analog reading regardless of which axis the connected pad actually uses.
+		fun MotionEvent.resolvedAxisValue(axis: Int): Float = when(axis)
+		{
+			MotionEvent.AXIS_LTRIGGER -> maxOf(getAxisValue(axis), getAxisValue(MotionEvent.AXIS_BRAKE))
+			MotionEvent.AXIS_RTRIGGER -> maxOf(getAxisValue(axis), getAxisValue(MotionEvent.AXIS_GAS))
+			else -> getAxisValue(axis)
+		}
 
 		// Update last-known axis values for combo edge detection
 		for(combo in comboEntries)
 		{
 			if(combo.trigger is PhysicalInput.AxisDirection)
-				lastAxisValues[combo.trigger.axis] = event.getAxisValue(combo.trigger.axis)
+				lastAxisValues[combo.trigger.axis] = event.resolvedAxisValue(combo.trigger.axis)
 		}
 
 		// Combo axis triggers (modifier held + axis movement)
@@ -506,7 +585,7 @@ class StreamInput(
 			{
 				if(combo.trigger !is PhysicalInput.AxisDirection) continue
 				if(combo.modifierKeyCode !in heldModifiers) continue
-				val rawValue = event.getAxisValue(combo.trigger.axis)
+				val rawValue = event.resolvedAxisValue(combo.trigger.axis)
 				val dirValue = if(combo.trigger.positive) maxOf(0f, rawValue) else maxOf(0f, -rawValue)
 				if(dirValue > 0.5f)
 				{
@@ -532,7 +611,7 @@ class StreamInput(
 		for((action, axis, positive) in singleAxisMappings)
 		{
 			if((axis to positive) in triggeredComboAxes) continue
-			val rawValue = event.getAxisValue(axis)
+			val rawValue = event.resolvedAxisValue(axis)
 			val dirValue = if(positive) maxOf(0f, rawValue) else maxOf(0f, -rawValue)
 			when(action)
 			{
@@ -567,8 +646,8 @@ class StreamInput(
 		motionControllerState.leftY = leftY.coerceSigned().signedAxis()
 		motionControllerState.rightX = rightX.coerceSigned().signedAxis()
 		motionControllerState.rightY = rightY.coerceSigned().signedAxis()
-		motionControllerState.l2State = l2.coerceIn(0f, 1f).unsignedAxis()
-		motionControllerState.r2State = r2.coerceIn(0f, 1f).unsignedAxis()
+		motionControllerState.l2State = l2.coerceIn(0f, 1f).triggerResponseCurve().unsignedAxis()
+		motionControllerState.r2State = r2.coerceIn(0f, 1f).triggerResponseCurve().unsignedAxis()
 
 		controllerStateUpdated()
 		return true

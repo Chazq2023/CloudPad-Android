@@ -1011,6 +1011,7 @@ static void stream_connection_takion_data_expect_streaminfo(ChiakiStreamConnecti
 		CHIAKI_LOGE(stream_connection->log, "StreamConnection failed to enable microphone input");
 		goto error;
 	}
+	CHIAKI_LOGI(stream_connection->log, "StreamConnection sent microphone capability STREAMINFO successfully");
 
 	// stream_connection->state_mutex is expected to be locked by the caller of this function
 	stream_connection->state_finished = true;
@@ -1230,7 +1231,10 @@ static ChiakiErrorCode stream_connection_enable_microphone(ChiakiStreamConnectio
 	memset(&msg, 0, sizeof(msg));
 
 	ChiakiAudioHeader audio_header_input;
-	chiaki_audio_header_set(&audio_header_input, 16, 1, 48000, 480);
+	// channels, bits, rate, frame_size — must match the header the opus encoder actually
+	// uses to send mic audio (2ch/16bit/48000Hz/480 samples), otherwise the console never
+	// considers the announced mic capability valid.
+	chiaki_audio_header_set(&audio_header_input, 2, 16, 48000, 480);
 	uint8_t audio_header[CHIAKI_AUDIO_HEADER_SIZE];
 	chiaki_audio_header_save(&audio_header_input, audio_header);
 	ChiakiPBBuf audio_header_buf = { sizeof(audio_header), (uint8_t *)audio_header };

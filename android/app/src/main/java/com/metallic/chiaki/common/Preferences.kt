@@ -686,6 +686,17 @@ class Preferences(context: Context)
 		else     -> R.style.AppTheme
 	}
 
+	/** Like [getThemeStyleRes], but for StreamActivity specifically — StreamTheme.<colour>
+	 *  instead of AppTheme.<colour>, since only StreamTheme carries the translucent status/nav
+	 *  bar flags the stream screen's window needs to actually fill the screen. */
+	fun getStreamThemeStyleRes(): Int = when (getThemeColour()) {
+		"blue"   -> R.style.StreamTheme_Blue
+		"green"  -> R.style.StreamTheme_Green
+		"yellow" -> R.style.StreamTheme_Yellow
+		"orange" -> R.style.StreamTheme_Orange
+		else     -> R.style.StreamTheme
+	}
+
 	private val CONTROLLER_MAPPING_KEY = "controller_mapping_json"
 
 	fun saveControllerMapping(mapping: Map<com.metallic.chiaki.session.ControllerAction, com.metallic.chiaki.session.PhysicalInput>)

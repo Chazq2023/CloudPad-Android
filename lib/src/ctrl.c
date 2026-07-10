@@ -540,6 +540,9 @@ static ChiakiErrorCode ctrl_message_send(ChiakiCtrl *ctrl, uint16_t type, const 
 			(unsigned int)type, (unsigned long long)payload_size);
 	if(payload)
 		chiaki_log_hexdump(ctrl->session->log, CHIAKI_LOG_VERBOSE, payload, payload_size);
+	if(type == CTRL_MESSAGE_TYPE_MIC_CONNECT || type == CTRL_MESSAGE_TYPE_MIC_TOGGLE)
+		CHIAKI_LOGI(ctrl->session->log, "Ctrl actually sending mic message type %x over the wire now (crypt_counter_local=%llu)",
+				(unsigned int)type, (unsigned long long)ctrl->crypt_counter_local);
 
 	uint8_t *enc = NULL;
 	if(payload)
@@ -650,6 +653,32 @@ CHIAKI_EXPORT ChiakiErrorCode ctrl_message_toggle_microphone(ChiakiCtrl *ctrl, b
 		return err;
 	}
 	return CHIAKI_ERR_SUCCESS;
+}
+
+// Queued (thread-safe) equivalents for use by application code (chiaki_session_connect_microphone/
+// chiaki_session_toggle_microphone), which may be called from any thread — ctrl_message_send()
+// above mutates ctrl->crypt_counter_local and writes to the socket without any locking, safe only
+// because its only other caller (ctrl_enable_features(), via ctrl_message_received()) always runs
+// on the ctrl thread itself. Calling it directly from another thread races with the ctrl thread's
+// own sends, corrupting the encryption counter and/or message framing for every ctrl message from
+// that point on — which silently breaks the mic (and anything else on the ctrl channel) without
+// any visible error, since the stream/controller channels are unaffected.
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_connect_microphone(ChiakiCtrl *ctrl)
+{
+	uint8_t connect[2] = {0x00, 0x00};
+	ChiakiErrorCode err = chiaki_ctrl_send_message(ctrl, CTRL_MESSAGE_TYPE_MIC_CONNECT, connect, 0x2);
+	CHIAKI_LOGI(ctrl->session->log, "Ctrl queued microphone connect message, err=%s", chiaki_error_string(err));
+	return err;
+}
+
+CHIAKI_EXPORT ChiakiErrorCode chiaki_ctrl_toggle_microphone(ChiakiCtrl *ctrl, bool muted)
+{
+	uint8_t toggle[0x4] = {0, 1, 1, 89};
+	if(muted)
+		toggle[2] = 0;
+	ChiakiErrorCode err = chiaki_ctrl_send_message(ctrl, CTRL_MESSAGE_TYPE_MIC_TOGGLE, toggle, 0x4);
+	CHIAKI_LOGI(ctrl->session->log, "Ctrl queued microphone toggle (muted=%d) message, err=%s", (int)muted, chiaki_error_string(err));
+	return err;
 }
 
 CHIAKI_EXPORT ChiakiErrorCode ctrl_message_set_fallback_session_id(ChiakiCtrl *ctrl)

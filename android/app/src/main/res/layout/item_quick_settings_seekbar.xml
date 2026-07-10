@@ -7,25 +7,21 @@
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
     android:paddingTop="10dp"
-    android:paddingBottom="10dp"
-    android:background="?attr/selectableItemBackground"
-    android:minHeight="56dp">
+    android:paddingBottom="10dp">
 
     <TextView
-        android:id="@+id/actionName"
+        android:id="@+id/quickSettingsSeekBarLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:textColor="@android:color/white"/>
-
-    <TextView
-        android:id="@+id/currentMapping"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textSize="13sp"
         android:textColor="?attr/pyluxAccent"
-        android:maxLines="1"
-        android:ellipsize="end"/>
+        android:textSize="13sp" />
+
+    <SeekBar
+        android:id="@+id/quickSettingsSeekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:progressTint="?attr/pyluxAccent"
+        android:progressBackgroundTint="@android:color/white"
+        android:thumbTint="?attr/pyluxAccent" />
 
 </LinearLayout>

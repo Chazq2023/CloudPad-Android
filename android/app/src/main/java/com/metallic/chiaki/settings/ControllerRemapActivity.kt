@@ -9,36 +9,19 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.session.ControllerAction
+import com.metallic.chiaki.session.ControllerRemapCapture
 import com.metallic.chiaki.session.PhysicalInput
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityControllerRemapBinding
-import kotlin.math.abs
 
 class ControllerRemapActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityControllerRemapBinding
     private lateinit var preferences: Preferences
     private lateinit var adapter: RemapAdapter
+    private lateinit var capture: ControllerRemapCapture
 
     private val currentMapping: MutableMap<ControllerAction, PhysicalInput> = mutableMapOf()
-
-    private var listeningForAction: ControllerAction? = null
-    private var listenDialog: AlertDialog? = null
-    private var captureModifier: Int? = null
-
-    // ---- Custom dialog that routes controller events back to this activity ----
-
-    private inner class InputCaptureDialog : AlertDialog(this@ControllerRemapActivity) {
-        override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-            if (listeningForAction != null && handleCaptureKeyEvent(event)) return true
-            return super.dispatchKeyEvent(event)
-        }
-
-        override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-            if (listeningForAction != null && handleCaptureMotionEvent(event)) return true
-            return super.dispatchGenericMotionEvent(event)
-        }
-    }
 
     // ---- Activity lifecycle ----
 
@@ -56,7 +39,20 @@ class ControllerRemapActivity : AppCompatActivity() {
         preferences = Preferences(this)
         currentMapping.putAll(PhysicalInput.resolveMapping(preferences.loadControllerMapping()))
 
-        adapter = RemapAdapter(buildItems()) { action -> startListeningFor(action) }
+        capture = ControllerRemapCapture(
+            context = this,
+            onInputDetected = { action, input ->
+                currentMapping[action] = input
+                saveAndRefresh()
+            },
+            onCleared = { action ->
+                currentMapping.remove(action)
+                saveAndRefresh()
+            },
+            onDialogClosed = { dropFocusAfterDialog() }
+        )
+
+        adapter = RemapAdapter(buildItems()) { action -> capture.startListeningFor(action) }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
     }
@@ -75,124 +71,13 @@ class ControllerRemapActivity : AppCompatActivity() {
     // ---- Activity-level dispatch (handles events when no dialog is showing) ----
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (listeningForAction != null && handleCaptureKeyEvent(event)) return true
+        if (capture.isListening && capture.handleCaptureKeyEvent(event)) return true
         return super.dispatchKeyEvent(event)
     }
 
     override fun onGenericMotionEvent(event: MotionEvent): Boolean {
-        if (listeningForAction != null && handleCaptureMotionEvent(event)) return true
+        if (capture.isListening && capture.handleCaptureMotionEvent(event)) return true
         return super.onGenericMotionEvent(event)
-    }
-
-    // ---- Shared capture logic (called from both activity and dialog dispatch) ----
-
-    fun handleCaptureKeyEvent(event: KeyEvent): Boolean {
-        // Ignore held-key repeat events
-        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount > 0) return true
-
-        val ignoredKeyCodes = setOf(
-            KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_HOME,
-            KeyEvent.KEYCODE_APP_SWITCH, KeyEvent.KEYCODE_MENU
-        )
-        if (event.keyCode in ignoredKeyCodes) {
-            if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
-                listenDialog?.dismiss()
-                cancelListening()
-            }
-            return true
-        }
-
-        when (event.action) {
-            KeyEvent.ACTION_DOWN -> {
-                val mod = captureModifier
-                when {
-                    mod == null -> {
-                        // First key down — record as potential modifier
-                        captureModifier = event.keyCode
-                        listenDialog?.setMessage(
-                            getString(
-                                R.string.controller_remap_modifier_held,
-                                PhysicalInput.formatKeyCode(event.keyCode)
-                            )
-                        )
-                    }
-                    mod != event.keyCode -> {
-                        // Second different key while first still held — save as combo
-                        onInputDetected(PhysicalInput.Combo(mod, PhysicalInput.Button(event.keyCode)))
-                    }
-                }
-            }
-            KeyEvent.ACTION_UP -> {
-                val mod = captureModifier
-                if (mod != null && mod == event.keyCode) {
-                    // Modifier released without a second input — save as single button
-                    onInputDetected(PhysicalInput.Button(mod))
-                }
-            }
-        }
-        return true
-    }
-
-    fun handleCaptureMotionEvent(event: MotionEvent): Boolean {
-        if (event.source and InputDevice.SOURCE_CLASS_JOYSTICK == 0) return false
-
-        val axes = listOf(
-            MotionEvent.AXIS_X, MotionEvent.AXIS_Y,
-            MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ,
-            MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_RTRIGGER,
-            MotionEvent.AXIS_HAT_X, MotionEvent.AXIS_HAT_Y
-        )
-        for (axis in axes) {
-            val value = event.getAxisValue(axis)
-            if (abs(value) > 0.8f) {
-                val axisInput = PhysicalInput.AxisDirection(axis, value > 0)
-                val mod = captureModifier
-                onInputDetected(if (mod != null) PhysicalInput.Combo(mod, axisInput) else axisInput)
-                return true
-            }
-        }
-        return false
-    }
-
-    // ---- Dialog management ----
-
-    private fun startListeningFor(action: ControllerAction) {
-        listeningForAction = action
-        captureModifier = null
-
-        val dialog = InputCaptureDialog()
-        dialog.setTitle(action.displayName)
-        dialog.setMessage(getString(R.string.controller_remap_press_button))
-        dialog.setButton(AlertDialog.BUTTON_NEGATIVE, getString(R.string.action_cancel)) { _, _ ->
-            cancelListening()
-        }
-        dialog.setButton(AlertDialog.BUTTON_NEUTRAL, getString(R.string.controller_remap_clear)) { _, _ ->
-            currentMapping.remove(action)
-            saveAndRefresh()
-            cancelListening()
-        }
-        dialog.setCancelable(false)
-        listenDialog = dialog
-        dialog.show()
-    }
-
-    private fun onInputDetected(input: PhysicalInput) {
-        val action = listeningForAction ?: return
-        listenDialog?.dismiss()
-        listenDialog = null
-        listeningForAction = null
-        captureModifier = null
-
-        currentMapping[action] = input
-        saveAndRefresh()
-        dropFocusAfterDialog()
-    }
-
-    private fun cancelListening() {
-        listeningForAction = null
-        captureModifier = null
-        listenDialog = null
-        dropFocusAfterDialog()
     }
 
     /**

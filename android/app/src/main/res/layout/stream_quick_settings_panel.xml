@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/stream_panel_background"
+    android:clickable="true"
+    android:focusable="true"
+    android:elevation="8dp">
+
+    <!-- Far-left edge bar, spanning the full height of the panel (unlike quickSettingsTabDivider
+         below, which only spans the tab rail's own height) — a themed edge to the whole panel,
+         matching the divider treatment already used between the tab rail and its content. -->
+    <View
+        android:id="@+id/quickSettingsLeftEdgeBar"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="?attr/pyluxAccent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <!-- Fixed header: stays pinned regardless of scroll position -->
+    <TextView
+        android:id="@+id/quickSettingsTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:text="@string/quick_settings_title"
+        android:textColor="?attr/pyluxAccent"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/quickSettingsCloseButton"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageButton
+        android:id="@+id/quickSettingsCloseButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/quick_settings_close"
+        android:src="@drawable/ic_close"
+        android:tint="?attr/pyluxAccent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Theme-coloured, edge-to-edge — meets quickSettingsLeftEdgeBar on the left and spans
+         all the way to the panel's right edge, sitting directly above the tab rail. -->
+    <View
+        android:id="@+id/quickSettingsHeaderDivider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="12dp"
+        android:background="?attr/pyluxAccent"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Bottom-left disconnect (power) button. Always tinted with the app's theme colour —
+         unlike the tab rail below, it isn't a toggle with a selected/unselected state, so it
+         uses ?attr/pyluxAccent directly rather than the checked-state colour selector. -->
+
+    <!-- Left-hand tab rail: General Settings / Controller Mapping / (dynamic) Session Settings -->
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/quickSettingsDisconnectButton"
+        style="@style/QuickSettingsTabButton"
+        android:layout_marginBottom="16dp"
+        android:contentDescription="@string/stream_disconnect_button"
+        app:icon="@drawable/ic_power"
+        app:iconTint="?attr/pyluxAccent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="@id/quickSettingsTabToggle"
+        app:layout_constraintEnd_toEndOf="@id/quickSettingsTabToggle"
+        app:strokeColor="?attr/pyluxAccent" />
+
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/quickSettingsTabToggle"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        app:singleSelection="true"
+        app:selectionRequired="true"
+        app:checkedButton="@id/quickSettingsTabGeneral"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabGeneral"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/quick_settings_title"
+            app:icon="@drawable/ic_settings" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabController"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/controller_remap_preference_title"
+            app:icon="@drawable/ic_gamepad" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabSession"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/quick_settings_session_tab_description"
+            app:icon="@drawable/ic_resolution" />
+
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <!-- Separates the tab rail from the settings content to its right. Meets
+         quickSettingsHeaderDivider at the top and spans all the way to the bottom of the
+         panel, matching quickSettingsLeftEdgeBar's full-height treatment on the other side. -->
+    <View
+        android:id="@+id/quickSettingsTabDivider"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="4dp"
+        android:background="?attr/pyluxAccent"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabToggle" />
+
+    <!-- Controller tab: remap list. Given a bounded height with its own internal scrolling
+         (matching the full-screen Settings > Remap Controller screen) rather than wrap_content
+         inside a ScrollView — a RecyclerView measured wrap_content while GONE (as this is
+         initially, since General is the default tab) does not reliably size itself to fit
+         every item once switched to VISIBLE, silently clipping the list. -->
+    <LinearLayout
+        android:id="@+id/quickSettingsControllerSection"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            style="@style/QuickSettingsSectionLabel"
+            android:text="@string/controller_remap_preference_title" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/quickSettingsRemapRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:paddingBottom="16dp"
+            android:clipToPadding="false" />
+
+    </LinearLayout>
+
+    <!-- General tab: everything else -->
+    <ScrollView
+        android:id="@+id/quickSettingsGeneralScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="16dp">
+
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsStatsRow" />
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsOscRow" />
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsTouchpadRow" />
+
+            <TextView
+                style="@style/QuickSettingsSectionLabel"
+                android:text="@string/quick_settings_window_size" />
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/quickSettingsDisplayModeToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="8dp"
+                app:singleSelection="true"
+                app:selectionRequired="true"
+                app:checkedButton="@id/quickSettingsDisplayModeNormal">
+
+                <com.google.android.material.button.MaterialButton
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:id="@+id/quickSettingsDisplayModeNormal"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/ic_display_normal"
+                    app:iconTint="@color/quick_settings_display_mode_tint"
+                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
+                <com.google.android.material.button.MaterialButton
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:id="@+id/quickSettingsDisplayModeZoom"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/ic_display_zoom"
+                    app:iconTint="@color/quick_settings_display_mode_tint"
+                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
+                <com.google.android.material.button.MaterialButton
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:id="@+id/quickSettingsDisplayModeStretch"
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    app:icon="@drawable/ic_display_stretch"
+                    app:iconTint="@color/quick_settings_display_mode_tint"
+                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
+
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMotionRow" />
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <!-- Session tab: content depends on whether this is a Remote Play, Game Catalog (PS3/PS4)
+         or Game Library (PS5) session — rows are inflated at runtime by QuickSettingsPanel
+         since the widget set genuinely differs per session type, not just its labels. -->
+    <ScrollView
+        android:id="@+id/quickSettingsSessionScroll"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/quickSettingsSessionRows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- Static, unlike the rows above it (which QuickSettingsPanel inflates at
+                 runtime) — always sits below whatever rows got added, since it's a sibling
+                 after quickSettingsSessionRows rather than a child of it. -->
+            <TextView
+                android:id="@+id/quickSettingsSessionRestartNotice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp"
+                android:gravity="center"
+                android:text="@string/quick_settings_session_restart_notice"
+                android:textColor="@android:color/white"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
