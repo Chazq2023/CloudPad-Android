@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Same treatment as cloud_tab_selected.xml (translucent theme-accent fill, rounded corners),
-     plus a solid theme-accent border — the tab pill sits on a flat surface so a fill alone
-     reads fine there, but this overlay sits over a paused stream frame, which can be any
-     colour, so it needs its own edge to stay legible/on-theme regardless of what's behind it. -->
+<!-- Solid black fill with a theme-accent border — this overlay sits over a paused stream
+     frame, which can be any colour, so a translucent fill wasn't enough to stay legible/
+     on-theme regardless of what's behind it. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <corners android:radius="16dp" />
-    <solid android:color="?attr/pyluxAccentA20" />
+    <solid android:color="@android:color/black" />
     <stroke
         android:width="1.5dp"
         android:color="?attr/pyluxAccent" />
