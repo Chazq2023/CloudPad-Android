@@ -168,8 +168,8 @@ class QuickSettingsPanel(
 		}
 
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
-		panel.quickSettingsDisconnectButton.setOnClickListener { activity.finish() }
-		panel.quickSettingsRefreshButton.setOnClickListener { onRefreshRequested() }
+		panel.quickSettingsDisconnectButton.setOnClickListener { dismissImmediately(); activity.finish() }
+		panel.quickSettingsRefreshButton.setOnClickListener { dismissImmediately(); onRefreshRequested() }
 
 		buildSessionSettingsTab()
 
@@ -437,6 +437,18 @@ class QuickSettingsPanel(
 	fun toggle()
 	{
 		if(isOpen) close() else open()
+	}
+
+	/** Used ahead of actions that finish the hosting Activity (Disconnect, Refresh) instead of
+	 *  [close]'s animated dismiss: the Dialog is created with the Activity as its context, so if
+	 *  the Activity finishes while it's still showing, Android throws a WindowLeaked crash — an
+	 *  animated close's dialog.dismiss() only runs 220ms later via withEndAction, which isn't
+	 *  soon enough when the caller finishes right after. This dismisses synchronously first. */
+	private fun dismissImmediately()
+	{
+		isOpen = false
+		panel.root.animate().cancel()
+		if(dialog.isShowing) dialog.dismiss()
 	}
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)
