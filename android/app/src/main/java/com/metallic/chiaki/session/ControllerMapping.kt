@@ -77,8 +77,8 @@ sealed class PhysicalInput {
             ControllerAction.RIGHT_STICK_DOWN to AxisDirection(MotionEvent.AXIS_RZ, true),
             // Touchpad: SELECT button = touchpad click; hold SELECT + face/trigger = swipe/click
             ControllerAction.TOUCHPAD_CLICK to Button(KeyEvent.KEYCODE_BUTTON_SELECT),
-            ControllerAction.TOUCHPAD_LEFT_CLICK to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, AxisDirection(MotionEvent.AXIS_LTRIGGER, true)),
-            ControllerAction.TOUCHPAD_RIGHT_CLICK to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, AxisDirection(MotionEvent.AXIS_RTRIGGER, true)),
+            ControllerAction.TOUCHPAD_LEFT_CLICK to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_L1)),
+            ControllerAction.TOUCHPAD_RIGHT_CLICK to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_R1)),
             ControllerAction.TOUCHPAD_SWIPE_UP to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_Y)),
             ControllerAction.TOUCHPAD_SWIPE_DOWN to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_A)),
             ControllerAction.TOUCHPAD_SWIPE_LEFT to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_X)),
