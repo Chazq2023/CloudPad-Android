@@ -9,6 +9,18 @@
     android:focusable="true"
     android:elevation="8dp">
 
+    <!-- Far-left edge bar, spanning the full height of the panel (unlike quickSettingsTabDivider
+         below, which only spans the tab rail's own height) — a themed edge to the whole panel,
+         matching the divider treatment already used between the tab rail and its content. -->
+    <View
+        android:id="@+id/quickSettingsLeftEdgeBar"
+        android:layout_width="1dp"
+        android:layout_height="0dp"
+        android:background="?attr/pyluxAccent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
     <!-- Fixed header: stays pinned regardless of scroll position -->
     <TextView
         android:id="@+id/quickSettingsTitle"
@@ -81,6 +93,7 @@
         android:id="@+id/quickSettingsTabToggle"
         android:layout_width="wrap_content"
         android:layout_height="0dp"
+        android:layout_marginStart="6dp"
         android:layout_marginTop="12dp"
         android:orientation="vertical"
         app:singleSelection="true"
