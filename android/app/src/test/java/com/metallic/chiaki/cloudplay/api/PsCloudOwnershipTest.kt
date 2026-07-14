@@ -263,6 +263,34 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun residentEvil7GoldEditionStreamsWithOwnRegionalIdForNonEuUser() {
+        // Non-EU regression: unlike Witcher 3/Nioh 2, RE7 Gold Edition matches via the PS5
+        // entitlement's own id (not product_id, which is a cross-platform bundle SKU with an
+        // unrelated PPSA number). A US owner's storeProductId (UP0102-PPSA01557...) shares no
+        // PPSA number with the hardcoded EU catalog productId, so the existing storeProductId
+        // regional-prefix check can't fire — entitlementId must be used instead.
+        val catalogOverride = CloudGame(
+            productId = "EP0102-PPSA04405_00-BH7G000000000001",
+            name = "RESIDENT EVIL 7 biohazard Gold Edition",
+            imageUrl = "",
+            serviceType = "pscloud"
+        )
+        val ps5EntUs = entitlement(
+            id = "UP0102-PPSA04405_00-BH7G000000000001",
+            productId = "UP0102-PPSA01557_00-RE7VILLAGECOMPGE",
+            packageType = "PSGD",
+            name = "RESIDENT EVIL 7 biohazard Gold Edition",
+            featureType = 3
+        )
+        val result = PsCloudOwnership.crossReferenceOwnedGames(
+            filteredEntitlements = listOf(ps5EntUs),
+            publicCatalog = listOf(catalogOverride)
+        )
+        assertEquals(1, result.size)
+        assertEquals("UP0102-PPSA04405_00-BH7G000000000001", PsCloudOwnership.streamingIdentifier(result[0]))
+    }
+
+    @Test
     fun supplementMatchRequiresFeatureType3() {
         // Games in the supplement (streamingSupported=false in all-ps5-list) must only
         // appear for outright owners (featureType=3). Subscription access (featureType=1,

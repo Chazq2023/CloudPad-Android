@@ -390,6 +390,11 @@ object PsCloudOwnership
 	// suffix and that's what Gaikai validates against their PSN entitlement. When PPSA numbers
 	// differ (GoT subscription PPSA05031 vs retail PPSA03208), drop(2) won't match so the catalog
 	// productId still wins — that is a deliberate SKU preference, not a regional variant.
+	// Exception 3: some hardcoded entries (e.g. RE7 Gold Edition) only cross-reference via the
+	// entitlement's own id — product_id is a cross-platform bundle SKU with an unrelated PPSA
+	// number, so the Exception 2 check on storeProductId never fires. Apply the same regional-
+	// prefix-variant check to entitlementId so non-EU owners still get their own regional id
+	// instead of the hardcoded EU one.
 	fun streamingIdentifier(game: CloudGame): String
 	{
 		if (game.serviceType.equals("pscloud", ignoreCase = true))
@@ -407,6 +412,10 @@ object PsCloudOwnership
 				// PS4 purchase (CUSA) that entitles a free PS5 upgrade (PPSA): entitlementId carries
 				// the user's actual regional PPSA, not the hardcoded EU catalog productId.
 				if (game.storeProductId.contains("CUSA") && game.entitlementId.contains("PPSA"))
+					return game.entitlementId
+				if (game.entitlementId.isNotEmpty() &&
+					game.entitlementId != game.productId &&
+					game.entitlementId.drop(2) == game.productId.drop(2))
 					return game.entitlementId
 				return game.productId
 			}

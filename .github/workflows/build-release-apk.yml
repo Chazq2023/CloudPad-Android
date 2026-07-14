@@ -98,6 +98,7 @@ jobs:
 
             ### Updates
             - Fixed RESIDENT EVIL 7 biohazard Gold Edition not appearing in the Game Library despite being owned and streamable, by mapping it to its PS5-native entitlement so it cross-references correctly with Sony's cloud catalog
+            - Fixed RESIDENT EVIL 7 biohazard Gold Edition streaming with the wrong region's entitlement for non-EU owners: streamingIdentifier now applies the same regional-prefix substitution to entitlementId as it already does for storeProductId
 
             ### APK
             Attached release asset:
