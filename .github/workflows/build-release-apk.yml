@@ -97,10 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a Microphone (Remote Play only) toggle, above Motion in Settings and in the Quick Settings General tab, that sends your device's mic audio to the console during a Remote Play session
-            - Requests the Android microphone permission the first time the toggle is turned on, in both Settings and Quick Settings
-            - Fixed the Microphone toggle being backwards in Quick Settings (turning it on was muting the console-side mic, and vice versa)
-            - Fixed enabling the Microphone toggle in Settings causing Remote Play connections to fail outright ("Ctrl has failed") by deferring mic activation until the stream is actually connected
+            - Fixed RESIDENT EVIL 7 biohazard Gold Edition not appearing in the Game Library despite being owned and streamable, by mapping it to its PS5-native entitlement so it cross-references correctly with Sony's cloud catalog
 
             ### APK
             Attached release asset:

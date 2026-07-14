@@ -112,6 +112,18 @@ class PsCloudCatalogService
 				platform = "ps5",
 				serviceType = "pscloud",
 			),
+			// Resident Evil 7 biohazard Gold Edition: imagic catalog has no entry under the
+			// bundle product_id (PPSA01557 / "RE7VILLAGECOMPGE") shared by both the PS4GD and
+			// PSGD entitlements. The PSGD (PS5-native) entitlement carries its own id=PPSA04405,
+			// which is what Gaikai validates against — same shape as the Nioh 2 case above
+			// (PS4 purchase entitles a PS5 upgrade with a distinct PS5-only id).
+			CloudGame(
+				productId = "EP0102-PPSA04405_00-BH7G000000000001",
+				name = "RESIDENT EVIL 7 biohazard Gold Edition",
+				imageUrl = "",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
 		)
 
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
