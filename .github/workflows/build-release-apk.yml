@@ -97,8 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed RESIDENT EVIL 7 biohazard Gold Edition not appearing in the Game Library despite being owned and streamable, by mapping it to its PS5-native entitlement so it cross-references correctly with Sony's cloud catalog
-            - Fixed RESIDENT EVIL 7 biohazard Gold Edition streaming with the wrong region's entitlement for non-EU owners: streamingIdentifier now applies the same regional-prefix substitution to entitlementId as it already does for storeProductId
+            - Fixed Assassin's Creed Black Flag Resynced not appearing in the Game Library despite being owned: Sony's cloud catalog still flags it as not stream-enabled shortly after release, so it's now hardcoded in until that flag catches up
 
             ### APK
             Attached release asset:

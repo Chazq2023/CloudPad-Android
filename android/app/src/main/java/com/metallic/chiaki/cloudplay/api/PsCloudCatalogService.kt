@@ -128,6 +128,26 @@ class PsCloudCatalogService
 			),
 		)
 
+		// Games present in the imagic catalog (correct name/box art/productId) but flagged
+		// streamingSupported=false because Sony has not yet enabled PS Cloud streaming for the
+		// title — typically brand-new releases in their first days/weeks, even when fully owned
+		// and visible in the PS Portal library. Hardcoded so the title shows up immediately;
+		// pressing play may still be rejected by Gaikai with a 401 until Sony enables it
+		// server-side. Safe to leave in place: once streamingSupported flips to true, the
+		// freshly-fetched imagic entry is processed first and wins via catalogMapFirstWins,
+		// making this a no-op.
+		private val PRE_STREAMING_ENABLED_GAMES = listOf(
+			CloudGame(
+				productId = "EP0001-PPSA28183_00-GAME000000000000",
+				name = "Assassin's Creed Black Flag Resynced",
+				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202603/1215/0962bc91a4952e6433367fcfec38b7e0655c6bd29b431712.png",
+				conceptId = "10013987",
+				conceptUrl = "https://store.playstation.com/en-us/concept/10013987",
+				platform = "ps5",
+				serviceType = "pscloud",
+			),
+		)
+
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
 		// when a game appears in both the subscription lists and the full streaming catalog.
 		// Subscription-list SKUs (e.g. GHOSTDCPS5PSPLUS) differ from what Gaikai indexes;
@@ -186,7 +206,7 @@ class PsCloudCatalogService
 			throw Exception("All imagic category lists failed to load")
 
 		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } +
-			DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES
+			DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES + PRE_STREAMING_ENABLED_GAMES
 		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
 
 		val catalogFetchWarning = if (failedLists.isEmpty()) null
