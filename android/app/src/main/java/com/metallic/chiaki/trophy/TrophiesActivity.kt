@@ -101,19 +101,7 @@ class TrophiesActivity : AppCompatActivity()
 		binding.trophyHeaderSilverCount.text = summary.earnedTrophies.silver.toString()
 		binding.trophyHeaderBronzeCount.text = summary.earnedTrophies.bronze.toString()
 
-		val items = mutableListOf<TrophyListItem>()
-		if (detail.groups.isEmpty())
-		{
-			detail.trophies.forEach { items.add(TrophyListItem.TrophyRow(it)) }
-		}
-		else
-		{
-			detail.groups.forEach { group ->
-				items.add(TrophyListItem.GroupHeader(group.groupName.ifEmpty { "Trophies" }))
-				detail.trophies.filter { it.groupId == group.groupId }
-					.forEach { items.add(TrophyListItem.TrophyRow(it)) }
-			}
-		}
+		val items = buildTrophyListItems(detail)
 
 		if (items.isEmpty())
 		{

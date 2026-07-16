@@ -110,6 +110,12 @@
             android:contentDescription="@string/quick_settings_session_tab_description"
             app:icon="@drawable/ic_resolution" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabTrophies"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/quick_settings_trophies_tab_description"
+            app:icon="@drawable/ic_trophy" />
+
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <!-- Separates the tab rail from the settings content to its right. Meets
@@ -272,5 +278,79 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <!-- Trophies tab: live trophy list for whichever game this session is streaming, resolved
+         by name/platform match the same way TrophiesActivity does (see QuickSettingsPanel).
+         Lazily fetched the first time this tab is opened; the refresh button re-fetches on
+         demand so a trophy unlocked mid-session shows up without leaving/reopening the panel. -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/quickSettingsTrophiesSection"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/quickSettingsTrophiesLabel"
+            style="@style/QuickSettingsSectionLabel"
+            android:layout_width="0dp"
+            android:text="@string/quick_settings_trophies_header_label"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/quickSettingsTrophiesRefreshButton" />
+
+        <ImageButton
+            android:id="@+id/quickSettingsTrophiesRefreshButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/quick_settings_trophies_refresh"
+            android:src="@drawable/ic_refresh"
+            android:tint="?attr/pyluxAccent"
+            app:layout_constraintTop_toTopOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <ProgressBar
+            android:id="@+id/quickSettingsTrophiesProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <TextView
+            android:id="@+id/quickSettingsTrophiesEmptyText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="24dp"
+            android:gravity="center"
+            android:text="@string/quick_settings_trophies_empty"
+            android:textColor="#B3B3B3"
+            android:textSize="13sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/quickSettingsTrophiesRecyclerView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            android:clipToPadding="false"
+            android:paddingBottom="16dp"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
