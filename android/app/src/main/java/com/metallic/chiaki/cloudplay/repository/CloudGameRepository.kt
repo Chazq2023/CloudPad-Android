@@ -137,9 +137,7 @@ class CloudGameRepository(
 			Log.i(TAG, "Fetching owned PS5 games from network")
 			try
 			{
-				val localeSetting = preferences.getCloudStoreLocale()
-				val locale = localeSetting.lowercase()
-
+				val locale = preferences.getCloudStoreLocale().lowercase()
 				val games = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale)
 				cacheGames(games, OWNED_CACHE_FILE)
 				PsnResult.Success(games)

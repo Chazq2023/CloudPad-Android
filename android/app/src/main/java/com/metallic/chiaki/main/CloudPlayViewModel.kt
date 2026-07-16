@@ -60,6 +60,12 @@ class CloudPlayViewModel(
 	 */
 	fun fetchPsnowCatalog(forceRefresh: Boolean = false)
 	{
+		if (_loading.value == true)
+		{
+			Log.i(TAG, "Fetch already in progress, ignoring duplicate PSNow catalog request")
+			return
+		}
+
 		viewModelScope.launch {
 			try
 			{
@@ -103,12 +109,18 @@ class CloudPlayViewModel(
 	 */
 	fun fetchPs5CloudCatalog(showOnlyOwned: Boolean = false, forceRefresh: Boolean = false)
 	{
+		if (_loading.value == true)
+		{
+			Log.i(TAG, "Fetch already in progress, ignoring duplicate PS5 catalog request")
+			return
+		}
+
 		viewModelScope.launch {
 			try
 			{
 				_loading.value = true
 				_error.value = null
-				
+
 				val npssoToken = preferences.getNpssoToken()
 				
 				if (showOnlyOwned)

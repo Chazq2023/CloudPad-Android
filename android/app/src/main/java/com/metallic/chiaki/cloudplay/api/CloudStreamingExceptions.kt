@@ -22,6 +22,9 @@ class AuthorizationFailedException(message: String) : Exception(message)
 /** General Gaikai allocation error */
 class GaikaiAllocationException(message: String) : Exception(message)
 
+/** Gaikai rejected the entitlement outright — the title isn't cloud-streamable for this account */
+class GameNotStreamableException(message: String) : Exception(message)
+
 /** Kamaji session error */
 class KamajiSessionException(message: String) : Exception(message)
 

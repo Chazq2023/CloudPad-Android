@@ -1420,13 +1420,14 @@ class CloudPlayFragment : Fragment() {
 
         // Get NPSSO token from secure storage
         val npssoToken = preferences.getNpssoToken()
+        val serviceType = PsCloudOwnership.streamServiceType(game)
 
         // Start cloud session in coroutine
         lifecycleScope.launch {
             try {
                 val backend = CloudStreamingBackend(requireContext(), viewModel.preferences)
                 val result = backend.startCompleteCloudSession(
-                    serviceType = PsCloudOwnership.streamServiceType(game),
+                    serviceType = serviceType,
                     gameIdentifier = PsCloudOwnership.streamIdentifier(game),
                     gameName = game.name,
                     npssoToken = npssoToken,
@@ -1462,8 +1463,9 @@ class CloudPlayFragment : Fragment() {
 
                     // Handle specific error types with appropriate dialogs
                     when (error) {
-                        is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException -> {
-                            showPsPlusSubscriptionErrorDialog()
+                        is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException,
+                        is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
+                            showStreamingUnavailableErrorDialog(serviceType)
                         }
 
                         is com.metallic.chiaki.cloudplay.api.AccountPrivacySettingsException -> {
@@ -1471,7 +1473,7 @@ class CloudPlayFragment : Fragment() {
                         }
 
                         is com.metallic.chiaki.cloudplay.api.PingTimeoutException -> {
-                            showPingTimeoutErrorDialog()
+                            showPingTimeoutErrorDialog(serviceType)
                         }
 
                         is com.metallic.chiaki.cloudplay.api.AuthorizationFailedException -> {
@@ -1479,8 +1481,7 @@ class CloudPlayFragment : Fragment() {
                         }
 
                         else -> {
-                            // Generic error
-                            showError("Cloud Session Failed", error.message ?: "Unknown error")
+                            showStreamingUnavailableErrorDialog(serviceType)
                         }
                     }
                 }
@@ -1502,8 +1503,9 @@ class CloudPlayFragment : Fragment() {
 
                 // Handle specific exception types
                 when (e) {
-                    is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException -> {
-                        showPsPlusSubscriptionErrorDialog()
+                    is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException,
+                    is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
+                        showStreamingUnavailableErrorDialog(serviceType)
                     }
 
                     is com.metallic.chiaki.cloudplay.api.AccountPrivacySettingsException -> {
@@ -1511,7 +1513,7 @@ class CloudPlayFragment : Fragment() {
                     }
 
                     is com.metallic.chiaki.cloudplay.api.PingTimeoutException -> {
-                        showPingTimeoutErrorDialog()
+                        showPingTimeoutErrorDialog(serviceType)
                     }
 
                     is com.metallic.chiaki.cloudplay.api.AuthorizationFailedException -> {
@@ -1519,7 +1521,7 @@ class CloudPlayFragment : Fragment() {
                     }
 
                     else -> {
-                        showError("Error", e.message ?: "Unknown error")
+                        showStreamingUnavailableErrorDialog(serviceType)
                     }
                 }
             }
@@ -1527,13 +1529,21 @@ class CloudPlayFragment : Fragment() {
     }
 
     /**
-     * Show PS Plus subscription error dialog
-     * Mirrors: CloudStreamingBackend Qt signals
+     * Default "can't stream this" message, tailored per service so PSNow (PS3/PS4 Catalog) and
+     * PS Cloud (PS5 Library) failures don't show the same generic copy. Covers every case where
+     * Gaikai/Kamaji rejected the session for subscription/availability reasons (PsPlusSubscriptionException,
+     * GameNotStreamableException) as well as any unclassified failure, so the user never sees a
+     * raw technical error string.
      */
-    private fun showPsPlusSubscriptionErrorDialog() {
+    private fun showStreamingUnavailableErrorDialog(serviceType: String) {
+        val message = if (serviceType == "psnow")
+            "Please ensure that you have a PS Plus Premium subscription and PS Now streaming is available in your region"
+        else
+            "Please ensure that you have a PS Plus Premium subscription, that the game is available for PS Cloud Streaming and PS Cloud streaming is available in your region"
+
         requireContext().alertDialogBuilder()
-            .setTitle("PlayStation Plus Required")
-            .setMessage("You need an active PlayStation Plus Premium subscription to stream games from the cloud, or this service may not be available in your region.")
+            .setTitle("Streaming Unavailable")
+            .setMessage(message)
             .setPositiveButton("OK", null)
             .show()
     }
@@ -1552,10 +1562,11 @@ class CloudPlayFragment : Fragment() {
     /**
      * Show ping timeout error dialog
      */
-    private fun showPingTimeoutErrorDialog() {
+    private fun showPingTimeoutErrorDialog(serviceType: String) {
+        val sectionName = if (serviceType == "psnow") "Game Catalog" else "Game Library"
         requireContext().alertDialogBuilder()
             .setTitle("Ping Too High")
-            .setMessage("Ping must be less than 80ms to start a cloud session.\n\nTo continue anyway, go to Settings → Cloud and manually select a datacenter for your service (PSNow Catalog).")
+            .setMessage("Ping must be less than 80ms to start a cloud session.\n\nTo continue anyway, go to Settings → Cloud and manually select a datacenter for your service ($sectionName).")
             .setPositiveButton("OK", null)
             .show()
     }

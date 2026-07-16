@@ -20,7 +20,8 @@ object PsCloudOwnership
 		val name: String,
 		val conceptId: String,
 		val featureType: Int,   // PSN feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
-		val skuType: String = ""  // PSN sku_type: "GAME_TRIAL" for limited-play game trials
+		val skuType: String = "",  // PSN sku_type: "GAME_TRIAL" for limited-play game trials
+		val iconUrl: String = ""  // game_meta.icon_url — box art straight from the entitlement itself
 	)
 
 	private data class CatalogIndex(
@@ -73,8 +74,142 @@ object PsCloudOwnership
 			name = name,
 			conceptId = conceptId,
 			featureType = obj.optInt("feature_type", 0),
-			skuType = skuType
+			skuType = skuType,
+			iconUrl = gameMeta.optString("icon_url", "")
 		)
+	}
+
+	/**
+	 * Builds the owned-games (Library) list directly from the user's entitlements — no public
+	 * catalog cross-reference and nothing to hardcode per title. Sony's entitlement data already
+	 * carries a usable icon and the identifiers Gaikai validates against; a title Sony hasn't
+	 * enabled for cloud streaming yet will simply fail to start with whatever error Gaikai
+	 * returns, same as it would in Sony's own apps — the user just needs to be aware, rather than
+	 * the app silently omitting or misidentifying it.
+	 *
+	 * Restricted to PS5-native (PPSA) entitlements: this Library is the PS Cloud tab, not PSNow,
+	 * so PS3/PS4-only titles don't belong here. This also happens to filter out legacy PS4 media
+	 * apps (e.g. BT Sport) that share the same entitlement shape as a real game and were never
+	 * issued a PS5-native upgrade entitlement the way real cross-gen games were.
+	 *
+	 * PS5-native media apps (Netflix, YouTube, Disney+, Prime Video, Twitch, Apple TV, etc.) are
+	 * excluded via package_type == "PSMEDIA" — Sony does classify these separately from games
+	 * (PSGD/PS4GD), just not under a field we were previously reading.
+	 */
+	fun buildOwnedGamesFromEntitlements(filteredEntitlements: List<Entitlement>): List<CloudGame>
+	{
+		// PSTRACK entitlements are Sony-issued analytics/tracking placeholders that ride along with
+		// a real purchase under the same product_id — not a separately streamable product. They
+		// carry featureType=3 like a real game, so they'd otherwise show up as a duplicate row for
+		// whatever real game they're attached to (confirmed against Mortal Kombat 11, DIRT 5,
+		// Immortals: Fenyx Rising).
+		val gameEntitlements = filteredEntitlements.filterNot {
+			it.packageType.equals("PSMEDIA", ignoreCase = true) ||
+				it.packageType.equals("PSTRACK", ignoreCase = true) ||
+				isDigitalExtra(it.name)
+		}
+
+		// Resolve each entitlement's own streaming identifier first, then group by THAT — not by
+		// the raw entitlement product_id. Grouping by product_id is unsafe: Sony sometimes assigns
+		// the same product_id to a bundle of otherwise-unrelated games (e.g. a "Resident Evil"
+		// cross-buy promo covering RE2 Remake, RE3 Remake, and Resistance all under one shared
+		// product_id), which would wrongly merge distinct games down into a single row. A PS4
+		// disc entitlement and its PS5-native counterpart for the *same* game don't have this
+		// problem: the disc entitlement's own id is never PS5-native, so it's simply filtered out
+		// below rather than needing to be merged with its PS5 counterpart.
+		val resolved = gameEntitlements
+			.map { it to bestStreamIdentifier(it.id, it.productId) }
+			.filter { (_, streamId) -> streamId.contains("PPSA") }
+
+		return resolved.groupBy { (_, streamId) -> streamId }.map { (streamId, group) ->
+			val best = group.map { it.first }.maxByOrNull { ownedStreamRank(it) } ?: group.first().first
+
+			CloudGame(
+				productId = streamId,
+				name = best.name,
+				imageUrl = best.iconUrl,
+				landscapeImageUrl = best.iconUrl,
+				thumbnailUrl = best.iconUrl,
+				platform = "ps5",
+				serviceType = "pscloud",
+				conceptId = best.conceptId,
+				isOwned = true,
+				entitlementId = best.id,
+				storeProductId = best.productId,
+				plusCatalog = best.featureType == 1,
+				featureType = best.featureType
+			)
+		}
+	}
+
+	// Digital extras (artbooks, soundtracks, bonus-content viewer apps) are sold as their own
+	// entitlement — often bundled under the same product_id as the real game (Horizon Zero Dawn
+	// Remastered Artbook, Persona 3 Reload Artbook/Soundtrack) or standalone (Square Enix's
+	// "Digital Content Viewer") — but Sony gives them the exact same package_type/featureType
+	// shape as a real game, so there's no structural field to key off. Name matching is the only
+	// signal available, same rationale as the existing demo/trial check below.
+	private val DIGITAL_EXTRA_NAME_PATTERNS = listOf(
+		Regex("art\\s*book", RegexOption.IGNORE_CASE),
+		Regex("^the\\s+art\\s+of\\s+", RegexOption.IGNORE_CASE), // "The Art of Starfield"-style artbook naming
+		Regex("soundtrack", RegexOption.IGNORE_CASE),
+		Regex("content\\s*viewer", RegexOption.IGNORE_CASE),
+	)
+
+	private fun isDigitalExtra(name: String): Boolean = DIGITAL_EXTRA_NAME_PATTERNS.any { it.containsMatchIn(name) }
+
+	/**
+	 * Picks the identifier Gaikai actually validates against when an entitlement's own `id` and
+	 * `product_id` disagree. `id` wins whenever both are present: confirmed across every observed
+	 * mismatch shape — a PS4-purchase entitlement whose product_id is a legacy CUSA SKU but whose
+	 * id carries the PS5-native PPSA id for a free upgrade (Nioh 2-style), and also cases where
+	 * both look PS5-native but product_id is actually a cross-edition/region bundle SKU that
+	 * neither the catalog nor Gaikai recognize, while id is the specific entitlement they do
+	 * (RE7 Gold Edition, RE2 Remake — id matches the public catalog's productId exactly; the
+	 * bundle product_id does not).
+	 */
+	private fun bestStreamIdentifier(id: String, productId: String): String
+	{
+		if (id.isEmpty()) return productId
+		return id
+	}
+
+	/**
+	 * Best-effort art upgrade: entitlements only carry a 512x512 square icon, while the public
+	 * catalog has proper cover/landscape box art for most titles. Swap it in when a catalog match
+	 * exists, but never require one — a game whose real SKU doesn't line up with the catalog's
+	 * (the Witcher 3/Nioh 2/RE7 Gold class of mismatch) simply keeps its entitlement icon rather
+	 * than being hidden or needing a hardcoded correction. Also checks the PS Plus supplement
+	 * list — some owned titles (e.g. classic Resident Evil 2) only ever appear there, not in the
+	 * main browse catalog.
+	 */
+	fun enrichWithCatalogArt(
+		ownedGames: List<CloudGame>,
+		catalog: List<CloudGame>,
+		supplement: List<CloudGame> = emptyList()
+	): List<CloudGame>
+	{
+		val combined = catalog + supplement
+		if (combined.isEmpty()) return ownedGames
+
+		val byProductId = catalogMapFirstWins(combined)
+		val byStableKey = buildStableKeyIndex(combined)
+		val byConceptId = buildConceptIdIndex(combined)
+
+		return ownedGames.map { game ->
+			val stable = productIdStableKey(game.productId)
+			val match = byProductId[game.productId]
+				?: byProductId[game.entitlementId]
+				?: byProductId[game.storeProductId]
+				?: stable?.let { byStableKey[it] }
+				?: game.conceptId.takeIf { it.isNotEmpty() }?.let { byConceptId[it] }
+				?: return@map game
+
+			game.copy(
+				imageUrl = match.imageUrl.ifEmpty { game.imageUrl },
+				landscapeImageUrl = match.landscapeImageUrl.ifEmpty { game.landscapeImageUrl },
+				thumbnailUrl = match.thumbnailUrl.ifEmpty { game.thumbnailUrl }
+			)
+		}
 	}
 
 	fun crossReferenceOwnedGames(

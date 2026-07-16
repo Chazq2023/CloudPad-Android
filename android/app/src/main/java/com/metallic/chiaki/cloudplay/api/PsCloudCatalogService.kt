@@ -31,123 +31,6 @@ class PsCloudCatalogService
 		private const val ACCOUNT_BASE = "https://ca.account.sony.com/api"
 		private const val IMAGIC_GAMESLIST_BASE = "https://www.playstation.com/bin/imagic/gameslist"
 
-		// Games that appear in Plus catalog lists with streamingSupported=false but are NOT
-		// actually streamable via PS Cloud even when owned outright. The imagic catalog gives
-		// no reliable field to distinguish these from genuinely streamable supplement games
-		// (e.g. HZD Remastered, Returnal), so they are excluded explicitly.
-		// Safe to maintain: if Sony ever adds these to the streaming catalog properly
-		// (streamingSupported=true in all-ps5-list) they will appear via browseGames instead.
-		private val SUPPLEMENT_EXCLUSIONS = setOf(
-			"PPSA24264", // Call of Duty: Modern Warfare III
-			"PPSA26127", // EA SPORTS Madden NFL 26
-			"PPSA01372", // Riders Republic
-			"PPSA01285", // Returnal
-		)
-
-		// Games that were de-listed from the PS Store but are still streamable via PS Cloud for
-		// outright owners. These no longer appear in any Sony imagic catalog list so are hardcoded.
-		// productId is taken from the user's PSN entitlement (which Gaikai also uses as the stream key).
-		private val DELISTED_STREAMABLE_GAMES = listOf(
-			CloudGame(
-				productId = "EP9000-PPSA02630_00-DALLSTARSPLUS001",
-				name = "Destruction AllStars",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202210/0418/d2l5anfkYCPcdtYL8lhqhfOX.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-			CloudGame(
-				productId = "EP0331-PPSA04189_00-DKOSTANDARDFPBUN",
-				name = "Divine Knockout",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202302/2320/e348bf25a1a1e0bc587bfdbe54bd79c9a0cee96dc8e44c41.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-			CloudGame(
-				productId = "EP1001-PPSA04426_00-PGA2K23CROSSBUY0",
-				name = "PGA Tour 2K23",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202207/2201/rhZ9AU0lZ221Km5tlnGcbTaG.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-			CloudGame(
-				productId = "EP1001-PPSA03150_00-WWE2K22DLXED0000",
-				name = "WWE 2K22",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202108/1915/GZu7bMokNvvuWIarYkhmzfGk.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-			CloudGame(
-				productId = "EP1001-PPSA16307_00-WWE2K24CROSSGEN0",
-				name = "WWE 2K24",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202401/0902/8ef9ab648b8b46461778764d6942c44a1c485abd7879e7ce.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-		)
-
-		// Games present in the imagic catalog under a DIFFERENT PPSA than the user's entitlement.
-		// We hardcode the user's actual entitlement PPSA here so:
-		//   (a) stable key matching works for any region (PPSA number is global; EP/UP/JP prefix varies)
-		//   (b) the streaming identifier sent to Gaikai is the product the user actually owns —
-		//       Gaikai validates the entitlement on the PSN side and rejects a CE PPSA when the
-		//       user only holds the GOTY/upgrade PPSA.
-		private val ENTITLEMENT_PPSA_OVERRIDES = listOf(
-			// Witcher 3: imagic catalog has PPSA10408 (Complete Edition) but the user owns
-			// PPSA03977 (GOTY Edition). Gaikai validates against the owned entitlement, so
-			// sending PPSA10408 returns 401 "not authorized for this user".
-			CloudGame(
-				productId = "EP4497-PPSA03977_00-00000000000GOTY8",
-				name = "The Witcher 3: Wild Hunt",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202211/0711/kh4MUIuMmHlktOHar3lVl6rY.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-			// Nioh 2: imagic catalog has PPSA02486 (CE) but the user's PS5 Remastered upgrade
-			// entitlement carries id=PPSA02488. storeProductId is CUSA15526 (PS4 purchase that
-			// entitles the upgrade), which would cause ps4/psnow routing without this override.
-			CloudGame(
-				productId = "EP9000-PPSA02488_00-NIOH2EU000000000",
-				name = "Nioh 2 Remastered – The Complete Edition",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202011/0516/8bfGZ0fYrcWwk8IfjDeAQt3J.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-			// Resident Evil 7 biohazard Gold Edition: imagic catalog has no entry under the
-			// bundle product_id (PPSA01557 / "RE7VILLAGECOMPGE") shared by both the PS4GD and
-			// PSGD entitlements. The PSGD (PS5-native) entitlement carries its own id=PPSA04405,
-			// which is what Gaikai validates against — same shape as the Nioh 2 case above
-			// (PS4 purchase entitles a PS5 upgrade with a distinct PS5-only id). No Gold-Edition-
-			// specific box art exists in Sony's catalog either, so this reuses the base game's
-			// (PPSA04400) official key art from all-ps5-list.
-			CloudGame(
-				productId = "EP0102-PPSA04405_00-BH7G000000000001",
-				name = "RESIDENT EVIL 7 biohazard Gold Edition",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202206/0207/V6IViuKogBMRtajqjnYrcj0e.png",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-		)
-
-		// Games present in the imagic catalog (correct name/box art/productId) but flagged
-		// streamingSupported=false because Sony has not yet enabled PS Cloud streaming for the
-		// title — typically brand-new releases in their first days/weeks, even when fully owned
-		// and visible in the PS Portal library. Hardcoded so the title shows up immediately;
-		// pressing play may still be rejected by Gaikai with a 401 until Sony enables it
-		// server-side. Safe to leave in place: once streamingSupported flips to true, the
-		// freshly-fetched imagic entry is processed first and wins via catalogMapFirstWins,
-		// making this a no-op.
-		private val PRE_STREAMING_ENABLED_GAMES = listOf(
-			CloudGame(
-				productId = "EP0001-PPSA28183_00-GAME000000000000",
-				name = "Assassin's Creed Black Flag Resynced",
-				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202603/1215/0962bc91a4952e6433367fcfec38b7e0655c6bd29b431712.png",
-				conceptId = "10013987",
-				conceptUrl = "https://store.playstation.com/en-us/concept/10013987",
-				platform = "ps5",
-				serviceType = "pscloud",
-			),
-		)
-
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
 		// when a game appears in both the subscription lists and the full streaming catalog.
 		// Subscription-list SKUs (e.g. GHOSTDCPS5PSPLUS) differ from what Gaikai indexes;
@@ -205,8 +88,7 @@ class PsCloudCatalogService
 		if (failedLists.size == IMAGIC_CATEGORY_LISTS.size)
 			throw Exception("All imagic category lists failed to load")
 
-		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } +
-			DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES + PRE_STREAMING_ENABLED_GAMES
+		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) }
 		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
 
 		val catalogFetchWarning = if (failedLists.isEmpty()) null
@@ -287,15 +169,8 @@ class PsCloudCatalogService
 						val stableKey = Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
 						if (stableKey != null && stableKey in allPs5ListStableKeys)
 						{
-							if (stableKey in SUPPLEMENT_EXCLUSIONS)
-							{
-								Log.i(TAG, "supplement excluded: $stableKey '${gameObj.optString("name", "")}' ($categoryList)")
-							}
-							else
-							{
-								gameObj.put("plusCatalog", true)
-								plusSupplementByProductId.putIfAbsent(productId, gameObj)
-							}
+							gameObj.put("plusCatalog", true)
+							plusSupplementByProductId.putIfAbsent(productId, gameObj)
 						}
 					}
 					continue
@@ -442,8 +317,11 @@ class PsCloudCatalogService
 	}
 
 	/**
-	 * Fetch owned PS5 games for a user (library view).
-	 * Fetches the full catalog then cross-references with the user's entitlements.
+	 * Fetch owned PS5 games for a user (library view), built directly from their entitlements —
+	 * no public catalog cross-reference is needed for a game to show up correctly or stream, so
+	 * there's nothing to hardcode per title. The public catalog is still fetched afterwards on a
+	 * best-effort basis purely to upgrade box art (entitlements only carry a square icon); if
+	 * that fetch fails or a title has no catalog match, the entitlement icon is used as-is.
 	 */
 	suspend fun fetchOwnedPs5Games(npssoToken: String, locale: String): List<CloudGame>
 	{
@@ -451,45 +329,29 @@ class PsCloudCatalogService
 			throw Exception("NPSSO token is required for cloud play.")
 
 		Log.i(TAG, "=== Fetching Owned PS5 Games ===")
-		Log.i(TAG, "  Locale: $locale")
-
-		val catalog = fetchPs5CloudCatalog(locale)
-		val ownedGames = getOwnedPs5CloudGames(
-			npssoToken,
-			catalog.browseGames,
-			catalog.plusLibrarySupplement.filter { it.productId.contains("PPSA") },
-			catalog.productIdAliases
-		)
-
-		Log.i(TAG, "  Owned streamable games: ${ownedGames.size}")
-		return ownedGames
-	}
-
-	suspend fun getOwnedPs5CloudGames(
-		npssoToken: String,
-		publicCatalog: List<CloudGame>,
-		plusLibrarySupplement: List<CloudGame> = emptyList(),
-		productIdAliases: Map<String, String> = emptyMap(),
-	): List<CloudGame>
-	{
-		if (npssoToken.isEmpty()) return emptyList()
 
 		val oauthToken = fetchOwnedGamesOAuthToken(npssoToken)
 		kotlinx.coroutines.delay(PsCloudOwnership.PAGE_COOLDOWN_MS)
 
 		val rawEntitlements = fetchEntitlementsPaginated(oauthToken)
 		val filtered = PsCloudOwnership.filterOwnedPs5Games(rawEntitlements)
-
 		Log.i(TAG, "  Raw entitlements: ${rawEntitlements.size}, after feature_type filter: ${filtered.size}")
 
-		val componentIds = mutableMapOf<String, MutableList<String>>()
-		for (ent in rawEntitlements)
-			if (ent.productId.isNotEmpty() && ent.id.isNotEmpty())
-				componentIds.getOrPut(ent.productId) { mutableListOf() }.add(ent.id)
+		val ownedGames = PsCloudOwnership.buildOwnedGamesFromEntitlements(filtered)
 
-		return PsCloudOwnership.crossReferenceOwnedGames(
-			filtered, publicCatalog, plusLibrarySupplement, productIdAliases, componentIds
-		)
+		val enrichedGames = try
+		{
+			val catalog = fetchPs5CloudCatalog(locale)
+			PsCloudOwnership.enrichWithCatalogArt(ownedGames, catalog.browseGames, catalog.plusLibrarySupplement)
+		}
+		catch (e: Exception)
+		{
+			Log.w(TAG, "Failed to enrich owned games with catalog art; using entitlement icons", e)
+			ownedGames
+		}
+
+		Log.i(TAG, "  Owned streamable games: ${enrichedGames.size}")
+		return enrichedGames
 	}
 
 	/**
