@@ -61,6 +61,10 @@
             android:exported="false" />
 
         <activity
+            android:name="com.metallic.chiaki.trophy.TrophiesActivity"
+            android:exported="false" />
+
+        <activity
             android:name="com.metallic.chiaki.settings.ControllerRemapActivity"
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />

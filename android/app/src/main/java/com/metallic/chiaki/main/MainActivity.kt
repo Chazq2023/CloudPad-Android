@@ -272,7 +272,14 @@ class MainActivity : AppCompatActivity() {
         val hostRv =
             if (currentPage == 0) window.decorView.findViewById<RecyclerView>(R.id.hostsRecyclerView) else null
 
-        if (focused == null) {
+        // Returning from another Activity (e.g. TrophiesActivity) can leave Android's focus
+        // restoration landing on a container RecyclerView itself rather than a child tile —
+        // either the games/hosts grid, or (since the tab switcher is a ViewPager2, which is
+        // itself backed by an internal RecyclerView) that ViewPager2's own paging RecyclerView.
+        // Any of these are valid focus targets but dead-end D-pad navigation since none of them
+        // are a real tile — game/host tiles are always CardViews, never RecyclerViews. Treat
+        // this the same as "nothing focused" and recover onto the first visible tile.
+        if (focused == null || focused is RecyclerView) {
             if (currentPage == 1) {
                 val lm = cloudRv?.layoutManager as? GridLayoutManager
                 lm?.findViewByPosition(lm.findFirstVisibleItemPosition())?.let {

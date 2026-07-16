@@ -97,8 +97,10 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a "Recently Played" sort option for PS3 Catalog, PS4 Catalog and PS5 Library
-            - Added a Playtime screen (long-press a game → Playtime) showing total playtime, last played date, and longest session, tracked automatically across all three platforms
+            - Added trophy tracking (long-press a game → Trophies) showing the full trophy list with icons, descriptions, earned/locked state and overall progress, for PS3 Catalog, PS4 Catalog and PS5 Library games alike
+            - Moved the PS5 Library's streamability badge (check/cross/question mark) to the top-right corner, replacing the old "Owned" badge
+            - Removed the "Owned First"/"Recent" default sort in favour of "Name: A → Z" everywhere
+            - Centred the game title in the Playtime dialog; Square on a controller now also opens Playtime for the focused game
 
             ### APK
             Attached release asset:

@@ -19,6 +19,7 @@ class CloudGameAdapter(
     private val onFavoriteClick: (CloudGame, Boolean) -> Unit,
     private val onAddShortcutClick: (CloudGame) -> Unit,
     private val onPlaytimeClick: (CloudGame) -> Unit,
+    private val onTrophiesClick: (CloudGame) -> Unit,
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
@@ -73,6 +74,7 @@ class CloudGameAdapter(
     override fun onViewRecycled(holder: CloudGameViewHolder) {
         super.onViewRecycled(holder)
         holder.cancelImage()
+        holder.cancelPendingLongPress()
     }
 
     override fun getItemCount(): Int = games.size
@@ -80,8 +82,17 @@ class CloudGameAdapter(
     inner class CloudGameViewHolder(
         val binding: ItemCloudGameBinding
     ) : RecyclerView.ViewHolder(binding.root) {
+        private val longPressHandler = android.os.Handler(android.os.Looper.getMainLooper())
+        private var pendingTrophiesRunnable: Runnable? = null
+        private var trophiesLongPressTriggered = false
+
         fun cancelImage() {
             binding.gameImageView.dispose()
+        }
+
+        fun cancelPendingLongPress() {
+            pendingTrophiesRunnable?.let { longPressHandler.removeCallbacks(it) }
+            pendingTrophiesRunnable = null
         }
 
         fun reloadImage(game: CloudGame) {
@@ -176,6 +187,13 @@ class CloudGameAdapter(
                     "Playtime"
                 )
 
+                popup.menu.add(
+                    0,
+                    4,
+                    3,
+                    "Trophies"
+                )
+
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         1 -> {
@@ -193,6 +211,11 @@ class CloudGameAdapter(
                             true
                         }
 
+                        4 -> {
+                            onTrophiesClick(game)
+                            true
+                        }
+
                         else -> false
                     }
                 }
@@ -201,18 +224,44 @@ class CloudGameAdapter(
                 true
             }
             binding.root.setOnKeyListener { _, keyCode, event ->
-                if (event.action != android.view.KeyEvent.ACTION_DOWN) {
-                    false
-                } else when (keyCode) {
+                when (keyCode) {
                     android.view.KeyEvent.KEYCODE_MENU -> {
-                        toggleFavorite()
-                        true
+                        if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                            toggleFavorite()
+                            true
+                        } else false
                     }
                     // Square on PlayStation controllers reports as the generic gamepad "X" keycode
-                    // on Android (X/Y/A/B are positional, not brand-specific).
+                    // on Android (X/Y/A/B are positional, not brand-specific). Short press opens
+                    // Playtime; holding it opens Trophies instead.
                     android.view.KeyEvent.KEYCODE_BUTTON_X -> {
-                        onPlaytimeClick(game)
-                        true
+                        when (event.action) {
+                            android.view.KeyEvent.ACTION_DOWN -> {
+                                if (event.repeatCount == 0) {
+                                    cancelPendingLongPress()
+                                    trophiesLongPressTriggered = false
+                                    val runnable = Runnable {
+                                        trophiesLongPressTriggered = true
+                                        onTrophiesClick(game)
+                                    }
+                                    pendingTrophiesRunnable = runnable
+                                    longPressHandler.postDelayed(
+                                        runnable,
+                                        android.view.ViewConfiguration.getLongPressTimeout().toLong()
+                                    )
+                                }
+                                true
+                            }
+
+                            android.view.KeyEvent.ACTION_UP -> {
+                                val wasLongPress = trophiesLongPressTriggered
+                                cancelPendingLongPress()
+                                if (!wasLongPress) onPlaytimeClick(game)
+                                true
+                            }
+
+                            else -> false
+                        }
                     }
                     else -> false
                 }
