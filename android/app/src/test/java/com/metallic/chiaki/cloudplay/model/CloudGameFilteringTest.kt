@@ -30,15 +30,15 @@ class CloudGameFilteringTest {
     }
 
     // Mirrors the sortState block in CloudPlayFragment.observeViewModel
-    private fun applySortState(games: List<CloudGame>, sortState: Int, section: String): List<CloudGame> =
+    private fun applySortState(
+        games: List<CloudGame>,
+        sortState: Int,
+        lastPlayedMs: Map<String, Long> = emptyMap()
+    ): List<CloudGame> =
         when (sortState) {
-            0 -> if (section == "pscloud")
-                games.sortedWith(compareByDescending { it.isOwned })
-            else
-                games
-            1 -> games.sortedBy { it.name.lowercase() }
-            2 -> games.sortedByDescending { it.name.lowercase() }
-            else -> games
+            1 -> games.sortedByDescending { it.name.lowercase() }
+            2 -> games.sortedByDescending { lastPlayedMs[it.productId] ?: 0L }
+            else -> games.sortedBy { it.name.lowercase() } // A->Z (default)
         }
 
     // --- Platform filtering ---
@@ -83,64 +83,75 @@ class CloudGameFilteringTest {
         assertTrue(filterBySection(emptyList(), "pscloud").isEmpty())
     }
 
-    // --- Sort: A→Z ---
+    // --- Sort: A→Z (default) ---
 
     @Test
-    fun `sort state 1 orders games A to Z`() {
+    fun `sort state 0 orders games A to Z`() {
         val games = listOf(
             CloudGame("C", "Zelda", ""),
             CloudGame("A", "Astro's Playroom", ""),
             CloudGame("B", "Batman", "")
         )
-        val sorted = applySortState(games, 1, "psnow_ps4")
+        val sorted = applySortState(games, 0)
         assertEquals(listOf("Astro's Playroom", "Batman", "Zelda"), sorted.map { it.name })
     }
 
     @Test
-    fun `sort state 1 is case-insensitive`() {
+    fun `sort state 0 is case-insensitive`() {
         val games = listOf(
             CloudGame("B", "zelda", ""),
             CloudGame("A", "Astro", "")
         )
-        val sorted = applySortState(games, 1, "psnow_ps4")
+        val sorted = applySortState(games, 0)
+        assertEquals("Astro", sorted.first().name)
+    }
+
+    @Test
+    fun `an unrecognised sort state falls back to A to Z`() {
+        val games = listOf(CloudGame("B", "Zelda", ""), CloudGame("A", "Astro", ""))
+        val sorted = applySortState(games, 99)
         assertEquals("Astro", sorted.first().name)
     }
 
     // --- Sort: Z→A ---
 
     @Test
-    fun `sort state 2 orders games Z to A`() {
+    fun `sort state 1 orders games Z to A`() {
         val games = listOf(
             CloudGame("C", "Zelda", ""),
             CloudGame("A", "Astro's Playroom", ""),
             CloudGame("B", "Batman", "")
         )
-        val sorted = applySortState(games, 2, "psnow_ps4")
+        val sorted = applySortState(games, 1)
         assertEquals(listOf("Zelda", "Batman", "Astro's Playroom"), sorted.map { it.name })
     }
 
-    // --- Sort: default (Library owned-first) ---
+    // --- Sort: Recently Played (works the same for Catalog and Library sections) ---
 
     @Test
-    fun `Library default sort places owned games before unowned`() {
+    fun `sort state 2 orders games by most recently played first`() {
         val games = listOf(
-            CloudGame("A", "Unowned Game", "", serviceType = "pscloud", isOwned = false),
-            CloudGame("B", "Owned Game",   "", serviceType = "pscloud", isOwned = true)
+            CloudGame("A", "Played Long Ago", "", platform = "ps3"),
+            CloudGame("B", "Played Most Recently", "", platform = "ps4"),
+            CloudGame("C", "Never Played", "", platform = "ps5", serviceType = "pscloud")
         )
-        val sorted = applySortState(games, 0, "pscloud")
-        assertEquals("Owned Game", sorted.first().name)
-        assertEquals("Unowned Game", sorted.last().name)
+        val lastPlayed = mapOf("A" to 1_000L, "B" to 5_000L) // "C" absent == never played
+        val sorted = applySortState(games, 2, lastPlayed)
+        assertEquals(
+            listOf("Played Most Recently", "Played Long Ago", "Never Played"),
+            sorted.map { it.name }
+        )
     }
 
     @Test
-    fun `Catalog default sort preserves original order`() {
+    fun `sort state 2 treats games with no recorded playtime as least recent`() {
         val games = listOf(
-            CloudGame("G3", "Gamma", ""),
-            CloudGame("G1", "Alpha", ""),
-            CloudGame("G2", "Beta", "")
+            CloudGame("A", "Has Playtime", ""),
+            CloudGame("B", "No Playtime", "")
         )
-        val sorted = applySortState(games, 0, "psnow_ps3")
-        assertEquals(listOf("Gamma", "Alpha", "Beta"), sorted.map { it.name })
+        val sorted = applySortState(games, 2, mapOf("A" to 42L))
+        assertEquals("Has Playtime", sorted.first().name)
+        assertEquals("No Playtime", sorted.last().name)
     }
 
     // --- Search logic (mirrors ViewModel.applySearchFilter) ---

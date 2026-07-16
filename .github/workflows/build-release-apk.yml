@@ -97,8 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added streamability badges (check/cross/question mark) to PS5 Library tiles, showing whether a game is known to stream, known not to, or unverified — badges update automatically based on real launch attempts and persist across refreshes and restarts
-            - Added a "PS5 Library Icon Key" section to Settings explaining what each badge icon means
+            - Added a "Recently Played" sort option for PS3 Catalog, PS4 Catalog and PS5 Library
+            - Added a Playtime screen (long-press a game → Playtime) showing total playtime, last played date, and longest session, tracked automatically across all three platforms
 
             ### APK
             Attached release asset:

@@ -88,6 +88,10 @@ data class ConnectInfo(
 	val cloudGameIdentifier: String? = null,
 	val cloudGameName: String? = null,
 	val cloudOwnedEntitlementId: String? = null,
+	// Stable CloudGame.productId for this session's game — kept separate from
+	// cloudGameIdentifier (which may be a normalized/rescued stream identifier) so playtime
+	// tracking keys against the same productId used by favorites/streamability overrides.
+	val cloudGameProductId: String? = null,
 	// PSN Remote Play fields (for holepunch connections)
 	val duid: String? = null,
 	val psnToken: String? = null,

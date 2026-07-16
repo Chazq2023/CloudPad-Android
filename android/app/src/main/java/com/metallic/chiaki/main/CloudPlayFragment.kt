@@ -596,7 +596,7 @@ class CloudPlayFragment : Fragment() {
         binding.ownedToggleButton.visibility = android.view.View.GONE
 
         viewModel.setCurrentSection("psnow_ps3")
-        adapter.showOwnershipBadge = false
+        adapter.showStreamabilityBadge = false
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
         updateSortButtonText()
@@ -614,7 +614,7 @@ class CloudPlayFragment : Fragment() {
         binding.ownedToggleButton.visibility = android.view.View.GONE
 
         viewModel.setCurrentSection("psnow_ps4")
-        adapter.showOwnershipBadge = false
+        adapter.showStreamabilityBadge = false
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
         updateSortButtonText()
@@ -633,7 +633,7 @@ class CloudPlayFragment : Fragment() {
         preferences.setPsCloudFilterOwned(true)
 
         viewModel.setCurrentSection("pscloud")
-        adapter.showOwnershipBadge = true
+        adapter.showStreamabilityBadge = true
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
         updateSortButtonText()
@@ -690,11 +690,7 @@ class CloudPlayFragment : Fragment() {
 
 
     private fun showSortMenu() {
-        val currentSection = viewModel.getCurrentSection()
-        val sortOptions = when (currentSection) {
-            "pscloud" -> arrayOf("Owned First", "Name: A → Z", "Name: Z → A")
-            else -> arrayOf("Recent", "Name: A → Z", "Name: Z → A")
-        }
+        val sortOptions = arrayOf("Name: A → Z", "Name: Z → A", "Recently Played")
 
         requireContext().alertDialogBuilder()
             .setTitle("Sort")
@@ -750,17 +746,11 @@ class CloudPlayFragment : Fragment() {
     private fun showSortMenu(anchor: android.view.View) {
         expandSettingsFab(false)
 
-        val currentSection = viewModel.getCurrentSection()
         val popup = androidx.appcompat.widget.PopupMenu(requireContext(), anchor)
 
-        // Different default sort for Library vs Catalog
-        if (currentSection == "pscloud") {
-            popup.menu.add(0, 0, 0, "Owned First (Default)")
-        } else {
-            popup.menu.add(0, 0, 0, "Recent (Default)")
-        }
-        popup.menu.add(0, 1, 1, "Name: A → Z")
-        popup.menu.add(0, 2, 2, "Name: Z → A")
+        popup.menu.add(0, 0, 0, "Name: A → Z (Default)")
+        popup.menu.add(0, 1, 1, "Name: Z → A")
+        popup.menu.add(0, 2, 2, "Recently Played")
 
         // Highlight current selection with radio button style
         popup.menu.findItem(sortState)?.isChecked = true
@@ -780,44 +770,34 @@ class CloudPlayFragment : Fragment() {
         updateSortButtonText()
 
         val currentGames = viewModel.games.value ?: return
-        val currentSection = viewModel.getCurrentSection()
 
         when (sortState) {
             0 -> {
-                // Default: Different behavior for Library vs Catalog
-                if (currentSection == "pscloud") {
-                    // Library: Sort by ownership (owned first), then maintain order
-                    val sortedGames = currentGames.sortedWith(
-                        compareByDescending<CloudGame> { it.isOwned }
-                    )
-                    viewModel.setSortedGames(sortedGames)
-                } else {
-                    // Catalog: Reload from cache to restore original API order
-                    viewModel.fetchPsnowCatalog(forceRefresh = false)
-                }
-            }
-
-            1 -> {
-                // A->Z
+                // A->Z (default)
                 val sortedGames = currentGames.sortedBy { it.name.lowercase() }
                 viewModel.setSortedGames(sortedGames)
             }
 
-            2 -> {
+            1 -> {
                 // Z->A
                 val sortedGames = currentGames.sortedByDescending { it.name.lowercase() }
+                viewModel.setSortedGames(sortedGames)
+            }
+
+            2 -> {
+                // Recently Played
+                val sortedGames = currentGames.sortedByDescending { preferences.getLastPlayedMs(it.productId) }
                 viewModel.setSortedGames(sortedGames)
             }
         }
     }
 
     private fun updateSortButtonText() {
-        val currentSection = viewModel.getCurrentSection()
         val text = when (sortState) {
-            0 -> if (currentSection == "pscloud") "Sort: Owned" else "Sort: Recent"
-            1 -> "Sort: A→Z"
-            2 -> "Sort: Z→A"
-            else -> if (currentSection == "pscloud") "Sort: Owned" else "Sort: Recent"
+            0 -> "Sort: A→Z"
+            1 -> "Sort: Z→A"
+            2 -> "Sort: Recently Played"
+            else -> "Sort: A→Z"
         }
         binding.sortLabelButton.text = text
     }
@@ -920,9 +900,9 @@ class CloudPlayFragment : Fragment() {
 
         // Apply current sort state
         val sortedGames = when (sortState) {
-            1 -> favoriteGames.sortedBy { it.name.lowercase() }
-            2 -> favoriteGames.sortedByDescending { it.name.lowercase() }
-            else -> favoriteGames
+            1 -> favoriteGames.sortedByDescending { it.name.lowercase() }
+            2 -> favoriteGames.sortedByDescending { preferences.getLastPlayedMs(it.productId) }
+            else -> favoriteGames.sortedBy { it.name.lowercase() }
         }
 
         adapter.games = sortedGames
@@ -945,11 +925,56 @@ class CloudPlayFragment : Fragment() {
         }
     }
 
+    /** Shown from the long-press "Playtime" menu item — works for PS3/PS4 Catalog and PS5
+     *  Library games alike since both accumulate stats under the same productId key
+     *  (see StreamActivity.flushStreamTimeSegment / Preferences.recordPlaySession). */
+    private fun showPlaytimeDialog(game: CloudGame) {
+        val stats = preferences.getGamePlaytimeStats(game.productId)
+
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_playtime, null)
+        view.findViewById<TextView>(R.id.playtimeGameTitle).text = game.name
+
+        val artImageView = view.findViewById<ImageView>(R.id.playtimeGameArt)
+        if (game.imageUrl.isNotEmpty()) {
+            artImageView.load(game.imageUrl) {
+                crossfade(true)
+                error(android.R.drawable.ic_menu_gallery)
+            }
+        } else {
+            artImageView.setImageResource(android.R.drawable.ic_menu_gallery)
+        }
+
+        view.findViewById<TextView>(R.id.playtimeTotalText).text =
+            "Total Playtime: ${com.metallic.chiaki.cloudplay.model.PlaytimeFormatter.formatTotalPlaytime(stats?.totalPlaytimeMs ?: 0L)}"
+        view.findViewById<TextView>(R.id.playtimeLastPlayedText).text =
+            "Last Played: ${formatLastPlayed(stats?.lastPlayedMs ?: 0L)}"
+        view.findViewById<TextView>(R.id.playtimeLongestSessionText).text =
+            "Longest Session: ${com.metallic.chiaki.cloudplay.model.PlaytimeFormatter.formatSessionDuration(stats?.longestSessionMs ?: 0L)}"
+
+        val dialog = requireContext().alertDialogBuilder()
+            .setView(view)
+            .setPositiveButton("Close", null)
+            .create()
+        // Border on the window itself, not just the content view, matching the disclaimer dialog.
+        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
+        dialog.show()
+    }
+
+    private fun formatLastPlayed(ms: Long): String {
+        if (ms <= 0L) return "Never"
+        val format = java.text.DateFormat.getDateTimeInstance(
+            java.text.DateFormat.MEDIUM,
+            java.text.DateFormat.SHORT
+        )
+        return format.format(java.util.Date(ms))
+    }
+
     private fun setupRecyclerView() {
         adapter = CloudGameAdapter(
             onGameClick = this::onGameClicked,
             onFavoriteClick = this::onGameFavoriteToggled,
             onAddShortcutClick = this::onAddShortcutClicked,
+            onPlaytimeClick = this::showPlaytimeDialog,
             isFavorite = { productId -> preferences.isFavoriteGame(productId) }
         )
         binding.gamesRecyclerView.adapter = adapter
@@ -1052,18 +1077,9 @@ class CloudPlayFragment : Fragment() {
 
             // Apply saved sort state when games are loaded
             val sortedGames = when (sortState) {
-                0 -> {
-                    // Default sort: Owned first for Library, original order for Catalog
-                    if (currentSection == "pscloud") {
-                        filteredGames.sortedWith(compareByDescending { it.isOwned })
-                    } else {
-                        filteredGames
-                    }
-                }
-
-                1 -> filteredGames.sortedBy { it.name.lowercase() } // A->Z
-                2 -> filteredGames.sortedByDescending { it.name.lowercase() } // Z->A
-                else -> filteredGames
+                1 -> filteredGames.sortedByDescending { it.name.lowercase() } // Z->A
+                2 -> filteredGames.sortedByDescending { preferences.getLastPlayedMs(it.productId) } // Recently Played
+                else -> filteredGames.sortedBy { it.name.lowercase() } // A->Z (default)
             }
 
             adapter.games = sortedGames
@@ -1443,7 +1459,7 @@ class CloudPlayFragment : Fragment() {
 
                 result.onSuccess { session ->
                     updateGameStreamability(game, streamable = true)
-                    launchCloudStream(session, PsCloudOwnership.streamIdentifier(game))
+                    launchCloudStream(session, PsCloudOwnership.streamIdentifier(game), game.productId)
                 }
 
                 result.onFailure { error ->
@@ -1622,12 +1638,12 @@ class CloudPlayFragment : Fragment() {
     /**
      * Launch StreamActivity with cloud stream session
      */
-    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession, gameIdentifier: String) {
+    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession, gameIdentifier: String, gameProductId: String? = null) {
 
         // ConnectInfo building (codec/resolution/bitrate selection) lives in
         // CloudConnectInfoBuilder so the in-stream Quick Settings "refresh" action can build
         // an identical ConnectInfo when re-allocating a session for the same game later.
-        val connectInfo = com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder.build(session, preferences, gameIdentifier)
+        val connectInfo = com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder.build(session, preferences, gameIdentifier, gameProductId)
 
         // Launch StreamActivity
         val intent = android.content.Intent(
