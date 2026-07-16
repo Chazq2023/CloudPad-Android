@@ -10,14 +10,13 @@ import org.junit.Test
  * (mirrored here as a pure function since the real one is a private suspend function driving
  * live network calls — see CloudGameFilteringTest for the same pattern used elsewhere).
  *
- * Regression coverage for: hardcoded catalog overrides (Witcher 3, Nioh 2, RE7 Gold Edition,
- * AC Black Flag Resynced) showing up as duplicate rows alongside Sony's own imagic catalog
- * entry for the same game, because the override's productId/name deliberately differs from
- * Sony's own listing (e.g. Witcher 3: Sony's GB catalog lists PPSA10408 while the override
- * corrects to the user's real entitlement PPSA03977 — both are the same game, conceptId
- * 204794, confirmed by querying the live imagic endpoint). The imagic-derived entry must be
- * dropped once an override for the same conceptId+platform exists, so only one (working) row
- * is shown per game.
+ * Regression coverage for: hardcoded catalog overrides (Witcher 3, Nioh 2, RE7 Gold Edition)
+ * showing up as duplicate rows alongside Sony's own imagic catalog entry for the same game,
+ * because the override's productId/name deliberately differs from Sony's own listing (e.g.
+ * Witcher 3: Sony's GB catalog lists PPSA10408 while the override corrects to the user's real
+ * entitlement PPSA03977 — both are the same game, conceptId 204794, confirmed by querying the
+ * live imagic endpoint). The imagic-derived entry must be dropped once an override for the
+ * same conceptId+platform exists, so only one (working) row is shown per game.
  */
 class PsCloudCatalogOverrideDedupeTest {
 
@@ -68,9 +67,10 @@ class PsCloudCatalogOverrideDedupeTest {
     }
 
     @Test
-    fun `override with identical productId to a now-live imagic entry does not create an exact duplicate`() {
-        // AC Black Flag Resynced case: Sony flipped streamingSupported to true, so imagic now
-        // returns the exact same productId the override already hardcoded.
+    fun `override with identical productId to the imagic entry does not create an exact duplicate`() {
+        // Covers an override that has become fully redundant (imagic now returns the exact
+        // same productId/conceptId the override already hardcodes) — it should still collapse
+        // to a single row rather than showing the same game twice.
         val liveImagic = CloudGame(
             productId = "EP0001-PPSA28183_00-GAME000000000000", name = "Assassin's Creed Black Flag Resynced",
             imageUrl = "", platform = "ps5", serviceType = "pscloud", conceptId = "10013987"

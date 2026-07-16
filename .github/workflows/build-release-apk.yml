@@ -97,7 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed duplicate Game Library entries for Witcher 3, Nioh 2, RE7 Gold Edition, and AC Black Flag Resynced: each showed up twice (once unowned, once owned) because our region-specific ownership fix wasn't being matched against Sony's own catalog listing for the same game
+            - Fixed duplicate Game Library entries for Witcher 3, Nioh 2, and RE7 Gold Edition: each showed up twice (once unowned, once owned) because our region-specific ownership fix wasn't being matched against Sony's own catalog listing for the same game
+            - Removed the AC Black Flag Resynced catalog workaround now that Sony's own catalog lists it identically — it had become a redundant duplicate entry
 
             ### APK
             Attached release asset:
