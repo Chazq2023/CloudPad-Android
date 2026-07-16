@@ -2,6 +2,8 @@
 
 package com.metallic.chiaki.trophy
 
+import android.graphics.drawable.GradientDrawable
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -45,7 +47,26 @@ class TrophyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>()
 		)
 		else -> TrophyViewHolder(
 			ItemTrophyBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-		)
+		).apply {
+			// Focusable unconditionally (not gated to TV mode) so D-pad/keyboard navigation
+			// through the trophy list works on phone/tablet too, not just Android TV.
+			itemView.isFocusable = true
+			itemView.isFocusableInTouchMode = true
+
+			val tv = TypedValue()
+			itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
+			val accent = tv.data
+			itemView.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+				v.background = if (hasFocus)
+					GradientDrawable().apply {
+						shape = GradientDrawable.RECTANGLE
+						setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
+						setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
+					}
+				else
+					null
+			}
+		}
 	}
 
 	override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int)

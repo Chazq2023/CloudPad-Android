@@ -69,6 +69,7 @@ class TrophiesActivity : AppCompatActivity()
 
 		binding.trophyRecyclerView.layoutManager = LinearLayoutManager(this)
 		binding.trophyRecyclerView.adapter = adapter
+		binding.trophyRecyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
 
 		loadTrophies(gameName, platform)
 	}
@@ -122,6 +123,24 @@ class TrophiesActivity : AppCompatActivity()
 
 		adapter.items = items
 		binding.trophyRecyclerView.visibility = View.VISIBLE
+		focusFirstTrophy()
+	}
+
+	/** Lands D-pad/keyboard focus on the first trophy row (skipping group headers, which aren't
+	 *  focusable) so up/down navigation works immediately without requiring a touch first
+	 *  (matches CloudPlayFragment.focusFirstGame). */
+	private fun focusFirstTrophy()
+	{
+		val firstTrophyPosition = adapter.items.indexOfFirst { it is TrophyListItem.TrophyRow }
+		if (firstTrophyPosition < 0) return
+
+		binding.trophyRecyclerView.postDelayed({
+			val layoutManager = binding.trophyRecyclerView.layoutManager as? LinearLayoutManager
+			layoutManager?.scrollToPosition(firstTrophyPosition)
+			binding.trophyRecyclerView.postDelayed({
+				layoutManager?.findViewByPosition(firstTrophyPosition)?.requestFocus()
+			}, 50)
+		}, 100)
 	}
 
 	private fun showEmptyState(message: String)
