@@ -320,10 +320,18 @@ class PsCloudCatalogService
 	 * Fetch owned PS5 games for a user (library view), built directly from their entitlements —
 	 * no public catalog cross-reference is needed for a game to show up correctly or stream, so
 	 * there's nothing to hardcode per title. The public catalog is still fetched afterwards on a
-	 * best-effort basis purely to upgrade box art (entitlements only carry a square icon); if
-	 * that fetch fails or a title has no catalog match, the entitlement icon is used as-is.
+	 * best-effort basis to upgrade box art and set the initial streamability badge (entitlements
+	 * only carry a square icon and no streamability signal at all); if that fetch fails or a title
+	 * has no catalog match, the entitlement icon is used as-is and the badge stays UNKNOWN.
+	 *
+	 * @param confirmedStreamableOverrides Real launch-attempt outcomes (productId -> streamable),
+	 * which always win over the catalog-derived guess — see [PsCloudOwnership.applyStreamabilityHints].
 	 */
-	suspend fun fetchOwnedPs5Games(npssoToken: String, locale: String): List<CloudGame>
+	suspend fun fetchOwnedPs5Games(
+		npssoToken: String,
+		locale: String,
+		confirmedStreamableOverrides: Map<String, Boolean> = emptyMap()
+	): List<CloudGame>
 	{
 		if (npssoToken.isEmpty())
 			throw Exception("NPSSO token is required for cloud play.")
@@ -342,12 +350,13 @@ class PsCloudCatalogService
 		val enrichedGames = try
 		{
 			val catalog = fetchPs5CloudCatalog(locale)
-			PsCloudOwnership.enrichWithCatalogArt(ownedGames, catalog.browseGames, catalog.plusLibrarySupplement)
+			val withArt = PsCloudOwnership.enrichWithCatalogArt(ownedGames, catalog.browseGames, catalog.plusLibrarySupplement)
+			PsCloudOwnership.applyStreamabilityHints(withArt, catalog.browseGames, confirmedStreamableOverrides)
 		}
 		catch (e: Exception)
 		{
-			Log.w(TAG, "Failed to enrich owned games with catalog art; using entitlement icons", e)
-			ownedGames
+			Log.w(TAG, "Failed to enrich owned games with catalog data; using entitlement icons and unknown streamability", e)
+			PsCloudOwnership.applyStreamabilityHints(ownedGames, emptyList(), confirmedStreamableOverrides)
 		}
 
 		Log.i(TAG, "  Owned streamable games: ${enrichedGames.size}")

@@ -8,6 +8,7 @@ import com.metallic.chiaki.cloudplay.api.PsCloudCatalogService
 import com.metallic.chiaki.cloudplay.api.PsnCatalogService
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
+import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -130,7 +131,15 @@ class CloudGameRepository(
 				if (cachedGames != null)
 				{
 					Log.i(TAG, "Returning ${cachedGames.size} owned PS5 games from cache")
-					return@withContext PsnResult.Success(cachedGames)
+					// A launch attempt may have recorded a confirmed override since this cache was
+					// written — reconcile so it still takes effect without needing a full refetch.
+					val overrides = preferences.getConfirmedStreamableOverrides()
+					val reconciled = if (overrides.isEmpty()) cachedGames else cachedGames.map { game ->
+						overrides[game.productId]?.let { streamable ->
+							game.copy(streamableStatus = if (streamable) StreamableStatus.STREAMABLE else StreamableStatus.NOT_STREAMABLE)
+						} ?: game
+					}
+					return@withContext PsnResult.Success(reconciled)
 				}
 			}
 
@@ -138,7 +147,8 @@ class CloudGameRepository(
 			try
 			{
 				val locale = preferences.getCloudStoreLocale().lowercase()
-				val games = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale)
+				val overrides = preferences.getConfirmedStreamableOverrides()
+				val games = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale, overrides)
 				cacheGames(games, OWNED_CACHE_FILE)
 				PsnResult.Success(games)
 			}
@@ -198,7 +208,12 @@ class CloudGameRepository(
 					entitlementId = entitlementId,
 					storeProductId = obj.optString("storeProductId", ""),
 					plusCatalog = obj.optBoolean("plusCatalog", false),
-					featureType = obj.optInt("featureType", 0)
+					featureType = obj.optInt("featureType", 0),
+					streamableStatus = try {
+						StreamableStatus.valueOf(obj.optString("streamableStatus", "UNKNOWN"))
+					} catch (e: IllegalArgumentException) {
+						StreamableStatus.UNKNOWN
+					}
 				))
 			}
 
@@ -235,6 +250,7 @@ class CloudGameRepository(
 				obj.put("storeProductId", game.storeProductId)
 				obj.put("plusCatalog", game.plusCatalog)
 				obj.put("featureType", game.featureType)
+				obj.put("streamableStatus", game.streamableStatus.name)
 				jsonArray.put(obj)
 			}
 

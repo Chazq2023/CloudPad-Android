@@ -11,6 +11,7 @@ import coil.load
 import coil.request.CachePolicy
 import com.pylux.stream.R
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
 import com.pylux.stream.databinding.ItemCloudGameBinding
 
@@ -114,8 +115,18 @@ class CloudGameAdapter(
                     binding.ownershipBadge.text = "Not Owned"
                     binding.ownershipBadge.setBackgroundColor(0xCCFF9800.toInt())
                 }
+
+                binding.streamabilityBadge.visibility = android.view.View.VISIBLE
+                binding.streamabilityIcon.setImageResource(
+                    when (game.streamableStatus) {
+                        StreamableStatus.STREAMABLE -> R.drawable.ic_check_white
+                        StreamableStatus.NOT_STREAMABLE -> R.drawable.ic_close_white
+                        StreamableStatus.UNKNOWN -> R.drawable.ic_question_white
+                    }
+                )
             } else {
                 binding.ownershipBadge.visibility = android.view.View.GONE
+                binding.streamabilityBadge.visibility = android.view.View.GONE
             }
 
             val isFav = isFavorite(game.productId)

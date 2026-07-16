@@ -3,6 +3,14 @@
 package com.metallic.chiaki.cloudplay.model
 
 /**
+ * Best-known streamability for a Library game's tile badge.
+ * STREAMABLE/NOT_STREAMABLE can come either from a catalog-derived guess (STREAMABLE only, when
+ * Sony's public catalog confirms streamingSupported=true) or from a real launch attempt, which
+ * always wins over the catalog guess and persists until another real attempt changes it.
+ */
+enum class StreamableStatus { STREAMABLE, NOT_STREAMABLE, UNKNOWN }
+
+/**
  * Represents a game in the cloud catalog (PSNow or PSCloud)
  */
 data class CloudGame(
@@ -19,7 +27,8 @@ data class CloudGame(
 	val entitlementId: String = "", // PSCloud: entitlement id from cross-reference (Qt gameData.id)
 	val storeProductId: String = "", // PSCloud: product_id from entitlements API (stream this, not entitlementId)
 	val plusCatalog: Boolean = false, // In the PS Plus subscription catalog (vs full streamable universe)
-	val featureType: Int = 0 // PSN entitlement feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
+	val featureType: Int = 0, // PSN entitlement feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
+	val streamableStatus: StreamableStatus = StreamableStatus.UNKNOWN // Library tile badge state
 )
 
 /**

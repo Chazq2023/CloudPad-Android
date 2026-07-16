@@ -1442,6 +1442,7 @@ class CloudPlayFragment : Fragment() {
                 )
 
                 result.onSuccess { session ->
+                    updateGameStreamability(game, streamable = true)
                     launchCloudStream(session, PsCloudOwnership.streamIdentifier(game))
                 }
 
@@ -1465,6 +1466,7 @@ class CloudPlayFragment : Fragment() {
                     when (error) {
                         is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException,
                         is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
+                            updateGameStreamability(game, streamable = false)
                             showStreamingUnavailableErrorDialog(serviceType)
                         }
 
@@ -1481,6 +1483,7 @@ class CloudPlayFragment : Fragment() {
                         }
 
                         else -> {
+                            updateGameStreamability(game, streamable = false)
                             showStreamingUnavailableErrorDialog(serviceType)
                         }
                     }
@@ -1505,6 +1508,7 @@ class CloudPlayFragment : Fragment() {
                 when (e) {
                     is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException,
                     is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
+                        updateGameStreamability(game, streamable = false)
                         showStreamingUnavailableErrorDialog(serviceType)
                     }
 
@@ -1521,10 +1525,32 @@ class CloudPlayFragment : Fragment() {
                     }
 
                     else -> {
+                        updateGameStreamability(game, streamable = false)
                         showStreamingUnavailableErrorDialog(serviceType)
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Records a real launch outcome as the confirmed streamability for this Library tile,
+     * overwriting whatever was there before (catalog guess, unknown, or an earlier attempt) in
+     * either direction, and persists it so it survives future Library refreshes and app restarts.
+     * Scoped to PS Cloud (PS5 Library) only — the badge doesn't apply to PSNow.
+     */
+    private fun updateGameStreamability(game: CloudGame, streamable: Boolean) {
+        if (game.serviceType != "pscloud") return
+
+        preferences.setConfirmedStreamable(game.productId, streamable)
+
+        val newStatus = if (streamable)
+            com.metallic.chiaki.cloudplay.model.StreamableStatus.STREAMABLE
+        else
+            com.metallic.chiaki.cloudplay.model.StreamableStatus.NOT_STREAMABLE
+
+        adapter.games = adapter.games.map {
+            if (it.productId == game.productId) it.copy(streamableStatus = newStatus) else it
         }
     }
 

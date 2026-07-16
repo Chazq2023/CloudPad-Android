@@ -1,0 +1,17 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+        android:width="24dp"
+        android:height="24dp"
+        android:viewportWidth="24.0"
+        android:viewportHeight="24.0">
+    <!-- Scaled up: the raw glyph only fills a small part of the 24x24 viewport, reading much
+         smaller than the check/cross icons at the same badge size otherwise. -->
+    <group
+        android:pivotX="12"
+        android:pivotY="13"
+        android:scaleX="1.7"
+        android:scaleY="1.7">
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M12,17c-0.55,0 -1,-0.45 -1,-1s0.45,-1 1,-1 1,0.45 1,1 -0.45,1 -1,1zM12.99,13.63c-0.29,0.29 -0.49,0.55 -0.49,1.12h-1.5v-0.38c0,-0.72 0.2,-1.16 0.63,-1.59l0.87,-0.88c0.32,-0.32 0.5,-0.75 0.5,-1.21 0,-0.97 -0.78,-1.75 -1.75,-1.75s-1.75,0.78 -1.75,1.75h-1.5c0,-1.79 1.46,-3.25 3.25,-3.25s3.25,1.46 3.25,3.25c0,0.7 -0.28,1.35 -0.76,1.82z"/>
+    </group>
+</vector>

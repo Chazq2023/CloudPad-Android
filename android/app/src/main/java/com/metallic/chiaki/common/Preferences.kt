@@ -555,6 +555,7 @@ class Preferences(context: Context)
 	private val LAST_MAIN_TAB_KEY = "last_main_tab"
 	private val CLOUD_SORT_STATE_KEY = "cloud_sort_state"
 	private val FAVORITE_GAMES_KEY = "favorite_games"
+	private val CONFIRMED_STREAMABLE_KEY = "confirmed_streamable_status"
 	private val PSNOW_FILTER_FAVORITES_KEY = "psnow_filter_favorites"
 	private val PSCLOUD_FILTER_FAVORITES_KEY = "pscloud_filter_favorites"
 	private val LICENSE_AGREED_KEY = "license_agreed"
@@ -639,6 +640,37 @@ class Preferences(context: Context)
 	fun isFavoriteGame(productId: String): Boolean
 	{
 		return getFavoriteGames().contains(productId)
+	}
+
+	/**
+	 * Streamability overrides confirmed by an actual launch attempt (success or Gaikai-rejected
+	 * failure), keyed by productId. Takes priority over the catalog-derived best-guess shown
+	 * before any real attempt, and persists across library refreshes and app restarts.
+	 */
+	fun getConfirmedStreamableOverrides(): Map<String, Boolean>
+	{
+		val json = sharedPreferences.getString(CONFIRMED_STREAMABLE_KEY, null) ?: return emptyMap()
+		return try
+		{
+			val obj = org.json.JSONObject(json)
+			val map = mutableMapOf<String, Boolean>()
+			obj.keys().forEach { key -> map[key] = obj.getBoolean(key) }
+			map
+		}
+		catch (e: Exception)
+		{
+			Log.w("Preferences", "Error reading confirmed streamable overrides", e)
+			emptyMap()
+		}
+	}
+
+	fun setConfirmedStreamable(productId: String, streamable: Boolean)
+	{
+		val current = getConfirmedStreamableOverrides().toMutableMap()
+		current[productId] = streamable
+		val obj = org.json.JSONObject()
+		current.forEach { (key, value) -> obj.put(key, value) }
+		sharedPreferences.edit().putString(CONFIRMED_STREAMABLE_KEY, obj.toString()).apply()
 	}
 	
 	// Filter states for favorites

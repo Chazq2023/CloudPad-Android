@@ -213,4 +213,26 @@
             app:title="@string/preferences_view_license_title"
             app:icon="@drawable/ic_log"/>
     </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_icon_key"
+        app:title="@string/preferences_category_title_icon_key">
+        <Preference
+            app:key="icon_key_streamable"
+            app:title="@string/preferences_icon_key_streamable_title"
+            app:selectable="false"
+            app:icon="@drawable/badge_key_streamable"/>
+
+        <Preference
+            app:key="icon_key_not_streamable"
+            app:title="@string/preferences_icon_key_not_streamable_title"
+            app:selectable="false"
+            app:icon="@drawable/badge_key_not_streamable"/>
+
+        <Preference
+            app:key="icon_key_unknown"
+            app:title="@string/preferences_icon_key_unknown_title"
+            app:selectable="false"
+            app:icon="@drawable/badge_key_unknown"/>
+    </PreferenceCategory>
 </PreferenceScreen>

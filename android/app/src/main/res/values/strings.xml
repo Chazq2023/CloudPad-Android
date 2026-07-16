@@ -122,6 +122,10 @@
     <string name="preferences_category_title_about">About</string>
     <string name="preferences_view_license_title">License Agreement</string>
     <string name="preferences_view_license_summary">View license terms and disclaimers</string>
+    <string name="preferences_category_title_icon_key">PS5 Library Icon Key</string>
+    <string name="preferences_icon_key_streamable_title">Game is verified as streamable</string>
+    <string name="preferences_icon_key_not_streamable_title">Game is verified as non-streamable</string>
+    <string name="preferences_icon_key_unknown_title">Game is not verified as streamable or non-streamable. Please launch game to verify status.</string>
     <string name="preferences_registered_hosts_summary">Currently registered: %d</string>
     <string name="preferences_resolution_title">Resolution</string>
     <string name="preferences_fps_title">FPS</string>

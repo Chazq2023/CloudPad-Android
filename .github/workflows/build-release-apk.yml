@@ -97,7 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a work-in-progress disclaimer shown on app launch (including right after an update), reminding you to double-check regional/subscription streaming availability via the official PS App
+            - Added streamability badges (check/cross/question mark) to PS5 Library tiles, showing whether a game is known to stream, known not to, or unverified — badges update automatically based on real launch attempts and persist across refreshes and restarts
+            - Added a "PS5 Library Icon Key" section to Settings explaining what each badge icon means
 
             ### APK
             Attached release asset:
