@@ -916,7 +916,7 @@ class CloudPlayFragment : Fragment() {
     private fun filterAndDisplayFavorites() {
         val favoriteIds = preferences.getFavoriteGames()
         val allGames = viewModel.getAllCachedGames()
-        val favoriteGames = allGames.filter { favoriteIds.contains(it.productId) }
+        val favoriteGames = mergeFavorites(favoriteIds, allGames)
 
         // Apply current sort state
         val sortedGames = when (sortState) {
@@ -928,6 +928,20 @@ class CloudPlayFragment : Fragment() {
         adapter.games = sortedGames
         updateEmptyState(sortedGames.isEmpty())
         updateFastScrollerVisibility()
+    }
+
+    /**
+     * Favorites list is keyed by productId, but the live catalog might not have loaded
+     * or matched every favorited title yet (e.g. cold/invalidated cache right after an
+     * app update). Fall back to the persisted snapshot for anything missing from [games]
+     * so favorited titles never appear to vanish.
+     */
+    private fun mergeFavorites(favoriteIds: Set<String>, games: List<CloudGame>): List<CloudGame> {
+        val liveFavorites = games.filter { favoriteIds.contains(it.productId) }
+        val liveIds = liveFavorites.map { it.productId }.toSet()
+        val snapshots = preferences.getFavoriteGameSnapshots()
+        val missingFavorites = favoriteIds.filter { it !in liveIds }.mapNotNull { snapshots[it] }
+        return liveFavorites + missingFavorites
     }
 
     private fun onAddShortcutClicked(game: CloudGame) {
@@ -993,7 +1007,7 @@ class CloudPlayFragment : Fragment() {
 
     private fun onGameFavoriteToggled(game: CloudGame, isFavorite: Boolean) {
         if (isFavorite) {
-            preferences.addFavoriteGame(game.productId)
+            preferences.addFavoriteGame(game)
         } else {
             preferences.removeFavoriteGame(game.productId)
         }
@@ -1037,8 +1051,7 @@ class CloudPlayFragment : Fragment() {
 
             // Filter for favorites if that filter is active
             val favFilteredGames = if (isFavoritesFilter) {
-                val favoriteIds = preferences.getFavoriteGames()
-                games.filter { favoriteIds.contains(it.productId) }
+                mergeFavorites(preferences.getFavoriteGames(), games)
             } else {
                 games
             }

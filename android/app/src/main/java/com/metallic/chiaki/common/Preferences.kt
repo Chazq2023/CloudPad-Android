@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.preference.PreferenceManager
+import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.pylux.stream.R
 import com.metallic.chiaki.lib.Codec
@@ -15,6 +16,8 @@ import com.metallic.chiaki.lib.VideoFPSPreset
 import com.metallic.chiaki.lib.VideoResolutionPreset
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
+import org.json.JSONArray
+import org.json.JSONObject
 import kotlin.math.max
 import kotlin.math.min
 
@@ -555,6 +558,7 @@ class Preferences(context: Context)
 	private val LAST_MAIN_TAB_KEY = "last_main_tab"
 	private val CLOUD_SORT_STATE_KEY = "cloud_sort_state"
 	private val FAVORITE_GAMES_KEY = "favorite_games"
+	private val FAVORITE_GAMES_METADATA_KEY = "favorite_games_metadata"
 	private val PSNOW_FILTER_FAVORITES_KEY = "psnow_filter_favorites"
 	private val PSCLOUD_FILTER_FAVORITES_KEY = "pscloud_filter_favorites"
 	private val LICENSE_AGREED_KEY = "license_agreed"
@@ -621,21 +625,95 @@ class Preferences(context: Context)
 	{
 		return sharedPreferences.getStringSet(FAVORITE_GAMES_KEY, emptySet()) ?: emptySet()
 	}
-	
-	fun addFavoriteGame(productId: String)
+
+	/**
+	 * Snapshot of favourited games (name/art/platform etc.), keyed by productId.
+	 * Lets the Favorites list render a game even if it isn't present in the
+	 * currently loaded catalog (e.g. catalog cache cold/invalidated right after
+	 * an app update), so favourites never appear to disappear.
+	 */
+	fun getFavoriteGameSnapshots(): Map<String, CloudGame>
+	{
+		val json = sharedPreferences.getString(FAVORITE_GAMES_METADATA_KEY, null) ?: return emptyMap()
+		return try
+		{
+			val jsonArray = JSONArray(json)
+			val snapshots = LinkedHashMap<String, CloudGame>()
+			for (i in 0 until jsonArray.length())
+			{
+				val obj = jsonArray.getJSONObject(i)
+				val game = CloudGame(
+					productId = obj.getString("productId"),
+					name = obj.getString("name"),
+					imageUrl = obj.getString("imageUrl"),
+					landscapeImageUrl = obj.optString("landscapeImageUrl", obj.getString("imageUrl")),
+					thumbnailUrl = obj.optString("thumbnailUrl", obj.getString("imageUrl")),
+					platform = obj.optString("platform", "ps4"),
+					serviceType = obj.optString("serviceType", "psnow"),
+					conceptUrl = obj.optString("conceptUrl", ""),
+					conceptId = obj.optString("conceptId", ""),
+					isOwned = obj.optBoolean("isOwned", false),
+					storeProductId = obj.optString("storeProductId", ""),
+					plusCatalog = obj.optBoolean("plusCatalog", false),
+					featureType = obj.optInt("featureType", 0)
+				)
+				snapshots[game.productId] = game
+			}
+			snapshots
+		}
+		catch (e: Exception)
+		{
+			Log.w("Preferences", "Error reading favorite game snapshots", e)
+			emptyMap()
+		}
+	}
+
+	private fun writeFavoriteGameSnapshots(snapshots: Map<String, CloudGame>)
+	{
+		val jsonArray = JSONArray()
+		for (game in snapshots.values)
+		{
+			val obj = JSONObject()
+			obj.put("productId", game.productId)
+			obj.put("name", game.name)
+			obj.put("imageUrl", game.imageUrl)
+			obj.put("landscapeImageUrl", game.landscapeImageUrl)
+			obj.put("thumbnailUrl", game.thumbnailUrl)
+			obj.put("platform", game.platform)
+			obj.put("serviceType", game.serviceType)
+			obj.put("conceptUrl", game.conceptUrl)
+			obj.put("conceptId", game.conceptId)
+			obj.put("isOwned", game.isOwned)
+			obj.put("storeProductId", game.storeProductId)
+			obj.put("plusCatalog", game.plusCatalog)
+			obj.put("featureType", game.featureType)
+			jsonArray.put(obj)
+		}
+		sharedPreferences.edit().putString(FAVORITE_GAMES_METADATA_KEY, jsonArray.toString()).apply()
+	}
+
+	fun addFavoriteGame(game: CloudGame)
 	{
 		val favorites = getFavoriteGames().toMutableSet()
-		favorites.add(productId)
+		favorites.add(game.productId)
 		sharedPreferences.edit().putStringSet(FAVORITE_GAMES_KEY, favorites).apply()
+
+		val snapshots = getFavoriteGameSnapshots().toMutableMap()
+		snapshots[game.productId] = game
+		writeFavoriteGameSnapshots(snapshots)
 	}
-	
+
 	fun removeFavoriteGame(productId: String)
 	{
 		val favorites = getFavoriteGames().toMutableSet()
 		favorites.remove(productId)
 		sharedPreferences.edit().putStringSet(FAVORITE_GAMES_KEY, favorites).apply()
+
+		val snapshots = getFavoriteGameSnapshots().toMutableMap()
+		snapshots.remove(productId)
+		writeFavoriteGameSnapshots(snapshots)
 	}
-	
+
 	fun isFavoriteGame(productId: String): Boolean
 	{
 		return getFavoriteGames().contains(productId)

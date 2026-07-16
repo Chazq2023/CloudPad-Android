@@ -97,7 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed Assassin's Creed Black Flag Resynced not appearing in the Game Library despite being owned: Sony's cloud catalog still flags it as not stream-enabled shortly after release, so it's now hardcoded in until that flag catches up
+            - Fixed favorited games disappearing after an app update: favorites now store a snapshot of each game's info so they still show up even if the catalog hasn't finished reloading
 
             ### APK
             Attached release asset:
