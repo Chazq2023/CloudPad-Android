@@ -153,6 +153,21 @@
 
                         android:padding="4dp" />
 
+                    <!-- Streamability filter (All/Streamable/Non-streamable/Not Verified) —
+                         PS5 Library only, hidden for PS3/PS4 Catalog -->
+                    <ImageButton
+                        android:id="@+id/headerStreamabilityFilterButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_apps"
+                        android:background="@drawable/secondary_header_button_bg"
+                        android:contentDescription="Streamability filter"
+                        android:scaleType="centerInside"
+                        android:focusable="true"
+                        android:visibility="gone"
+
+                        android:padding="4dp" />
+
                     <!-- Sort menu -->
                     <ImageButton
                         android:id="@+id/headerSortButton"
