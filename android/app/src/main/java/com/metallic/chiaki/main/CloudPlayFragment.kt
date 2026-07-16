@@ -975,6 +975,7 @@ class CloudPlayFragment : Fragment() {
             onFavoriteClick = this::onGameFavoriteToggled,
             onAddShortcutClick = this::onAddShortcutClicked,
             onPlaytimeClick = this::showPlaytimeDialog,
+            onTrophiesClick = { game -> com.metallic.chiaki.trophy.TrophiesActivity.start(requireContext(), game) },
             isFavorite = { productId -> preferences.isFavoriteGame(productId) }
         )
         binding.gamesRecyclerView.adapter = adapter

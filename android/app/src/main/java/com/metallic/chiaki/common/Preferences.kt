@@ -255,6 +255,62 @@ class Preferences(context: Context)
 			.apply()
 	}
 
+	// ==========================================================================
+	// PSN Trophy token storage — separate scope/client from the Remote Play tokens above,
+	// exchanged from the same stored NPSSO cookie (see PsnTrophyTokenManager).
+	// ==========================================================================
+	private val PSN_TROPHY_AUTH_TOKEN_KEY = "psn_trophy_auth_token"
+	private val PSN_TROPHY_REFRESH_TOKEN_KEY = "psn_trophy_refresh_token"
+	private val PSN_TROPHY_AUTH_TOKEN_EXPIRY_KEY = "psn_trophy_auth_token_expiry"
+
+	var psnTrophyAuthToken: String
+		get() = sharedPreferences.getString(PSN_TROPHY_AUTH_TOKEN_KEY, "") ?: ""
+		set(value) { sharedPreferences.edit().putString(PSN_TROPHY_AUTH_TOKEN_KEY, value).apply() }
+
+	var psnTrophyRefreshToken: String
+		get() = sharedPreferences.getString(PSN_TROPHY_REFRESH_TOKEN_KEY, "") ?: ""
+		set(value) { sharedPreferences.edit().putString(PSN_TROPHY_REFRESH_TOKEN_KEY, value).apply() }
+
+	var psnTrophyAuthTokenExpiry: Long
+		get() = sharedPreferences.getLong(PSN_TROPHY_AUTH_TOKEN_EXPIRY_KEY, 0L)
+		set(value) { sharedPreferences.edit().putLong(PSN_TROPHY_AUTH_TOKEN_EXPIRY_KEY, value).apply() }
+
+	val hasPsnTrophyTokens: Boolean
+		get() = psnTrophyAuthToken.isNotEmpty() && psnTrophyRefreshToken.isNotEmpty()
+
+	val isPsnTrophyTokenExpired: Boolean
+		get()
+		{
+			val expiry = psnTrophyAuthTokenExpiry
+			if (expiry == 0L) return true
+			return System.currentTimeMillis() + 60_000 >= expiry
+		}
+
+	// Cached account-wide trophy titles list (Trophies feature) — avoids re-fetching all ~hundreds
+	// of titles on every "Trophies" menu tap. Serialization lives in TrophyService to avoid
+	// duplicating its JSON parsing here.
+	private val TROPHY_TITLES_CACHE_KEY = "trophy_titles_cache"
+	private val TROPHY_TITLES_CACHE_FETCHED_AT_KEY = "trophy_titles_cache_fetched_at"
+	private val TROPHY_TITLES_CACHE_MAX_AGE_MS = 60 * 60 * 1000L // 1 hour
+
+	fun getCachedTrophyTitlesJson(): String? = sharedPreferences.getString(TROPHY_TITLES_CACHE_KEY, null)
+
+	val isTrophyTitlesCacheFresh: Boolean
+		get()
+		{
+			val fetchedAt = sharedPreferences.getLong(TROPHY_TITLES_CACHE_FETCHED_AT_KEY, 0L)
+			if (fetchedAt == 0L) return false
+			return System.currentTimeMillis() - fetchedAt < TROPHY_TITLES_CACHE_MAX_AGE_MS
+		}
+
+	fun setCachedTrophyTitlesJson(json: String)
+	{
+		sharedPreferences.edit()
+			.putString(TROPHY_TITLES_CACHE_KEY, json)
+			.putLong(TROPHY_TITLES_CACHE_FETCHED_AT_KEY, System.currentTimeMillis())
+			.apply()
+	}
+
 	// Store/catalog locale and game-language settings.
 	// Store locale controls PS Store/Kamaji catalog/container requests.
 	// Game language controls the actual Gaikai stream language.
