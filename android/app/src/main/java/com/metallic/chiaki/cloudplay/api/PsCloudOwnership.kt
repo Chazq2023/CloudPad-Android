@@ -4,6 +4,7 @@ package com.metallic.chiaki.cloudplay.api
 
 import android.util.Log
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import org.json.JSONObject
 
 object PsCloudOwnership
@@ -209,6 +210,45 @@ object PsCloudOwnership
 				landscapeImageUrl = match.landscapeImageUrl.ifEmpty { game.landscapeImageUrl },
 				thumbnailUrl = match.thumbnailUrl.ifEmpty { game.thumbnailUrl }
 			)
+		}
+	}
+
+	/**
+	 * Library tile badge state. A confirmed override (from an actual launch attempt — success or
+	 * a Gaikai-rejected failure) always wins, since it reflects reality rather than a guess and
+	 * should persist until another real attempt changes it. Absent that, a match in Sony's main
+	 * browse catalog (streamingSupported=true, by construction — see mergeImagicCategoryIntoMap)
+	 * is a confident STREAMABLE signal. Everything else — no match, or a match only in the PS
+	 * Plus supplement list (streamingSupported=false, which is sometimes wrong) — is UNKNOWN
+	 * rather than an assumed cross; only a real attempt should ever produce NOT_STREAMABLE.
+	 */
+	fun applyStreamabilityHints(
+		games: List<CloudGame>,
+		catalog: List<CloudGame>,
+		confirmedOverrides: Map<String, Boolean> = emptyMap()
+	): List<CloudGame>
+	{
+		val byProductId = catalogMapFirstWins(catalog)
+		val byStableKey = buildStableKeyIndex(catalog)
+		val byConceptId = buildConceptIdIndex(catalog)
+
+		return games.map { game ->
+			val status = when (confirmedOverrides[game.productId])
+			{
+				true -> StreamableStatus.STREAMABLE
+				false -> StreamableStatus.NOT_STREAMABLE
+				null ->
+				{
+					val stable = productIdStableKey(game.productId)
+					val catalogMatch = byProductId[game.productId]
+						?: byProductId[game.entitlementId]
+						?: byProductId[game.storeProductId]
+						?: stable?.let { byStableKey[it] }
+						?: game.conceptId.takeIf { it.isNotEmpty() }?.let { byConceptId[it] }
+					if (catalogMatch != null) StreamableStatus.STREAMABLE else StreamableStatus.UNKNOWN
+				}
+			}
+			game.copy(streamableStatus = status)
 		}
 	}
 

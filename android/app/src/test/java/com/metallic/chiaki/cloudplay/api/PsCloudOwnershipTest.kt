@@ -1,6 +1,7 @@
 package com.metallic.chiaki.cloudplay.api
 
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -835,5 +836,73 @@ class PsCloudOwnershipTest {
         )
 
         assertEquals("https://cover/classic-re2.jpg", result.first().imageUrl)
+    }
+
+    // --- applyStreamabilityHints: Library tile badge derivation
+
+    @Test
+    fun `catalog match sets STREAMABLE`() {
+        val owned = CloudGame(
+            productId = "PPSA00001_00", name = "Some Game", imageUrl = "", platform = "ps5", serviceType = "pscloud"
+        )
+        val catalogEntry = CloudGame(
+            productId = "PPSA00001_00", name = "Some Game", imageUrl = "", platform = "ps5", serviceType = "pscloud"
+        )
+
+        val result = PsCloudOwnership.applyStreamabilityHints(listOf(owned), listOf(catalogEntry))
+
+        assertEquals(StreamableStatus.STREAMABLE, result.first().streamableStatus)
+    }
+
+    @Test
+    fun `no catalog match and no confirmed override is UNKNOWN, not an assumed cross`() {
+        val owned = CloudGame(
+            productId = "PPSA00001_00", name = "Some Game", imageUrl = "", platform = "ps5", serviceType = "pscloud"
+        )
+
+        val result = PsCloudOwnership.applyStreamabilityHints(listOf(owned), catalog = emptyList())
+
+        assertEquals(StreamableStatus.UNKNOWN, result.first().streamableStatus)
+    }
+
+    @Test
+    fun `confirmed override wins over a catalog match`() {
+        val owned = CloudGame(
+            productId = "PPSA00001_00", name = "Some Game", imageUrl = "", platform = "ps5", serviceType = "pscloud"
+        )
+        val catalogEntry = owned.copy()
+
+        val result = PsCloudOwnership.applyStreamabilityHints(
+            listOf(owned), listOf(catalogEntry), confirmedOverrides = mapOf("PPSA00001_00" to false)
+        )
+
+        // A real failed launch attempt overrides even a confident catalog "streamable" match.
+        assertEquals(StreamableStatus.NOT_STREAMABLE, result.first().streamableStatus)
+    }
+
+    @Test
+    fun `confirmed streamable override applies even with no catalog match at all`() {
+        val owned = CloudGame(
+            productId = "PPSA00001_00", name = "Some Game", imageUrl = "", platform = "ps5", serviceType = "pscloud"
+        )
+
+        val result = PsCloudOwnership.applyStreamabilityHints(
+            listOf(owned), catalog = emptyList(), confirmedOverrides = mapOf("PPSA00001_00" to true)
+        )
+
+        assertEquals(StreamableStatus.STREAMABLE, result.first().streamableStatus)
+    }
+
+    @Test
+    fun `unrelated confirmed overrides do not affect other games`() {
+        val gameA = CloudGame(productId = "PPSA00001_00", name = "Game A", imageUrl = "", platform = "ps5", serviceType = "pscloud")
+        val gameB = CloudGame(productId = "PPSA00002_00", name = "Game B", imageUrl = "", platform = "ps5", serviceType = "pscloud")
+
+        val result = PsCloudOwnership.applyStreamabilityHints(
+            listOf(gameA, gameB), catalog = emptyList(), confirmedOverrides = mapOf("PPSA00001_00" to false)
+        )
+
+        assertEquals(StreamableStatus.NOT_STREAMABLE, result.first { it.productId == "PPSA00001_00" }.streamableStatus)
+        assertEquals(StreamableStatus.UNKNOWN, result.first { it.productId == "PPSA00002_00" }.streamableStatus)
     }
 }

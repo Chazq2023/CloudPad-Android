@@ -68,6 +68,28 @@
             android:paddingTop="8dp"
             android:paddingBottom="8dp">
 
+            <FrameLayout
+                android:id="@+id/streamabilityBadge"
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_marginEnd="6dp"
+                android:visibility="gone">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/bg_streamability_circle" />
+
+                <ImageView
+                    android:id="@+id/streamabilityIcon"
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="Streamability status"
+                    android:src="@drawable/ic_check_white" />
+
+            </FrameLayout>
+
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/gameNameTextView"
                 android:layout_width="0dp"
