@@ -31,19 +31,6 @@ class PsCloudCatalogService
 		private const val ACCOUNT_BASE = "https://ca.account.sony.com/api"
 		private const val IMAGIC_GAMESLIST_BASE = "https://www.playstation.com/bin/imagic/gameslist"
 
-		// Games that appear in Plus catalog lists with streamingSupported=false but are NOT
-		// actually streamable via PS Cloud even when owned outright. The imagic catalog gives
-		// no reliable field to distinguish these from genuinely streamable supplement games
-		// (e.g. HZD Remastered, Returnal), so they are excluded explicitly.
-		// Safe to maintain: if Sony ever adds these to the streaming catalog properly
-		// (streamingSupported=true in all-ps5-list) they will appear via browseGames instead.
-		private val SUPPLEMENT_EXCLUSIONS = setOf(
-			"PPSA24264", // Call of Duty: Modern Warfare III
-			"PPSA26127", // EA SPORTS Madden NFL 26
-			"PPSA01372", // Riders Republic
-			"PPSA01285", // Returnal
-		)
-
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
 		// when a game appears in both the subscription lists and the full streaming catalog.
 		// Subscription-list SKUs (e.g. GHOSTDCPS5PSPLUS) differ from what Gaikai indexes;
@@ -182,15 +169,8 @@ class PsCloudCatalogService
 						val stableKey = Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
 						if (stableKey != null && stableKey in allPs5ListStableKeys)
 						{
-							if (stableKey in SUPPLEMENT_EXCLUSIONS)
-							{
-								Log.i(TAG, "supplement excluded: $stableKey '${gameObj.optString("name", "")}' ($categoryList)")
-							}
-							else
-							{
-								gameObj.put("plusCatalog", true)
-								plusSupplementByProductId.putIfAbsent(productId, gameObj)
-							}
+							gameObj.put("plusCatalog", true)
+							plusSupplementByProductId.putIfAbsent(productId, gameObj)
 						}
 					}
 					continue

@@ -101,6 +101,7 @@ jobs:
             - Library now correctly shows PS5 games only, filtering out PS3/PS4 titles, streaming apps (Netflix, Disney+, BT Sport, etc.), and non-game extras (artbooks, soundtracks, tracking placeholders) that share the same account data as real games
             - Streaming error messages are now consistent and specific to which service failed (PS Now Game Catalog vs PS Cloud Game Library), instead of a generic or raw technical error
             - Box art now upgrades to proper cover art when available, falling back to your account's game icon otherwise
+            - Removed a hardcoded exclusion list from the Game Catalog's PS Plus supplement matching — no longer needed now that the Library is entitlement-based, and it had drifted out of sync with reality anyway
 
             ### APK
             Attached release asset:
