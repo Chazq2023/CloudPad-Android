@@ -3,6 +3,7 @@
 package com.metallic.chiaki.trophy
 
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
+import android.util.Log
 
 /**
  * Sony's Trophies API has no direct mapping from a store productId/CUSA id to the
@@ -12,6 +13,7 @@ import com.metallic.chiaki.trophy.model.TrophyTitleSummary
  */
 object TrophyMatcher
 {
+	private const val TAG = "TrophyMatcher"
 	private val editionSuffixPattern = Regex(
 		"[:\\-–—]\\s*(standard|digital|deluxe|ultimate|complete|goty|game of the year|" +
 			"definitive|remastered?|anniversary|legendary|gold|special|enhanced)\\s*edition.*",
@@ -35,13 +37,97 @@ object TrophyMatcher
 		return whitespacePattern.replace(result, " ").trim()
 	}
 
-	/** "ps3"/"ps4"/"ps5" style platform token from any of this app's platform string variants. */
-	private fun platformToken(platform: String): String = when
+	/**
+	 * Converts standalone Arabic-number tokens in a title to Roman numerals.
+	 *
+	 * Examples:
+	 * Alan Wake 2        -> Alan Wake II
+	 * Mafia 3            -> Mafia III
+	 * Final Fantasy 16   -> Final Fantasy XVI
+	 *
+	 * Numbers embedded inside words are not changed.
+	 */
+	private fun withRomanNumerals(name: String): String
 	{
-		platform.contains("5") -> "ps5"
-		platform.contains("4") -> "ps4"
-		platform.contains("3") -> "ps3"
-		else -> ""
+		val standaloneNumberPattern = Regex("""(?<!\p{L}|\p{N})\d+(?!\p{L}|\p{N})""")
+
+		return standaloneNumberPattern.replace(name) { match ->
+			val number = match.value.toIntOrNull()
+
+			if (number != null && number in 2..3999)
+			{
+				toRomanNumeral(number)
+			}
+			else
+			{
+				match.value
+			}
+		}
+	}
+
+	private fun numericTokens(
+		normalizedTitle: String
+	): Set<String>
+	{
+		return normalizedTitle
+			.split(Regex("\\s+"))
+			.filter { token ->
+				token.isNotEmpty() &&
+						token.all(Char::isDigit)
+			}
+			.toSet()
+	}
+
+	private fun toRomanNumeral(value: Int): String
+	{
+		var remaining = value
+
+		val numerals = listOf(
+			1000 to "M",
+			900 to "CM",
+			500 to "D",
+			400 to "CD",
+			100 to "C",
+			90 to "XC",
+			50 to "L",
+			40 to "XL",
+			10 to "X",
+			9 to "IX",
+			5 to "V",
+			4 to "IV",
+			1 to "I"
+		)
+
+		return buildString {
+			for ((number, numeral) in numerals)
+			{
+				while (remaining >= number)
+				{
+					append(numeral)
+					remaining -= number
+				}
+			}
+		}
+	}
+
+	/** "ps3"/"ps4"/"ps5" style platform token from any of this app's platform string variants. */
+	private fun platformToken(platform: String): String
+	{
+		val normalized = platform.lowercase().trim()
+
+		return when
+		{
+			normalized == "ps5" ||
+					normalized == "playstation 5" -> "ps5"
+
+			normalized == "ps4" ||
+					normalized == "playstation 4" -> "ps4"
+
+			normalized == "ps3" ||
+					normalized == "playstation 3" -> "ps3"
+
+			else -> ""
+		}
 	}
 
 	/**
@@ -50,31 +136,235 @@ object TrophyMatcher
 	 * matches [platform] when more than one candidate remains. Returns null if nothing
 	 * reasonable is found.
 	 */
-	fun findBestMatch(gameName: String, platform: String, titles: List<TrophyTitleSummary>): TrophyTitleSummary?
+	fun findBestMatch(
+		gameName: String,
+		platform: String,
+		titles: List<TrophyTitleSummary>
+	): TrophyTitleSummary?
 	{
+		android.util.Log.e(
+			"TrophyMatcher",
+			"findBestMatch called: gameName=\"$gameName\", platform=\"$platform\""
+		)
 		val normalizedGame = normalize(gameName)
-		if (normalizedGame.isEmpty() || titles.isEmpty()) return null
 
-		val candidates = titles.map { it to normalize(it.trophyTitleName) }
-		val token = platformToken(platform)
+		if (normalizedGame.isEmpty() || titles.isEmpty())
+		{
+			return null
+		}
 
-		val exact = candidates.filter { it.second == normalizedGame }.map { it.first }
-		if (exact.isNotEmpty()) return pickByPlatform(exact, token)
+		val candidates = titles.map { title ->
+			title to normalize(title.trophyTitleName)
+		}
 
-		val partial = candidates.filter {
-			it.second.isNotEmpty() && (it.second.contains(normalizedGame) || normalizedGame.contains(it.second))
-		}.map { it.first }
-		if (partial.isNotEmpty()) return pickByPlatform(partial, token)
+		val platformToken = platformToken(platform)
+
+		candidates
+			.filter { candidate ->
+				candidate.second == normalizedGame
+			}
+			.forEach { candidate ->
+				val title = candidate.first
+
+				Log.e(
+					TAG,
+					"Exact name candidate: " +
+							"requested=\"$gameName\", " +
+							"requestedPlatform=\"$platformToken\", " +
+							"SonyTitle=\"${title.trophyTitleName}\", " +
+							"SonyPlatform=\"${title.trophyTitlePlatform}\", " +
+							"service=\"${title.npServiceName}\", " +
+							"npCommunicationId=\"${title.npCommunicationId}\""
+				)
+			}
+
+		/*
+         * Pass 1: use the original catalogue title unchanged.
+         *
+         * This preserves all currently working title matches.
+         */
+		val exactOriginal = candidates
+			.filter { candidate ->
+				candidate.second == normalizedGame
+			}
+			.map { candidate ->
+				candidate.first
+			}
+
+		if (exactOriginal.isNotEmpty())
+		{
+			return pickByPlatform(
+				matches = exactOriginal,
+				platformToken = platformToken
+			)
+		}
+
+		/*
+         * Pass 2: retry using Roman numerals.
+         *
+         * This only runs when the original exact lookup failed.
+         */
+		val romanGameName = withRomanNumerals(gameName)
+		val normalizedRomanGame = normalize(romanGameName)
+
+		android.util.Log.e(
+			"TrophyMatcher",
+			"Roman retry: original=\"$gameName\", " +
+					"alternate=\"$romanGameName\", " +
+					"normalizedOriginal=\"$normalizedGame\", " +
+					"normalizedAlternate=\"$normalizedRomanGame\""
+		)
+
+		if (
+			normalizedRomanGame.isNotEmpty() &&
+			normalizedRomanGame != normalizedGame
+		)
+		{
+			val exactRoman = candidates
+				.filter { candidate ->
+					candidate.second == normalizedRomanGame
+				}
+				.map { candidate ->
+					candidate.first
+				}
+
+			android.util.Log.e(
+				"TrophyMatcher",
+				"Roman exact matches found: ${exactRoman.size}"
+			)
+
+			if (exactRoman.isNotEmpty())
+			{
+				android.util.Log.i(
+					"TrophyMatcher",
+					"Roman numeral fallback matched: " +
+							"original=\"$gameName\", " +
+							"alternate=\"$romanGameName\", " +
+							"Sony title=\"${exactRoman.first().trophyTitleName}\""
+				)
+
+				return pickByPlatform(
+					matches = exactRoman,
+					platformToken = platformToken
+				)
+			}
+		}
+
+		/*
+         * Preserve the existing subtitle/edition fallback, but only after both
+         * exact lookup strategies have failed.
+         *
+         * Numeric tokens must match so that sequels cannot fall back to the
+         * original game or a different numbered title.
+         */
+		val originalNumbers = numericTokens(normalizedGame)
+
+		val partial = candidates
+			.filter { candidate ->
+				val normalizedCandidate = candidate.second
+
+				normalizedCandidate.isNotEmpty() &&
+						numericTokens(normalizedCandidate) == originalNumbers &&
+						(
+								normalizedCandidate.contains(normalizedGame) ||
+										normalizedGame.contains(normalizedCandidate)
+								)
+			}
+			.map { candidate ->
+				candidate.first
+			}
+
+		if (partial.isNotEmpty())
+		{
+			return pickByPlatform(
+				matches = partial,
+				platformToken = platformToken
+			)
+		}
 
 		return null
 	}
 
-	private fun pickByPlatform(matches: List<TrophyTitleSummary>, platformToken: String): TrophyTitleSummary
+	private fun pickByPlatform(
+		matches: List<TrophyTitleSummary>,
+		platformToken: String
+	): TrophyTitleSummary?
 	{
-		if (platformToken.isNotEmpty())
+		if (matches.isEmpty())
 		{
-			matches.firstOrNull { it.trophyTitlePlatform.lowercase().contains(platformToken) }?.let { return it }
+			return null
 		}
-		return matches.first()
+
+		/*
+         * If CloudPad cannot identify the requested platform, preserve the
+         * existing behaviour and return the first title-name match.
+         */
+		if (platformToken.isEmpty())
+		{
+			return matches.firstOrNull()
+		}
+
+		val selected = matches.firstOrNull { title ->
+			val supportedPlatforms = title.trophyTitlePlatform
+				.lowercase()
+				.split(Regex("[,/\\s]+"))
+				.filter { it.isNotBlank() }
+
+			platformToken in supportedPlatforms
+		}
+
+		if (selected != null)
+		{
+			Log.i(
+				TAG,
+				"Platform trophy match selected: " +
+						"requestedPlatform=\"$platformToken\", " +
+						"title=\"${selected.trophyTitleName}\", " +
+						"SonyPlatform=\"${selected.trophyTitlePlatform}\", " +
+						"service=\"${selected.npServiceName}\", " +
+						"npCommunicationId=\"${selected.npCommunicationId}\""
+			)
+		}
+		else
+		{
+			Log.w(
+				TAG,
+				"Title matched by name but no \"$platformToken\" trophy set exists. " +
+						"Available matches: " +
+						matches.joinToString {
+							"\"${it.trophyTitleName}\" " +
+									"[platform=${it.trophyTitlePlatform}, " +
+									"service=${it.npServiceName}, " +
+									"id=${it.npCommunicationId}]"
+						}
+			)
+		}
+
+		Log.e(
+			TAG,
+			if (selected != null)
+			{
+				"Platform selection succeeded: " +
+						"requested=\"$platformToken\", " +
+						"selected=\"${selected.trophyTitleName}\", " +
+						"SonyPlatform=\"${selected.trophyTitlePlatform}\", " +
+						"service=\"${selected.npServiceName}\", " +
+						"id=\"${selected.npCommunicationId}\""
+			}
+			else
+			{
+				"Platform selection failed: " +
+						"requested=\"$platformToken\", " +
+						"available=" +
+						matches.joinToString {
+							"\"${it.trophyTitleName}\"[" +
+									"${it.trophyTitlePlatform}," +
+									"${it.npServiceName}," +
+									"${it.npCommunicationId}]"
+						}
+			}
+		)
+
+		return selected
 	}
 }
