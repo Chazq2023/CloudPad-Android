@@ -101,6 +101,7 @@ class PsCloudCatalogService
 				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202211/0711/kh4MUIuMmHlktOHar3lVl6rY.png",
 				platform = "ps5",
 				serviceType = "pscloud",
+				conceptId = "204794",
 			),
 			// Nioh 2: imagic catalog has PPSA02486 (CE) but the user's PS5 Remastered upgrade
 			// entitlement carries id=PPSA02488. storeProductId is CUSA15526 (PS4 purchase that
@@ -111,6 +112,7 @@ class PsCloudCatalogService
 				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202011/0516/8bfGZ0fYrcWwk8IfjDeAQt3J.png",
 				platform = "ps5",
 				serviceType = "pscloud",
+				conceptId = "234389",
 			),
 			// Resident Evil 7 biohazard Gold Edition: imagic catalog has no entry under the
 			// bundle product_id (PPSA01557 / "RE7VILLAGECOMPGE") shared by both the PS4GD and
@@ -125,6 +127,7 @@ class PsCloudCatalogService
 				imageUrl = "https://image.api.playstation.com/vulcan/ap/rnd/202206/0207/V6IViuKogBMRtajqjnYrcj0e.png",
 				platform = "ps5",
 				serviceType = "pscloud",
+				conceptId = "220037",
 			),
 		)
 
@@ -205,8 +208,21 @@ class PsCloudCatalogService
 		if (failedLists.size == IMAGIC_CATEGORY_LISTS.size)
 			throw Exception("All imagic category lists failed to load")
 
-		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) } +
-			DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES + PRE_STREAMING_ENABLED_GAMES
+		// Overrides correct a productId/entitlement mismatch for a specific title. If Sony's own
+		// imagic catalog also lists an entry for the same game (matched by conceptId+platform,
+		// since the override's productId/name deliberately differs from Sony's), drop that entry
+		// so only the corrected override remains. Otherwise both show up as separate,
+		// visually-identical (or same-title) rows, and the imagic-derived one can never be owned
+		// since it's the wrong regional/edition SKU (e.g. Witcher 3: Sony's GB catalog lists
+		// PPSA10408 while the user's real entitlement is PPSA03977, both conceptId 204794).
+		val overrideGames = DELISTED_STREAMABLE_GAMES + ENTITLEMENT_PPSA_OVERRIDES + PRE_STREAMING_ENABLED_GAMES
+		val overrideConceptKeys = overrideGames
+			.filter { it.conceptId.isNotEmpty() }
+			.map { "${it.conceptId}|${it.platform}" }
+			.toSet()
+		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) }
+			.filterNot { "${it.conceptId}|${it.platform}" in overrideConceptKeys } +
+			overrideGames
 		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
 
 		val catalogFetchWarning = if (failedLists.isEmpty()) null
