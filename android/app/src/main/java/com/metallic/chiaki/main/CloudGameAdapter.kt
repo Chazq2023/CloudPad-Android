@@ -2,7 +2,6 @@
 
 package com.metallic.chiaki.main
 
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -19,6 +18,7 @@ class CloudGameAdapter(
     private val onGameClick: (CloudGame) -> Unit,
     private val onFavoriteClick: (CloudGame, Boolean) -> Unit,
     private val onAddShortcutClick: (CloudGame) -> Unit,
+    private val onPlaytimeClick: (CloudGame) -> Unit,
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
@@ -31,7 +31,7 @@ class CloudGameAdapter(
             notifyDataSetChanged()
         }
 
-    var showOwnershipBadge: Boolean = false
+    var showStreamabilityBadge: Boolean = false
         set(value) {
             field = value
             notifyDataSetChanged()
@@ -104,18 +104,7 @@ class CloudGameAdapter(
                 else -> game.platform.takeLast(1)
             }
 
-            if (showOwnershipBadge && game.serviceType == "pscloud") {
-                binding.ownershipBadge.visibility = android.view.View.VISIBLE
-                if (game.isOwned) {
-                    binding.ownershipBadge.text = "Owned"
-                    val tv = TypedValue()
-                    binding.ownershipBadge.context.theme.resolveAttribute(R.attr.pyluxAccentA80, tv, true)
-                    binding.ownershipBadge.setBackgroundColor(tv.data)
-                } else {
-                    binding.ownershipBadge.text = "Not Owned"
-                    binding.ownershipBadge.setBackgroundColor(0xCCFF9800.toInt())
-                }
-
+            if (showStreamabilityBadge && game.serviceType == "pscloud") {
                 binding.streamabilityBadge.visibility = android.view.View.VISIBLE
                 binding.streamabilityIcon.setImageResource(
                     when (game.streamableStatus) {
@@ -125,7 +114,6 @@ class CloudGameAdapter(
                     }
                 )
             } else {
-                binding.ownershipBadge.visibility = android.view.View.GONE
                 binding.streamabilityBadge.visibility = android.view.View.GONE
             }
 
@@ -181,6 +169,13 @@ class CloudGameAdapter(
                     "Add to Home Screen"
                 )
 
+                popup.menu.add(
+                    0,
+                    3,
+                    2,
+                    "Playtime"
+                )
+
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         1 -> {
@@ -193,6 +188,11 @@ class CloudGameAdapter(
                             true
                         }
 
+                        3 -> {
+                            onPlaytimeClick(game)
+                            true
+                        }
+
                         else -> false
                     }
                 }
@@ -201,13 +201,20 @@ class CloudGameAdapter(
                 true
             }
             binding.root.setOnKeyListener { _, keyCode, event ->
-                if (event.action == android.view.KeyEvent.ACTION_DOWN &&
-                    keyCode == android.view.KeyEvent.KEYCODE_MENU
-                ) {
-                    toggleFavorite()
-                    true
-                } else {
+                if (event.action != android.view.KeyEvent.ACTION_DOWN) {
                     false
+                } else when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_MENU -> {
+                        toggleFavorite()
+                        true
+                    }
+                    // Square on PlayStation controllers reports as the generic gamepad "X" keycode
+                    // on Android (X/Y/A/B are positional, not brand-specific).
+                    android.view.KeyEvent.KEYCODE_BUTTON_X -> {
+                        onPlaytimeClick(game)
+                        true
+                    }
+                    else -> false
                 }
             }
         }

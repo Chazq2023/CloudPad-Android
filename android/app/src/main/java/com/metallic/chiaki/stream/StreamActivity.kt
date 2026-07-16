@@ -80,6 +80,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	/** [SystemClock.elapsedRealtime] when this session entered [StreamStateConnected]; 0 if not connected. */
 	private var connectedAtElapsedRealtime: Long = 0L
 
+	/** Wall-clock counterpart of [connectedAtElapsedRealtime], used as the "last played" timestamp
+	 *  recorded against the game once the segment is flushed (elapsedRealtime is boot-relative and
+	 *  not meaningful to persist/display). 0 if not connected. */
+	private var connectedAtWallClockMs: Long = 0L
+
 	/** Currently-applied window size / display mode. Only changes when the Quick Settings
 	 *  panel's Save button is pressed — the panel's own toggle group is staged separately. */
 	private var currentDisplayMode: TransformMode = TransformMode.FIT
@@ -369,8 +374,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		if (connectedAtElapsedRealtime == 0L) return
 		val delta = SystemClock.elapsedRealtime() - connectedAtElapsedRealtime
 		if (delta > 0L)
+		{
 			viewModel.preferences.addTotalStreamTimeMs(delta)
+			viewModel.connectInfo.cloudGameProductId?.let { productId ->
+				viewModel.preferences.recordPlaySession(productId, delta, connectedAtWallClockMs)
+			}
+		}
 		connectedAtElapsedRealtime = 0L
+		connectedAtWallClockMs = 0L
 	}
 
 	private fun stateChanged(state: StreamState)
@@ -383,7 +394,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			StreamStateConnected ->
 			{
 				if (connectedAtElapsedRealtime == 0L)
+				{
 					connectedAtElapsedRealtime = SystemClock.elapsedRealtime()
+					connectedAtWallClockMs = System.currentTimeMillis()
+				}
 			}
 
 			StreamStateConnecting ->

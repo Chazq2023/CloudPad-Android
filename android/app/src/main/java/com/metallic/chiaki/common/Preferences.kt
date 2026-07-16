@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.preference.PreferenceManager
+import com.metallic.chiaki.cloudplay.model.GamePlaytimeStats
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.pylux.stream.R
 import com.metallic.chiaki.lib.Codec
@@ -560,6 +561,7 @@ class Preferences(context: Context)
 	private val PSCLOUD_FILTER_FAVORITES_KEY = "pscloud_filter_favorites"
 	private val LICENSE_AGREED_KEY = "license_agreed"
 	private val TOTAL_STREAM_TIME_MS_KEY = "total_stream_time_ms"
+	private val GAME_PLAYTIME_KEY = "game_playtime_stats"
 	/** Migrated from one-time flag; removed after [lastDonationPromptWallClockMs] is seeded. */
 	private val DONATION_STREAM_AUTO_PROMPT_SHOWN_KEY = "donation_stream_auto_prompt_shown"
 	private val LAST_DONATION_PROMPT_WALL_MS_KEY = "last_donation_prompt_wall_ms"
@@ -609,7 +611,7 @@ class Preferences(context: Context)
 	
 	fun getCloudSortState(): Int
 	{
-		return sharedPreferences.getInt(CLOUD_SORT_STATE_KEY, 0) // Default to Recent (0)
+		return sharedPreferences.getInt(CLOUD_SORT_STATE_KEY, 0) // Default to Name: A→Z (0)
 	}
 	
 	fun setCloudSortState(sortState: Int)
@@ -672,7 +674,66 @@ class Preferences(context: Context)
 		current.forEach { (key, value) -> obj.put(key, value) }
 		sharedPreferences.edit().putString(CONFIRMED_STREAMABLE_KEY, obj.toString()).apply()
 	}
-	
+
+	/**
+	 * Per-game playtime stats (PS3/PS4 Catalog and PS5 Library), keyed by [CloudGame.productId].
+	 * Written by [recordPlaySession] once per stream disconnect (see StreamActivity.flushStreamTimeSegment).
+	 */
+	fun getGamePlaytimeStats(): Map<String, GamePlaytimeStats>
+	{
+		val json = sharedPreferences.getString(GAME_PLAYTIME_KEY, null) ?: return emptyMap()
+		return try
+		{
+			val obj = org.json.JSONObject(json)
+			val map = mutableMapOf<String, GamePlaytimeStats>()
+			obj.keys().forEach { key ->
+				val entry = obj.getJSONObject(key)
+				map[key] = GamePlaytimeStats(
+					totalPlaytimeMs = entry.optLong("totalPlaytimeMs", 0L),
+					lastPlayedMs = entry.optLong("lastPlayedMs", 0L),
+					longestSessionMs = entry.optLong("longestSessionMs", 0L)
+				)
+			}
+			map
+		}
+		catch (e: Exception)
+		{
+			Log.w("Preferences", "Error reading game playtime stats", e)
+			emptyMap()
+		}
+	}
+
+	fun getGamePlaytimeStats(productId: String): GamePlaytimeStats? = getGamePlaytimeStats()[productId]
+
+	fun getLastPlayedMs(productId: String): Long = getGamePlaytimeStats(productId)?.lastPlayedMs ?: 0L
+
+	/**
+	 * Records a completed play session against [productId] — accumulates total playtime, bumps
+	 * the longest single session if this one was longer, and overwrites the last-played timestamp.
+	 */
+	fun recordPlaySession(productId: String, sessionDurationMs: Long, sessionStartedWallClockMs: Long)
+	{
+		if (sessionDurationMs <= 0L) return
+
+		val current = getGamePlaytimeStats().toMutableMap()
+		val existing = current[productId]
+		current[productId] = GamePlaytimeStats(
+			totalPlaytimeMs = (existing?.totalPlaytimeMs ?: 0L) + sessionDurationMs,
+			lastPlayedMs = sessionStartedWallClockMs,
+			longestSessionMs = maxOf(existing?.longestSessionMs ?: 0L, sessionDurationMs)
+		)
+
+		val obj = org.json.JSONObject()
+		current.forEach { (key, stats) ->
+			val entryObj = org.json.JSONObject()
+			entryObj.put("totalPlaytimeMs", stats.totalPlaytimeMs)
+			entryObj.put("lastPlayedMs", stats.lastPlayedMs)
+			entryObj.put("longestSessionMs", stats.longestSessionMs)
+			obj.put(key, entryObj)
+		}
+		sharedPreferences.edit().putString(GAME_PLAYTIME_KEY, obj.toString()).apply()
+	}
+
 	// Filter states for favorites
 	fun getPsnowFilterFavorites(): Boolean
 	{

@@ -14,7 +14,7 @@ import com.metallic.chiaki.lib.ConnectVideoProfile
  */
 object CloudConnectInfoBuilder
 {
-	fun build(session: CloudStreamSession, preferences: Preferences, gameIdentifier: String): ConnectInfo
+	fun build(session: CloudStreamSession, preferences: Preferences, gameIdentifier: String, gameProductId: String? = null): ConnectInfo
 	{
 		// Set codec based on service type (Qt lines 344-353): PSCLOUD: H.265/HEVC, PSNOW: H.264
 		val codec = if(session.serviceType == "pscloud") Codec.CODEC_H265 else Codec.CODEC_H264
@@ -63,7 +63,8 @@ object CloudConnectInfoBuilder
 			cloudRttUs = session.rttMs.toLong() * 1000L, // Convert ms to microseconds
 			cloudGameIdentifier = gameIdentifier,
 			cloudGameName = session.gameName,
-			cloudOwnedEntitlementId = session.entitlementId
+			cloudOwnedEntitlementId = session.entitlementId,
+			cloudGameProductId = gameProductId
 		)
 	}
 }
