@@ -29,6 +29,18 @@ class CloudGameFilteringTest {
         else        -> games
     }
 
+    // Mirrors the PS5-Library-only streamability filter block in CloudPlayFragment.observeViewModel
+    private fun applyStreamabilityFilter(
+        games: List<CloudGame>,
+        section: String,
+        filterState: Int
+    ): List<CloudGame> = if (section != "pscloud") games else when (filterState) {
+        1 -> games.filter { it.streamableStatus == StreamableStatus.STREAMABLE }
+        2 -> games.filter { it.streamableStatus == StreamableStatus.NOT_STREAMABLE }
+        3 -> games.filter { it.streamableStatus == StreamableStatus.UNKNOWN }
+        else -> games
+    }
+
     // Mirrors the sortState block in CloudPlayFragment.observeViewModel
     private fun applySortState(
         games: List<CloudGame>,
@@ -81,6 +93,50 @@ class CloudGameFilteringTest {
         assertTrue(filterBySection(emptyList(), "psnow_ps3").isEmpty())
         assertTrue(filterBySection(emptyList(), "psnow_ps4").isEmpty())
         assertTrue(filterBySection(emptyList(), "pscloud").isEmpty())
+    }
+
+    // --- PS5 Library streamability filter (All / Streamable / Non-streamable / Not Verified) ---
+
+    private val mixedStatusGames = listOf(
+        CloudGame("A", "Confirmed Streamable", "", platform = "ps5", serviceType = "pscloud", streamableStatus = StreamableStatus.STREAMABLE),
+        CloudGame("B", "Confirmed Non-streamable", "", platform = "ps5", serviceType = "pscloud", streamableStatus = StreamableStatus.NOT_STREAMABLE),
+        CloudGame("C", "Never Attempted", "", platform = "ps5", serviceType = "pscloud", streamableStatus = StreamableStatus.UNKNOWN)
+    )
+
+    @Test
+    fun `streamability filter state 0 shows all games regardless of status`() {
+        val result = applyStreamabilityFilter(mixedStatusGames, "pscloud", 0)
+        assertEquals(3, result.size)
+    }
+
+    @Test
+    fun `streamability filter state 1 shows only streamable games`() {
+        val result = applyStreamabilityFilter(mixedStatusGames, "pscloud", 1)
+        assertEquals(listOf("Confirmed Streamable"), result.map { it.name })
+    }
+
+    @Test
+    fun `streamability filter state 2 shows only non-streamable games`() {
+        val result = applyStreamabilityFilter(mixedStatusGames, "pscloud", 2)
+        assertEquals(listOf("Confirmed Non-streamable"), result.map { it.name })
+    }
+
+    @Test
+    fun `streamability filter state 3 shows only not-verified games`() {
+        val result = applyStreamabilityFilter(mixedStatusGames, "pscloud", 3)
+        assertEquals(listOf("Never Attempted"), result.map { it.name })
+    }
+
+    @Test
+    fun `streamability filter never applies outside the PS5 Library section`() {
+        val result = applyStreamabilityFilter(mixedStatusGames, "psnow_ps4", 1)
+        assertEquals(3, result.size)
+    }
+
+    @Test
+    fun `an unrecognised streamability filter state falls back to showing all games`() {
+        val result = applyStreamabilityFilter(mixedStatusGames, "pscloud", 99)
+        assertEquals(3, result.size)
     }
 
     // --- Sort: A→Z (default) ---

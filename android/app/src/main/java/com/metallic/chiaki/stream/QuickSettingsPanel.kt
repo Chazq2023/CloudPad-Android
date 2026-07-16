@@ -20,6 +20,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.StreamSessionType
@@ -30,11 +31,16 @@ import com.metallic.chiaki.session.PhysicalInput
 import com.metallic.chiaki.session.StreamInput
 import com.metallic.chiaki.settings.RemapAdapter
 import com.metallic.chiaki.settings.RemapItem
+import com.metallic.chiaki.trophy.TrophyAdapter
+import com.metallic.chiaki.trophy.TrophyRepository
+import com.metallic.chiaki.trophy.TrophyResult
+import com.metallic.chiaki.trophy.buildTrophyListItems
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
 import com.pylux.stream.databinding.ItemQuickSettingsSeekbarBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
+import kotlinx.coroutines.launch
 import org.json.JSONArray
 
 /**
@@ -107,6 +113,10 @@ class QuickSettingsPanel(
 
 	private val sessionType: StreamSessionType = viewModel.connectInfo.sessionType
 
+	private val trophyRepository = TrophyRepository(preferences)
+	private val trophyAdapter = TrophyAdapter()
+	private var trophiesLoadedOnce = false
+
 	var isOpen = false
 		private set
 
@@ -132,6 +142,10 @@ class QuickSettingsPanel(
 		remapAdapter = RemapAdapter(buildRemapItems()) { action -> capture.startListeningFor(action) }
 		panel.quickSettingsRemapRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsRemapRecyclerView.adapter = remapAdapter
+
+		panel.quickSettingsTrophiesRecyclerView.layoutManager = LinearLayoutManager(activity)
+		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
+		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
 
 		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_performance_overlay_title)
 		panel.quickSettingsOscRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_osc_title)
@@ -223,6 +237,60 @@ class QuickSettingsPanel(
 			if(checkedButtonId == R.id.quickSettingsTabGeneral) View.VISIBLE else View.GONE
 		panel.quickSettingsSessionScroll.visibility =
 			if(checkedButtonId == R.id.quickSettingsTabSession) View.VISIBLE else View.GONE
+		panel.quickSettingsTrophiesSection.visibility =
+			if(checkedButtonId == R.id.quickSettingsTabTrophies) View.VISIBLE else View.GONE
+
+		// Fetched lazily the first time this tab is opened rather than at construction time
+		// (unlike the Session tab's static rows) since it's a live network call — the refresh
+		// button handles picking up anything unlocked after that.
+		if(checkedButtonId == R.id.quickSettingsTabTrophies && !trophiesLoadedOnce)
+		{
+			trophiesLoadedOnce = true
+			loadTrophies(forceRefresh = false)
+		}
+	}
+
+	/** Loads the trophy list for whichever game this session is streaming — resolved by
+	 *  name/platform match against the account's trophy titles the same way TrophiesActivity
+	 *  does. [forceRefresh] bypasses the cached account-wide trophy titles list (the refresh
+	 *  button's path) so a trophy unlocked mid-session is picked up; per-game trophy detail
+	 *  itself is always fetched fresh regardless, since TrophyRepository never caches that. */
+	private fun loadTrophies(forceRefresh: Boolean)
+	{
+		panel.quickSettingsTrophiesProgressBar.visibility = View.VISIBLE
+		panel.quickSettingsTrophiesEmptyText.visibility = View.GONE
+		panel.quickSettingsTrophiesRecyclerView.visibility = View.GONE
+
+		val gameName = viewModel.connectInfo.cloudGameName ?: ""
+		val platform = viewModel.connectInfo.cloudGamePlatform ?: ""
+
+		activity.lifecycleScope.launch {
+			val result = trophyRepository.fetchTrophiesForGame(gameName, platform, forceRefresh)
+			panel.quickSettingsTrophiesProgressBar.visibility = View.GONE
+			when(result)
+			{
+				is TrophyResult.Success -> {
+					val items = buildTrophyListItems(result.detail)
+					if(items.isEmpty())
+					{
+						showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty))
+					}
+					else
+					{
+						trophyAdapter.items = items
+						panel.quickSettingsTrophiesRecyclerView.visibility = View.VISIBLE
+					}
+				}
+				is TrophyResult.NoMatchFound -> showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty))
+				is TrophyResult.Error -> showTrophiesEmptyState(result.message)
+			}
+		}
+	}
+
+	private fun showTrophiesEmptyState(message: String)
+	{
+		panel.quickSettingsTrophiesEmptyText.text = message
+		panel.quickSettingsTrophiesEmptyText.visibility = View.VISIBLE
 	}
 
 	// ---- Session tab: content depends on sessionType, built once (it never changes during

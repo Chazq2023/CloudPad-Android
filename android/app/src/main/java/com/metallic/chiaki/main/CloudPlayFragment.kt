@@ -40,6 +40,7 @@ import com.metallic.chiaki.cloudplay.api.CloudStreamingBackend
 import com.metallic.chiaki.cloudplay.api.PsCloudOwnership
 import com.metallic.chiaki.cloudplay.model.CloudError
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.viewModelFactory
 import com.pylux.stream.databinding.FragmentCloudPlayBinding
@@ -65,6 +66,10 @@ class CloudPlayFragment : Fragment() {
     // Cloud sub-tabs now in secondary header (binding.cloudSubHeader)
     // Sort state: 0 = Default, 1 = A->Z, 2 = Z->A
     private var sortState: Int = 0
+
+    /** PS5 Library only: 0=All, 1=Streamable, 2=Non-streamable, 3=Not Verified. Cycled by
+     *  headerStreamabilityFilterButton, next to the favorites star. */
+    private var streamabilityFilterState: Int = 0
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -478,6 +483,7 @@ class CloudPlayFragment : Fragment() {
         binding.ownedToggleButton.setOnClickListener(null)
 
         binding.headerFavoritesButton.setOnClickListener { toggleFavoritesFilter() }
+        binding.headerStreamabilityFilterButton.setOnClickListener { cycleStreamabilityFilter() }
         binding.headerSortButton.setOnClickListener { showSortMenu() }
         binding.headerSearchButton.setOnClickListener { toggleSearch() }
         binding.headerRefreshButton.setOnClickListener { refreshCurrentSectionInternal() }
@@ -502,6 +508,7 @@ class CloudPlayFragment : Fragment() {
         binding.ps4TabButton.onFocusChangeListener = focusHighlight
         binding.libraryTabButton.onFocusChangeListener = focusHighlight
         binding.headerFavoritesButton.onFocusChangeListener = focusHighlight
+        binding.headerStreamabilityFilterButton.onFocusChangeListener = focusHighlight
         binding.headerSortButton.onFocusChangeListener = focusHighlight
         binding.headerSearchButton.onFocusChangeListener = focusHighlight
         binding.headerRefreshButton.onFocusChangeListener = focusHighlight
@@ -556,6 +563,30 @@ class CloudPlayFragment : Fragment() {
         binding.headerFavoritesButton.alpha = if (favActive) 1.0f else 0.45f
     }
 
+    /** Cycles All -> Streamable -> Non-streamable -> Not Verified -> All. PS5 Library only. */
+    private fun cycleStreamabilityFilter() {
+        streamabilityFilterState = (streamabilityFilterState + 1) % 4
+        preferences.setPsCloudStreamabilityFilter(streamabilityFilterState)
+        updateStreamabilityFilterButton()
+
+        // Force the same games.observe pipeline to re-run so the new filter state is applied —
+        // mirrors applySortState()'s no-op resort trick rather than re-fetching from network/disk.
+        val currentGames = viewModel.games.value ?: return
+        viewModel.setSortedGames(currentGames)
+    }
+
+    private fun updateStreamabilityFilterButton() {
+        val (icon, colorRes) = when (streamabilityFilterState) {
+            1 -> R.drawable.ic_check_white to android.R.color.holo_green_light
+            2 -> R.drawable.ic_close_white to android.R.color.holo_red_light
+            3 -> R.drawable.ic_question_white to android.R.color.holo_orange_light
+            else -> R.drawable.ic_apps to android.R.color.white
+        }
+        binding.headerStreamabilityFilterButton.setImageResource(icon)
+        binding.headerStreamabilityFilterButton.setColorFilter(resources.getColor(colorRes, null))
+        binding.headerStreamabilityFilterButton.alpha = if (streamabilityFilterState == 0) 0.45f else 1.0f
+    }
+
     fun navigateTabLeft() {
         when (viewModel.getCurrentSection()) {
             // PS3 and PS4 share the same PSNow dataset — just re-filter, no fetch
@@ -594,6 +625,7 @@ class CloudPlayFragment : Fragment() {
         setTabUnselected(binding.libraryTabButton)
 
         binding.ownedToggleButton.visibility = android.view.View.GONE
+        binding.headerStreamabilityFilterButton.visibility = android.view.View.GONE
 
         viewModel.setCurrentSection("psnow_ps3")
         adapter.showStreamabilityBadge = false
@@ -612,6 +644,7 @@ class CloudPlayFragment : Fragment() {
         setTabUnselected(binding.libraryTabButton)
 
         binding.ownedToggleButton.visibility = android.view.View.GONE
+        binding.headerStreamabilityFilterButton.visibility = android.view.View.GONE
 
         viewModel.setCurrentSection("psnow_ps4")
         adapter.showStreamabilityBadge = false
@@ -636,6 +669,9 @@ class CloudPlayFragment : Fragment() {
         adapter.showStreamabilityBadge = true
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
+        binding.headerStreamabilityFilterButton.visibility = android.view.View.VISIBLE
+        streamabilityFilterState = preferences.getPsCloudStreamabilityFilter()
+        updateStreamabilityFilterButton()
         updateSortButtonText()
         updateFilterButtonText()
         updateFavoritesIcon()
@@ -1070,10 +1106,23 @@ class CloudPlayFragment : Fragment() {
             }
 
             // Filter by platform for catalog sections
-            val filteredGames = when (currentSection) {
+            val platformFilteredGames = when (currentSection) {
                 "psnow_ps3" -> favFilteredGames.filter { it.platform == "ps3" }
                 "psnow_ps4" -> favFilteredGames.filter { it.platform == "ps4" }
                 else -> favFilteredGames
+            }
+
+            // PS5 Library only: All/Streamable/Non-streamable/Not Verified, cycled via
+            // headerStreamabilityFilterButton next to the favorites star.
+            val filteredGames = if (currentSection == "pscloud") {
+                when (streamabilityFilterState) {
+                    1 -> platformFilteredGames.filter { it.streamableStatus == StreamableStatus.STREAMABLE }
+                    2 -> platformFilteredGames.filter { it.streamableStatus == StreamableStatus.NOT_STREAMABLE }
+                    3 -> platformFilteredGames.filter { it.streamableStatus == StreamableStatus.UNKNOWN }
+                    else -> platformFilteredGames
+                }
+            } else {
+                platformFilteredGames
             }
 
             // Apply saved sort state when games are loaded
@@ -1561,14 +1610,13 @@ class CloudPlayFragment : Fragment() {
 
         preferences.setConfirmedStreamable(game.productId, streamable)
 
-        val newStatus = if (streamable)
-            com.metallic.chiaki.cloudplay.model.StreamableStatus.STREAMABLE
-        else
-            com.metallic.chiaki.cloudplay.model.StreamableStatus.NOT_STREAMABLE
+        val newStatus = if (streamable) StreamableStatus.STREAMABLE else StreamableStatus.NOT_STREAMABLE
 
-        adapter.games = adapter.games.map {
-            if (it.productId == game.productId) it.copy(streamableStatus = newStatus) else it
-        }
+        // Goes through the ViewModel (not a direct adapter.games mutation) so it re-emits
+        // through the same games.observe pipeline that applies the streamability filter —
+        // a game confirmed streamable/non-streamable immediately leaves "Not Verified" and
+        // shows up under "Streamable"/"Non-streamable" if that filter is currently active.
+        viewModel.updateGameStreamableStatus(game.productId, newStatus)
     }
 
     /**

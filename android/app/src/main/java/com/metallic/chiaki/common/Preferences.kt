@@ -611,6 +611,7 @@ class Preferences(context: Context)
 	private val PSCLOUD_FILTER_OWNED_KEY = "pscloud_filter_owned"
 	private val LAST_MAIN_TAB_KEY = "last_main_tab"
 	private val CLOUD_SORT_STATE_KEY = "cloud_sort_state"
+	private val PSCLOUD_STREAMABILITY_FILTER_KEY = "pscloud_streamability_filter"
 	private val FAVORITE_GAMES_KEY = "favorite_games"
 	private val CONFIRMED_STREAMABLE_KEY = "confirmed_streamable_status"
 	private val PSNOW_FILTER_FAVORITES_KEY = "psnow_filter_favorites"
@@ -674,7 +675,18 @@ class Preferences(context: Context)
 	{
 		sharedPreferences.edit().putInt(CLOUD_SORT_STATE_KEY, sortState).apply()
 	}
-	
+
+	/** PS5 Library streamability filter: 0=All, 1=Streamable, 2=Non-streamable, 3=Not Verified. */
+	fun getPsCloudStreamabilityFilter(): Int
+	{
+		return sharedPreferences.getInt(PSCLOUD_STREAMABILITY_FILTER_KEY, 0)
+	}
+
+	fun setPsCloudStreamabilityFilter(filterState: Int)
+	{
+		sharedPreferences.edit().putInt(PSCLOUD_STREAMABILITY_FILTER_KEY, filterState).apply()
+	}
+
 	// Favorite games management
 	fun getFavoriteGames(): Set<String>
 	{

@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
+import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.metallic.chiaki.common.Preferences
 import kotlinx.coroutines.launch
@@ -275,6 +276,19 @@ class CloudPlayViewModel(
 	fun getAllCachedGames(): List<CloudGame>
 	{
 		return allGames
+	}
+
+	/**
+	 * Updates a single game's streamability status in place (after a real launch attempt
+	 * confirms it either way) and re-emits through the same search-filter pipeline so any
+	 * active streamability filter in CloudPlayFragment picks up the change immediately —
+	 * e.g. a game moves out of "Not Verified" into "Streamable"/"Non-streamable" live,
+	 * without needing a manual refresh.
+	 */
+	fun updateGameStreamableStatus(productId: String, newStatus: StreamableStatus)
+	{
+		allGames = allGames.map { if (it.productId == productId) it.copy(streamableStatus = newStatus) else it }
+		applySearchFilter()
 	}
 }
 

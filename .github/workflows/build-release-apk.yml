@@ -97,10 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added trophy tracking (long-press a game → Trophies) showing the full trophy list with icons, descriptions, earned/locked state and overall progress, for PS3 Catalog, PS4 Catalog and PS5 Library games alike
-            - Moved the PS5 Library's streamability badge (check/cross/question mark) to the top-right corner, replacing the old "Owned" badge
-            - Removed the "Owned First"/"Recent" default sort in favour of "Name: A → Z" everywhere
-            - Centred the game title in the Playtime dialog; Square on a controller now also opens Playtime for the focused game
+            - Added a state filter within the PS5 Library tab next to the Favourites icon (star). Default is all, if you click it again it will change to streamable titles (Green tick), if you click it again it will change to non-streamable titles (Red cross), if you click it again it will change to not verified titles (Yellow question mark). A final click will take you back to all.
 
             ### APK
             Attached release asset:

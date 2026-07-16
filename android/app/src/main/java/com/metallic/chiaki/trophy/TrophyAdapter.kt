@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.trophy.model.Trophy
+import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.metallic.chiaki.trophy.model.TrophyType
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemTrophyBinding
@@ -21,6 +22,26 @@ sealed class TrophyListItem
 {
 	data class GroupHeader(val name: String) : TrophyListItem()
 	data class TrophyRow(val trophy: Trophy) : TrophyListItem()
+}
+
+/** Shared by [TrophiesActivity] and [QuickSettingsPanel]'s in-stream Trophies tab so both
+ *  present identical group-header + trophy-row structure from the same fetched detail. */
+fun buildTrophyListItems(detail: TrophyTitleDetail): List<TrophyListItem>
+{
+	val items = mutableListOf<TrophyListItem>()
+	if (detail.groups.isEmpty())
+	{
+		detail.trophies.forEach { items.add(TrophyListItem.TrophyRow(it)) }
+	}
+	else
+	{
+		detail.groups.forEach { group ->
+			items.add(TrophyListItem.GroupHeader(group.groupName.ifEmpty { "Trophies" }))
+			detail.trophies.filter { it.groupId == group.groupId }
+				.forEach { items.add(TrophyListItem.TrophyRow(it)) }
+		}
+	}
+	return items
 }
 
 class TrophyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>()

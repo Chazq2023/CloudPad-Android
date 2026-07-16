@@ -161,6 +161,10 @@
     <string name="quick_settings_window_size">Window Size</string>
     <string name="quick_settings_session_tab_description">Session Settings</string>
     <string name="quick_settings_session_restart_notice">Any changes in this section will require you to restart the stream, otherwise they will not take effect</string>
+    <string name="quick_settings_trophies_tab_description">Trophies</string>
+    <string name="quick_settings_trophies_header_label">Refresh Trophy List</string>
+    <string name="quick_settings_trophies_refresh">Refresh trophies</string>
+    <string name="quick_settings_trophies_empty">No trophy data found for this game</string>
     <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %s with ID %s?</string>
     <string name="alert_message_delete_manual_host">Are you sure you want to delete the console entry for %s?</string>
     <string name="action_keep">Keep</string>
