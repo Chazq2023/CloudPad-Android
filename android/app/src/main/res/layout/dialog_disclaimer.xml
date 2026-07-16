@@ -21,7 +21,7 @@
         android:id="@+id/disclaimerMessage"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="CloudPad is still a work in progress. You are responsible for ensuring that games you purchase are available for streaming in your region.\n\nIf you are unsure, please use the official PS App to check whether a title is available in your region for streaming."
+        android:text="CloudPad is still a work in progress. You are responsible for:\n\n• Ensuring you have an active PS Plus Subscription.\n• PS Now and PS5 Cloud Gaming is available in your region.\n• PS5 Games that you purchase or already own are eligible for Cloud Streaming.\n\nIf you are unsure, please either visit the official PSN Store online or use the official PS App to check whether a title is available in your region for streaming."
         android:textColor="@android:color/white"
         android:textSize="14sp" />
 
