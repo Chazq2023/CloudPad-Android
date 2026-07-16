@@ -97,11 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Rebuilt the PS5 Game Library to list games straight from your account's entitlements instead of cross-referencing Sony's public catalog — fixes every past case of an owned game (Witcher 3, Nioh 2, RE7 Gold, RE2 Remake, etc.) showing up unowned or missing, with no per-title fixes needed going forward
-            - Library now correctly shows PS5 games only, filtering out PS3/PS4 titles, streaming apps (Netflix, Disney+, BT Sport, etc.), and non-game extras (artbooks, soundtracks, tracking placeholders) that share the same account data as real games
-            - Streaming error messages are now consistent and specific to which service failed (PS Now Game Catalog vs PS Cloud Game Library), instead of a generic or raw technical error
-            - Box art now upgrades to proper cover art when available, falling back to your account's game icon otherwise
-            - Removed a hardcoded exclusion list from the Game Catalog's PS Plus supplement matching — no longer needed now that the Library is entitlement-based, and it had drifted out of sync with reality anyway
+            - Added a work-in-progress disclaimer shown on app launch (including right after an update), reminding you to double-check regional/subscription streaming availability via the official PS App
 
             ### APK
             Attached release asset:

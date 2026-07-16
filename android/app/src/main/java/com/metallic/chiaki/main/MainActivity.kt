@@ -120,10 +120,32 @@ class MainActivity : AppCompatActivity() {
 
             handleCloudGameShortcutIntent(intent)
 
-            // In-app review: once per *new* Main instance (not every resume). Play throttles whether a sheet is shown.
-            if (savedInstanceState == null)
-                InAppReviewHelper.tryPromptIfEligible(this, preferences)
+            // Disclaimer + in-app review: once per *new* Main instance (not every resume), so this
+            // covers both a fresh app launch and the first launch after an update. Review prompt
+            // waits until the disclaimer is acknowledged so the two dialogs don't stack.
+            if (savedInstanceState == null) {
+                showDisclaimerDialog {
+                    InAppReviewHelper.tryPromptIfEligible(this, preferences)
+                }
+            }
         }
+    }
+
+    /**
+     * Work-in-progress disclaimer shown on every fresh launch (including right after an update) —
+     * region/subscription availability for cloud streaming can change under us, so this is a
+     * repeating reminder rather than a one-time acknowledgement.
+     */
+    private fun showDisclaimerDialog(onAcknowledged: () -> Unit) {
+        val view = layoutInflater.inflate(R.layout.dialog_disclaimer, null)
+        val dialog = alertDialogBuilder()
+            .setView(view)
+            .setPositiveButton("Acknowledge") { _, _ -> onAcknowledged() }
+            .setCancelable(false)
+            .create()
+        // Border on the window itself, not just the content view, so it wraps the button row too.
+        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
+        dialog.show()
     }
 
     private var appliedThemeColour = "pink"
