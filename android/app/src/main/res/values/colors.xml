@@ -17,6 +17,9 @@
     <color name="control_pressed">#88ffffff</color>
     <color name="item_delete_background">#B71C1C</color>
 
+    <!-- Neutral grey used for the disclaimer dialog box, independent of the active accent theme -->
+    <color name="disclaimer_box_background">#FF2B2B2B</color>
+
     <!-- UI Elements -->
     <color name="fab_background">#FF149D</color>
     <color name="search_background">#21101C</color>
