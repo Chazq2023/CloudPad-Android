@@ -296,6 +296,8 @@ class CloudStreamingBackend(
 				}
 
 				val detail = if (kamajiDiag.isNotEmpty()) "${allocationResult.message} | Kamaji: $kamajiDiag" else allocationResult.message
+				if (isEntitlementRejectedError(allocationResult.message))
+					return@withContext Result.failure(GameNotStreamableException(detail))
 				return@withContext Result.failure(Exception("Gaikai allocation failed: $detail"))
 			}
 			

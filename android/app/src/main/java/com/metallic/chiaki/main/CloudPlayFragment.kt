@@ -1478,6 +1478,10 @@ class CloudPlayFragment : Fragment() {
                             showAuthorizationFailedDialog()
                         }
 
+                        is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
+                            showGameNotStreamableErrorDialog()
+                        }
+
                         else -> {
                             // Generic error
                             showError("Cloud Session Failed", error.message ?: "Unknown error")
@@ -1516,6 +1520,10 @@ class CloudPlayFragment : Fragment() {
 
                     is com.metallic.chiaki.cloudplay.api.AuthorizationFailedException -> {
                         showAuthorizationFailedDialog()
+                    }
+
+                    is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
+                        showGameNotStreamableErrorDialog()
                     }
 
                     else -> {
@@ -1567,6 +1575,17 @@ class CloudPlayFragment : Fragment() {
         requireContext().alertDialogBuilder()
             .setTitle("Authorization Failed")
             .setMessage("Failed to authorize your PlayStation Network account. Please check your NPSSO token and try again.")
+            .setPositiveButton("OK", null)
+            .show()
+    }
+
+    /**
+     * Show game-not-streamable error dialog (Gaikai rejected the entitlement outright)
+     */
+    private fun showGameNotStreamableErrorDialog() {
+        requireContext().alertDialogBuilder()
+            .setTitle("Unable to Stream This Title")
+            .setMessage("This game couldn't be started. Please ensure you have an active PlayStation Plus Premium subscription and that this title is currently available for cloud streaming.")
             .setPositiveButton("OK", null)
             .show()
     }
