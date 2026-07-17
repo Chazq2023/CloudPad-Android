@@ -155,6 +155,7 @@
     <string name="preferences_button_haptic_enabled_summary">Vibrate the phone on touchscreen button presses</string>
     <string name="quick_settings_title">Quick Settings</string>
     <string name="quick_settings_close">Close</string>
+    <string name="quick_settings_current_game">Current game: %s</string>
     <string name="quick_settings_performance_overlay_title">Performance Overlay</string>
     <string name="quick_settings_osc_title">On-Screen Controls</string>
     <string name="quick_settings_touchpad_title">Touchpad Only</string>

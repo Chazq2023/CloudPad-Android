@@ -35,8 +35,21 @@ fun buildTrophyListItems(detail: TrophyTitleDetail): List<TrophyListItem>
 	}
 	else
 	{
+		// Sony's API frequently returns an empty trophyGroupName for more than one group (not
+		// just the base game group), all of which fall back to the generic "Trophies" label
+		// below — only the first such fallback gets its own header so it doesn't repeat further
+		// down the list; later empty-named groups' trophies fold under that same header.
+		var fallbackHeaderShown = false
 		detail.groups.forEach { group ->
-			items.add(TrophyListItem.GroupHeader(group.groupName.ifEmpty { "Trophies" }))
+			if (group.groupName.isNotEmpty())
+			{
+				items.add(TrophyListItem.GroupHeader(group.groupName))
+			}
+			else if (!fallbackHeaderShown)
+			{
+				items.add(TrophyListItem.GroupHeader("Trophies"))
+				fallbackHeaderShown = true
+			}
 			detail.trophies.filter { it.groupId == group.groupId }
 				.forEach { items.add(TrophyListItem.TrophyRow(it)) }
 		}

@@ -7,10 +7,18 @@ import android.app.Dialog
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.GradientDrawable
+import android.os.Handler
+import android.os.Looper
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.view.Window
 import android.view.WindowManager
 import android.widget.AdapterView
@@ -22,6 +30,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.StreamSessionType
 import com.metallic.chiaki.lib.sessionType
@@ -35,6 +45,7 @@ import com.metallic.chiaki.trophy.TrophyAdapter
 import com.metallic.chiaki.trophy.TrophyRepository
 import com.metallic.chiaki.trophy.TrophyResult
 import com.metallic.chiaki.trophy.buildTrophyListItems
+import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
@@ -77,12 +88,25 @@ class QuickSettingsPanel(
 	private val preferences: Preferences,
 	private val streamInput: StreamInput,
 	private val viewModel: StreamViewModel,
+	private val gameImageUrl: String,
 	private val getDisplayMode: () -> TransformMode,
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
 	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit
 ) {
-	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater)
+	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater).apply {
+		// root.focusable=true (see stream_quick_settings_panel.xml) exists only so a touch tap
+		// on empty panel space doesn't fall through to the surface view below — but by default
+		// that makes the root itself the very first focus candidate ahead of any of its
+		// descendants, so a controller's initial D-pad press lands on this dead end (a plain
+		// ViewGroup with no key handling of its own) instead of any actual control.
+		root.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+	}
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
+
+	private val pyluxAccentColor: Int = TypedValue().let {
+		activity.theme.resolveAttribute(R.attr.pyluxAccent, it, true)
+		it.data
+	}
 
 	private val dialog: Dialog = Dialog(activity).apply {
 		requestWindowFeature(Window.FEATURE_NO_TITLE)
@@ -95,14 +119,47 @@ class QuickSettingsPanel(
 			setLayout(panelWidthPx.toInt(), WindowManager.LayoutParams.MATCH_PARENT)
 			setGravity(Gravity.END)
 		}
+		// Full controller focus, two-level like the Settings screen's own D-pad navigation:
+		// the tab rail is one level, a tab's content is the next level in. Standard Android
+		// D-pad/keyboard focus navigation and SeekBar/Spinner adjustment already work natively
+		// on whichever view currently has focus, since this Dialog's own window intercepts
+		// input ahead of the Activity while shown (see isCapturingInput doc below). The two
+		// gaps that navigation alone doesn't cover: BUTTON_A (Cross) isn't one of Android's
+		// built-in "confirm" keycodes (only DPAD_CENTER/ENTER are), so it can't activate a
+		// focused control, or drill from the rail into a tab's content, without help; and
+		// BUTTON_B (Circle) is the PlayStation-convention back/cancel button, used here to
+		// step back out of a tab's content to the rail, then (pressed again) to close the panel.
 		setOnKeyListener { _, keyCode, event ->
-			if(keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP)
+			when
 			{
-				close()
-				true
+				event.action != KeyEvent.ACTION_UP -> false
+				keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B ->
+				{
+					if(inTabContent) exitToRailScope() else close()
+					true
+				}
+				keyCode == KeyEvent.KEYCODE_BUTTON_A ->
+				{
+					val focused = currentFocus
+					val wasTabButton = focused != null && panel.quickSettingsTabToggle.indexOfChild(focused) >= 0
+					focused?.performClick()
+					if(wasTabButton) enterContentScope()
+					true
+				}
+				else -> false
 			}
-			else false
 		}
+	}
+
+	/** True while D-pad focus is inside the currently selected tab's content rather than on the
+	 *  rail — see enterContentScope()/exitToRailScope(). */
+	private var inTabContent = false
+
+	/** Debounces re-enabling the trophies refresh button's focusability after a burst of
+	 *  scroll-driven row detaches — see the trophies RecyclerView's OnChildAttachStateChangeListener. */
+	private val trophiesScrollSettleHandler = Handler(Looper.getMainLooper())
+	private val reenableTrophiesRefreshFocusable = Runnable {
+		panel.quickSettingsTrophiesRefreshButton.isFocusable = true
 	}
 
 	private val currentMapping: MutableMap<ControllerAction, PhysicalInput> =
@@ -142,10 +199,102 @@ class QuickSettingsPanel(
 		remapAdapter = RemapAdapter(buildRemapItems()) { action -> capture.startListeningFor(action) }
 		panel.quickSettingsRemapRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsRemapRecyclerView.adapter = remapAdapter
+		// Without this, the RecyclerView container itself can end up taking focus ahead of its
+		// focusable item rows, breaking D-pad navigation into the list — same fix TrophiesActivity
+		// already needed for its own (full-screen) trophy list.
+		panel.quickSettingsRemapRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		// Holding D-pad down to fast-scroll otherwise recycles the currently-focused row out from
+		// under itself: the platform's focus-restoration then falls back to the nearest other
+		// focusable view in the window (close/refresh), which is what caused focus to bounce out
+		// of the list entirely mid-scroll. A larger off-screen view cache keeps recently-focused
+		// rows around instead of tearing them down, so LinearLayoutManager's own scroll-to-follow-
+		// focus handling has a real view to hand focus off to.
+		panel.quickSettingsRemapRecyclerView.setItemViewCacheSize(20)
 
 		panel.quickSettingsTrophiesRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
+		panel.quickSettingsTrophiesRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		panel.quickSettingsTrophiesRecyclerView.setItemViewCacheSize(20)
+		// Holding D-pad down fast-scrolls past rows faster than they can be laid out — when the
+		// currently-focused row gets recycled mid-scroll, the platform's own focus-restoration
+		// searches the whole window and lands on whatever's nearest outside the list (close/
+		// refresh), which is what caused focus to bounce out entirely. Catching the detach and
+		// immediately reclaiming focus keeps it inside the list without touching scroll speed at
+		// all — unlike throttling the key events (tried and rejected: slowed down normal fast
+		// scrolling). Scoped to this RecyclerView instance only, so TrophiesActivity's identical
+		// (shared TrophyAdapter) full-screen list is unaffected.
+		panel.quickSettingsTrophiesRecyclerView.addOnChildAttachStateChangeListener(
+			object: RecyclerView.OnChildAttachStateChangeListener
+			{
+				override fun onChildViewAttachedToWindow(view: View) {}
+				override fun onChildViewDetachedFromWindow(view: View)
+				{
+					if(!view.hasFocus()) return
+					// The platform's own (synchronous) default focus-restoration runs the instant
+					// the focused row detaches — before the post{} below gets a chance to redirect
+					// it — and it's not scoped to the list, so it can briefly land on the refresh
+					// button (the nearest other focusable view) every single detach. That's the
+					// flicker: refresh flashes focused, then a moment later gets overridden back
+					// into the list, over and over while scrolling. Making it transiently
+					// unfocusable for as long as detaches keep happening in quick succession (and
+					// only that long — restored once scrolling actually stops) removes it from
+					// that race entirely without blocking deliberate D-pad-up navigation to it
+					// once the list is idle.
+					panel.quickSettingsTrophiesRefreshButton.isFocusable = false
+					trophiesScrollSettleHandler.removeCallbacks(reenableTrophiesRefreshFocusable)
+					trophiesScrollSettleHandler.postDelayed(reenableTrophiesRefreshFocusable, 300L)
+
+					// Captured now, before the ViewHolder backing this view gets recycled —
+					// addFocusables() below returns attached views in top-to-bottom traversal
+					// order regardless of scroll direction, so blindly taking the first one
+					// snapped focus back toward the top of the visible range on every detach
+					// during a downward hold-scroll instead of continuing on downward. Picking
+					// whichever still-attached row's adapter position is closest to this one
+					// keeps focus moving the direction the list is actually scrolling.
+					val lastPosition = panel.quickSettingsTrophiesRecyclerView.getChildViewHolder(view)
+						?.bindingAdapterPosition ?: RecyclerView.NO_POSITION
+					panel.quickSettingsTrophiesRecyclerView.post {
+						val focusables = ArrayList<View>()
+						panel.quickSettingsTrophiesRecyclerView.addFocusables(focusables, View.FOCUS_DOWN)
+						val target = if(lastPosition == RecyclerView.NO_POSITION) focusables.firstOrNull()
+						else focusables.minByOrNull { candidate ->
+							val pos = panel.quickSettingsTrophiesRecyclerView.getChildAdapterPosition(candidate)
+							if(pos == RecyclerView.NO_POSITION) Int.MAX_VALUE else kotlin.math.abs(pos - lastPosition)
+						}
+						target?.requestFocus()
+					}
+				}
+			}
+		)
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
+
+		// "Current game" header row and the Trophies tab both only make sense for cloud
+		// streaming (PS3/PS4/PS5) — Remote Play has no catalog game/trophy title to show.
+		val isCloudSession = sessionType != StreamSessionType.REMOTE_PLAY
+		panel.quickSettingsTabTrophies.visibility = if(isCloudSession) View.VISIBLE else View.GONE
+		if(isCloudSession)
+		{
+			panel.quickSettingsGameInfoRow.visibility = View.VISIBLE
+			val gameName = viewModel.connectInfo.cloudGameName ?: ""
+			val gameLabelText = activity.getString(R.string.quick_settings_current_game, gameName)
+			// Colours just the "Current game: " label — the title itself stays the TextView's
+			// own white — without hardcoding the label text, so it still works if translated.
+			panel.quickSettingsGameNameText.text = SpannableString(gameLabelText).apply {
+				setSpan(
+					ForegroundColorSpan(pyluxAccentColor),
+					0, gameLabelText.length - gameName.length,
+					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+			}
+			if(gameImageUrl.isNotEmpty())
+			{
+				panel.quickSettingsGameIcon.load(gameImageUrl) { crossfade(true) }
+			}
+			else
+			{
+				panel.quickSettingsGameIcon.setImageResource(android.R.drawable.ic_menu_gallery)
+			}
+		}
 
 		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_performance_overlay_title)
 		panel.quickSettingsOscRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_osc_title)
@@ -225,6 +374,40 @@ class QuickSettingsPanel(
 		}
 		showTab(panel.quickSettingsTabToggle.checkedButtonId)
 
+		// Buttons are focusable by default but not focusableInTouchMode — open() explicitly
+		// focuses the checked tab as soon as the panel appears, before the user's first D-pad
+		// press has had a chance to exit touch mode, so that requestFocus() call would otherwise
+		// silently fail right when the panel first opens (all later D-pad-driven focus moves are
+		// unaffected, since a real key event has exited touch mode by then).
+		listOf(
+			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
+			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies
+		).forEach { it.isFocusableInTouchMode = true }
+
+		// These buttons' colour selectors only vary by checked state (see
+		// quick_settings_display_mode_tint.xml) — a focused-but-unchecked tab would otherwise
+		// look pixel-identical to an unfocused one, leaving a controller user with no visual
+		// sign that D-pad navigation moved anywhere. The rail (tabs, close, disconnect) gets a
+		// translucent white highlight; everything inside a tab's content gets the theme-coloured
+		// one below, matching the Controller tab's remap list.
+		listOf(
+			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
+			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies,
+			panel.quickSettingsCloseButton, panel.quickSettingsDisconnectButton
+		).forEach { addFocusHighlight(it, Color.WHITE, useForeground = true) }
+
+		listOf(
+			panel.quickSettingsDisplayModeNormal, panel.quickSettingsDisplayModeZoom,
+			panel.quickSettingsDisplayModeStretch
+		).forEach { addFocusHighlight(it, pyluxAccentColor, useForeground = true) }
+
+		listOf(
+			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOscRow.quickSettingsRowSwitch,
+			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
+			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
+			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsTrophiesRefreshButton
+		).forEach { addFocusHighlight(it, pyluxAccentColor) }
+
 		// Start off-screen (closed).
 		panel.root.translationX = panelWidthPx
 	}
@@ -260,6 +443,8 @@ class QuickSettingsPanel(
 		panel.quickSettingsTrophiesProgressBar.visibility = View.VISIBLE
 		panel.quickSettingsTrophiesEmptyText.visibility = View.GONE
 		panel.quickSettingsTrophiesRecyclerView.visibility = View.GONE
+		panel.quickSettingsTrophiesProgressText.visibility = View.GONE
+		panel.quickSettingsTrophiesCountsRow.visibility = View.GONE
 
 		val gameName = viewModel.connectInfo.cloudGameName ?: ""
 		val platform = viewModel.connectInfo.cloudGamePlatform ?: ""
@@ -279,12 +464,24 @@ class QuickSettingsPanel(
 					{
 						trophyAdapter.items = items
 						panel.quickSettingsTrophiesRecyclerView.visibility = View.VISIBLE
+						showTrophiesSummary(result.detail.summary)
 					}
 				}
 				is TrophyResult.NoMatchFound -> showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty))
 				is TrophyResult.Error -> showTrophiesEmptyState(result.message)
 			}
 		}
+	}
+
+	private fun showTrophiesSummary(summary: TrophyTitleSummary)
+	{
+		panel.quickSettingsTrophiesProgressText.text = "${summary.progressPercent}% Complete"
+		panel.quickSettingsTrophiesProgressText.visibility = View.VISIBLE
+		panel.quickSettingsTrophiesPlatinumCount.text = summary.earnedTrophies.platinum.toString()
+		panel.quickSettingsTrophiesGoldCount.text = summary.earnedTrophies.gold.toString()
+		panel.quickSettingsTrophiesSilverCount.text = summary.earnedTrophies.silver.toString()
+		panel.quickSettingsTrophiesBronzeCount.text = summary.earnedTrophies.bronze.toString()
+		panel.quickSettingsTrophiesCountsRow.visibility = View.VISIBLE
 	}
 
 	private fun showTrophiesEmptyState(message: String)
@@ -452,6 +649,7 @@ class QuickSettingsPanel(
 				onSelected(values[position])
 			override fun onNothingSelected(parent: AdapterView<*>?) {}
 		}
+		addFocusHighlight(row.quickSettingsDropdownSpinner, pyluxAccentColor)
 	}
 
 	private fun addSeekBarRow(
@@ -466,6 +664,10 @@ class QuickSettingsPanel(
 		val row = ItemQuickSettingsSeekbarBinding.inflate(activity.layoutInflater, container, true)
 		fun updateLabel(value: Int) { row.quickSettingsSeekBarLabel.text = activity.getString(summaryRes, value) }
 		row.quickSettingsSeekBar.max = max - min
+		// Without this, D-pad left/right steps by SeekBar's auto-computed default increment
+		// (roughly max/20 — 10 here) instead of 1, since keyProgressIncrement is never set
+		// explicitly otherwise.
+		row.quickSettingsSeekBar.keyProgressIncrement = 1
 		row.quickSettingsSeekBar.progress = (currentValue - min).coerceIn(0, max - min)
 		updateLabel(currentValue)
 		row.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
@@ -479,6 +681,7 @@ class QuickSettingsPanel(
 			override fun onStartTrackingTouch(seekBar: SeekBar) {}
 			override fun onStopTrackingTouch(seekBar: SeekBar) {}
 		})
+		addFocusHighlight(row.quickSettingsSeekBar, pyluxAccentColor)
 	}
 
 	private fun addEditTextRow(
@@ -494,6 +697,7 @@ class QuickSettingsPanel(
 		row.quickSettingsEditText.hint = hint
 		row.quickSettingsEditText.setText(currentValue?.toString() ?: "")
 		row.quickSettingsEditText.doAfterTextChanged { text -> onChanged(text?.toString()?.toIntOrNull()) }
+		addFocusHighlight(row.quickSettingsEditText, pyluxAccentColor)
 	}
 
 	fun open()
@@ -516,6 +720,21 @@ class QuickSettingsPanel(
 
 		panel.root.translationX = panelWidthPx
 		if(!dialog.isShowing) dialog.show()
+
+		// Always reopen at rail scope, regardless of which scope it was left in last time.
+		exitToRailScope()
+
+		// Nothing has focus by default when the dialog first attaches, so a controller's first
+		// D-pad press would have nowhere to move from — land it on the currently selected tab so
+		// navigation works immediately without requiring a touch first. Posted rather than called
+		// directly: right after dialog.show() the content hasn't finished its first layout pass
+		// yet, and a requestFocus() on an unlaid-out view can silently lose out to the platform's
+		// own default-focus pass once that layout completes a frame later.
+		panel.root.post {
+			panel.quickSettingsTabToggle.findViewById<View>(panel.quickSettingsTabToggle.checkedButtonId)
+				?.requestFocus()
+		}
+
 		panel.root.animate().cancel()
 		panel.root.animate().translationX(0f).setDuration(220L).start()
 	}
@@ -553,6 +772,68 @@ class QuickSettingsPanel(
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)
 	fun handleCaptureMotionEvent(event: MotionEvent): Boolean = capture.handleCaptureMotionEvent(event)
+
+	/** Translucent focus highlight — a low-alpha fill plus a stronger-alpha stroke, matching
+	 *  the treatment TrophyAdapter/RemapAdapter's list rows already use. [useForeground] draws
+	 *  it as an overlay instead of a background, for MaterialButtons (tab rail, window size,
+	 *  close/disconnect) whose background/stroke is already internally managed — overwriting
+	 *  that directly would fight the button's own corner radius and outline. Plain widgets
+	 *  (switches, spinners, seek bars, edit texts, the trophies refresh button) use background,
+	 *  capturing whatever was there before (e.g. an EditText's underline) so it's restored
+	 *  rather than lost the moment focus first leaves. */
+	private fun addFocusHighlight(view: View, color: Int, useForeground: Boolean = false)
+	{
+		val fillColor = (0x30 shl 24) or (color and 0x00FFFFFF)
+		val strokeColor = (0x99 shl 24) or (color and 0x00FFFFFF)
+		val strokeWidthPx = (2f * activity.resources.displayMetrics.density).toInt()
+		val original = if(useForeground) view.foreground else view.background
+		view.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+			val drawable = if(hasFocus)
+				GradientDrawable().apply {
+					shape = GradientDrawable.RECTANGLE
+					setColor(fillColor)
+					setStroke(strokeWidthPx, strokeColor)
+				}
+			else original
+			if(useForeground) v.foreground = drawable else v.background = drawable
+		}
+	}
+
+	/** Drills D-pad focus from the tab rail into the currently selected tab's content — the
+	 *  rail, close and disconnect buttons are all temporarily excluded from focus search so
+	 *  D-pad navigation inside the content can't wander onto them (e.g. off the bottom of a
+	 *  scrolled list); only exitToRailScope() (Circle/Back) returns. */
+	private fun enterContentScope()
+	{
+		val container = currentTabContentContainer() ?: return
+		val focusables = ArrayList<View>()
+		container.addFocusables(focusables, View.FOCUS_DOWN)
+		val target = focusables.firstOrNull() ?: return
+		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+		panel.quickSettingsCloseButton.isFocusable = false
+		panel.quickSettingsDisconnectButton.isFocusable = false
+		inTabContent = true
+		target.requestFocus()
+	}
+
+	private fun exitToRailScope()
+	{
+		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+		panel.quickSettingsCloseButton.isFocusable = true
+		panel.quickSettingsDisconnectButton.isFocusable = true
+		inTabContent = false
+		panel.quickSettingsTabToggle.findViewById<View>(panel.quickSettingsTabToggle.checkedButtonId)
+			?.requestFocus()
+	}
+
+	private fun currentTabContentContainer(): View? = when(panel.quickSettingsTabToggle.checkedButtonId)
+	{
+		R.id.quickSettingsTabController -> panel.quickSettingsControllerSection
+		R.id.quickSettingsTabGeneral -> panel.quickSettingsGeneralScroll
+		R.id.quickSettingsTabSession -> panel.quickSettingsSessionScroll
+		R.id.quickSettingsTabTrophies -> panel.quickSettingsTrophiesSection
+		else -> null
+	}
 
 	private fun buttonIdFor(mode: TransformMode) = when(mode)
 	{

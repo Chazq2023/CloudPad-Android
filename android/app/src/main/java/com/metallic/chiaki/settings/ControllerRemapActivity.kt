@@ -1,6 +1,8 @@
 package com.metallic.chiaki.settings
 
+import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.*
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -55,6 +57,7 @@ class ControllerRemapActivity : AppCompatActivity() {
         adapter = RemapAdapter(buildItems()) { action -> capture.startListeningFor(action) }
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
+        binding.recyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -161,7 +164,27 @@ class RemapAdapter(
             else -> ActionViewHolder(
                 inflater.inflate(R.layout.item_controller_action, parent, false),
                 onActionClick
-            )
+            ).apply {
+                // Focusable so D-pad/keyboard navigation can land on each row individually
+                // (matches TrophyAdapter's item-focus treatment for the same reason).
+                itemView.isFocusable = true
+                itemView.isFocusableInTouchMode = true
+
+                val originalBackground = itemView.background
+                val tv = TypedValue()
+                itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
+                val accent = tv.data
+                itemView.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+                    v.background = if (hasFocus)
+                        GradientDrawable().apply {
+                            shape = GradientDrawable.RECTANGLE
+                            setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
+                            setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
+                        }
+                    else
+                        originalBackground
+                }
+            }
         }
     }
 
