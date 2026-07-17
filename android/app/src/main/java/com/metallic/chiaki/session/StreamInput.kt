@@ -116,6 +116,7 @@ class StreamInput(
 		// Defensive: drop any in-flight held-key/combo runtime state referencing the old
 		// mapping, to avoid a "stuck button" if a physical key held during remapping no
 		// longer maps to anything.
+		stopTouchpadHold()
 		heldModifiers.clear()
 		activeComboActions.clear()
 		triggeredComboAxes.clear()
@@ -232,6 +233,31 @@ class StreamInput(
 
 	// ---- Touchpad gestures ----
 
+	/** Touch id for the sustained touch registered by [startTouchpadHold], if currently held. */
+	private var touchpadHoldTouchId: UByte? = null
+
+	/** Simulates pressing and holding the touchpad button (as opposed to [quickTouchpadTap]'s
+	 *  momentary click) — the touch position and BUTTON_TOUCHPAD stay set until [stopTouchpadHold]
+	 *  is called, mirroring how [PhysicalInput.Combo]-driven actions are held for as long as the
+	 *  mapped combo/button stays pressed. */
+	private fun startTouchpadHold()
+	{
+		touchControllerState = ControllerState()
+		val touchId = touchControllerState.startTouch(960U.toUShort(), 471U.toUShort()) ?: return
+		touchpadHoldTouchId = touchId
+		keyControllerState.buttons = keyControllerState.buttons or ControllerState.BUTTON_TOUCHPAD
+		controllerStateUpdated()
+	}
+
+	private fun stopTouchpadHold()
+	{
+		touchpadHoldTouchId?.let { touchControllerState.stopTouch(it) }
+		touchpadHoldTouchId = null
+		touchControllerState = ControllerState()
+		keyControllerState.buttons = keyControllerState.buttons and ControllerState.BUTTON_TOUCHPAD.inv()
+		controllerStateUpdated()
+	}
+
 	private fun quickTouchpadTap(x: UShort, y: UShort)
 	{
 		touchControllerState = ControllerState()
@@ -316,6 +342,7 @@ class StreamInput(
 			ControllerAction.L2 -> { keyControllerState.l2State = UByte.MAX_VALUE; controllerStateUpdated() }
 			ControllerAction.R2 -> { keyControllerState.r2State = UByte.MAX_VALUE; controllerStateUpdated() }
 			ControllerAction.TOUCHPAD_CLICK -> quickTouchpadTap(960U.toUShort(), 471U.toUShort())
+			ControllerAction.TOUCHPAD_HOLD -> startTouchpadHold()
 			ControllerAction.TOUCHPAD_LEFT_CLICK -> quickTouchpadTap(480U.toUShort(), 471U.toUShort())
 			ControllerAction.TOUCHPAD_RIGHT_CLICK -> quickTouchpadTap(1440U.toUShort(), 471U.toUShort())
 			ControllerAction.TOUCHPAD_SWIPE_UP -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_UP)
@@ -336,6 +363,7 @@ class StreamInput(
 		{
 			ControllerAction.L2 -> { keyControllerState.l2State = 0U; controllerStateUpdated() }
 			ControllerAction.R2 -> { keyControllerState.r2State = 0U; controllerStateUpdated() }
+			ControllerAction.TOUCHPAD_HOLD -> stopTouchpadHold()
 			// Tap/swipe actions are fire-and-forget; quickTouchpadTap/Swipe handle their own cleanup
 			ControllerAction.TOUCHPAD_CLICK, ControllerAction.TOUCHPAD_LEFT_CLICK,
 			ControllerAction.TOUCHPAD_RIGHT_CLICK, ControllerAction.TOUCHPAD_SWIPE_UP,
@@ -527,6 +555,7 @@ class StreamInput(
 					// overlaps BUTTON_SHARE (or similar) in the same controller state frame
 					hasHeldAction && !isDown -> handler.post { fireQuickPress(action) }
 				}
+				ControllerAction.TOUCHPAD_HOLD -> if(isDown) startTouchpadHold() else stopTouchpadHold()
 				ControllerAction.TOUCHPAD_LEFT_CLICK -> { if(isDown) quickTouchpadTap(480U.toUShort(), 471U.toUShort()) }
 				ControllerAction.TOUCHPAD_RIGHT_CLICK -> { if(isDown) quickTouchpadTap(1440U.toUShort(), 471U.toUShort()) }
 				ControllerAction.TOUCHPAD_SWIPE_UP -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_UP) }
@@ -587,19 +616,30 @@ class StreamInput(
 				if(combo.modifierKeyCode !in heldModifiers) continue
 				val rawValue = event.resolvedAxisValue(combo.trigger.axis)
 				val dirValue = if(combo.trigger.positive) maxOf(0f, rawValue) else maxOf(0f, -rawValue)
+				val triggerKey = combo.trigger.axis to combo.trigger.positive
 				if(dirValue > 0.5f)
 				{
-					val triggerKey = combo.trigger.axis to combo.trigger.positive
 					if(triggerKey !in triggeredComboAxes)
 					{
 						// First time this axis crosses the threshold — fire the combo once
 						heldModifiers[combo.modifierKeyCode] = true
 						triggeredComboAxes.add(triggerKey)
+						// Quick-press actions (swipes) clean themselves up via their own delayed
+						// handler and must never be tracked here, matching the button-trigger path.
+						if(!isQuickPressAction(combo.action)) activeComboActions[combo.action] = combo.modifierKeyCode
 						pressAction(combo.action)
 						return true
 					}
 					// Already triggered — let normal axis processing continue (axis is
 					// excluded from it via triggeredComboAxes, so no double-processing)
+				}
+				else if(triggerKey in triggeredComboAxes)
+				{
+					// Axis has returned to neutral while the modifier is still held — release any
+					// held (non-quick-press) combo action bound to it, e.g. TOUCHPAD_HOLD, so it
+					// doesn't stay stuck on until the modifier itself is released.
+					triggeredComboAxes.remove(triggerKey)
+					if(activeComboActions.remove(combo.action) != null) releaseAction(combo.action)
 				}
 			}
 		}
