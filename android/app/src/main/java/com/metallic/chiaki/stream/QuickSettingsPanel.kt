@@ -8,6 +8,9 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
@@ -202,9 +205,17 @@ class QuickSettingsPanel(
 		if(isCloudSession)
 		{
 			panel.quickSettingsGameInfoRow.visibility = View.VISIBLE
-			panel.quickSettingsGameNameText.text = activity.getString(
-				R.string.quick_settings_current_game, viewModel.connectInfo.cloudGameName ?: ""
-			)
+			val gameName = viewModel.connectInfo.cloudGameName ?: ""
+			val gameLabelText = activity.getString(R.string.quick_settings_current_game, gameName)
+			// Colours just the "Current game: " label — the title itself stays the TextView's
+			// own white — without hardcoding the label text, so it still works if translated.
+			panel.quickSettingsGameNameText.text = SpannableString(gameLabelText).apply {
+				setSpan(
+					ForegroundColorSpan(pyluxAccentColor),
+					0, gameLabelText.length - gameName.length,
+					Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+				)
+			}
 			if(gameImageUrl.isNotEmpty())
 			{
 				panel.quickSettingsGameIcon.load(gameImageUrl) { crossfade(true) }
