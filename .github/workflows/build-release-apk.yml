@@ -97,12 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added full controller (D-pad/Cross/Circle) navigation to the in-stream Quick Settings panel: press a tab icon to drill into its content, Circle steps back out to the tab rail, and every switch/dropdown/seek bar/button now shows a clear focus highlight.
-            - Added a "Current game" header (cover art + title) to the Quick Settings panel for PS3/PS4/PS5 cloud streaming, and hid the Trophies tab for Remote Play sessions, which have no catalog game to show trophies for.
-            - Added a completion summary (percentage + trophy badge counts) to the Quick Settings panel's Trophies tab, matching the full Trophies screen's styling.
-            - Fixed the Trophies list showing a duplicate "Trophies" header every time a game had more than one unnamed trophy group, instead of just once at the top.
-            - Fixed the bitrate seek bar in Quick Settings stepping by 10 instead of 1 when adjusted with a D-pad.
-            - Fixed D-pad focus in the Quick Settings panel being able to reach the disconnect/close buttons from inside a tab's content, and fixed holding D-pad down in the Trophies tab losing focus out of the list entirely.
+            - Updated the "no trophy data" message (Quick Settings Trophies tab and full Trophies screen) to explain that the game needs to be launched and synced, that syncing can take 5-10 minutes, and to raise a GitHub issue if data is still missing after that.
 
             ### APK
             Attached release asset:
