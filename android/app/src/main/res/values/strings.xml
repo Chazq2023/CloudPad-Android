@@ -165,6 +165,7 @@
     <string name="quick_settings_trophies_header_label">Refresh Trophy List</string>
     <string name="quick_settings_trophies_refresh">Refresh trophies</string>
     <string name="quick_settings_trophies_empty">No trophy data found for this game</string>
+    <string name="trophy_unlock_popup_header">Trophy unlocked!</string>
     <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %s with ID %s?</string>
     <string name="alert_message_delete_manual_host">Are you sure you want to delete the console entry for %s?</string>
     <string name="action_keep">Keep</string>

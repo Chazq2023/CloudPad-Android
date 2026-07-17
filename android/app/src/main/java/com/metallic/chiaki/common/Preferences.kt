@@ -275,8 +275,14 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getLong(PSN_TROPHY_AUTH_TOKEN_EXPIRY_KEY, 0L)
 		set(value) { sharedPreferences.edit().putLong(PSN_TROPHY_AUTH_TOKEN_EXPIRY_KEY, value).apply() }
 
+	// Only the access token is required here — Sony's response for this client/scope doesn't
+	// always include a refresh_token, which used to make this permanently false and force a
+	// full NPSSO->code->token re-exchange on every single call (confirmed live: every ~30s poll
+	// from TrophyUnlockWatcher was re-authenticating from scratch instead of reusing the still-
+	// valid cached access token). getValidToken()/refreshToken() already fall back to a fresh
+	// exchange once the access token actually expires and no refresh token is available.
 	val hasPsnTrophyTokens: Boolean
-		get() = psnTrophyAuthToken.isNotEmpty() && psnTrophyRefreshToken.isNotEmpty()
+		get() = psnTrophyAuthToken.isNotEmpty()
 
 	val isPsnTrophyTokenExpired: Boolean
 		get()
