@@ -97,9 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed PS4 and PS5 trophy support for games where games are available for both platforms.
-            - Fixed trophy support for games that have roman numerals in the title.
-            - If you aren't seeing trophies to begin with, you will need to start the game, wait a couple of minutes and then refresh the trophy list. Then they will appear. 
+            - Added an in-stream popup that appears in the top-left corner when you unlock a new trophy, showing a themed "Trophy unlocked!" header, the trophy's image, name, description and Bronze/Silver/Gold/Platinum badge for 10 seconds. Only fires for trophies earned during the current session, for the game you're actually playing.
+            - Fixed the Trophies feature re-authenticating with PSN from scratch on every check instead of reusing its existing login for up to an hour, which was wasting network calls in the background during every stream.
 
             ### APK
             Attached release asset:
