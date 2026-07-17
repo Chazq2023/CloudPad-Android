@@ -3,7 +3,6 @@
 package com.metallic.chiaki.trophy
 
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
-import android.util.Log
 
 /**
  * Sony's Trophies API has no direct mapping from a store productId/CUSA id to the
@@ -13,7 +12,6 @@ import android.util.Log
  */
 object TrophyMatcher
 {
-	private const val TAG = "TrophyMatcher"
 	private val editionSuffixPattern = Regex(
 		"[:\\-–—]\\s*(standard|digital|deluxe|ultimate|complete|goty|game of the year|" +
 			"definitive|remastered?|anniversary|legendary|gold|special|enhanced)\\s*edition.*",
@@ -142,10 +140,6 @@ object TrophyMatcher
 		titles: List<TrophyTitleSummary>
 	): TrophyTitleSummary?
 	{
-		android.util.Log.e(
-			"TrophyMatcher",
-			"findBestMatch called: gameName=\"$gameName\", platform=\"$platform\""
-		)
 		val normalizedGame = normalize(gameName)
 
 		if (normalizedGame.isEmpty() || titles.isEmpty())
@@ -158,25 +152,6 @@ object TrophyMatcher
 		}
 
 		val platformToken = platformToken(platform)
-
-		candidates
-			.filter { candidate ->
-				candidate.second == normalizedGame
-			}
-			.forEach { candidate ->
-				val title = candidate.first
-
-				Log.e(
-					TAG,
-					"Exact name candidate: " +
-							"requested=\"$gameName\", " +
-							"requestedPlatform=\"$platformToken\", " +
-							"SonyTitle=\"${title.trophyTitleName}\", " +
-							"SonyPlatform=\"${title.trophyTitlePlatform}\", " +
-							"service=\"${title.npServiceName}\", " +
-							"npCommunicationId=\"${title.npCommunicationId}\""
-				)
-			}
 
 		/*
          * Pass 1: use the original catalogue title unchanged.
@@ -207,14 +182,6 @@ object TrophyMatcher
 		val romanGameName = withRomanNumerals(gameName)
 		val normalizedRomanGame = normalize(romanGameName)
 
-		android.util.Log.e(
-			"TrophyMatcher",
-			"Roman retry: original=\"$gameName\", " +
-					"alternate=\"$romanGameName\", " +
-					"normalizedOriginal=\"$normalizedGame\", " +
-					"normalizedAlternate=\"$normalizedRomanGame\""
-		)
-
 		if (
 			normalizedRomanGame.isNotEmpty() &&
 			normalizedRomanGame != normalizedGame
@@ -228,21 +195,8 @@ object TrophyMatcher
 					candidate.first
 				}
 
-			android.util.Log.e(
-				"TrophyMatcher",
-				"Roman exact matches found: ${exactRoman.size}"
-			)
-
 			if (exactRoman.isNotEmpty())
 			{
-				android.util.Log.i(
-					"TrophyMatcher",
-					"Roman numeral fallback matched: " +
-							"original=\"$gameName\", " +
-							"alternate=\"$romanGameName\", " +
-							"Sony title=\"${exactRoman.first().trophyTitleName}\""
-				)
-
 				return pickByPlatform(
 					matches = exactRoman,
 					platformToken = platformToken
@@ -312,58 +266,6 @@ object TrophyMatcher
 
 			platformToken in supportedPlatforms
 		}
-
-		if (selected != null)
-		{
-			Log.i(
-				TAG,
-				"Platform trophy match selected: " +
-						"requestedPlatform=\"$platformToken\", " +
-						"title=\"${selected.trophyTitleName}\", " +
-						"SonyPlatform=\"${selected.trophyTitlePlatform}\", " +
-						"service=\"${selected.npServiceName}\", " +
-						"npCommunicationId=\"${selected.npCommunicationId}\""
-			)
-		}
-		else
-		{
-			Log.w(
-				TAG,
-				"Title matched by name but no \"$platformToken\" trophy set exists. " +
-						"Available matches: " +
-						matches.joinToString {
-							"\"${it.trophyTitleName}\" " +
-									"[platform=${it.trophyTitlePlatform}, " +
-									"service=${it.npServiceName}, " +
-									"id=${it.npCommunicationId}]"
-						}
-			)
-		}
-
-		Log.e(
-			TAG,
-			if (selected != null)
-			{
-				"Platform selection succeeded: " +
-						"requested=\"$platformToken\", " +
-						"selected=\"${selected.trophyTitleName}\", " +
-						"SonyPlatform=\"${selected.trophyTitlePlatform}\", " +
-						"service=\"${selected.npServiceName}\", " +
-						"id=\"${selected.npCommunicationId}\""
-			}
-			else
-			{
-				"Platform selection failed: " +
-						"requested=\"$platformToken\", " +
-						"available=" +
-						matches.joinToString {
-							"\"${it.trophyTitleName}\"[" +
-									"${it.trophyTitlePlatform}," +
-									"${it.npServiceName}," +
-									"${it.npCommunicationId}]"
-						}
-			}
-		)
 
 		return selected
 	}

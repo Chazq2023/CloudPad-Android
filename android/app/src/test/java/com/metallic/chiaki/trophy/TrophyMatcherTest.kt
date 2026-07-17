@@ -64,7 +64,7 @@ class TrophyMatcherTest {
 
     @Test
     fun `falls back to substring containment when no exact match`() {
-        val titles = listOf(title("NPWR001_00", "Marvel's Spider-Man Remastered"))
+        val titles = listOf(title("NPWR001_00", "Marvel's Spider-Man Remastered", platform = "PS5"))
         val match = TrophyMatcher.findBestMatch("Spider-Man", "ps5", titles)
         assertEquals("NPWR001_00", match?.npCommunicationId)
     }
@@ -80,10 +80,57 @@ class TrophyMatcherTest {
     }
 
     @Test
-    fun `falls back to first candidate when platform does not disambiguate`() {
+    fun `falls back to first candidate when the requested platform is unrecognised`() {
         val titles = listOf(title("NPWR-PS4", "Some Game", platform = "PS4"))
-        val match = TrophyMatcher.findBestMatch("Some Game", "ps3", titles)
+        val match = TrophyMatcher.findBestMatch("Some Game", "xbox", titles)
         assertEquals("NPWR-PS4", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `returns null instead of a different platform's trophy set when no candidate matches the requested platform`() {
+        // Regression test: a game owned only on PS4 (e.g. GTA V) must not silently return the
+        // PS4 trophy set when the PS5 Library entry asks for PS5 trophies — the two platforms'
+        // progress must never be conflated.
+        val titles = listOf(title("NPWR-PS4", "Grand Theft Auto V", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Grand Theft Auto V", "ps5", titles)
+        assertNull(match)
+    }
+
+    @Test
+    fun `PS4 and PS5 entries for the same game resolve to their own distinct trophy sets`() {
+        val titles = listOf(
+            title("NPWR-PS4", "Grand Theft Auto V", platform = "PS4"),
+            title("NPWR-PS5", "Grand Theft Auto V", platform = "PS5")
+        )
+        assertEquals(
+            "NPWR-PS4",
+            TrophyMatcher.findBestMatch("Grand Theft Auto V", "ps4", titles)?.npCommunicationId
+        )
+        assertEquals(
+            "NPWR-PS5",
+            TrophyMatcher.findBestMatch("Grand Theft Auto V", "ps5", titles)?.npCommunicationId
+        )
+    }
+
+    @Test
+    fun `matches a catalogue title using Roman numerals against a game name using Arabic numerals`() {
+        val titles = listOf(title("NPWR001_00", "Alan Wake II", platform = "PS5"))
+        val match = TrophyMatcher.findBestMatch("Alan Wake 2", "ps5", titles)
+        assertEquals("NPWR001_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches a differently numbered catalogue title using Roman numerals against a game name using Arabic numerals`() {
+        val titles = listOf(title("NPWR001_00", "Mafia III", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Mafia 3", "ps4", titles)
+        assertEquals("NPWR001_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `roman numeral fallback does not match a differently numbered sequel`() {
+        val titles = listOf(title("NPWR001_00", "Uncharted 3", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Uncharted II", "ps4", titles)
+        assertNull(match)
     }
 
     @Test
