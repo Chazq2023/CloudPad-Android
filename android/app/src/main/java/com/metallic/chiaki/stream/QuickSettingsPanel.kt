@@ -547,6 +547,10 @@ class QuickSettingsPanel(
 		val row = ItemQuickSettingsSeekbarBinding.inflate(activity.layoutInflater, container, true)
 		fun updateLabel(value: Int) { row.quickSettingsSeekBarLabel.text = activity.getString(summaryRes, value) }
 		row.quickSettingsSeekBar.max = max - min
+		// Without this, D-pad left/right steps by SeekBar's auto-computed default increment
+		// (roughly max/20 — 10 here) instead of 1, since keyProgressIncrement is never set
+		// explicitly otherwise.
+		row.quickSettingsSeekBar.keyProgressIncrement = 1
 		row.quickSettingsSeekBar.progress = (currentValue - min).coerceIn(0, max - min)
 		updateLabel(currentValue)
 		row.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
