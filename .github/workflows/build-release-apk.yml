@@ -97,8 +97,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added an in-stream popup that appears in the top-left corner when you unlock a new trophy, showing a themed "Trophy unlocked!" header, the trophy's image, name, description and Bronze/Silver/Gold/Platinum badge for 10 seconds. Only fires for trophies earned during the current session, for the game you're actually playing.
-            - Fixed the Trophies feature re-authenticating with PSN from scratch on every check instead of reusing its existing login for up to an hour, which was wasting network calls in the background during every stream.
+            - Added a new "Touchpad Hold" controller mapping that simulates pressing and holding the touchpad button, separate from the existing quick Touchpad Click. Defaults to Select + D-Pad Down, and can be reassigned to any combo like other mappings.
 
             ### APK
             Attached release asset:
