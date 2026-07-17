@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
+import android.os.Handler
+import android.os.Looper
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.style.ForegroundColorSpan
@@ -28,6 +30,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.StreamSessionType
@@ -42,6 +45,7 @@ import com.metallic.chiaki.trophy.TrophyAdapter
 import com.metallic.chiaki.trophy.TrophyRepository
 import com.metallic.chiaki.trophy.TrophyResult
 import com.metallic.chiaki.trophy.buildTrophyListItems
+import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
@@ -151,6 +155,13 @@ class QuickSettingsPanel(
 	 *  rail — see enterContentScope()/exitToRailScope(). */
 	private var inTabContent = false
 
+	/** Debounces re-enabling the trophies refresh button's focusability after a burst of
+	 *  scroll-driven row detaches — see the trophies RecyclerView's OnChildAttachStateChangeListener. */
+	private val trophiesScrollSettleHandler = Handler(Looper.getMainLooper())
+	private val reenableTrophiesRefreshFocusable = Runnable {
+		panel.quickSettingsTrophiesRefreshButton.isFocusable = true
+	}
+
 	private val currentMapping: MutableMap<ControllerAction, PhysicalInput> =
 		PhysicalInput.resolveMapping(preferences.loadControllerMapping()).toMutableMap()
 
@@ -192,10 +203,69 @@ class QuickSettingsPanel(
 		// focusable item rows, breaking D-pad navigation into the list — same fix TrophiesActivity
 		// already needed for its own (full-screen) trophy list.
 		panel.quickSettingsRemapRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		// Holding D-pad down to fast-scroll otherwise recycles the currently-focused row out from
+		// under itself: the platform's focus-restoration then falls back to the nearest other
+		// focusable view in the window (close/refresh), which is what caused focus to bounce out
+		// of the list entirely mid-scroll. A larger off-screen view cache keeps recently-focused
+		// rows around instead of tearing them down, so LinearLayoutManager's own scroll-to-follow-
+		// focus handling has a real view to hand focus off to.
+		panel.quickSettingsRemapRecyclerView.setItemViewCacheSize(20)
 
 		panel.quickSettingsTrophiesRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
 		panel.quickSettingsTrophiesRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		panel.quickSettingsTrophiesRecyclerView.setItemViewCacheSize(20)
+		// Holding D-pad down fast-scrolls past rows faster than they can be laid out — when the
+		// currently-focused row gets recycled mid-scroll, the platform's own focus-restoration
+		// searches the whole window and lands on whatever's nearest outside the list (close/
+		// refresh), which is what caused focus to bounce out entirely. Catching the detach and
+		// immediately reclaiming focus keeps it inside the list without touching scroll speed at
+		// all — unlike throttling the key events (tried and rejected: slowed down normal fast
+		// scrolling). Scoped to this RecyclerView instance only, so TrophiesActivity's identical
+		// (shared TrophyAdapter) full-screen list is unaffected.
+		panel.quickSettingsTrophiesRecyclerView.addOnChildAttachStateChangeListener(
+			object: RecyclerView.OnChildAttachStateChangeListener
+			{
+				override fun onChildViewAttachedToWindow(view: View) {}
+				override fun onChildViewDetachedFromWindow(view: View)
+				{
+					if(!view.hasFocus()) return
+					// The platform's own (synchronous) default focus-restoration runs the instant
+					// the focused row detaches — before the post{} below gets a chance to redirect
+					// it — and it's not scoped to the list, so it can briefly land on the refresh
+					// button (the nearest other focusable view) every single detach. That's the
+					// flicker: refresh flashes focused, then a moment later gets overridden back
+					// into the list, over and over while scrolling. Making it transiently
+					// unfocusable for as long as detaches keep happening in quick succession (and
+					// only that long — restored once scrolling actually stops) removes it from
+					// that race entirely without blocking deliberate D-pad-up navigation to it
+					// once the list is idle.
+					panel.quickSettingsTrophiesRefreshButton.isFocusable = false
+					trophiesScrollSettleHandler.removeCallbacks(reenableTrophiesRefreshFocusable)
+					trophiesScrollSettleHandler.postDelayed(reenableTrophiesRefreshFocusable, 300L)
+
+					// Captured now, before the ViewHolder backing this view gets recycled —
+					// addFocusables() below returns attached views in top-to-bottom traversal
+					// order regardless of scroll direction, so blindly taking the first one
+					// snapped focus back toward the top of the visible range on every detach
+					// during a downward hold-scroll instead of continuing on downward. Picking
+					// whichever still-attached row's adapter position is closest to this one
+					// keeps focus moving the direction the list is actually scrolling.
+					val lastPosition = panel.quickSettingsTrophiesRecyclerView.getChildViewHolder(view)
+						?.bindingAdapterPosition ?: RecyclerView.NO_POSITION
+					panel.quickSettingsTrophiesRecyclerView.post {
+						val focusables = ArrayList<View>()
+						panel.quickSettingsTrophiesRecyclerView.addFocusables(focusables, View.FOCUS_DOWN)
+						val target = if(lastPosition == RecyclerView.NO_POSITION) focusables.firstOrNull()
+						else focusables.minByOrNull { candidate ->
+							val pos = panel.quickSettingsTrophiesRecyclerView.getChildAdapterPosition(candidate)
+							if(pos == RecyclerView.NO_POSITION) Int.MAX_VALUE else kotlin.math.abs(pos - lastPosition)
+						}
+						target?.requestFocus()
+					}
+				}
+			}
+		)
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
 
 		// "Current game" header row and the Trophies tab both only make sense for cloud
@@ -373,6 +443,8 @@ class QuickSettingsPanel(
 		panel.quickSettingsTrophiesProgressBar.visibility = View.VISIBLE
 		panel.quickSettingsTrophiesEmptyText.visibility = View.GONE
 		panel.quickSettingsTrophiesRecyclerView.visibility = View.GONE
+		panel.quickSettingsTrophiesProgressText.visibility = View.GONE
+		panel.quickSettingsTrophiesCountsRow.visibility = View.GONE
 
 		val gameName = viewModel.connectInfo.cloudGameName ?: ""
 		val platform = viewModel.connectInfo.cloudGamePlatform ?: ""
@@ -392,12 +464,24 @@ class QuickSettingsPanel(
 					{
 						trophyAdapter.items = items
 						panel.quickSettingsTrophiesRecyclerView.visibility = View.VISIBLE
+						showTrophiesSummary(result.detail.summary)
 					}
 				}
 				is TrophyResult.NoMatchFound -> showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty))
 				is TrophyResult.Error -> showTrophiesEmptyState(result.message)
 			}
 		}
+	}
+
+	private fun showTrophiesSummary(summary: TrophyTitleSummary)
+	{
+		panel.quickSettingsTrophiesProgressText.text = "${summary.progressPercent}% Complete"
+		panel.quickSettingsTrophiesProgressText.visibility = View.VISIBLE
+		panel.quickSettingsTrophiesPlatinumCount.text = summary.earnedTrophies.platinum.toString()
+		panel.quickSettingsTrophiesGoldCount.text = summary.earnedTrophies.gold.toString()
+		panel.quickSettingsTrophiesSilverCount.text = summary.earnedTrophies.silver.toString()
+		panel.quickSettingsTrophiesBronzeCount.text = summary.earnedTrophies.bronze.toString()
+		panel.quickSettingsTrophiesCountsRow.visibility = View.VISIBLE
 	}
 
 	private fun showTrophiesEmptyState(message: String)
@@ -716,8 +800,9 @@ class QuickSettingsPanel(
 	}
 
 	/** Drills D-pad focus from the tab rail into the currently selected tab's content — the
-	 *  rail is temporarily excluded from focus search so D-pad navigation inside the content
-	 *  can't accidentally wander back onto it; only exitToRailScope() (Circle/Back) returns. */
+	 *  rail, close and disconnect buttons are all temporarily excluded from focus search so
+	 *  D-pad navigation inside the content can't wander onto them (e.g. off the bottom of a
+	 *  scrolled list); only exitToRailScope() (Circle/Back) returns. */
 	private fun enterContentScope()
 	{
 		val container = currentTabContentContainer() ?: return
@@ -725,6 +810,8 @@ class QuickSettingsPanel(
 		container.addFocusables(focusables, View.FOCUS_DOWN)
 		val target = focusables.firstOrNull() ?: return
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+		panel.quickSettingsCloseButton.isFocusable = false
+		panel.quickSettingsDisconnectButton.isFocusable = false
 		inTabContent = true
 		target.requestFocus()
 	}
@@ -732,6 +819,8 @@ class QuickSettingsPanel(
 	private fun exitToRailScope()
 	{
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+		panel.quickSettingsCloseButton.isFocusable = true
+		panel.quickSettingsDisconnectButton.isFocusable = true
 		inTabContent = false
 		panel.quickSettingsTabToggle.findViewById<View>(panel.quickSettingsTabToggle.checkedButtonId)
 			?.requestFocus()

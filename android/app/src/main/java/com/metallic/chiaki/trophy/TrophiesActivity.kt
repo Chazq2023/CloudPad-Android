@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -48,6 +49,14 @@ class TrophiesActivity : AppCompatActivity()
 		binding = ActivityTrophiesBinding.inflate(layoutInflater)
 		setContentView(binding.root)
 
+		// This screen has no text fields, but every D-pad focus move onto a new trophy row still
+		// triggers a synchronous IME restart (confirmed via logcat: GoogleInputMethodService
+		// .onStartInput firing once per row during a fast scroll) — a well-known Android cost
+		// for lists of focusable non-editable rows, and a plausible cause of the scroll stutter
+		// reported when fast-scrolling downward into newly bound rows. Telling the window the IME
+		// should never show removes it from having to track focus for input-method purposes here.
+		window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
+
 		setSupportActionBar(binding.toolbar)
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
@@ -70,6 +79,10 @@ class TrophiesActivity : AppCompatActivity()
 		binding.trophyRecyclerView.layoutManager = LinearLayoutManager(this)
 		binding.trophyRecyclerView.adapter = adapter
 		binding.trophyRecyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
+		// Holding D-pad down otherwise recycles rows faster than the default cache retains them,
+		// which shows up as scrolling repeatedly stalling then catching up under a held key —
+		// same fix already applied to the Quick Settings panel's copy of this list.
+		binding.trophyRecyclerView.setItemViewCacheSize(20)
 
 		loadTrophies(gameName, platform)
 	}

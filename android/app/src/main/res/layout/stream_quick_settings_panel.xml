@@ -69,8 +69,8 @@
 
         <ImageView
             android:id="@+id/quickSettingsGameIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:scaleType="centerCrop"
             android:contentDescription="@null" />
 
@@ -354,6 +354,58 @@
             app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophiesLabel"
             app:layout_constraintEnd_toEndOf="parent" />
 
+        <!-- Completion summary — mirrors TrophiesActivity's own header styling (same
+             TrophyHeaderCount badges). Only shown alongside a successfully loaded list, so it
+             collapses to zero height (GONE) during loading/empty/error states, leaving
+             quickSettingsTrophiesProgressBar/EmptyText correctly positioned right below the
+             label in those states. -->
+        <TextView
+            android:id="@+id/quickSettingsTrophiesProgressText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+        <LinearLayout
+            android:id="@+id/quickSettingsTrophiesCountsRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:paddingStart="16dp"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesProgressText"
+            app:layout_constraintStart_toStartOf="parent">
+
+            <TextView
+                android:id="@+id/quickSettingsTrophiesPlatinumCount"
+                style="@style/TrophyHeaderCount"
+                android:background="@drawable/bg_trophy_platinum" />
+
+            <TextView
+                android:id="@+id/quickSettingsTrophiesGoldCount"
+                style="@style/TrophyHeaderCount"
+                android:background="@drawable/bg_trophy_gold" />
+
+            <TextView
+                android:id="@+id/quickSettingsTrophiesSilverCount"
+                style="@style/TrophyHeaderCount"
+                android:background="@drawable/bg_trophy_silver" />
+
+            <TextView
+                android:id="@+id/quickSettingsTrophiesBronzeCount"
+                style="@style/TrophyHeaderCount"
+                android:background="@drawable/bg_trophy_bronze" />
+
+        </LinearLayout>
+
         <ProgressBar
             android:id="@+id/quickSettingsTrophiesProgressBar"
             android:layout_width="wrap_content"
@@ -382,10 +434,11 @@
             android:id="@+id/quickSettingsTrophiesRecyclerView"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:layout_marginTop="16dp"
             android:visibility="gone"
             android:clipToPadding="false"
             android:paddingBottom="16dp"
-            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesCountsRow"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
