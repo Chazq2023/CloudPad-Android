@@ -458,7 +458,7 @@ class QuickSettingsPanel(
 					val items = buildTrophyListItems(result.detail)
 					if(items.isEmpty())
 					{
-						showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty))
+						showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty, gameName))
 					}
 					else
 					{
@@ -467,7 +467,7 @@ class QuickSettingsPanel(
 						showTrophiesSummary(result.detail.summary)
 					}
 				}
-				is TrophyResult.NoMatchFound -> showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty))
+				is TrophyResult.NoMatchFound -> showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty, gameName))
 				is TrophyResult.Error -> showTrophiesEmptyState(result.message)
 			}
 		}

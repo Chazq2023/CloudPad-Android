@@ -15,6 +15,7 @@ import coil.load
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
+import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityTrophiesBinding
 import kotlinx.coroutines.launch
 
@@ -96,14 +97,14 @@ class TrophiesActivity : AppCompatActivity()
 		lifecycleScope.launch {
 			when (val result = repository.fetchTrophiesForGame(gameName, platform))
 			{
-				is TrophyResult.Success -> showTrophies(result.detail)
-				is TrophyResult.NoMatchFound -> showEmptyState("No trophy data found for this game")
+				is TrophyResult.Success -> showTrophies(result.detail, gameName)
+				is TrophyResult.NoMatchFound -> showEmptyState(getString(R.string.quick_settings_trophies_empty, gameName))
 				is TrophyResult.Error -> showEmptyState(result.message)
 			}
 		}
 	}
 
-	private fun showTrophies(detail: TrophyTitleDetail)
+	private fun showTrophies(detail: TrophyTitleDetail, gameName: String)
 	{
 		binding.trophyProgressBar.visibility = View.GONE
 
@@ -118,7 +119,7 @@ class TrophiesActivity : AppCompatActivity()
 
 		if (items.isEmpty())
 		{
-			showEmptyState("No trophy data found for this game")
+			showEmptyState(getString(R.string.quick_settings_trophies_empty, gameName))
 			return
 		}
 

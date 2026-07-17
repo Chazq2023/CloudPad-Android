@@ -114,11 +114,11 @@
 
     <TextView
         android:id="@+id/trophyEmptyStateText"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_margin="24dp"
         android:gravity="center"
-        android:text="No trophy data found for this game"
+        android:text="@string/quick_settings_trophies_empty"
         android:textColor="#B3B3B3"
         android:textSize="14sp"
         android:visibility="gone"
