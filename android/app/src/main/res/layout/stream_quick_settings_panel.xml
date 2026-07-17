@@ -48,6 +48,45 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- "Current game" row: cover art + name, shown only for cloud sessions (PS3/PS4/PS5
+         streaming) — hidden entirely for Remote Play, which has no catalog game to show. Left
+         margin matches quickSettingsTabToggle's below so the icon lines up with the tab rail.
+         Collapses to zero height when GONE, so quickSettingsHeaderDivider sits right below the
+         title with no gap when this row isn't shown. -->
+    <LinearLayout
+        android:id="@+id/quickSettingsGameInfoRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ImageView
+            android:id="@+id/quickSettingsGameIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/quickSettingsGameNameText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+    </LinearLayout>
+
     <!-- Theme-coloured, edge-to-edge — meets quickSettingsLeftEdgeBar on the left and spans
          all the way to the panel's right edge, sitting directly above the tab rail. -->
     <View
@@ -56,7 +95,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="12dp"
         android:background="?attr/pyluxAccent"
-        app:layout_constraintTop_toBottomOf="@id/quickSettingsTitle"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsGameInfoRow"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

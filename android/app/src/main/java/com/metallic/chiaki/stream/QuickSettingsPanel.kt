@@ -25,6 +25,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import coil.load
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.StreamSessionType
 import com.metallic.chiaki.lib.sessionType
@@ -80,6 +81,7 @@ class QuickSettingsPanel(
 	private val preferences: Preferences,
 	private val streamInput: StreamInput,
 	private val viewModel: StreamViewModel,
+	private val gameImageUrl: String,
 	private val getDisplayMode: () -> TransformMode,
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
 	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit
@@ -192,6 +194,26 @@ class QuickSettingsPanel(
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
 		panel.quickSettingsTrophiesRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
+
+		// "Current game" header row and the Trophies tab both only make sense for cloud
+		// streaming (PS3/PS4/PS5) — Remote Play has no catalog game/trophy title to show.
+		val isCloudSession = sessionType != StreamSessionType.REMOTE_PLAY
+		panel.quickSettingsTabTrophies.visibility = if(isCloudSession) View.VISIBLE else View.GONE
+		if(isCloudSession)
+		{
+			panel.quickSettingsGameInfoRow.visibility = View.VISIBLE
+			panel.quickSettingsGameNameText.text = activity.getString(
+				R.string.quick_settings_current_game, viewModel.connectInfo.cloudGameName ?: ""
+			)
+			if(gameImageUrl.isNotEmpty())
+			{
+				panel.quickSettingsGameIcon.load(gameImageUrl) { crossfade(true) }
+			}
+			else
+			{
+				panel.quickSettingsGameIcon.setImageResource(android.R.drawable.ic_menu_gallery)
+			}
+		}
 
 		panel.quickSettingsStatsRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_performance_overlay_title)
 		panel.quickSettingsOscRow.quickSettingsRowLabel.text = activity.getString(R.string.quick_settings_osc_title)

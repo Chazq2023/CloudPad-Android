@@ -1509,7 +1509,7 @@ class CloudPlayFragment : Fragment() {
 
                 result.onSuccess { session ->
                     updateGameStreamability(game, streamable = true)
-                    launchCloudStream(session, PsCloudOwnership.streamIdentifier(game), game.productId)
+                    launchCloudStream(session, PsCloudOwnership.streamIdentifier(game), game.productId, game.imageUrl)
                 }
 
                 result.onFailure { error ->
@@ -1687,7 +1687,7 @@ class CloudPlayFragment : Fragment() {
     /**
      * Launch StreamActivity with cloud stream session
      */
-    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession, gameIdentifier: String, gameProductId: String? = null) {
+    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession, gameIdentifier: String, gameProductId: String? = null, gameImageUrl: String = "") {
 
         // ConnectInfo building (codec/resolution/bitrate selection) lives in
         // CloudConnectInfoBuilder so the in-stream Quick Settings "refresh" action can build
@@ -1700,6 +1700,7 @@ class CloudPlayFragment : Fragment() {
             com.metallic.chiaki.stream.StreamActivity::class.java
         )
         intent.putExtra(com.metallic.chiaki.stream.StreamActivity.EXTRA_CONNECT_INFO, connectInfo)
+        intent.putExtra(com.metallic.chiaki.stream.StreamActivity.EXTRA_GAME_IMAGE_URL, gameImageUrl)
         startActivity(intent)
         shortcutLaunchInProgress = false
 

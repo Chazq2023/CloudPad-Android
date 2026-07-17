@@ -53,6 +53,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	companion object
 	{
 		const val EXTRA_CONNECT_INFO = "connect_info"
+		/** Cover art URL for the Quick Settings panel's "Current game" header — only ever set
+		 *  by cloud-streaming launch paths (CloudPlayFragment); absent for Remote Play, where
+		 *  that header is hidden entirely. */
+		const val EXTRA_GAME_IMAGE_URL = "game_image_url"
 		private const val HIDE_UI_TIMEOUT_MS = 4000L
 	}
 
@@ -148,6 +152,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			preferences = viewModel.preferences,
 			streamInput = viewModel.input,
 			viewModel = viewModel,
+			gameImageUrl = intent.getStringExtra(EXTRA_GAME_IMAGE_URL) ?: "",
 			getDisplayMode = { currentDisplayMode },
 			onDisplayModeChanged = { mode ->
 				currentDisplayMode = mode

@@ -98,7 +98,9 @@ jobs:
 
             ### Updates
             - Added full controller (D-pad/Cross/Circle) navigation to the in-stream Quick Settings panel: press a tab icon to drill into its content, Circle steps back out to the tab rail, and every switch/dropdown/seek bar/button now shows a clear focus highlight.
+            - Added a "Current game" header (cover art + title) to the Quick Settings panel for PS3/PS4/PS5 cloud streaming, and hid the Trophies tab for Remote Play sessions, which have no catalog game to show trophies for.
             - Fixed the Trophies list showing a duplicate "Trophies" header every time a game had more than one unnamed trophy group, instead of just once at the top.
+            - Fixed the bitrate seek bar in Quick Settings stepping by 10 instead of 1 when adjusted with a D-pad.
 
             ### APK
             Attached release asset:
