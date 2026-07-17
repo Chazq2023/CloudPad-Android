@@ -97,7 +97,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a new "Touchpad Hold" controller mapping that simulates pressing and holding the touchpad button, separate from the existing quick Touchpad Click. Defaults to Select + D-Pad Down, and can be reassigned to any combo like other mappings.
+            - Added full controller (D-pad/Cross/Circle) navigation to the in-stream Quick Settings panel: press a tab icon to drill into its content, Circle steps back out to the tab rail, and every switch/dropdown/seek bar/button now shows a clear focus highlight.
+            - Fixed the Trophies list showing a duplicate "Trophies" header every time a game had more than one unnamed trophy group, instead of just once at the top.
 
             ### APK
             Attached release asset:
