@@ -101,11 +101,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a Trophy Compare feature: tap the trophy icon on a friend's row (main menu or Quick Settings) to see a side-by-side comparison of account level, total trophies, platinum/gold/silver/bronze counts, and shared games with progress bars.
-            - Fixed several D-pad/controller focus bugs: overlapping focus rectangles on friend rows, doubled focus highlights on Trophies/Trophy Compare/Friends lists, and list scrolling occasionally getting "stuck" for a few button presses.
-            - Fixed shared games in Trophy Compare only showing one entry, and your own profile picture not loading, when there were more games or the picture failed to fetch correctly.
-            - Restyled every pop-up dialog across the app to a consistent rounded box with a grey background and theme-coloured border.
-            - Redesigned the Trophy Compare header for landscape use, with clearer "Level:" and "Total Trophies:" labels that resize to fit both the full-screen and Quick Settings layouts without getting cut off.
+            - Tapping a trophy in the Trophies list (Quick Settings or the full-screen Trophies screen) now opens a detail pop-up with the full trophy name, description, icon, and earned date, so long trophy names/descriptions are no longer cut off with "...".
 
             ### APK
             Attached release asset:

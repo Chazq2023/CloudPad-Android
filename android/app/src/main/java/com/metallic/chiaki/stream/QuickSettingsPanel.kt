@@ -57,6 +57,7 @@ import com.metallic.chiaki.trophy.TrophyAdapter
 import com.metallic.chiaki.trophy.TrophyRepository
 import com.metallic.chiaki.trophy.TrophyResult
 import com.metallic.chiaki.trophy.buildTrophyListItems
+import com.metallic.chiaki.trophy.showTrophyDetailDialog
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
@@ -189,7 +190,7 @@ class QuickSettingsPanel(
 	private val sessionType: StreamSessionType = viewModel.connectInfo.sessionType
 
 	private val trophyRepository = TrophyRepository(preferences)
-	private val trophyAdapter = TrophyAdapter()
+	private val trophyAdapter = TrophyAdapter(onTrophyClick = { trophy -> showTrophyDetailDialog(activity, trophy) })
 	private var trophiesLoadedOnce = false
 
 	private val friendsRepository = FriendsRepository(preferences)
