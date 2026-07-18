@@ -660,6 +660,135 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <!-- Sub-view 3: inline trophy comparison with the selected friend — same "no separate
+             Activity" reasoning as the chat sub-view above. -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/quickSettingsTrophyCompareGroup"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageButton
+                android:id="@+id/quickSettingsTrophyCompareBackButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/quick_settings_trophy_compare_back"
+                android:src="@drawable/ic_arrow_back"
+                android:tint="?attr/pyluxAccent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <ImageButton
+                android:id="@+id/quickSettingsTrophyCompareRefreshButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/trophy_compare_refresh"
+                android:src="@drawable/ic_refresh"
+                android:tint="?attr/pyluxAccent"
+                app:layout_constraintTop_toTopOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintStart_toEndOf="@id/quickSettingsTrophyCompareBackButton" />
+
+            <TextView
+                android:id="@+id/quickSettingsTrophyCompareTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="?attr/pyluxAccent"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                app:layout_constraintTop_toTopOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintStart_toEndOf="@id/quickSettingsTrophyCompareRefreshButton"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <ProgressBar
+                android:id="@+id/quickSettingsTrophyCompareProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/quickSettingsTrophyCompareEmptyText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="24dp"
+                android:gravity="center"
+                android:text="@string/trophy_compare_empty"
+                android:textColor="#B3B3B3"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- A wrap_content RecyclerView inside a ScrollView doesn't reliably remeasure once
+                 its adapter data arrives after the initial (empty) layout pass — fixed header
+                 above a 0dp-constrained, independently-scrolling RecyclerView below, same pattern
+                 the rest of this app's lists already use. -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/quickSettingsTrophyCompareContentGroup"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophyCompareBackButton"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <include
+                    layout="@layout/item_trophy_compare_header"
+                    android:id="@+id/quickSettingsTrophyCompareHeader"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    app:layout_constraintTop_toTopOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <com.google.android.material.divider.MaterialDivider
+                    android:id="@+id/quickSettingsTrophyCompareDivider"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophyCompareHeader"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <TextView
+                    android:id="@+id/quickSettingsTrophyCompareSharedGamesLabel"
+                    style="@style/QuickSettingsSectionLabel"
+                    android:layout_width="0dp"
+                    app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophyCompareDivider"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/quickSettingsTrophyCompareRecyclerView"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    android:paddingBottom="16dp"
+                    android:clipToPadding="false"
+                    app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophyCompareSharedGamesLabel"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

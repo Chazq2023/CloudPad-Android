@@ -101,11 +101,11 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a Friends feature: a new smiley icon in the main menu opens your PSN friends list (with avatars, online status, current game, and last-online time), and tapping a friend opens a chat screen to message them.
-            - Added the same Friends list and messaging as a new tab in the in-stream Quick Settings panel, so you can check friends and chat without leaving your stream.
-            - Sent messages appear instantly and conversation history now loads correctly; message bubbles show yours on the left and your friend's on the right.
-            - Added a refresh button to the friends list and chat screens (both the main menu and Quick Settings), plus a Triangle/Y controller shortcut for refreshing the main menu's friends list and chat screens.
-            - Shrank and re-centred the Quick Settings tab rail icons so the new Friends tab fits alongside the existing ones without crowding.
+            - Added a Trophy Compare feature: tap the trophy icon on a friend's row (main menu or Quick Settings) to see a side-by-side comparison of account level, total trophies, platinum/gold/silver/bronze counts, and shared games with progress bars.
+            - Fixed several D-pad/controller focus bugs: overlapping focus rectangles on friend rows, doubled focus highlights on Trophies/Trophy Compare/Friends lists, and list scrolling occasionally getting "stuck" for a few button presses.
+            - Fixed shared games in Trophy Compare only showing one entry, and your own profile picture not loading, when there were more games or the picture failed to fetch correctly.
+            - Restyled every pop-up dialog across the app to a consistent rounded box with a grey background and theme-coloured border.
+            - Redesigned the Trophy Compare header for landscape use, with clearer "Level:" and "Total Trophies:" labels that resize to fit both the full-screen and Quick Settings layouts without getting cut off.
 
             ### APK
             Attached release asset:

@@ -991,8 +991,6 @@ class CloudPlayFragment : Fragment() {
             .setView(view)
             .setPositiveButton("Close", null)
             .create()
-        // Border on the window itself, not just the content view, matching the disclaimer dialog.
-        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
         dialog.show()
     }
 

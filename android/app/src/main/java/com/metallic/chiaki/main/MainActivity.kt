@@ -143,8 +143,6 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton("Acknowledge") { _, _ -> onAcknowledged() }
             .setCancelable(false)
             .create()
-        // Border on the window itself, not just the content view, so it wraps the button row too.
-        dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
         dialog.show()
     }
 

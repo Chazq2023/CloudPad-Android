@@ -5,6 +5,7 @@ package com.metallic.chiaki.trophy
 import android.util.Log
 import com.metallic.chiaki.cloudplay.api.HttpClient
 import com.metallic.chiaki.trophy.model.Trophy
+import com.metallic.chiaki.trophy.model.TrophyAccountSummary
 import com.metallic.chiaki.trophy.model.TrophyCounts
 import com.metallic.chiaki.trophy.model.TrophyGroup
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
@@ -22,15 +23,17 @@ object TrophyService
 	private const val TAG = "TrophyService"
 	private const val PAGE_SIZE = 100
 
-	/** All trophy titles (games with trophy data) on the signed-in account, across every page. */
-	suspend fun fetchAllTrophyTitles(accessToken: String): List<TrophyTitleSummary>
+	/** All trophy titles (games with trophy data) for [accountId] ("me" by default), across every
+	 *  page — parameterised so [TrophyCompareRepository] can fetch a friend's titles through the
+	 *  exact same call, just with their accountId instead of "me". */
+	suspend fun fetchAllTrophyTitles(accessToken: String, accountId: String = "me"): List<TrophyTitleSummary>
 	{
 		val all = mutableListOf<TrophyTitleSummary>()
 		var offset = 0
 
 		while (true)
 		{
-			val url = "${PsnTrophyConstants.TROPHY_BASE}/users/me/trophyTitles?limit=$PAGE_SIZE&offset=$offset"
+			val url = "${PsnTrophyConstants.TROPHY_BASE}/users/$accountId/trophyTitles?limit=$PAGE_SIZE&offset=$offset"
 			val response = HttpClient.get(
 				url = url,
 				headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
@@ -38,7 +41,7 @@ object TrophyService
 
 			if (response.statusCode != 200)
 			{
-				Log.e(TAG, "fetchAllTrophyTitles failed at offset=$offset: ${response.statusCode} - ${response.body}")
+				Log.e(TAG, "fetchAllTrophyTitles failed for $accountId at offset=$offset: ${response.statusCode} - ${response.body}")
 				throw Exception("Failed to fetch trophy titles: HTTP ${response.statusCode}")
 			}
 
@@ -52,8 +55,90 @@ object TrophyService
 			if (titlesArray.length() == 0 || offset >= totalItemCount) break
 		}
 
-		Log.i(TAG, "fetchAllTrophyTitles: ${all.size} titles")
+		Log.i(TAG, "fetchAllTrophyTitles($accountId): ${all.size} titles")
 		return all
+	}
+
+	/** Overall account-level trophy stats (level + total earned counts) — the same figure PSN
+	 *  shows on a profile. Returns null on failure (including a friend's data being private),
+	 *  distinct from a genuinely empty result, same reasoning as FriendsService.fetchConversation. */
+	suspend fun fetchTrophySummary(accessToken: String, accountId: String = "me"): TrophyAccountSummary?
+	{
+		val url = "${PsnTrophyConstants.TROPHY_BASE}/users/$accountId/trophySummary"
+		val response = HttpClient.get(
+			url = url,
+			headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
+		)
+		if (response.statusCode != 200)
+		{
+			Log.w(TAG, "fetchTrophySummary failed for $accountId: ${response.statusCode} - ${response.body}")
+			return null
+		}
+
+		val json = JSONObject(response.body)
+		// Field name isn't independently confirmed against a live response yet — "trophyLevel" is
+		// the more common name across PSN API projects, "level" a fallback if that's ever wrong.
+		val level = json.optInt("trophyLevel", json.optInt("level", 0))
+		if (level == 0) Log.d(TAG, "fetchTrophySummary $accountId: no recognized level field in response body: ${response.body}")
+		return TrophyAccountSummary(
+			level = level,
+			progressPercent = json.optInt("progress", 0),
+			earnedTrophies = parseTrophyCounts(json.optJSONObject("earnedTrophies"))
+		)
+	}
+
+	/** Just the "m"-size avatar URL from a PSN profile — used only to show "your" avatar in trophy
+	 *  comparison. A small deliberate duplicate of the parsing FriendsService.fetchProfile already
+	 *  does (that lives in the `friends` package, which already depends on `trophy` for token
+	 *  reuse — importing it back here would make that a circular package dependency for one field). */
+	suspend fun fetchAvatarUrl(accessToken: String, accountId: String = "me"): String
+	{
+		// Unlike trophyTitles/friends, this profile endpoint live-tested as rejecting the literal
+		// "me" in the path ("Bad Request (path: accountId)") — needs the real resolved id first.
+		val resolvedAccountId = if (accountId == "me") resolveMyAccountId(accessToken) ?: return "" else accountId
+		val url = "https://m.np.playstation.com/api/userProfile/v1/internal/users/$resolvedAccountId/profiles?fields=avatars"
+		val response = HttpClient.get(
+			url = url,
+			headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
+		)
+		if (response.statusCode != 200)
+		{
+			Log.w(TAG, "fetchAvatarUrl failed for $accountId: ${response.statusCode} - ${response.body}")
+			return ""
+		}
+
+		val avatars = JSONObject(response.body).optJSONArray("avatars") ?: JSONArray()
+		var avatarUrl = ""
+		for (i in 0 until avatars.length())
+		{
+			val avatar = avatars.getJSONObject(i)
+			if (avatar.optString("size") == "m")
+			{
+				avatarUrl = avatar.optString("url", "")
+				break
+			}
+		}
+		if (avatarUrl.isEmpty() && avatars.length() > 0) avatarUrl = avatars.getJSONObject(0).optString("url", "")
+		// Sony serves these as plain http:// — Android blocks cleartext traffic by default, same
+		// fix already applied in FriendsService.fetchProfile.
+		if (avatarUrl.startsWith("http://")) avatarUrl = "https://" + avatarUrl.removePrefix("http://")
+		return avatarUrl
+	}
+
+	/** Same device-account lookup FriendsService.fetchMyAccountId already uses to resolve our own
+	 *  accountId — duplicated here for the same "avoid a circular package dependency" reasoning. */
+	private suspend fun resolveMyAccountId(accessToken: String): String?
+	{
+		val response = HttpClient.get(
+			url = "https://dms.api.playstation.com/api/v1/devices/accounts/me",
+			headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
+		)
+		if (response.statusCode != 200)
+		{
+			Log.w(TAG, "resolveMyAccountId failed: ${response.statusCode} - ${response.body}")
+			return null
+		}
+		return JSONObject(response.body).optString("accountId", "").ifEmpty { null }
 	}
 
 	/** Full detail (groups + every trophy, earned state merged in) for one trophy title. */
