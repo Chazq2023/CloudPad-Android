@@ -101,7 +101,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added CAS (Contrast Adaptive Sharpening) image sharpening for the video stream, with a toggle and 1-10 sharpening level slider in both Settings and the in-stream Quick Settings panel. Changes apply live while streaming — no need to restart.
+            - Tuned CAS Image Sharpening's level slider to ramp up more aggressively at higher values (1-10), instead of increasing sharpness evenly across the whole range.
 
             ### APK
             Attached release asset:

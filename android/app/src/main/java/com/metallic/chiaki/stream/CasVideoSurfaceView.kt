@@ -12,6 +12,7 @@ import android.os.Looper
 import android.util.AttributeSet
 import android.util.Log
 import android.view.Surface
+import com.metallic.chiaki.common.Preferences
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -25,6 +26,12 @@ import javax.microedition.khronos.opengles.GL10
  * screen without touching the native decoder at all — MediaCodec/ANativeWindow doesn't care what
  * kind of Surface it's handed. See [onSurfaceReady] for how the decoder's target Surface is handed
  * back out to [com.metallic.chiaki.session.StreamSession].
+ *
+ * The sharpening kernel itself runs at a fixed strength (matching the AMD FidelityFX CAS
+ * reference's own "contrast" constant), and the 1-10 level slider instead blends between the
+ * original pixel and that fixed-strength result — see [CAS_FRAGMENT_SHADER]'s comment for why
+ * this (rather than feeding the slider into the kernel's own peak/weight formula) is what gives
+ * high slider values their noticeably more aggressive look instead of a flat linear ramp.
  *
  * The EGL context is preserved across pause/resume ([GLSurfaceView.setPreserveEGLContextOnPause])
  * so the external texture/SurfaceTexture/Surface triple is created exactly once for this view's
@@ -65,7 +72,7 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		private var aTexCoordLoc = 0
 		private var uSTMatrixLoc = 0
 		private var uTexelSizeLoc = 0
-		private var uSharpnessLoc = 0
+		private var uLevelLoc = 0
 		private var uEnabledLoc = 0
 
 		private val stMatrix = FloatArray(16)
@@ -73,7 +80,7 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		@Volatile private var videoWidth = 1
 		@Volatile private var videoHeight = 1
 		@Volatile private var sharpeningEnabled = false
-		@Volatile private var sharpnessT = CAS_SHARPNESS_MIN
+		@Volatile private var sharpeningLevel = Preferences.CAS_SHARPENING_LEVEL_MIN
 
 		fun setVideoSize(width: Int, height: Int)
 		{
@@ -84,7 +91,7 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		fun setSharpening(enabled: Boolean, level: Int)
 		{
 			sharpeningEnabled = enabled
-			sharpnessT = (level.coerceIn(1, 10) / 10f).coerceIn(CAS_SHARPNESS_MIN, 1f)
+			sharpeningLevel = level.coerceIn(Preferences.CAS_SHARPENING_LEVEL_MIN, Preferences.CAS_SHARPENING_LEVEL_MAX)
 			requestRender()
 		}
 
@@ -114,7 +121,7 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			aTexCoordLoc = GLES20.glGetAttribLocation(program, "aTexCoord")
 			uSTMatrixLoc = GLES20.glGetUniformLocation(program, "uSTMatrix")
 			uTexelSizeLoc = GLES20.glGetUniformLocation(program, "uTexelSize")
-			uSharpnessLoc = GLES20.glGetUniformLocation(program, "uSharpness")
+			uLevelLoc = GLES20.glGetUniformLocation(program, "uLevel")
 			uEnabledLoc = GLES20.glGetUniformLocation(program, "uEnabled")
 
 			val surface = Surface(st)
@@ -148,7 +155,7 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 
 			GLES20.glUniformMatrix4fv(uSTMatrixLoc, 1, false, stMatrix, 0)
 			GLES20.glUniform2f(uTexelSizeLoc, 1f / videoWidth, 1f / videoHeight)
-			GLES20.glUniform1f(uSharpnessLoc, sharpnessT)
+			GLES20.glUniform1f(uLevelLoc, sharpeningLevel.toFloat())
 			GLES20.glUniform1f(uEnabledLoc, if(sharpeningEnabled) 1f else 0f)
 
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
@@ -161,10 +168,6 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 	companion object
 	{
 		private const val TAG = "CasVideoSurfaceView"
-
-		/** Slider value 1 still applies a small amount of sharpening rather than none — the
-		 *  toggle, not the slider, is what fully disables the effect (uEnabled uniform). */
-		private const val CAS_SHARPNESS_MIN = 0.1f
 
 		private const val VERTEX_STRIDE = 2 * 4
 
@@ -200,17 +203,26 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			}
 		"""
 
-		// AMD FidelityFX CAS (sharpen-only, no upscale), 5-tap "plus" pattern. uSharpness is
-		// the normalized 0..1 slider value; uEnabled gates the whole effect so a disabled
-		// toggle is a pure passthrough regardless of whatever level the slider was left at.
+		// AMD FidelityFX CAS (sharpen-only, no upscale), 5-tap "plus" pattern. Matches the
+		// approach used by better-xcloud's "Clarity Boost" shader: the sharpening kernel itself
+		// runs at a *fixed* strength (peak derived from AMD's own reference contrast=0.8, i.e.
+		// 8-3*0.8=5.6) rather than being driven by the slider — the slider instead blends
+		// between the original pixel and that fixed-strength result via uLevel/2. Since the
+		// blend factor isn't clamped to [0,1], levels above ~2 extrapolate past the nominal CAS
+		// result rather than plateauing, which is what gives the top of the 1-10 range its
+		// noticeably more aggressive look instead of a flat linear ramp. uEnabled gates the
+		// whole effect so a disabled toggle is a pure passthrough regardless of the level the
+		// slider was left at.
 		private const val CAS_FRAGMENT_SHADER = """
 			#extension GL_OES_EGL_image_external : require
 			precision mediump float;
 			varying vec2 vTexCoord;
 			uniform samplerExternalOES sTexture;
 			uniform vec2 uTexelSize;
-			uniform float uSharpness;
+			uniform float uLevel;
 			uniform float uEnabled;
+
+			const float CAS_PEAK = 5.6;
 
 			void main()
 			{
@@ -233,12 +245,13 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 				vec3 amp = clamp(min(mn, 2.0 - mx) * rcpMx, 0.0, 1.0);
 				amp = inversesqrt(amp);
 
-				float peak = 8.0 - 3.0 * uSharpness;
-				vec3 weight = -1.0 / (amp * peak);
+				vec3 weight = -1.0 / (amp * CAS_PEAK);
 				vec3 rcpWeight = 1.0 / (1.0 + 4.0 * weight);
 
 				vec3 window = n + s + w + e;
-				vec3 sharpened = clamp((window * weight + centerColor) * rcpWeight, 0.0, 1.0);
+				vec3 casOutput = clamp((window * weight + centerColor) * rcpWeight, 0.0, 1.0);
+
+				vec3 sharpened = clamp(mix(centerColor, casOutput, uLevel * 0.5), 0.0, 1.0);
 				gl_FragColor = vec4(sharpened, 1.0);
 			}
 		"""
