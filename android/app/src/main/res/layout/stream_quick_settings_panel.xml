@@ -277,6 +277,18 @@
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
 
+            <com.google.android.material.divider.MaterialDivider
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp" />
+
+            <TextView
+                style="@style/QuickSettingsSectionLabel"
+                android:text="@string/preferences_category_title_cas_sharpening" />
+
+            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsCasRow" />
+            <include layout="@layout/item_quick_settings_seekbar" android:id="@+id/quickSettingsCasSeekBarRow" />
+
         </LinearLayout>
 
     </ScrollView>

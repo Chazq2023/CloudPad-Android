@@ -101,7 +101,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Tapping a trophy in the Trophies list (Quick Settings or the full-screen Trophies screen) now opens a detail pop-up with the full trophy name, description, icon, and earned date, so long trophy names/descriptions are no longer cut off with "...".
+            - Added CAS (Contrast Adaptive Sharpening) image sharpening for the video stream, with a toggle and 1-10 sharpening level slider in both Settings and the in-stream Quick Settings panel. Changes apply live while streaming — no need to restart.
 
             ### APK
             Attached release asset:

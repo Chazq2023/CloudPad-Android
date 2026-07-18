@@ -36,6 +36,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
 		preferences.pipEnabledKey -> preferences.pipEnabled
+		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
 		else -> defValue
 	}
 
@@ -48,6 +49,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
 			preferences.pipEnabledKey -> preferences.pipEnabled = value
+			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
 		}
 	}
 
@@ -96,6 +98,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 	override fun getInt(key: String, defValue: Int) = when (key) {
 		preferences.cloudBitratePscloudKey -> preferences.getCloudBitratePscloud() / 1000
 		preferences.cloudBitratePsnowKey -> preferences.getCloudBitratePsnow() / 1000
+		preferences.casSharpeningLevelKey -> preferences.casSharpeningLevel
 		else -> defValue
 	}
 
@@ -103,6 +106,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		when (key) {
 			preferences.cloudBitratePscloudKey -> preferences.setCloudBitratePscloud(value * 1000)
 			preferences.cloudBitratePsnowKey -> preferences.setCloudBitratePsnow(value * 1000)
+			preferences.casSharpeningLevelKey -> preferences.casSharpeningLevel = value
 		}
 	}
 }
@@ -188,6 +192,17 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		viewModel.bitrateAuto.observe(this, Observer {
 			bitratePreference?.summaryProvider = bitrateSummaryProvider
 		})
+
+		// CAS sharpening: the level slider only ever makes sense while the effect is on, and
+		// disabling the toggle must visibly remove any suggestion that the leftover slider
+		// value is still doing anything — hidden outright rather than just disabled/greyed.
+		val casLevelPreference = preferenceScreen.findPreference<SeekBarPreference>(getString(R.string.preferences_cas_sharpening_level_key))
+		casLevelPreference?.isVisible = preferences.casSharpeningEnabled
+		preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_cas_sharpening_enabled_key))
+			?.setOnPreferenceChangeListener { _, newValue ->
+				casLevelPreference?.isVisible = newValue as? Boolean ?: false
+				true
+			}
 
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_codec_key))?.let {
 			it.entryValues = Preferences.codecAll.map { codec -> codec.value }.toTypedArray()

@@ -153,6 +153,11 @@
     <string name="preferences_motion_enabled_summary">Use device\'s motion sensors for controller motion</string>
     <string name="preferences_button_haptic_enabled_title">Touch Haptics</string>
     <string name="preferences_button_haptic_enabled_summary">Vibrate the phone on touchscreen button presses</string>
+    <string name="preferences_category_title_cas_sharpening">CAS Image Sharpening</string>
+    <string name="preferences_cas_sharpening_enabled_title">Enable CAS Image Sharpening</string>
+    <string name="preferences_cas_sharpening_enabled_summary">Sharpens the stream image in real time using AMD FidelityFX Contrast Adaptive Sharpening</string>
+    <string name="preferences_cas_sharpening_level_title">Sharpening Level</string>
+    <string name="quick_settings_cas_sharpening_level">Sharpening Level: %d</string>
     <string name="quick_settings_title">Quick Settings</string>
     <string name="quick_settings_close">Close</string>
     <string name="quick_settings_current_game">Current game: %s</string>
@@ -321,6 +326,8 @@
     <string name="preferences_cloud_resolution_psnow_key">cloud_resolution_psnow</string>
     <string name="preferences_cloud_resolution_pscloud_key">cloud_resolution_pscloud</string>
     <string name="preferences_pip_enabled_key">pip_enabled</string>
+    <string name="preferences_cas_sharpening_enabled_key">cas_sharpening_enabled</string>
+    <string name="preferences_cas_sharpening_level_key">cas_sharpening_level</string>
     <string name="donation_dialog_title">Support CloudPad</string>
     <string name="donation_dialog_body">CloudPad is built by the community. If you enjoy using it, please consider supporting its development. Your contribution helps fund continued updates and keeps the project alive.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
