@@ -40,7 +40,7 @@ class TrophiesActivity : AppCompatActivity()
 
 	private lateinit var binding: ActivityTrophiesBinding
 	private lateinit var repository: TrophyRepository
-	private val adapter = TrophyAdapter()
+	private val adapter = TrophyAdapter(onTrophyClick = { trophy -> showTrophyDetailDialog(this, trophy) })
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
