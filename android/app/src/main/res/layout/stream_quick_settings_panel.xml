@@ -128,6 +128,7 @@
         app:selectionRequired="true"
         app:checkedButton="@id/quickSettingsTabGeneral"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/quickSettingsTabDivider"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
         app:layout_constraintBottom_toTopOf="@id/quickSettingsDisconnectButton">
 
@@ -155,6 +156,12 @@
             android:contentDescription="@string/quick_settings_trophies_tab_description"
             app:icon="@drawable/ic_trophy" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsTabFriends"
+            style="@style/QuickSettingsTabButton"
+            android:contentDescription="@string/quick_settings_friends_tab_description"
+            app:icon="@drawable/ic_smiley" />
+
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <!-- Separates the tab rail from the settings content to its right. Meets
@@ -164,11 +171,11 @@
         android:id="@+id/quickSettingsTabDivider"
         android:layout_width="1dp"
         android:layout_height="0dp"
-        android:layout_marginStart="4dp"
         android:background="?attr/pyluxAccent"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toEndOf="@id/quickSettingsTabToggle" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginStart="64dp" />
 
     <!-- Controller tab: remap list. Given a bounded height with its own internal scrolling
          (matching the full-screen Settings > Remap Controller screen) rather than wrap_content
@@ -442,6 +449,216 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Friends tab: account-level PSN friends list + inline 1:1 messaging, available for every
+         session type (not gated like Trophies) since it isn't tied to the game being streamed.
+         Two sub-views, only one visible at a time — selecting a friend swaps the list for a chat
+         view in place, rather than launching a separate Activity (which would background
+         StreamActivity mid-session, same reasoning documented on QuickSettingsPanel). -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/quickSettingsFriendsSection"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Sub-view 1: friends list -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/quickSettingsFriendsListGroup"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <TextView
+                android:id="@+id/quickSettingsFriendsLabel"
+                style="@style/QuickSettingsSectionLabel"
+                android:layout_width="0dp"
+                android:text="@string/quick_settings_friends_header_label"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/quickSettingsFriendsRefreshButton" />
+
+            <ImageButton
+                android:id="@+id/quickSettingsFriendsRefreshButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="12dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/quick_settings_friends_refresh"
+                android:src="@drawable/ic_refresh"
+                android:tint="?attr/pyluxAccent"
+                app:layout_constraintTop_toTopOf="@id/quickSettingsFriendsLabel"
+                app:layout_constraintBottom_toBottomOf="@id/quickSettingsFriendsLabel"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <ProgressBar
+                android:id="@+id/quickSettingsFriendsProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsFriendsLabel"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/quickSettingsFriendsEmptyText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="24dp"
+                android:gravity="center"
+                android:text="@string/quick_settings_friends_empty"
+                android:textColor="#B3B3B3"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsFriendsLabel"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/quickSettingsFriendsRecyclerView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="12dp"
+                android:visibility="gone"
+                android:clipToPadding="false"
+                android:paddingBottom="16dp"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsFriendsLabel"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <!-- Sub-view 2: inline chat with the selected friend -->
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/quickSettingsFriendsChatGroup"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ImageButton
+                android:id="@+id/quickSettingsFriendChatBackButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/quick_settings_friend_chat_back"
+                android:src="@drawable/ic_arrow_back"
+                android:tint="?attr/pyluxAccent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <ImageButton
+                android:id="@+id/quickSettingsFriendChatRefreshButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/quick_settings_friend_chat_refresh"
+                android:src="@drawable/ic_refresh"
+                android:tint="?attr/pyluxAccent"
+                app:layout_constraintTop_toTopOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintBottom_toBottomOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintStart_toEndOf="@id/quickSettingsFriendChatBackButton" />
+
+            <TextView
+                android:id="@+id/quickSettingsFriendChatTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="?attr/pyluxAccent"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                app:layout_constraintTop_toTopOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintBottom_toBottomOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintStart_toEndOf="@id/quickSettingsFriendChatRefreshButton"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <ProgressBar
+                android:id="@+id/quickSettingsFriendChatProgressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintBottom_toTopOf="@id/quickSettingsFriendChatInputRow"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <TextView
+                android:id="@+id/quickSettingsFriendChatEmptyText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_margin="24dp"
+                android:gravity="center"
+                android:text="@string/friend_chat_empty_state"
+                android:textColor="#B3B3B3"
+                android:textSize="13sp"
+                android:visibility="gone"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintBottom_toTopOf="@id/quickSettingsFriendChatInputRow"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/quickSettingsFriendChatRecyclerView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:layout_marginTop="8dp"
+                android:visibility="gone"
+                android:clipToPadding="false"
+                app:layout_constraintTop_toBottomOf="@id/quickSettingsFriendChatBackButton"
+                app:layout_constraintBottom_toTopOf="@id/quickSettingsFriendChatInputRow"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/quickSettingsFriendChatInputRow"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingBottom="8dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <EditText
+                    android:id="@+id/quickSettingsFriendChatInput"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="@string/friend_chat_input_hint"
+                    android:inputType="textShortMessage|textCapSentences"
+                    android:maxLines="3"
+                    android:textColor="@android:color/white"
+                    android:textColorHint="#80FFFFFF"
+                    android:textSize="13sp" />
+
+                <ImageButton
+                    android:id="@+id/quickSettingsFriendChatSendButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/friend_chat_send"
+                    android:padding="10dp"
+                    android:src="@drawable/ic_send"
+                    android:tint="?attr/pyluxAccent" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

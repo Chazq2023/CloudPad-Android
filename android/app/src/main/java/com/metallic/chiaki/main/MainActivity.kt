@@ -218,6 +218,11 @@ class MainActivity : AppCompatActivity() {
             viewModel.discoveryManager.active = !(viewModel.discoveryActive.value ?: false)
         }
 
+        // Friends
+        binding.friendsIcon.setOnClickListener {
+            com.metallic.chiaki.friends.FriendsActivity.start(this)
+        }
+
         // Settings
         binding.settingsIcon.setOnClickListener {
             Intent(this, SettingsActivity::class.java).also {
@@ -242,6 +247,7 @@ class MainActivity : AppCompatActivity() {
             binding.remotePlayButton.onFocusChangeListener = primaryFocusHighlight
             binding.cloudPlayButton.onFocusChangeListener = primaryFocusHighlight
             binding.wifiIcon.onFocusChangeListener = primaryFocusHighlight
+            binding.friendsIcon.onFocusChangeListener = primaryFocusHighlight
             binding.settingsIcon.onFocusChangeListener = primaryFocusHighlight
         }
     }
@@ -300,7 +306,7 @@ class MainActivity : AppCompatActivity() {
         )
         val primaryIds = setOf(
             R.id.remotePlayButton, R.id.cloudPlayButton,
-            R.id.settingsIcon, R.id.wifiIcon
+            R.id.settingsIcon, R.id.wifiIcon, R.id.friendsIcon
         )
 
         val focusedInCloud = cloudRv?.findContainingItemView(focused)
@@ -495,7 +501,7 @@ class MainActivity : AppCompatActivity() {
         )
         val primaryIds = setOf(
             R.id.remotePlayButton, R.id.cloudPlayButton,
-            R.id.settingsIcon, R.id.wifiIcon
+            R.id.settingsIcon, R.id.wifiIcon, R.id.friendsIcon
         )
 
         val focusedInCloud = focused?.let { cloudRv?.findContainingItemView(it) }

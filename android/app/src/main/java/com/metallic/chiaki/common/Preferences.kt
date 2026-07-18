@@ -317,6 +317,32 @@ class Preferences(context: Context)
 			.apply()
 	}
 
+	// Cached friends list (Friends feature) — same shape as the trophy titles cache above, but a
+	// much shorter TTL: presence (online status/current game) goes stale within minutes, unlike
+	// trophy titles which barely change. Serialization lives in FriendsService, same reasoning as
+	// TrophyService's above.
+	private val FRIENDS_CACHE_KEY = "friends_cache"
+	private val FRIENDS_CACHE_FETCHED_AT_KEY = "friends_cache_fetched_at"
+	private val FRIENDS_CACHE_MAX_AGE_MS = 2 * 60 * 1000L // 2 minutes
+
+	fun getCachedFriendsJson(): String? = sharedPreferences.getString(FRIENDS_CACHE_KEY, null)
+
+	val isFriendsCacheFresh: Boolean
+		get()
+		{
+			val fetchedAt = sharedPreferences.getLong(FRIENDS_CACHE_FETCHED_AT_KEY, 0L)
+			if (fetchedAt == 0L) return false
+			return System.currentTimeMillis() - fetchedAt < FRIENDS_CACHE_MAX_AGE_MS
+		}
+
+	fun setCachedFriendsJson(json: String)
+	{
+		sharedPreferences.edit()
+			.putString(FRIENDS_CACHE_KEY, json)
+			.putLong(FRIENDS_CACHE_FETCHED_AT_KEY, System.currentTimeMillis())
+			.apply()
+	}
+
 	// Store/catalog locale and game-language settings.
 	// Store locale controls PS Store/Kamaji catalog/container requests.
 	// Game language controls the actual Gaikai stream language.
