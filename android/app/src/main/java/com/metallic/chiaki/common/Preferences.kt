@@ -55,6 +55,20 @@ class Preferences(context: Context)
 		const val CLOUD_BITRATE_MAX_KBPS = 200000
 		const val CLOUD_BITRATE_DEFAULT_KBPS = 20000
 
+		/**
+		 * Minimum bitrate (kbps) needed to keep a Cloud Play stream at the given resolution from
+		 * starving the decoder/network and dropping frames. The bitrate slider is a single flat
+		 * value shared across all resolutions, so without this a bitrate lowered for 720p would
+		 * silently carry over when switching up to 1080p/1440p/2160p.
+		 */
+		fun recommendedCloudBitrateKbps(resolutionHeight: Int) = when
+		{
+			resolutionHeight >= 2160 -> 40000
+			resolutionHeight >= 1440 -> 25000
+			resolutionHeight >= 1080 -> 15000
+			else -> 10000
+		}
+
 		private const val CLOUD_STORE_LOCALE_KEY = "cloud_store_locale"
 		private const val LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY = "cloud_language_pscloud"
 
@@ -547,6 +561,9 @@ class Preferences(context: Context)
 	fun setCloudResolutionPsnow(value: Int)
 	{
 		sharedPreferences.edit().putString(cloudResolutionPsnowKey, value.toString()).apply()
+		val recommended = recommendedCloudBitrateKbps(value)
+		if(getCloudBitratePsnow() < recommended)
+			setCloudBitratePsnow(recommended)
 	}
 	
 	// Cloud resolution settings for PSCloud (matching Qt GetCloudResolutionPSCloud/SetCloudResolutionPSCloud)
@@ -559,6 +576,9 @@ class Preferences(context: Context)
 	fun setCloudResolutionPscloud(value: Int)
 	{
 		sharedPreferences.edit().putString(cloudResolutionPscloudKey, value.toString()).apply()
+		val recommended = recommendedCloudBitrateKbps(value)
+		if(getCloudBitratePscloud() < recommended)
+			setCloudBitratePscloud(recommended)
 	}
 
 	// Cloud bitrate settings
