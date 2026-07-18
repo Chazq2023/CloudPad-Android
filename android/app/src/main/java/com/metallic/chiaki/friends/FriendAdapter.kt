@@ -11,12 +11,16 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemFriendBinding
 
 /** Shared by [FriendsActivity] and [com.metallic.chiaki.stream.QuickSettingsPanel]'s in-stream
  *  Friends tab so both present an identical friends list from the same fetched data. */
-class FriendAdapter(private val onFriendClick: (Friend) -> Unit) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>()
+class FriendAdapter(
+	private val onFriendClick: (Friend) -> Unit,
+	private val onCompareTrophiesClick: (Friend) -> Unit
+) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>()
 {
 	companion object
 	{
@@ -34,24 +38,48 @@ class FriendAdapter(private val onFriendClick: (Friend) -> Unit) : RecyclerView.
 
 		// Focusable unconditionally (not gated to TV mode) so D-pad/keyboard navigation through
 		// the friends list works on phone/tablet too, matching TrophyAdapter's row focus handling.
-		binding.root.isFocusable = true
-		binding.root.isFocusableInTouchMode = true
+		// Targets friendItemContent, not binding.root — the row's own focus/click target needs to
+		// be sized to just its own content, not the trophy button's area too. A focusable parent
+		// whose bounds fully contain a focusable child confuses D-pad directional focus search
+		// (the button was technically reachable but arrow keys couldn't reliably land on it,
+		// since it wasn't beside the row's focus rectangle but entirely inside it).
+		binding.friendItemContent.isFocusable = true
+		binding.friendItemContent.isFocusableInTouchMode = true
+		binding.friendItemContent.disableDefaultFocusHighlight()
+		binding.friendItemCompareTrophiesButton.isFocusable = true
+		binding.friendItemCompareTrophiesButton.isFocusableInTouchMode = true
+		binding.friendItemCompareTrophiesButton.disableDefaultFocusHighlight()
 
 		val tv = TypedValue()
 		binding.root.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
 		val accent = tv.data
-		binding.root.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+		val fillColor = (0x30 shl 24) or (accent and 0x00FFFFFF)
+		val strokeColor = (0x99 shl 24) or (accent and 0x00FFFFFF)
+		binding.friendItemContent.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
 			v.background = if (hasFocus)
 				GradientDrawable().apply {
 					shape = GradientDrawable.RECTANGLE
-					setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
-					setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
+					setColor(fillColor)
+					setStroke(2, strokeColor)
 				}
 			else
 				null
 		}
-		binding.root.setOnClickListener {
+		binding.friendItemCompareTrophiesButton.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+			v.foreground = if (hasFocus)
+				GradientDrawable().apply {
+					shape = GradientDrawable.OVAL
+					setColor(fillColor)
+					setStroke(2, strokeColor)
+				}
+			else
+				null
+		}
+		binding.friendItemContent.setOnClickListener {
 			holder.items()?.let { onFriendClick(it) }
+		}
+		binding.friendItemCompareTrophiesButton.setOnClickListener {
+			holder.items()?.let { onCompareTrophiesClick(it) }
 		}
 
 		return holder

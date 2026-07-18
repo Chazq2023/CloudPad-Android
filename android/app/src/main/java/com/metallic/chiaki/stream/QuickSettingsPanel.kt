@@ -30,9 +30,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.friends.ChatMessage
 import com.metallic.chiaki.friends.ChatMessageAdapter
 import com.metallic.chiaki.friends.ConversationResult
@@ -40,6 +41,10 @@ import com.metallic.chiaki.friends.Friend
 import com.metallic.chiaki.friends.FriendAdapter
 import com.metallic.chiaki.friends.FriendsRepository
 import com.metallic.chiaki.friends.FriendsResult
+import com.metallic.chiaki.trophy.TrophyCompareAdapter
+import com.metallic.chiaki.trophy.TrophyCompareRepository
+import com.metallic.chiaki.trophy.TrophyComparisonResult
+import com.metallic.chiaki.trophy.bindTrophyCompareHeader
 import com.metallic.chiaki.lib.StreamSessionType
 import com.metallic.chiaki.lib.sessionType
 import com.metallic.chiaki.session.ControllerAction
@@ -144,6 +149,7 @@ class QuickSettingsPanel(
 				{
 					when
 					{
+						inTrophyCompare -> backFromTrophyCompare()
 						inFriendChat -> backToFriendsList()
 						inTabContent -> exitToRailScope()
 						else -> close()
@@ -187,7 +193,10 @@ class QuickSettingsPanel(
 	private var trophiesLoadedOnce = false
 
 	private val friendsRepository = FriendsRepository(preferences)
-	private val friendAdapter = FriendAdapter { friend -> showFriendChat(friend) }
+	private val friendAdapter = FriendAdapter(
+		onFriendClick = { friend -> showFriendChat(friend) },
+		onCompareTrophiesClick = { friend -> showTrophyCompare(friend) }
+	)
 	private val chatMessageAdapter = ChatMessageAdapter()
 	private var friendsLoadedOnce = false
 	/** True while D-pad focus is inside the inline chat sub-view of the Friends tab rather than
@@ -195,6 +204,13 @@ class QuickSettingsPanel(
 	 *  BACK/BUTTON_B key handling. */
 	private var inFriendChat = false
 	private var currentChatGroupId: String? = null
+
+	private val trophyCompareRepository = TrophyCompareRepository(preferences, trophyRepository)
+	private val trophyCompareAdapter = TrophyCompareAdapter()
+	/** Sibling nesting level to [inFriendChat] — also a direct child of the friends-list
+	 *  sub-view, not nested inside chat. */
+	private var inTrophyCompare = false
+	private var currentCompareAccountId: String? = null
 
 	var isOpen = false
 		private set
@@ -236,58 +252,20 @@ class QuickSettingsPanel(
 		panel.quickSettingsTrophiesRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
 		panel.quickSettingsTrophiesRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-		panel.quickSettingsTrophiesRecyclerView.setItemViewCacheSize(20)
-		// Holding D-pad down fast-scrolls past rows faster than they can be laid out — when the
-		// currently-focused row gets recycled mid-scroll, the platform's own focus-restoration
-		// searches the whole window and lands on whatever's nearest outside the list (close/
-		// refresh), which is what caused focus to bounce out entirely. Catching the detach and
-		// immediately reclaiming focus keeps it inside the list without touching scroll speed at
-		// all — unlike throttling the key events (tried and rejected: slowed down normal fast
-		// scrolling). Scoped to this RecyclerView instance only, so TrophiesActivity's identical
-		// (shared TrophyAdapter) full-screen list is unaffected.
-		panel.quickSettingsTrophiesRecyclerView.addOnChildAttachStateChangeListener(
-			object: RecyclerView.OnChildAttachStateChangeListener
-			{
-				override fun onChildViewAttachedToWindow(view: View) {}
-				override fun onChildViewDetachedFromWindow(view: View)
-				{
-					if(!view.hasFocus()) return
-					// The platform's own (synchronous) default focus-restoration runs the instant
-					// the focused row detaches — before the post{} below gets a chance to redirect
-					// it — and it's not scoped to the list, so it can briefly land on the refresh
-					// button (the nearest other focusable view) every single detach. That's the
-					// flicker: refresh flashes focused, then a moment later gets overridden back
-					// into the list, over and over while scrolling. Making it transiently
-					// unfocusable for as long as detaches keep happening in quick succession (and
-					// only that long — restored once scrolling actually stops) removes it from
-					// that race entirely without blocking deliberate D-pad-up navigation to it
-					// once the list is idle.
-					panel.quickSettingsTrophiesRefreshButton.isFocusable = false
-					trophiesScrollSettleHandler.removeCallbacks(reenableTrophiesRefreshFocusable)
-					trophiesScrollSettleHandler.postDelayed(reenableTrophiesRefreshFocusable, 300L)
-
-					// Captured now, before the ViewHolder backing this view gets recycled —
-					// addFocusables() below returns attached views in top-to-bottom traversal
-					// order regardless of scroll direction, so blindly taking the first one
-					// snapped focus back toward the top of the visible range on every detach
-					// during a downward hold-scroll instead of continuing on downward. Picking
-					// whichever still-attached row's adapter position is closest to this one
-					// keeps focus moving the direction the list is actually scrolling.
-					val lastPosition = panel.quickSettingsTrophiesRecyclerView.getChildViewHolder(view)
-						?.bindingAdapterPosition ?: RecyclerView.NO_POSITION
-					panel.quickSettingsTrophiesRecyclerView.post {
-						val focusables = ArrayList<View>()
-						panel.quickSettingsTrophiesRecyclerView.addFocusables(focusables, View.FOCUS_DOWN)
-						val target = if(lastPosition == RecyclerView.NO_POSITION) focusables.firstOrNull()
-						else focusables.minByOrNull { candidate ->
-							val pos = panel.quickSettingsTrophiesRecyclerView.getChildAdapterPosition(candidate)
-							if(pos == RecyclerView.NO_POSITION) Int.MAX_VALUE else kotlin.math.abs(pos - lastPosition)
-						}
-						target?.requestFocus()
-					}
-				}
-			}
-		)
+		panel.quickSettingsTrophiesRecyclerView.fixFocusOnFastScroll("QSTrophies") {
+			// The platform's own (synchronous) default focus-restoration runs the instant a
+			// focused row detaches — before fixFocusOnFastScroll's own redirect gets a chance to
+			// run — and it's not scoped to the list, so it can briefly land on the refresh button
+			// (the nearest other focusable view) every single detach. That's the flicker: refresh
+			// flashes focused, then a moment later gets overridden back into the list, over and
+			// over while scrolling. Making it transiently unfocusable for as long as detaches keep
+			// happening in quick succession (and only that long — restored once scrolling actually
+			// stops) removes it from that race entirely without blocking deliberate D-pad-up
+			// navigation to it once the list is idle.
+			panel.quickSettingsTrophiesRefreshButton.isFocusable = false
+			trophiesScrollSettleHandler.removeCallbacks(reenableTrophiesRefreshFocusable)
+			trophiesScrollSettleHandler.postDelayed(reenableTrophiesRefreshFocusable, 300L)
+		}
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
 
 		panel.quickSettingsFriendsRecyclerView.layoutManager = LinearLayoutManager(activity)
@@ -302,6 +280,13 @@ class QuickSettingsPanel(
 		panel.quickSettingsFriendChatBackButton.setOnClickListener { backToFriendsList() }
 		panel.quickSettingsFriendChatRefreshButton.setOnClickListener { refreshFriendChat() }
 		panel.quickSettingsFriendChatSendButton.setOnClickListener { sendFriendChatMessage() }
+
+		panel.quickSettingsTrophyCompareRecyclerView.layoutManager = LinearLayoutManager(activity)
+		panel.quickSettingsTrophyCompareRecyclerView.adapter = trophyCompareAdapter
+		panel.quickSettingsTrophyCompareRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		panel.quickSettingsTrophyCompareRecyclerView.fixFocusOnFastScroll("QSTrophyCompare")
+		panel.quickSettingsTrophyCompareBackButton.setOnClickListener { backFromTrophyCompare() }
+		panel.quickSettingsTrophyCompareRefreshButton.setOnClickListener { loadTrophyCompare() }
 
 		// "Current game" header row and the Trophies tab both only make sense for cloud
 		// streaming (PS3/PS4/PS5) — Remote Play has no catalog game/trophy title to show.
@@ -443,7 +428,8 @@ class QuickSettingsPanel(
 			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsTrophiesRefreshButton,
 			panel.quickSettingsFriendsRefreshButton,
 			panel.quickSettingsFriendChatBackButton, panel.quickSettingsFriendChatRefreshButton,
-			panel.quickSettingsFriendChatInput, panel.quickSettingsFriendChatSendButton
+			panel.quickSettingsFriendChatInput, panel.quickSettingsFriendChatSendButton,
+			panel.quickSettingsTrophyCompareBackButton, panel.quickSettingsTrophyCompareRefreshButton
 		).forEach { addFocusHighlight(it, pyluxAccentColor) }
 
 		// Start off-screen (closed).
@@ -679,6 +665,79 @@ class QuickSettingsPanel(
 		inFriendChat = false
 		currentChatGroupId = null
 		panel.quickSettingsFriendsChatGroup.visibility = View.GONE
+		panel.quickSettingsFriendsListGroup.visibility = View.VISIBLE
+		panel.quickSettingsFriendsListGroup.post {
+			panel.quickSettingsFriendsRefreshButton.isFocusableInTouchMode = true
+			panel.quickSettingsFriendsRefreshButton.requestFocus()
+		}
+	}
+
+	/** Swaps the Friends tab's list sub-view for its inline trophy-comparison sub-view — a
+	 *  sibling of the chat sub-view, not nested inside it, same "no separate Activity" reasoning. */
+	private fun showTrophyCompare(friend: Friend)
+	{
+		inTrophyCompare = true
+		currentCompareAccountId = friend.accountId
+		panel.quickSettingsFriendsListGroup.visibility = View.GONE
+		panel.quickSettingsTrophyCompareGroup.visibility = View.VISIBLE
+		panel.quickSettingsTrophyCompareTitle.text = activity.getString(R.string.trophy_compare_title, friend.onlineId)
+
+		loadTrophyCompare()
+
+		panel.quickSettingsTrophyCompareGroup.post {
+			panel.quickSettingsTrophyCompareBackButton.isFocusableInTouchMode = true
+			panel.quickSettingsTrophyCompareBackButton.requestFocus()
+		}
+	}
+
+	private fun loadTrophyCompare()
+	{
+		val accountId = currentCompareAccountId ?: return
+		panel.quickSettingsTrophyCompareProgressBar.visibility = View.VISIBLE
+		panel.quickSettingsTrophyCompareEmptyText.visibility = View.GONE
+		panel.quickSettingsTrophyCompareContentGroup.visibility = View.GONE
+
+		activity.lifecycleScope.launch {
+			when (val result = trophyCompareRepository.fetchComparison(accountId))
+			{
+				is TrophyComparisonResult.Success -> {
+					panel.quickSettingsTrophyCompareProgressBar.visibility = View.GONE
+					panel.quickSettingsTrophyCompareSharedGamesLabel.text =
+						activity.getString(R.string.trophy_compare_shared_games, result.sharedGames.size)
+
+					if (result.sharedGames.isEmpty())
+					{
+						showTrophyCompareEmptyState(activity.getString(R.string.trophy_compare_empty))
+					}
+					else
+					{
+						val friend = friendAdapter.items.firstOrNull { it.accountId == accountId }
+						panel.quickSettingsTrophyCompareHeader.bindTrophyCompareHeader(
+							result, result.myAvatarUrl, theirName = friend?.onlineId ?: "", theirAvatarUrl = friend?.avatarUrl ?: ""
+						)
+						trophyCompareAdapter.items = result.sharedGames
+						panel.quickSettingsTrophyCompareContentGroup.visibility = View.VISIBLE
+					}
+				}
+				is TrophyComparisonResult.Error -> {
+					panel.quickSettingsTrophyCompareProgressBar.visibility = View.GONE
+					showTrophyCompareEmptyState(result.message)
+				}
+			}
+		}
+	}
+
+	private fun showTrophyCompareEmptyState(message: String)
+	{
+		panel.quickSettingsTrophyCompareEmptyText.text = message
+		panel.quickSettingsTrophyCompareEmptyText.visibility = View.VISIBLE
+	}
+
+	private fun backFromTrophyCompare()
+	{
+		inTrophyCompare = false
+		currentCompareAccountId = null
+		panel.quickSettingsTrophyCompareGroup.visibility = View.GONE
 		panel.quickSettingsFriendsListGroup.visibility = View.VISIBLE
 		panel.quickSettingsFriendsListGroup.post {
 			panel.quickSettingsFriendsRefreshButton.isFocusableInTouchMode = true
@@ -979,6 +1038,7 @@ class QuickSettingsPanel(
 	 *  rather than lost the moment focus first leaves. */
 	private fun addFocusHighlight(view: View, color: Int, useForeground: Boolean = false)
 	{
+		view.disableDefaultFocusHighlight()
 		val fillColor = (0x30 shl 24) or (color and 0x00FFFFFF)
 		val strokeColor = (0x99 shl 24) or (color and 0x00FFFFFF)
 		val strokeWidthPx = (2f * activity.resources.displayMetrics.density).toInt()
@@ -1014,9 +1074,10 @@ class QuickSettingsPanel(
 
 	private fun exitToRailScope()
 	{
-		// Always land back on the friends list, never mid-conversation, next time this tab is
-		// reopened or drilled back into.
+		// Always land back on the friends list, never mid-conversation/comparison, next time this
+		// tab is reopened or drilled back into.
 		if(inFriendChat) backToFriendsList()
+		if(inTrophyCompare) backFromTrophyCompare()
 
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = true

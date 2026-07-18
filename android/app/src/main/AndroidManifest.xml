@@ -74,6 +74,10 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name="com.metallic.chiaki.friends.TrophyCompareActivity"
+            android:exported="false" />
+
+        <activity
             android:name="com.metallic.chiaki.settings.ControllerRemapActivity"
             android:exported="false"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />

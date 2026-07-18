@@ -32,7 +32,10 @@ class FriendsActivity : AppCompatActivity()
 
 	private lateinit var binding: ActivityFriendsBinding
 	private lateinit var repository: FriendsRepository
-	private val adapter = FriendAdapter { friend -> FriendChatActivity.start(this, friend) }
+	private val adapter = FriendAdapter(
+		onFriendClick = { friend -> FriendChatActivity.start(this, friend) },
+		onCompareTrophiesClick = { friend -> TrophyCompareActivity.start(this, friend) }
+	)
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{

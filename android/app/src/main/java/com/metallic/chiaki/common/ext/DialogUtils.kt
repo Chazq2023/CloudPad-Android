@@ -11,6 +11,7 @@ import android.view.KeyEvent
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.pylux.stream.R
 
 private const val TV_TITLE_SP = 28f
 private const val TV_BODY_SP = 24f
@@ -24,17 +25,30 @@ fun Context.isTv(): Boolean
 }
 
 /**
- * App-wide dialog builder. On phone/tablet it behaves identically to
- * [MaterialAlertDialogBuilder]. On TV it automatically:
+ * App-wide dialog builder — every dialog in the app should be created via
+ * `context.alertDialogBuilder()` (never a bare `MaterialAlertDialogBuilder`) so this styling and
+ * the TV enhancements below apply automatically.
  *
- * - Scales title, message and button text for couch-distance readability.
- * - Adds a visible blue overlay on focused buttons for D-pad navigation.
- * - Pre-highlights the positive button and intercepts the first
- *   DPAD_CENTER / ENTER so it activates with a single press even when
- *   the system is in touch mode (common on TV emulators).
+ * - Rounded grey box with a theme-accent-coloured border, on the window itself so it wraps the
+ *   button row too — originally a one-off applied to just the disclaimer dialog, now the standard
+ *   look for every dialog in the app from this single shared entry point. Overriding [create]
+ *   rather than [show] covers callers that build via `.create()` then show the result later, not
+ *   just ones that call `.show()` directly — [show]'s own default implementation calls [create]
+ *   internally, so both paths still only need this one override.
+ * - On TV: scales title, message and button text for couch-distance readability, adds a visible
+ *   blue overlay on focused buttons for D-pad navigation, and pre-highlights the positive button
+ *   so it activates with a single press even when the system is in touch mode (common on TV
+ *   emulators).
  */
 class AppAlertDialogBuilder(context: Context) : MaterialAlertDialogBuilder(context)
 {
+	override fun create(): AlertDialog
+	{
+		val dialog = super.create()
+		dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
+		return dialog
+	}
+
 	override fun show(): AlertDialog
 	{
 		val dialog = super.show()

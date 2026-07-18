@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.metallic.chiaki.trophy.model.Trophy
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.metallic.chiaki.trophy.model.TrophyType
@@ -86,6 +87,7 @@ class TrophyAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>()
 			// through the trophy list works on phone/tablet too, not just Android TV.
 			itemView.isFocusable = true
 			itemView.isFocusableInTouchMode = true
+			itemView.disableDefaultFocusHighlight()
 
 			val tv = TypedValue()
 			itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)

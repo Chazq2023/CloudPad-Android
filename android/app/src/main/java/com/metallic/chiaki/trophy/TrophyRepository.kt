@@ -59,6 +59,15 @@ class TrophyRepository(private val preferences: Preferences)
 		}
 	}
 
+	/** All of the signed-in account's trophy titles, not matched to any specific game — used by
+	 *  trophy comparison. Shares the same cache [fetchTrophiesForGame] populates via
+	 *  [getTrophyTitles], so opening a comparison right after browsing Trophies doesn't re-fetch. */
+	suspend fun fetchMyTrophyTitles(forceRefresh: Boolean = false): List<com.metallic.chiaki.trophy.model.TrophyTitleSummary>? =
+		withContext(Dispatchers.IO) {
+			val token = tokenManager.getValidToken() ?: return@withContext null
+			getTrophyTitles(token, forceRefresh)
+		}
+
 	private suspend fun getTrophyTitles(token: String, forceRefresh: Boolean): List<com.metallic.chiaki.trophy.model.TrophyTitleSummary>
 	{
 		if (!forceRefresh && preferences.isTrophyTitlesCacheFresh)

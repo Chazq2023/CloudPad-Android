@@ -3,6 +3,7 @@
 package com.metallic.chiaki.common.ext
 
 import android.content.Context
+import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 
@@ -22,5 +23,18 @@ fun View.enableFocusableInTouchModeForTv(context: Context)
 	}
 	if (isFocusable) {
 		isFocusableInTouchMode = true
+	}
+}
+
+/**
+ * Suppresses the platform's own automatic focus highlight (a system-drawn glow/scale effect
+ * added in API 26, layered on top of whatever a view already draws for focus). Custom row/button
+ * focus highlights in this app draw their own — without this they show doubled: the intended
+ * theme-coloured one plus a separate translucent system one behind/around it.
+ */
+fun View.disableDefaultFocusHighlight()
+{
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+		defaultFocusHighlightEnabled = false
 	}
 }

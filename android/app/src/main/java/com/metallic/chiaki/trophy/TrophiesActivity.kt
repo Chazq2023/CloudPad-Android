@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityTrophiesBinding
@@ -80,10 +81,7 @@ class TrophiesActivity : AppCompatActivity()
 		binding.trophyRecyclerView.layoutManager = LinearLayoutManager(this)
 		binding.trophyRecyclerView.adapter = adapter
 		binding.trophyRecyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
-		// Holding D-pad down otherwise recycles rows faster than the default cache retains them,
-		// which shows up as scrolling repeatedly stalling then catching up under a held key —
-		// same fix already applied to the Quick Settings panel's copy of this list.
-		binding.trophyRecyclerView.setItemViewCacheSize(20)
+		binding.trophyRecyclerView.fixFocusOnFastScroll("TrophiesActivity")
 
 		loadTrophies(gameName, platform)
 	}

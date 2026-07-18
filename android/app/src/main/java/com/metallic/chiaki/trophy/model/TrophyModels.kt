@@ -44,6 +44,14 @@ data class TrophyTitleSummary(
 	val progressPercent: Int
 )
 
+/** Account-wide trophy stats — the "Level 312" figure PSN shows on a profile, used by trophy
+ *  comparison rather than any per-game screen. */
+data class TrophyAccountSummary(
+	val level: Int,
+	val progressPercent: Int,
+	val earnedTrophies: TrophyCounts
+)
+
 data class TrophyGroup(
 	val groupId: String,
 	val groupName: String,
