@@ -452,6 +452,20 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 		})
 	}
 
+	/** Like [attachToTextureView], but the Surface comes from a [com.metallic.chiaki.stream.CasVideoSurfaceView]'s
+	 *  off-screen SurfaceTexture (an external OES texture sampled by its CAS shader) instead of a
+	 *  TextureView's own on-screen one — the decoder doesn't know or care which. */
+	fun attachToCasSurfaceView(view: com.metallic.chiaki.stream.CasVideoSurfaceView)
+	{
+		view.onSurfaceReady = { readySurface ->
+			if(surface == null)
+			{
+				surface = readySurface
+				session?.setSurface(readySurface)
+			}
+		}
+	}
+
 	fun attachToTextureView(textureView: TextureView)
 	{
 		textureView.surfaceTextureListener = object: TextureView.SurfaceTextureListener {

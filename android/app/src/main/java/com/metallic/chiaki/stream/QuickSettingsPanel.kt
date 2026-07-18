@@ -104,7 +104,8 @@ class QuickSettingsPanel(
 	private val gameImageUrl: String,
 	private val getDisplayMode: () -> TransformMode,
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
-	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit
+	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit,
+	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater).apply {
 		// root.focusable=true (see stream_quick_settings_panel.xml) exists only so a touch tap
@@ -373,6 +374,33 @@ class QuickSettingsPanel(
 			preferences.pipEnabled = isChecked
 		}
 
+		// CAS Image Sharpening: applies to the live GL renderer immediately, in the same
+		// listener that flips the toggle/moves the slider — no Save button, same as every
+		// other row here. Slider only exists visually while the toggle is on.
+		panel.quickSettingsCasRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_cas_sharpening_enabled_title)
+		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.max = Preferences.CAS_SHARPENING_LEVEL_MAX - Preferences.CAS_SHARPENING_LEVEL_MIN
+		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.keyProgressIncrement = 1
+		panel.quickSettingsCasRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
+			preferences.casSharpeningEnabled = isChecked
+			panel.quickSettingsCasSeekBarRow.root.visibility = if(isChecked) View.VISIBLE else View.GONE
+			onCasSharpeningChanged(isChecked, preferences.casSharpeningLevel)
+		}
+		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
+		{
+			override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean)
+			{
+				val value = progress + Preferences.CAS_SHARPENING_LEVEL_MIN
+				updateCasSeekBarLabel(value)
+				if(fromUser)
+				{
+					preferences.casSharpeningLevel = value
+					onCasSharpeningChanged(preferences.casSharpeningEnabled, value)
+				}
+			}
+			override fun onStartTrackingTouch(seekBar: SeekBar) {}
+			override fun onStopTrackingTouch(seekBar: SeekBar) {}
+		})
+
 		// Window Size applies immediately too, as soon as a new option is checked.
 		panel.quickSettingsDisplayModeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
 			if(!isChecked) return@addOnButtonCheckedListener
@@ -426,7 +454,8 @@ class QuickSettingsPanel(
 			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOscRow.quickSettingsRowSwitch,
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
-			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsTrophiesRefreshButton,
+			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsCasRow.quickSettingsRowSwitch,
+			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
 			panel.quickSettingsFriendsRefreshButton,
 			panel.quickSettingsFriendChatBackButton, panel.quickSettingsFriendChatRefreshButton,
 			panel.quickSettingsFriendChatInput, panel.quickSettingsFriendChatSendButton,
@@ -908,6 +937,12 @@ class QuickSettingsPanel(
 		addFocusHighlight(row.quickSettingsDropdownSpinner, pyluxAccentColor)
 	}
 
+	private fun updateCasSeekBarLabel(value: Int)
+	{
+		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBarLabel.text =
+			activity.getString(R.string.quick_settings_cas_sharpening_level, value)
+	}
+
 	private fun addSeekBarRow(
 		container: LinearLayout,
 		summaryRes: Int,
@@ -973,6 +1008,11 @@ class QuickSettingsPanel(
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.isChecked = preferences.motionEnabled
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
+
+		panel.quickSettingsCasRow.quickSettingsRowSwitch.isChecked = preferences.casSharpeningEnabled
+		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.casSharpeningEnabled) View.VISIBLE else View.GONE
+		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
+		updateCasSeekBarLabel(preferences.casSharpeningLevel)
 
 		panel.root.translationX = panelWidthPx
 		if(!dialog.isShowing) dialog.show()

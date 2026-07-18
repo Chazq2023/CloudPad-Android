@@ -55,6 +55,10 @@ class Preferences(context: Context)
 		const val CLOUD_BITRATE_MAX_KBPS = 200000
 		const val CLOUD_BITRATE_DEFAULT_KBPS = 20000
 
+		const val CAS_SHARPENING_LEVEL_MIN = 1
+		const val CAS_SHARPENING_LEVEL_MAX = 10
+		const val CAS_SHARPENING_LEVEL_DEFAULT = 1
+
 		private const val CLOUD_STORE_LOCALE_KEY = "cloud_store_locale"
 		private const val LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY = "cloud_language_pscloud"
 
@@ -123,6 +127,16 @@ class Preferences(context: Context)
 	var pipEnabled
 		get() = sharedPreferences.getBoolean(pipEnabledKey, true)
 		set(value) { sharedPreferences.edit().putBoolean(pipEnabledKey, value).apply() }
+
+	val casSharpeningEnabledKey get() = resources.getString(R.string.preferences_cas_sharpening_enabled_key)
+	var casSharpeningEnabled
+		get() = sharedPreferences.getBoolean(casSharpeningEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(casSharpeningEnabledKey, value).apply() }
+
+	val casSharpeningLevelKey get() = resources.getString(R.string.preferences_cas_sharpening_level_key)
+	var casSharpeningLevel
+		get() = sharedPreferences.getInt(casSharpeningLevelKey, CAS_SHARPENING_LEVEL_DEFAULT).coerceIn(CAS_SHARPENING_LEVEL_MIN, CAS_SHARPENING_LEVEL_MAX)
+		set(value) { sharedPreferences.edit().putInt(casSharpeningLevelKey, value.coerceIn(CAS_SHARPENING_LEVEL_MIN, CAS_SHARPENING_LEVEL_MAX)).apply() }
 
 	val swapCrossMoonKey get() = resources.getString(R.string.preferences_swap_cross_moon_key)
 	var swapCrossMoon

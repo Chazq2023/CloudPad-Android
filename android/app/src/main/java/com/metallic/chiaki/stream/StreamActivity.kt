@@ -161,7 +161,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			requestMicPermission = { onResult ->
 				pendingMicPermissionCallback = onResult
 				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-			}
+			},
+			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) }
 		)
 
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch,
@@ -182,7 +183,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		})
 
 		//viewModel.session.attachToTextureView(textureView)
-		viewModel.session.attachToSurfaceView(binding.surfaceView)
+		val videoProfile = connectInfo.videoProfile
+		binding.surfaceView.setVideoSize(videoProfile.width, videoProfile.height)
+		binding.surfaceView.setSharpening(prefs.casSharpeningEnabled, prefs.casSharpeningLevel)
+		viewModel.session.attachToCasSurfaceView(binding.surfaceView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()
 
@@ -228,6 +232,9 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		Log.i("StreamActivity", "onResume: pip=$isInPictureInPictureMode session=${viewModel.session.session != null}")
 		hideSystemUI()
 
+		// Paired with viewModel.session.resume() — the GL render thread should be alive
+		// exactly when the decoder is (see CasVideoSurfaceView's own doc comment).
+		binding.surfaceView.onResume()
 		viewModel.session.resume()
 	}
 
@@ -238,6 +245,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		if (!isInPictureInPictureMode)
 		{
 			viewModel.session.skipNativeSurfaceCleanup = false
+			binding.surfaceView.onPause()
 			viewModel.session.pause()
 		}
 	}
@@ -250,6 +258,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		if (!isInPictureInPictureMode)
 		{
 			viewModel.session.skipNativeSurfaceCleanup = false
+			binding.surfaceView.onPause()
 			viewModel.session.pause()
 		}
 	}
@@ -344,6 +353,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			if (activityStopped)
 			{
 				Log.i("StreamActivity", "handlePipChanged: PiP dismissed while stopped, shutting down session")
+				binding.surfaceView.onPause()
 				viewModel.session.pause()
 			}
 			else if (!isFinishing)

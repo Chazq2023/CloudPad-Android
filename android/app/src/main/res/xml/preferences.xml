@@ -94,6 +94,27 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:key="category_cas_sharpening"
+        app:title="@string/preferences_category_title_cas_sharpening">
+        <SwitchPreference
+            app:key="@string/preferences_cas_sharpening_enabled_key"
+            app:title="@string/preferences_cas_sharpening_enabled_title"
+            app:summary="@string/preferences_cas_sharpening_enabled_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_resolution"/>
+
+        <SeekBarPreference
+            app:key="@string/preferences_cas_sharpening_level_key"
+            app:title="@string/preferences_cas_sharpening_level_title"
+            app:min="1"
+            android:max="10"
+            app:seekBarIncrement="1"
+            app:defaultValue="1"
+            app:showSeekBarValue="true"
+            app:icon="@drawable/ic_resolution"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="category_stream"
         app:title="@string/preferences_category_title_stream">
         <ListPreference
