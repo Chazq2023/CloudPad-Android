@@ -102,6 +102,7 @@ jobs:
 
             ### Updates
             - Fixed Cloud Play streams dropping FPS after switching to a higher resolution (e.g. 1080p): the bitrate is now automatically raised to match the selected resolution instead of silently carrying over a lower value set at a smaller resolution.
+            - Reduced occasional video microstutter by giving the frame-pacing scheduler more headroom (50ms vs 33ms) to absorb network/encode jitter before it shows up as a visible hitch, at the cost of a small increase in input latency.
 
             ### APK
             Attached release asset:

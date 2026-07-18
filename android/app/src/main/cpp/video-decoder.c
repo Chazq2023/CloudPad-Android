@@ -419,9 +419,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// 2x vsync (33ms at 60fps) baseline minimises display-side input latency.
+				// 3x vsync (50ms at 60fps) baseline trades a bit more display-side input
+				// latency for extra slack to absorb network/encode jitter before it shows
+				// up as a visible pacing hitch (was 2x; bumped after observing periodic
+				// >25ms-late frames uncorrelated with any single measurable cause).
 				// Cap at 8x vsync (133ms at 60fps) as a safety net for extreme jitter bursts.
-				const int64_t baseline_ns = 2 * vsync_period_ns;
+				const int64_t baseline_ns = 3 * vsync_period_ns;
 				const int64_t cap_ns      = 8 * vsync_period_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
