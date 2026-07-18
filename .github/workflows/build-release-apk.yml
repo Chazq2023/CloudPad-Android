@@ -41,6 +41,10 @@ jobs:
           sudo apt-get install -y protobuf-compiler
           python3 -m pip install grpcio-tools
 
+      - name: Run unit tests
+        working-directory: android
+        run: ./gradlew testDebugUnitTest
+
       - name: Set up signing keystore
         working-directory: android
         env:
@@ -97,7 +101,11 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Updated the "no trophy data" message (Quick Settings Trophies tab and full Trophies screen) to explain that the game needs to be launched and synced, that syncing can take 5-10 minutes, and to raise a GitHub issue if data is still missing after that.
+            - Added a Friends feature: a new smiley icon in the main menu opens your PSN friends list (with avatars, online status, current game, and last-online time), and tapping a friend opens a chat screen to message them.
+            - Added the same Friends list and messaging as a new tab in the in-stream Quick Settings panel, so you can check friends and chat without leaving your stream.
+            - Sent messages appear instantly and conversation history now loads correctly; message bubbles show yours on the left and your friend's on the right.
+            - Added a refresh button to the friends list and chat screens (both the main menu and Quick Settings), plus a Triangle/Y controller shortcut for refreshing the main menu's friends list and chat screens.
+            - Shrank and re-centred the Quick Settings tab rail icons so the new Friends tab fits alongside the existing ones without crowding.
 
             ### APK
             Attached release asset:

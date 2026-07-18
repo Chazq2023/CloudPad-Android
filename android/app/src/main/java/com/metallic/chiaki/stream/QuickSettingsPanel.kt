@@ -33,6 +33,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.friends.ChatMessage
+import com.metallic.chiaki.friends.ChatMessageAdapter
+import com.metallic.chiaki.friends.ConversationResult
+import com.metallic.chiaki.friends.Friend
+import com.metallic.chiaki.friends.FriendAdapter
+import com.metallic.chiaki.friends.FriendsRepository
+import com.metallic.chiaki.friends.FriendsResult
 import com.metallic.chiaki.lib.StreamSessionType
 import com.metallic.chiaki.lib.sessionType
 import com.metallic.chiaki.session.ControllerAction
@@ -135,7 +142,12 @@ class QuickSettingsPanel(
 				event.action != KeyEvent.ACTION_UP -> false
 				keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B ->
 				{
-					if(inTabContent) exitToRailScope() else close()
+					when
+					{
+						inFriendChat -> backToFriendsList()
+						inTabContent -> exitToRailScope()
+						else -> close()
+					}
 					true
 				}
 				keyCode == KeyEvent.KEYCODE_BUTTON_A ->
@@ -173,6 +185,16 @@ class QuickSettingsPanel(
 	private val trophyRepository = TrophyRepository(preferences)
 	private val trophyAdapter = TrophyAdapter()
 	private var trophiesLoadedOnce = false
+
+	private val friendsRepository = FriendsRepository(preferences)
+	private val friendAdapter = FriendAdapter { friend -> showFriendChat(friend) }
+	private val chatMessageAdapter = ChatMessageAdapter()
+	private var friendsLoadedOnce = false
+	/** True while D-pad focus is inside the inline chat sub-view of the Friends tab rather than
+	 *  its friends-list sub-view — a third nesting level below inTabContent, see the panel's
+	 *  BACK/BUTTON_B key handling. */
+	private var inFriendChat = false
+	private var currentChatGroupId: String? = null
 
 	var isOpen = false
 		private set
@@ -267,6 +289,19 @@ class QuickSettingsPanel(
 			}
 		)
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
+
+		panel.quickSettingsFriendsRecyclerView.layoutManager = LinearLayoutManager(activity)
+		panel.quickSettingsFriendsRecyclerView.adapter = friendAdapter
+		panel.quickSettingsFriendsRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		panel.quickSettingsFriendsRecyclerView.setItemViewCacheSize(20)
+		panel.quickSettingsFriendsRefreshButton.setOnClickListener { loadFriends(forceRefresh = true) }
+
+		panel.quickSettingsFriendChatRecyclerView.layoutManager = LinearLayoutManager(activity).apply { stackFromEnd = true }
+		panel.quickSettingsFriendChatRecyclerView.adapter = chatMessageAdapter
+		panel.quickSettingsFriendChatRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		panel.quickSettingsFriendChatBackButton.setOnClickListener { backToFriendsList() }
+		panel.quickSettingsFriendChatRefreshButton.setOnClickListener { refreshFriendChat() }
+		panel.quickSettingsFriendChatSendButton.setOnClickListener { sendFriendChatMessage() }
 
 		// "Current game" header row and the Trophies tab both only make sense for cloud
 		// streaming (PS3/PS4/PS5) — Remote Play has no catalog game/trophy title to show.
@@ -381,7 +416,7 @@ class QuickSettingsPanel(
 		// unaffected, since a real key event has exited touch mode by then).
 		listOf(
 			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
-			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies
+			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies, panel.quickSettingsTabFriends
 		).forEach { it.isFocusableInTouchMode = true }
 
 		// These buttons' colour selectors only vary by checked state (see
@@ -392,7 +427,7 @@ class QuickSettingsPanel(
 		// one below, matching the Controller tab's remap list.
 		listOf(
 			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
-			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies,
+			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies, panel.quickSettingsTabFriends,
 			panel.quickSettingsCloseButton, panel.quickSettingsDisconnectButton
 		).forEach { addFocusHighlight(it, Color.WHITE, useForeground = true) }
 
@@ -405,7 +440,10 @@ class QuickSettingsPanel(
 			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOscRow.quickSettingsRowSwitch,
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
-			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsTrophiesRefreshButton
+			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsTrophiesRefreshButton,
+			panel.quickSettingsFriendsRefreshButton,
+			panel.quickSettingsFriendChatBackButton, panel.quickSettingsFriendChatRefreshButton,
+			panel.quickSettingsFriendChatInput, panel.quickSettingsFriendChatSendButton
 		).forEach { addFocusHighlight(it, pyluxAccentColor) }
 
 		// Start off-screen (closed).
@@ -422,6 +460,8 @@ class QuickSettingsPanel(
 			if(checkedButtonId == R.id.quickSettingsTabSession) View.VISIBLE else View.GONE
 		panel.quickSettingsTrophiesSection.visibility =
 			if(checkedButtonId == R.id.quickSettingsTabTrophies) View.VISIBLE else View.GONE
+		panel.quickSettingsFriendsSection.visibility =
+			if(checkedButtonId == R.id.quickSettingsTabFriends) View.VISIBLE else View.GONE
 
 		// Fetched lazily the first time this tab is opened rather than at construction time
 		// (unlike the Session tab's static rows) since it's a live network call — the refresh
@@ -430,6 +470,11 @@ class QuickSettingsPanel(
 		{
 			trophiesLoadedOnce = true
 			loadTrophies(forceRefresh = false)
+		}
+		if(checkedButtonId == R.id.quickSettingsTabFriends && !friendsLoadedOnce)
+		{
+			friendsLoadedOnce = true
+			loadFriends(forceRefresh = false)
 		}
 	}
 
@@ -488,6 +533,157 @@ class QuickSettingsPanel(
 	{
 		panel.quickSettingsTrophiesEmptyText.text = message
 		panel.quickSettingsTrophiesEmptyText.visibility = View.VISIBLE
+	}
+
+	/** Loads the account's friends list — unlike Trophies this isn't tied to the game being
+	 *  streamed, so it's the same call regardless of session type. */
+	private fun loadFriends(forceRefresh: Boolean)
+	{
+		panel.quickSettingsFriendsProgressBar.visibility = View.VISIBLE
+		panel.quickSettingsFriendsEmptyText.visibility = View.GONE
+		panel.quickSettingsFriendsRecyclerView.visibility = View.GONE
+
+		activity.lifecycleScope.launch {
+			when(val result = friendsRepository.fetchFriends(forceRefresh))
+			{
+				is FriendsResult.Success -> {
+					panel.quickSettingsFriendsProgressBar.visibility = View.GONE
+					if(result.friends.isEmpty())
+					{
+						showFriendsEmptyState(activity.getString(R.string.quick_settings_friends_empty))
+					}
+					else
+					{
+						friendAdapter.items = result.friends
+						panel.quickSettingsFriendsRecyclerView.visibility = View.VISIBLE
+					}
+				}
+				is FriendsResult.Error -> {
+					panel.quickSettingsFriendsProgressBar.visibility = View.GONE
+					showFriendsEmptyState(result.message)
+				}
+			}
+		}
+	}
+
+	private fun showFriendsEmptyState(message: String)
+	{
+		panel.quickSettingsFriendsEmptyText.text = message
+		panel.quickSettingsFriendsEmptyText.visibility = View.VISIBLE
+	}
+
+	/** Swaps the Friends tab's list sub-view for its inline chat sub-view — never a separate
+	 *  Activity, which would background StreamActivity mid-session (see the layout's own comment
+	 *  on quickSettingsFriendsSection). */
+	private fun showFriendChat(friend: Friend)
+	{
+		inFriendChat = true
+		panel.quickSettingsFriendsListGroup.visibility = View.GONE
+		panel.quickSettingsFriendsChatGroup.visibility = View.VISIBLE
+		panel.quickSettingsFriendChatTitle.text = friend.onlineId
+		panel.quickSettingsFriendChatProgressBar.visibility = View.VISIBLE
+		panel.quickSettingsFriendChatEmptyText.visibility = View.GONE
+		panel.quickSettingsFriendChatRecyclerView.visibility = View.GONE
+		currentChatGroupId = null
+
+		activity.lifecycleScope.launch {
+			when(val result = friendsRepository.openConversation(friend.accountId))
+			{
+				is ConversationResult.Success -> {
+					currentChatGroupId = result.groupId
+					showChatMessages(result.messages)
+				}
+				is ConversationResult.Error -> {
+					// Still capture the group id if the DM group itself was created fine and only
+					// the history fetch failed — lets the user send even though history didn't load.
+					currentChatGroupId = result.groupId
+					panel.quickSettingsFriendChatProgressBar.visibility = View.GONE
+					panel.quickSettingsFriendChatEmptyText.text = result.message
+					panel.quickSettingsFriendChatEmptyText.visibility = View.VISIBLE
+				}
+			}
+		}
+
+		// Same reasoning as open()'s post{}: right after the group's visibility flips the new
+		// content hasn't finished its first layout pass yet, so requestFocus() here can silently
+		// lose to the platform's own default-focus pass a frame later without this.
+		panel.quickSettingsFriendsChatGroup.post {
+			panel.quickSettingsFriendChatBackButton.isFocusableInTouchMode = true
+			panel.quickSettingsFriendChatBackButton.requestFocus()
+		}
+	}
+
+	private fun showChatMessages(messages: List<ChatMessage>)
+	{
+		panel.quickSettingsFriendChatProgressBar.visibility = View.GONE
+
+		if(messages.isEmpty())
+		{
+			panel.quickSettingsFriendChatEmptyText.text = activity.getString(R.string.friend_chat_empty_state)
+			panel.quickSettingsFriendChatEmptyText.visibility = View.VISIBLE
+			panel.quickSettingsFriendChatRecyclerView.visibility = View.GONE
+			return
+		}
+
+		panel.quickSettingsFriendChatEmptyText.visibility = View.GONE
+		chatMessageAdapter.items = messages
+		panel.quickSettingsFriendChatRecyclerView.visibility = View.VISIBLE
+		panel.quickSettingsFriendChatRecyclerView.scrollToPosition(messages.size - 1)
+	}
+
+	/** Re-fetches the open conversation on demand — same call the panel already makes right after
+	 *  sending, just triggerable manually so the latest messages (e.g. a friend's reply) show up
+	 *  without having to leave and re-enter the chat. */
+	private fun refreshFriendChat()
+	{
+		val groupId = currentChatGroupId ?: return
+		panel.quickSettingsFriendChatProgressBar.visibility = View.VISIBLE
+		activity.lifecycleScope.launch {
+			when(val result = friendsRepository.refreshConversation(groupId))
+			{
+				is ConversationResult.Success -> showChatMessages(result.messages)
+				is ConversationResult.Error -> {
+					panel.quickSettingsFriendChatProgressBar.visibility = View.GONE
+					panel.quickSettingsFriendChatEmptyText.text = result.message
+					panel.quickSettingsFriendChatEmptyText.visibility = View.VISIBLE
+				}
+			}
+		}
+	}
+
+	private fun sendFriendChatMessage()
+	{
+		val text = panel.quickSettingsFriendChatInput.text?.toString()?.trim() ?: ""
+		val groupId = currentChatGroupId
+		if(text.isEmpty() || groupId == null) return
+
+		panel.quickSettingsFriendChatInput.setText("")
+
+		// Optimistic append — shows the sent message immediately rather than waiting on the
+		// send + re-fetch round trip, matching how any messenger app behaves. Reconciled with
+		// the server's own view once refreshConversation comes back below.
+		showChatMessages(chatMessageAdapter.items + ChatMessage(text, "", isMine = true, timestampMs = System.currentTimeMillis()))
+
+		activity.lifecycleScope.launch {
+			friendsRepository.sendMessage(groupId, text)
+			when(val result = friendsRepository.refreshConversation(groupId))
+			{
+				is ConversationResult.Success -> showChatMessages(result.messages)
+				is ConversationResult.Error -> { /* keep the optimistic state on screen */ }
+			}
+		}
+	}
+
+	private fun backToFriendsList()
+	{
+		inFriendChat = false
+		currentChatGroupId = null
+		panel.quickSettingsFriendsChatGroup.visibility = View.GONE
+		panel.quickSettingsFriendsListGroup.visibility = View.VISIBLE
+		panel.quickSettingsFriendsListGroup.post {
+			panel.quickSettingsFriendsRefreshButton.isFocusableInTouchMode = true
+			panel.quickSettingsFriendsRefreshButton.requestFocus()
+		}
 	}
 
 	// ---- Session tab: content depends on sessionType, built once (it never changes during
@@ -818,6 +1014,10 @@ class QuickSettingsPanel(
 
 	private fun exitToRailScope()
 	{
+		// Always land back on the friends list, never mid-conversation, next time this tab is
+		// reopened or drilled back into.
+		if(inFriendChat) backToFriendsList()
+
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = true
 		panel.quickSettingsDisconnectButton.isFocusable = true
@@ -832,6 +1032,7 @@ class QuickSettingsPanel(
 		R.id.quickSettingsTabGeneral -> panel.quickSettingsGeneralScroll
 		R.id.quickSettingsTabSession -> panel.quickSettingsSessionScroll
 		R.id.quickSettingsTabTrophies -> panel.quickSettingsTrophiesSection
+		R.id.quickSettingsTabFriends -> panel.quickSettingsFriendsSection
 		else -> null
 	}
 
