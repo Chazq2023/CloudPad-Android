@@ -106,9 +106,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed PSN sign-in failing with "Can't connect to the server" — sign-in now opens in Chrome instead of an in-app browser, which Sony's own fraud detection was rejecting.
-            - Sign-in is now a guided four-step flow: sign in with Sony, obtain your login token, paste it in, then finalise.
-            - Fixed the Cloud Play tab's LOGIN button being unreachable with a controller — the whole screen was getting the focus highlight instead of the button itself.
+            - Fixed "Session has quit: Remote Play on Console is already in use" showing up when reconnecting shortly after a previous stream ended — the console needs a moment to release the old session, so the app now silently retries once after a short delay instead of surfacing that error immediately.
+            - Fixed the Quick Settings panel's left-hand tab icons (General/Controller/Session/Trophies/Friends) needing two taps on a touchscreen — the first tap only highlighted the icon, requiring a second tap to actually select it. Controller/D-pad navigation is unaffected.
 
             ### APK
             Attached release asset:
