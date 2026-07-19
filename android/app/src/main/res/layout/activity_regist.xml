@@ -123,12 +123,32 @@
                 android:autoLink="web"
                 android:textAppearance="?attr/textAppearanceBody1"/>
 
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/psnAccountIdHelpCloudPadTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/psnAccountIdHelpURLTextView"
+                android:text="@string/regist_psn_account_id_help_cloudpad"
+                android:gravity="center_horizontal"
+                android:textAppearance="?attr/textAppearanceBody1"
+                android:alpha="0.6"
+                android:layout_marginTop="8dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/obtainAccountIdButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/psnAccountIdHelpCloudPadTextView"
+                style="@style/MageTheme.Button.Secondary"
+                android:text="@string/action_obtain_account_id"
+                android:layout_marginTop="8dp"/>
+
             <androidx.constraintlayout.widget.Group
                 android:id="@+id/psnAccountIdHelpGroup"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:visibility="visible"
-                app:constraint_referenced_ids="psnAccountIdHelpTextView,psnAccountIdHelpURLTextView"/>
+                app:constraint_referenced_ids="psnAccountIdHelpTextView,psnAccountIdHelpURLTextView,psnAccountIdHelpCloudPadTextView,obtainAccountIdButton"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/psnIdTextInputLayout"
@@ -136,7 +156,7 @@
                 android:layout_height="wrap_content"
                 android:hint="@string/hint_regist_psn_online_id"
                 app:startIconDrawable="@drawable/ic_psn_id"
-                app:layout_constraintTop_toBottomOf="@id/psnAccountIdHelpURLTextView"
+                app:layout_constraintTop_toBottomOf="@id/obtainAccountIdButton"
                 android:layout_marginTop="16dp">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/psnIdEditText"

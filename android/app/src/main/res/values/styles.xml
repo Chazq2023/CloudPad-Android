@@ -252,6 +252,17 @@
         <item name="iconTint">?attr/colorOnSecondary</item>
     </style>
 
+    <!-- Secondary action button: grey fill, white text, theme-accent border -->
+    <style name="MageTheme.Button.Secondary" parent="Widget.MaterialComponents.Button">
+        <item name="tint">@android:color/white</item>
+        <item name="android:backgroundTint">@color/disclaimer_box_background</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="iconTint">@android:color/white</item>
+        <item name="strokeColor">?attr/colorAccent</item>
+        <item name="strokeWidth">2dp</item>
+        <item name="rippleColor">?attr/colorAccent</item>
+    </style>
+
     <style name="MageTheme.TextAppearanceButton" parent="TextAppearance.MaterialComponents.Button">
         <item name="android:textColor">?attr/colorOnSecondary</item>
     </style>

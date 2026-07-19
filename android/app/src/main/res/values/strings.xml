@@ -58,6 +58,9 @@
     <string name="regist_option_ps5">Gen 5</string>
     <string name="regist_psn_account_id_help">About obtaining your Account ID, see</string>
     <string name="regist_psn_account_id_help_url">https://git.sr.ht/~thestr4ng3r/chiaki/tree/master/item/README.md#obtaining-your-psn-accountid</string>
+    <string name="regist_psn_account_id_help_cloudpad">or if you have logged in via CloudPad then please use the button below to obtain your Account ID</string>
+    <string name="action_obtain_account_id">Obtain Account ID</string>
+    <string name="regist_obtain_account_id_not_logged_in">Please log in via CloudPad (Cloud Play) first to obtain your Account ID this way</string>
     <string name="hint_regist_psn_online_id">Online ID (username, case-sensitive)</string>
     <string name="hint_regist_psn_account_id">Account ID (8 bytes, base64)</string>
     <string name="hint_regist_pin">PIN</string>
