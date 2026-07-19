@@ -4,7 +4,21 @@
 
 CloudPad streams your PlayStation games to Android — either straight from Sony's cloud catalog, or from your own console over Remote Play — with an interface built for touchscreens, handhelds, and TV-style devices.
 
-# ✨ Features
+## Table of Contents
+
+* [Features](#features)
+* [Unofficial fork notice](#unofficial-fork-notice)
+* [About this fork](#about-this-fork)
+* [Releases](#releases)
+* [Documentation](#documentation)
+* [Contributing](#contributing)
+* [Work in progress / known limitations](#work-in-progress--known-limitations)
+* [Legal and responsible use](#legal-and-responsible-use)
+* [Licence](#licence)
+* [Credits](#credits)
+* [Screenshots](#screenshots)
+
+# Features
 
 ### Streaming
 * **Internet Play (Cloud Play)** — stream from Sony's game catalog or your own owned PS3/PS4/PS5 library, no console required
@@ -140,7 +154,7 @@ Pylux is built on top of:
 
 Special thanks to the original Pylux developer, the Chiaki development team, and the chiaki-ng maintainers for their excellent foundational work.
 
-# 📸 Screenshots
+# Screenshots
 
 ### Login
 Sign in to your PlayStation Network account directly from the app to unlock cloud streaming and console discovery.
