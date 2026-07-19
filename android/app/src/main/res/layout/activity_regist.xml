@@ -139,7 +139,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:layout_constraintTop_toBottomOf="@id/psnAccountIdHelpCloudPadTextView"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                style="@style/MageTheme.Button.Secondary"
                 android:text="@string/action_obtain_account_id"
                 android:layout_marginTop="8dp"/>
 
