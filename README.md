@@ -166,23 +166,24 @@ Console tiles reflect an accurate, live state — Ready, Asleep, Waking, or Offl
 <img src="readme%20assets/Remote%20Play/Remote%20Play.jpeg" width="600">
 
 ### Quick Settings Panel (In-Stream)
-Controller remapping, trophies, friends, and messaging — all without ever leaving your stream.
+Live stream settings, performance stats, controller remapping, trophies, friends, and messaging — all without ever leaving your stream.
 
 <table>
 <tr>
-<td align="center"><b>Overview</b><br><img src="readme%20assets/Quick%20menu%20features/Stream%20Quick%20Settings.jpg" width="380"></td>
+<td align="center"><b>Bitrate & Resolution</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Stream%20bitrate%20resolution.png" width="380"></td>
+<td align="center"><b>Performance Overlay</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Performance%20Overlay.png" width="380"></td>
+</tr>
+<tr>
 <td align="center"><b>Controller Remap</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Remap%20Controller.jpg" width="380"></td>
-</tr>
-<tr>
 <td align="center"><b>Trophy List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20List.jpg" width="380"></td>
+</tr>
+<tr>
 <td align="center"><b>Trophy Detail</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20Detail.jpg" width="380"></td>
-</tr>
-<tr>
 <td align="center"><b>Trophy Comparison</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20Comparison.jpeg" width="380"></td>
-<td align="center"><b>Friends List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20List.jpeg" width="380"></td>
 </tr>
 <tr>
-<td align="center" colspan="2"><b>Friend Messaging</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20Messaging.jpeg" width="380"></td>
+<td align="center"><b>Friends List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20List.jpeg" width="380"></td>
+<td align="center"><b>Friend Messaging</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20Messaging.jpeg" width="380"></td>
 </tr>
 </table>
 
