@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.metallic.chiaki.common.LogManager
+import com.metallic.chiaki.discovery.ConsoleSleepIntent
 import com.metallic.chiaki.lib.*
 
 sealed class StreamState
@@ -168,6 +169,7 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 			Log.w("StreamSession", "requestConsoleSleep() called before the session finished connecting; ignoring")
 			return
 		}
+		ConsoleSleepIntent.markPendingSleep(connectInfo.host)
 		session.gotoBed()
 	}
 

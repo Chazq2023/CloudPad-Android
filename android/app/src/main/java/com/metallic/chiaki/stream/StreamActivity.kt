@@ -98,6 +98,28 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  not meaningful to persist/display). 0 if not connected. */
 	private var connectedAtWallClockMs: Long = 0L
 
+	/** True once this session has reached [StreamStateConnected] at least once. Unlike
+	 *  [connectedAtElapsedRealtime] (which flushStreamTimeSegment resets back to 0 on every
+	 *  disconnect, including the very one this flag needs to be checked against), this is never
+	 *  reset — it exists purely to gate [autoRetriedFirstConnect] below to the console's very
+	 *  first connection attempt for this Activity's lifetime. */
+	private var everConnected = false
+
+	/** Confirmed on-device: right after a console finishes waking (either from rest mode or a
+	 *  cold power-on), its control connection can come up and respond to heartbeats successfully
+	 *  while its actual AV/Takion streaming listener still refuses connections for a bit longer —
+	 *  even well past the point our own host-list "Ready" state (see MainViewModel.confirmConsoleOn)
+	 *  already waited out. The first real connection attempt against a console in this state
+	 *  reliably fails with CHIAKI_QUIT_REASON_STREAM_CONNECTION_UNKNOWN ("Unknown Error in Stream
+	 *  Connection"); a second attempt moments later, once that listener has caught up, reliably
+	 *  succeeds. This silently retries once instead of surfacing that first failure to the user as
+	 *  a "Session has quit" dialog — set true the moment that retry fires, so a second genuine
+	 *  failure (the console really isn't reachable) still shows the normal dialog rather than
+	 *  retrying forever. Only applies before the first successful connect ([everConnected]); a
+	 *  later mid-stream disconnect always shows the dialog immediately, since auto-reconnecting
+	 *  there could silently mask a real problem instead of just working around this one quirk. */
+	private var autoRetriedFirstConnect = false
+
 	/** Currently-applied window size / display mode. Only changes when the Quick Settings
 	 *  panel's Save button is pressed — the panel's own toggle group is staged separately. */
 	private var currentDisplayMode: TransformMode = TransformMode.FIT
@@ -509,6 +531,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		{
 			StreamStateConnected ->
 			{
+				everConnected = true
 				if (connectedAtElapsedRealtime == 0L)
 				{
 					connectedAtElapsedRealtime = SystemClock.elapsedRealtime()
@@ -537,7 +560,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			is StreamStateQuit ->
 			{
 				flushStreamTimeSegment()
-				if(dialogContents != StreamQuitDialog && !suppressQuitDialogForRestart)
+				if(!everConnected && !autoRetriedFirstConnect && !suppressQuitDialogForRestart &&
+					state.reason.toString() == "Unknown Error in Stream Connection")
+				{
+					Log.i("StreamActivity", "First connection attempt failed with the known post-wake Takion-not-ready quirk — silently retrying once")
+					autoRetriedFirstConnect = true
+					reconnect()
+				}
+				else if(dialogContents != StreamQuitDialog && !suppressQuitDialogForRestart)
 				{
 					if(state.reason.isError)
 					{

@@ -208,6 +208,8 @@
                         android:fontFamily="sans-serif"
                         android:textSize="14sp"
                         android:textColor="#808080"
+                        android:maxLines="2"
+                        android:gravity="end"
                         tools:text="Ready" />
 
                 </LinearLayout>
