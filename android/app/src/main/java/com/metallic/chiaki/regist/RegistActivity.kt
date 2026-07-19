@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.util.Base64
 import android.view.View
 import android.view.Window
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
@@ -53,6 +54,7 @@ class RegistActivity: AppCompatActivity(), RevealActivity
 		binding.broadcastCheckBox.isChecked = intent.getBooleanExtra(EXTRA_BROADCAST, true)
 
 		binding.registButton.setOnClickListener { doRegist() }
+		binding.obtainAccountIdButton.setOnClickListener { obtainAccountId() }
 
 		binding.ps4VersionRadioGroup.check(when(viewModel.ps4Version.value ?: RegistViewModel.ConsoleVersion.PS5) {
 			RegistViewModel.ConsoleVersion.PS5 -> R.id.ps5RadioButton
@@ -82,6 +84,18 @@ class RegistActivity: AppCompatActivity(), RevealActivity
 			binding.pinHelpBeforeTextView.setText(if(it.isPS5) R.string.regist_pin_instructions_ps5_before else R.string.regist_pin_instructions_ps4_before)
 			binding.pinHelpNavigationTextView.setText(if(it.isPS5) R.string.regist_pin_instructions_ps5_navigation else R.string.regist_pin_instructions_ps4_navigation)
 		})
+	}
+
+	private fun obtainAccountId()
+	{
+		val accountId = Preferences(this).psnAccountId
+		if(accountId.isEmpty())
+		{
+			Toast.makeText(this, R.string.regist_obtain_account_id_not_logged_in, Toast.LENGTH_LONG).show()
+			return
+		}
+		binding.psnIdEditText.setText(accountId)
+		binding.psnIdEditText.error = null
 	}
 
 	private fun doRegist()
