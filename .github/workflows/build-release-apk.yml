@@ -106,11 +106,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed the in-stream Quick Settings' Monitor tab focusing the whole content panel instead of the first setting when you first navigate into it with a controller.
-            - Fixed the Monitor tab's Apply button staying visible after switching to another tab (Trophies, Friends, etc.) when a change was still pending.
-            - Fixed Monitor tab changes (resolution, FPS, bitrate, codec, datacenter) being saved permanently the moment you changed them, even without tapping Apply — disconnecting without applying will no longer carry the change into your next session.
-            - Settings now shows the installed app's version at the top, under About.
-            - Removed the known-issues list from the repo.
+            - Fixed PSN sign-in failing with "Can't connect to the server" — sign-in now opens in Chrome instead of an in-app browser, which Sony's own fraud detection was rejecting.
+            - Sign-in is now a guided four-step flow: sign in with Sony, obtain your login token, paste it in, then finalise.
+            - Fixed the Cloud Play tab's LOGIN button being unreachable with a controller — the whole screen was getting the focus highlight instead of the button itself.
 
             ### APK
             Attached release asset:
