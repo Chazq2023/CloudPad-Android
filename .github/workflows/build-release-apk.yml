@@ -101,7 +101,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Tuned CAS Image Sharpening's level slider to ramp up more aggressively at higher values (1-10), instead of increasing sharpness evenly across the whole range.
+            - In-stream Quick Settings' Session tab now applies resolution/FPS/bitrate/codec (Remote Play) or resolution/datacenter/bitrate (Cloud Play) changes without leaving the stream: an Apply button appears once you change a setting and disappears if you revert it, and tapping it restarts the stream in place with the new settings.
+            - Fixed several native crashes and a stray "session has quit" dialog that could occur when restarting a Remote Play or Cloud Play stream.
 
             ### APK
             Attached release asset:

@@ -23,6 +23,7 @@
     <string name="alert_message_standby_wakeup">The Console is currently in standby mode. Do you want to send a Wakeup packet instead of trying to connect immediately?</string>
     <string name="alert_message_session_quit">Session has quit: %s</string>
     <string name="alert_message_session_create_error">Failed to create Session: %s</string>
+    <string name="alert_message_session_restart_failed">Failed to apply new settings: %s</string>
     <string name="alert_message_login_pin_request">Login PIN:</string>
     <string name="alert_message_login_pin_request_incorrect">Entered PIN was incorrect!\nLogin PIN:</string>
     <string name="action_reconnect">Reconnect</string>
@@ -166,7 +167,9 @@
     <string name="quick_settings_touchpad_title">Touchpad Only</string>
     <string name="quick_settings_window_size">Window Size</string>
     <string name="quick_settings_session_tab_description">Session Settings</string>
-    <string name="quick_settings_session_restart_notice">Any changes in this section will require you to restart the stream, otherwise they will not take effect</string>
+    <string name="quick_settings_session_restart_notice">Changing a setting here will briefly restart the stream once you tap Apply</string>
+    <string name="quick_settings_session_apply">Apply</string>
+    <string name="quick_settings_session_restarting">Restarting stream…</string>
     <string name="quick_settings_trophies_tab_description">Trophies</string>
     <string name="quick_settings_trophies_header_label">Refresh Trophy List</string>
     <string name="quick_settings_trophies_refresh">Refresh trophies</string>

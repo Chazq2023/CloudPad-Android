@@ -47,6 +47,7 @@ private sealed class DialogContents
 private object StreamQuitDialog: DialogContents()
 private object CreateErrorDialog: DialogContents()
 private object PinRequestDialog: DialogContents()
+private object SessionRestartFailedDialog: DialogContents()
 
 class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListener
 {
@@ -189,6 +190,45 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		viewModel.session.attachToCasSurfaceView(binding.surfaceView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()
+
+		// Cloud Play's re-allocation phase of an "Apply" restart (see suppressQuitDialogForRestart)
+		// has no StreamState of its own — the old session can keep reporting StreamStateConnected
+		// right up until the server kills it — so the loading spinner needs its own trigger here
+		// rather than relying solely on stateChanged's StreamStateConnecting case. A Failed
+		// outcome gets its own dialog here too: by the time re-allocation fails, the old cloud
+		// session has near-certainly already been killed server-side as a side effect of locking
+		// the new one (see suppressQuitDialogForRestart's doc comment), so the ordinary Quit
+		// dialog that would normally tell the user their stream ended never fires — it was
+		// suppressed while this was still InProgress, and no further StreamState change follows
+		// to un-suppress it. This is the user's only way back to a live stream in that case.
+		viewModel.sessionRestartState.observe(this, Observer { state ->
+			updateProgressBarVisibility()
+			if(state is SessionRestartState.Failed && dialogContents != SessionRestartFailedDialog)
+			{
+				dialog?.dismiss()
+				val dialog = alertDialogBuilder()
+					.setMessage(getString(R.string.alert_message_session_restart_failed, state.message))
+					.setPositiveButton(R.string.action_reconnect) { _, _ ->
+						dialog = null
+						dialogContents = null
+						viewModel.acknowledgeSessionRestartFailure()
+						viewModel.restartCloudSession()
+					}
+					.setOnCancelListener {
+						dialog = null
+						viewModel.acknowledgeSessionRestartFailure()
+						finish()
+					}
+					.setNegativeButton(R.string.action_quit_session) { _, _ ->
+						dialog = null
+						viewModel.acknowledgeSessionRestartFailure()
+						finish()
+					}
+					.create()
+				dialogContents = SessionRestartFailedDialog
+				dialog.show()
+			}
+		})
 
 		viewModel.showPerformanceOverlay.observe(this, Observer { show ->
 			binding.performanceOverlay.isVisible = show
@@ -430,10 +470,40 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		connectedAtWallClockMs = 0L
 	}
 
+	/** True while an "Apply" restart (see QuickSettingsPanel) is between tearing down the old
+	 *  session and handing a new ConnectInfo to StreamSession — covers two different but equally
+	 *  self-inflicted causes of a stray Quit/CreateError on the *old* session that the user
+	 *  should never see a dialog for:
+	 *   - Cloud Play: StreamViewModel.restartCloudSession's Gaikai re-allocation goes through an
+	 *     account-level session lock that forces the *old* cloud session closed server-side as a
+	 *     side effect (confirmed on-device: arrives as a Quit with reason "Remote has
+	 *     disconnected .../Shutdown requested by server", then a string of "Unknown Error" quits
+	 *     from stray reconnect attempts against the now-dead old session) — well before the new
+	 *     session is actually ready.
+	 *   - Remote Play: StreamSession.restartWithNewConnectInfo's own shutdown() of the old
+	 *     session synchronously fires a QuitEvent(reason=Stopped) on it (confirmed on-device).
+	 *  Without this check, stateChanged's ordinary Quit/CreateError handling below would show the
+	 *  ordinary ended-session dialog — or, for a non-error reason like Stopped, silently call
+	 *  finish() and tear down the whole Activity — for what is, from the user's perspective, just
+	 *  a moment of the restart they already asked for. The real outcome (success or failure)
+	 *  still shows normally once the restart hands off to the new session and this goes back to
+	 *  false. */
+	private val suppressQuitDialogForRestart: Boolean get() =
+		viewModel.sessionRestartState.value is SessionRestartState.InProgress
+
+	private fun updateProgressBarVisibility(state: StreamState = viewModel.session.state.value ?: StreamStateIdle)
+	{
+		binding.progressBar.visibility =
+			if(state == StreamStateConnecting || viewModel.sessionRestartState.value is SessionRestartState.InProgress)
+				View.VISIBLE
+			else
+				View.GONE
+	}
+
 	private fun stateChanged(state: StreamState)
 	{
 		Log.i("StreamActivity", "stateChanged: $state pip=$isInPictureInPictureMode")
-		binding.progressBar.visibility = if(state == StreamStateConnecting) View.VISIBLE else View.GONE
+		updateProgressBarVisibility(state)
 
 		when(state)
 		{
@@ -445,6 +515,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 					connectedAtWallClockMs = System.currentTimeMillis()
 				}
 				trophyUnlockWatcher?.start(lifecycleScope)
+
+				// Re-applied on every connect, not just the first — a Quick Settings "Apply"
+				// restart (see QuickSettingsPanel) can hand StreamSession a new videoProfile, and
+				// this is the only place that profile drives the surface/sharpening shader's
+				// notion of decode resolution. Idempotent when nothing changed.
+				val videoProfile = viewModel.session.connectInfo.videoProfile
+				binding.surfaceView.setVideoSize(videoProfile.width, videoProfile.height)
+				adjustStreamViewAspect()
 			}
 
 			StreamStateConnecting ->
@@ -459,7 +537,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			is StreamStateQuit ->
 			{
 				flushStreamTimeSegment()
-				if(dialogContents != StreamQuitDialog)
+				if(dialogContents != StreamQuitDialog && !suppressQuitDialogForRestart)
 				{
 					if(state.reason.isError)
 					{
@@ -492,7 +570,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			is StreamStateCreateError ->
 			{
 				flushStreamTimeSegment()
-				if(dialogContents != CreateErrorDialog)
+				if(dialogContents != CreateErrorDialog && !suppressQuitDialogForRestart)
 				{
 					dialog?.dismiss()
 					val dialog = alertDialogBuilder()
