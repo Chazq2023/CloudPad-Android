@@ -24,6 +24,9 @@
     <string name="alert_message_session_quit">Session has quit: %s</string>
     <string name="alert_message_session_create_error">Failed to create Session: %s</string>
     <string name="alert_message_session_restart_failed">Failed to apply new settings: %s</string>
+    <string name="alert_message_console_power_options">What would you like to do with your console?</string>
+    <string name="action_console_sleep">Put Console to Sleep</string>
+    <string name="action_disconnect_session">Disconnect Session</string>
     <string name="alert_message_login_pin_request">Login PIN:</string>
     <string name="alert_message_login_pin_request_incorrect">Entered PIN was incorrect!\nLogin PIN:</string>
     <string name="action_reconnect">Reconnect</string>

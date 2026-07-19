@@ -145,6 +145,32 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		}
 	}
 
+	/** Remote Play only — requests the console enter rest mode. Sony's Remote Play protocol has
+	 *  no separate "power off" command (see Session.gotoBed's own doc comment for why); rest
+	 *  mode is the only remote power-state change it supports, and this is used for the in-stream
+	 *  Quick Settings panel's "Put Console to Sleep" option. Doesn't disconnect by itself — the
+	 *  console ends the stream on its own end shortly after actually entering rest mode, same as
+	 *  any other server-initiated disconnect, so the caller (QuickSettingsPanel) still finishes
+	 *  the Activity itself right after calling this rather than waiting on that.
+	 *
+	 *  Same "before fully connected" hazard as setMicrophoneEnabled's own doc comment describes —
+	 *  chiaki_ctrl_goto_bed goes through the same thread-safe queued send path, so calling it
+	 *  before CHIAKI_EVENT_CONNECTED can abort the control connection outright instead of the
+	 *  console ever seeing the request. No-ops in that case; the caller's own disconnect right
+	 *  after still proceeds regardless, it just won't have told the console to sleep first. */
+	fun requestConsoleSleep()
+	{
+		val session = session ?: return
+		if(!input.isRemotePlay)
+			return
+		if(!sessionConnected)
+		{
+			Log.w("StreamSession", "requestConsoleSleep() called before the session finished connecting; ignoring")
+			return
+		}
+		session.gotoBed()
+	}
+
 	private fun startMicCapture(nativeSession: Session)
 	{
 		if(micThreadRunning)

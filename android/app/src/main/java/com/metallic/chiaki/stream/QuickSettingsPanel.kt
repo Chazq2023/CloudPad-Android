@@ -33,6 +33,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.friends.ChatMessage
@@ -457,7 +458,7 @@ class QuickSettingsPanel(
 		}
 
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
-		panel.quickSettingsDisconnectButton.setOnClickListener { dismissImmediately(); activity.finish() }
+		panel.quickSettingsDisconnectButton.setOnClickListener { showDisconnectOptions() }
 
 		buildSessionSettingsTab()
 
@@ -1236,6 +1237,37 @@ class QuickSettingsPanel(
 	fun toggle()
 	{
 		if(isOpen) close() else open()
+	}
+
+	/** Remote Play only — Cloud Play's power icon keeps its original single-tap disconnect
+	 *  unchanged: "put to sleep" isn't meaningful there, since Cloud Play streams a cloud-hosted
+	 *  instance rather than a physical console the user owns. For Remote Play, offers a choice
+	 *  between putting the physical console to sleep first
+	 *  ([com.metallic.chiaki.session.StreamSession.requestConsoleSleep]) or just disconnecting —
+	 *  Sony's protocol has no distinct "power off" command, only rest mode (see that function's
+	 *  own doc comment for why). Uses the app-wide dialog styling like every other dialog in the
+	 *  app, and stays cancelable (back button / tap outside) by default so an accidental tap on
+	 *  the power icon doesn't force picking one of two disconnecting outcomes. */
+	private fun showDisconnectOptions()
+	{
+		if(sessionType != StreamSessionType.REMOTE_PLAY)
+		{
+			dismissImmediately()
+			activity.finish()
+			return
+		}
+		activity.alertDialogBuilder()
+			.setMessage(R.string.alert_message_console_power_options)
+			.setPositiveButton(R.string.action_console_sleep) { _, _ ->
+				viewModel.session.requestConsoleSleep()
+				dismissImmediately()
+				activity.finish()
+			}
+			.setNegativeButton(R.string.action_disconnect_session) { _, _ ->
+				dismissImmediately()
+				activity.finish()
+			}
+			.show()
 	}
 
 	/** Used ahead of Disconnect instead of [close]'s animated dismiss: the Dialog is created with

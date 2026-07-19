@@ -12,6 +12,7 @@ import com.metallic.chiaki.common.ext.toLiveData
 import com.metallic.chiaki.discovery.DiscoveryManager
 import com.metallic.chiaki.discovery.PsnDiscoveryManager
 import com.metallic.chiaki.discovery.serverMac
+import com.metallic.chiaki.lib.DiscoveryHost
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.Observables
@@ -40,7 +41,14 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 	 *  identity with a different status colour — every single time that happens, which is exactly
 	 *  what showed up as the list row flickering between a green "Ready" and a theme-coloured one.
 	 *  A host is only actually dropped from the discovered bucket once it's been missing
-	 *  continuously for longer than [DISCOVERED_HOST_GRACE_MS]. */
+	 *  continuously for longer than [DISCOVERED_HOST_GRACE_MS] — or, for a host last seen in
+	 *  STANDBY, [DISCOVERED_HOST_ASLEEP_GRACE_MS]: a console that's actually asleep is *expected*
+	 *  to go quiet on discovery for long stretches (confirmed on-device — one replied with
+	 *  STANDBY exactly once right as it entered rest mode, then didn't answer another discovery
+	 *  ping for over a minute), unlike an awake console falling silent, which usually does mean
+	 *  something's wrong. Using the short grace period for both meant a confirmed-asleep console
+	 *  got demoted back to the less-certain "Finding console" tile within seconds of correctly
+	 *  showing "Asleep", just because it was doing exactly what a sleeping console should. */
 	private val discoveredHostCache = mutableMapOf<String, Pair<DiscoveredDisplayHost, Long>>()
 
 	/** Local discovered + manual hosts (without PSN) */
@@ -105,7 +113,14 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 				val key = host.name ?: continue
 				discoveredHostCache[key] = host to now
 			}
-			discoveredHostCache.entries.removeAll { (_, entry) -> now - entry.second > DISCOVERED_HOST_GRACE_MS }
+			discoveredHostCache.entries.removeAll { (_, entry) ->
+				val (cachedHost, lastSeenAt) = entry
+				val grace = if(cachedHost.discoveredHost.state == DiscoveryHost.State.STANDBY)
+					DISCOVERED_HOST_ASLEEP_GRACE_MS
+				else
+					DISCOVERED_HOST_GRACE_MS
+				now - lastSeenAt > grace
+			}
 			val discovered = discoveredHostCache.values.map { it.first }
 
 			// Build a set of locally discovered nicknames
@@ -181,6 +196,7 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 	{
 		private const val TAG = "MainViewModel"
 		private const val DISCOVERED_HOST_GRACE_MS = 10_000L
+		private const val DISCOVERED_HOST_ASLEEP_GRACE_MS = 5 * 60_000L
 	}
 
 	override fun onCleared()

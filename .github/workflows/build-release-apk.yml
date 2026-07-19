@@ -107,6 +107,8 @@ jobs:
             - Fixed the Remote Play console list flickering between two different tile styles when local network discovery briefly missed a beat.
             - Console status on the Remote Play list is now more specific: green "Ready" (powered on), yellow "Asleep" (rest mode), red "Offline" (manually-added console not currently reachable), or blue "Finding console" (known via PSN, not yet confirmed on the local network).
             - The platform badge on each console tile now reads "PS5"/"PS4" instead of just "5"/"4".
+            - Remote Play's power icon now asks what to do: put the console to sleep or disconnect the session, matching the app's standard dialog style. Cloud Play's power icon is unchanged (still an instant disconnect).
+            - A console confirmed asleep now reliably stays showing "Asleep" instead of reverting to "Finding console" a few seconds later, since a sleeping console going quiet on the network is expected, not a sign it's unreachable.
 
             ### APK
             Attached release asset:

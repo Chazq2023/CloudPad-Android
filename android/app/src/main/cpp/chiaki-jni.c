@@ -855,6 +855,14 @@ JNIEXPORT void JNICALL JNI_FCN(sessionToggleMicrophone)(JNIEnv *env, jobject obj
 	chiaki_session_toggle_microphone(&session->session, muted);
 }
 
+JNIEXPORT jint JNICALL JNI_FCN(sessionGotoBed)(JNIEnv *env, jobject obj, jlong ptr)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return CHIAKI_ERR_UNKNOWN;
+	return chiaki_session_goto_bed(&session->session);
+}
+
 JNIEXPORT void JNICALL JNI_FCN(sessionSendMicFrame)(JNIEnv *env, jobject obj, jlong ptr, jshortArray pcm)
 {
 	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
