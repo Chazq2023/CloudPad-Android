@@ -101,14 +101,11 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - In-stream Quick Settings' Session tab now applies resolution/FPS/bitrate/codec (Remote Play) or resolution/datacenter/bitrate (Cloud Play) changes without leaving the stream: an Apply button appears once you change a setting and disappears if you revert it, and tapping it restarts the stream in place with the new settings.
-            - Fixed several native crashes and a stray "session has quit" dialog that could occur when restarting a Remote Play or Cloud Play stream.
-            - Fixed controller D-pad navigation in the Quick Settings panel: pressing down past the last tab icon (Friends) could re-enter that tab's content instead of moving to the Disconnect button below the tab rail.
-            - Fixed the Remote Play console list flickering between two different tile styles when local network discovery briefly missed a beat.
-            - Console status on the Remote Play list is now more specific: green "Ready" (powered on), yellow "Asleep" (rest mode), red "Offline" (manually-added console not currently reachable), or blue "Finding console" (known via PSN, not yet confirmed on the local network).
-            - The platform badge on each console tile now reads "PS5"/"PS4" instead of just "5"/"4".
-            - Remote Play's power icon now asks what to do: put the console to sleep or disconnect the session, matching the app's standard dialog style. Cloud Play's power icon is unchanged (still an instant disconnect).
-            - A console confirmed asleep now reliably stays showing "Asleep" instead of reverting to "Finding console" a few seconds later, since a sleeping console going quiet on the network is expected, not a sign it's unreachable.
+            - Remote Play console tiles now show accurate in-between states while waking or sleeping: "Waking console" / "Console on, please wait until in Ready state" after a wake (whether triggered from the app or the console's own controller), and "Console sleeping, please wait" while an app-initiated sleep request is taking effect.
+            - A console that's been off since before the app was opened now correctly shows red "Console Offline" after a few seconds, instead of sitting on "Getting Console Status" (previously "Finding console") indefinitely.
+            - Fixed local network discovery continuing to run in the background even while browsing the Cloud Play tab; it's now correctly scoped to only poll while the Remote Play tab is visible.
+            - Fixed returning to the Remote Play tab forcing a full rediscovery of every console from scratch, which could briefly show a stale "Getting Console Status" for a console that was already confirmed Asleep or Ready moments earlier.
+            - Fixed a "Session has quit: Unknown Error in Stream Connection" that could occur on the very first connection attempt right after a console finishes waking, even once it's confirmed Ready — the app now silently retries once in that specific case instead of surfacing an error.
 
             ### APK
             Attached release asset:
