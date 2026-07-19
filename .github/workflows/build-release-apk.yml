@@ -101,11 +101,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Remote Play console tiles now show accurate in-between states while waking or sleeping: "Waking console" / "Console on, please wait until in Ready state" after a wake (whether triggered from the app or the console's own controller), and "Console sleeping, please wait" while an app-initiated sleep request is taking effect.
-            - A console that's been off since before the app was opened now correctly shows red "Console Offline" after a few seconds, instead of sitting on "Getting Console Status" (previously "Finding console") indefinitely.
-            - Fixed local network discovery continuing to run in the background even while browsing the Cloud Play tab; it's now correctly scoped to only poll while the Remote Play tab is visible.
-            - Fixed returning to the Remote Play tab forcing a full rediscovery of every console from scratch, which could briefly show a stale "Getting Console Status" for a console that was already confirmed Asleep or Ready moments earlier.
-            - Fixed a "Session has quit: Unknown Error in Stream Connection" that could occur on the very first connection attempt right after a console finishes waking, even once it's confirmed Ready — the app now silently retries once in that specific case instead of surfacing an error.
+            - Fixed the in-stream Quick Settings' Monitor tab focusing the whole content panel instead of the first setting when you first navigate into it with a controller.
+            - Fixed the Monitor tab's Apply button staying visible after switching to another tab (Trophies, Friends, etc.) when a change was still pending.
+            - Fixed Monitor tab changes (resolution, FPS, bitrate, codec, datacenter) being saved permanently the moment you changed them, even without tapping Apply — disconnecting without applying will no longer carry the change into your next session.
 
             ### APK
             Attached release asset:
