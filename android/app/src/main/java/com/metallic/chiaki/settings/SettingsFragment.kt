@@ -16,6 +16,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.*
 import com.metallic.chiaki.common.ext.alertDialogBuilder
+import com.pylux.stream.BuildConfig
 import com.pylux.stream.R
 import com.metallic.chiaki.common.LicenseAgreementActivity
 import com.metallic.chiaki.common.Preferences
@@ -235,6 +236,10 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		val cachedLocalePreference = preferenceScreen.findPreference<Preference>("cached_locale_display")
 		val rawStored = preferences.getRawStoredLocale()
 		cachedLocalePreference?.summary = rawStored ?: getString(R.string.preferences_cached_locale_summary_not_set)
+
+		// Static, non-selectable — just reports whatever version was actually installed, read
+		// straight from the APK's own manifest rather than duplicated as a preference value.
+		preferenceScreen.findPreference<Preference>("app_version")?.summary = BuildConfig.VERSION_NAME
 
 		// View License
 		preferenceScreen.findPreference<Preference>("view_license")?.setOnPreferenceClickListener { viewLicense(); true }

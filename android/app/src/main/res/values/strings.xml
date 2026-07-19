@@ -124,6 +124,7 @@
     <string name="preferences_import_settings_title">Import Settings</string>
     <string name="preferences_import_settings_summary">Import Settings from JSON</string>
     <string name="preferences_category_title_about">About</string>
+    <string name="preferences_app_version_title">CloudPad Application Version</string>
     <string name="preferences_view_license_title">License Agreement</string>
     <string name="preferences_view_license_summary">View license terms and disclaimers</string>
     <string name="preferences_category_title_icon_key">PS5 Library Icon Key</string>

@@ -21,7 +21,8 @@ def chiakiVersionPatch = grepVersionComponent(rootCMakeListsContent, "CHIAKI_VER
 def chiakiVersion = "$chiakiVersionMajor.$chiakiVersionMinor.$chiakiVersionPatch"
 println("Determined Chiaki Version: $chiakiVersion")
 
-// versionName + default versionCode are read from repo root CMakeLists.txt (CHIAKI_VERSION_*), not duplicated here.
+// Default versionName + versionCode are read from repo root CMakeLists.txt (CHIAKI_VERSION_*),
+// not duplicated here — both have their own override further down for CI's benefit.
 // Google Play: versionCode must increase on each upload. Default = encoded Pylux semver
 // (same as iOS CURRENT_PROJECT_VERSION / macOS CFBundleVersion in CI): MAJOR*10000+MINOR*100+PATCH.
 // Optional override: env ANDROID_VERSION_CODE or -PandroidVersionCode= (e.g. one-off migration).
@@ -43,6 +44,26 @@ def resolveAndroidVersionCode(String major, String minor, String patch) {
 }
 def androidVersionCode = resolveAndroidVersionCode(chiakiVersionMajor, chiakiVersionMinor, chiakiVersionPatch)
 println("Android versionCode: $androidVersionCode (from ${chiakiVersion})")
+
+// Optional override for versionName itself (what Settings > About shows on-device): env
+// ANDROID_VERSION_NAME or -PandroidVersionName=. Falls back to the Chiaki library version for
+// ordinary/local builds. The release workflow computes its own CloudPad release tag (e.g.
+// "0.1.0", independent of Chiaki's own version) and passes it through here — without this,
+// the tag shown on a GitHub Release and the version shown in the app it links to would never
+// actually match, since Chiaki's own version doesn't move in step with this fork's releases.
+def resolveAndroidVersionName(String fallback) {
+    def envVn = System.getenv("ANDROID_VERSION_NAME")
+    if (envVn != null && !envVn.trim().isEmpty()) {
+        return envVn.trim()
+    }
+    def propVn = project.findProperty("androidVersionName")
+    if (propVn != null && !propVn.toString().trim().isEmpty()) {
+        return propVn.toString().trim()
+    }
+    return fallback
+}
+def androidVersionName = resolveAndroidVersionName(chiakiVersion)
+println("Android versionName: $androidVersionName")
 
 // Fastlane reads this via ./gradlew :app:printPyluxVersionCode — must not live only in afterEvaluate
 // (task can be missing or output unreliable for single-task invocations).
@@ -66,7 +87,7 @@ android {
         minSdk 24
         targetSdk 35
         versionCode androidVersionCode
-        versionName chiakiVersion
+        versionName androidVersionName
         ndk {
             // For local development: arm64-v8a only
             // For production builds: include all ABIs (armeabi-v7a, arm64-v8a, x86, x86_64)

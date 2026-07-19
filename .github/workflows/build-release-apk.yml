@@ -64,8 +64,29 @@ jobs:
             echo "No keystore secret found — build will use default debug signing (updates may require reinstall)"
           fi
 
+      # Runs before the build (not after, as this used to) — the version it computes is baked
+      # into the APK itself via ANDROID_VERSION_NAME below, so the tag a GitHub Release is filed
+      # under and the version the resulting app actually reports in Settings > About now match.
+      - name: Compute version
+        run: |
+          git fetch --tags
+          LATEST=$(git tag -l "v0.1.*" | sort -t. -k3 -n | tail -1)
+          if [ -z "$LATEST" ]; then
+            VERSION="0.1.1"
+          else
+            PATCH=$(echo "$LATEST" | sed 's/v0\.1\.//')
+            VERSION="0.1.$((PATCH + 1))"
+          fi
+          TAG="v${VERSION}"
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+          git tag $TAG
+          git push origin $TAG
+
       - name: Build APK
         working-directory: android
+        env:
+          ANDROID_VERSION_NAME: ${{ env.VERSION }}
         run: ./gradlew assembleDebug
 
       - name: Prepare APK
@@ -75,22 +96,6 @@ jobs:
           cp android/app/src/main/assets/FrontendArt/cloudpad-hero.png release/cloudpad-hero.png
           cp android/app/src/main/assets/FrontendArt/cloudpad-icon.png release/cloudpad-icon.png
           cp android/app/src/main/assets/FrontendArt/cloudpad-logo.png release/cloudpad-logo.png
-
-      - name: Compute version
-        run: |
-          git fetch --tags
-          LATEST=$(git tag -l "v0.0.*" | sort -t. -k3 -n | tail -1)
-          if [ -z "$LATEST" ]; then
-            VERSION="0.0.1"
-          else
-            PATCH=$(echo "$LATEST" | sed 's/v0\.0\.//')
-            VERSION="0.0.$((PATCH + 1))"
-          fi
-          TAG="v${VERSION}"
-          echo "VERSION=${VERSION}" >> $GITHUB_ENV
-          echo "TAG=${TAG}" >> $GITHUB_ENV
-          git tag $TAG
-          git push origin $TAG
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
