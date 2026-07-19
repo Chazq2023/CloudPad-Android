@@ -59,6 +59,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		 *  that header is hidden entirely. */
 		const val EXTRA_GAME_IMAGE_URL = "game_image_url"
 		private const val HIDE_UI_TIMEOUT_MS = 4000L
+		/** How long to wait before the silent retry for CHIAKI_QUIT_REASON_SESSION_REQUEST_RP_IN_USE
+		 *  (see [autoRetriedFirstConnect]) — confirmed on-device that retrying immediately after that
+		 *  quit reason reliably fails again with the same reason, since it's the console itself, not
+		 *  just this app, that needs the time to actually release the just-closed previous session. */
+		private const val RP_IN_USE_RETRY_DELAY_MS = 3000L
 	}
 
 	private lateinit var viewModel: StreamViewModel
@@ -117,8 +122,17 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  failure (the console really isn't reachable) still shows the normal dialog rather than
 	 *  retrying forever. Only applies before the first successful connect ([everConnected]); a
 	 *  later mid-stream disconnect always shows the dialog immediately, since auto-reconnecting
-	 *  there could silently mask a real problem instead of just working around this one quirk. */
+	 *  there could silently mask a real problem instead of just working around this one quirk.
+	 *
+	 *  Also gates the same single-silent-retry treatment for CHIAKI_QUIT_REASON_SESSION_REQUEST_RP_IN_USE
+	 *  ("Remote Play on Console is already in use") — confirmed on-device by re-tapping a tile
+	 *  within a second or two of a previous session ending: the console hasn't finished releasing
+	 *  that previous Remote Play session yet, so a fresh one gets rejected outright even though the
+	 *  console is genuinely available. See [RP_IN_USE_RETRY_DELAY_MS] for why that retry is delayed
+	 *  rather than immediate, unlike the Unknown-Error-Stream-Connection case above. */
 	private var autoRetriedFirstConnect = false
+
+	private val reconnectRetryHandler = Handler(Looper.getMainLooper())
 
 	/** Currently-applied window size / display mode. Only changes when the Quick Settings
 	 *  panel's Save button is pressed — the panel's own toggle group is staged separately. */
@@ -332,6 +346,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		flushStreamTimeSegment()
 		controlsDisposable.dispose()
 		uiVisibilityHandler.removeCallbacksAndMessages(null)
+		reconnectRetryHandler.removeCallbacksAndMessages(null)
 	}
 
 	override fun onConfigurationChanged(newConfig: Configuration)
@@ -566,6 +581,13 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 					Log.i("StreamActivity", "First connection attempt failed with the known post-wake Takion-not-ready quirk — silently retrying once")
 					autoRetriedFirstConnect = true
 					reconnect()
+				}
+				else if(!everConnected && !autoRetriedFirstConnect && !suppressQuitDialogForRestart &&
+					state.reason.toString() == "Remote Play on Console is already in use")
+				{
+					Log.i("StreamActivity", "Console hasn't finished releasing the previous session yet — silently retrying once after ${RP_IN_USE_RETRY_DELAY_MS}ms")
+					autoRetriedFirstConnect = true
+					reconnectRetryHandler.postDelayed({ reconnect() }, RP_IN_USE_RETRY_DELAY_MS)
 				}
 				else if(dialogContents != StreamQuitDialog && !suppressQuitDialogForRestart)
 				{

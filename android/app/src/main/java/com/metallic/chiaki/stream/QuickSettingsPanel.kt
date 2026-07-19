@@ -135,6 +135,15 @@ class QuickSettingsPanel(
 	}
 	private val panelWidthPx = 320f * activity.resources.displayMetrics.density
 
+	/** Left-hand tab rail buttons — see the isFocusableInTouchMode handling around these in the
+	 *  init block and in [open] for why this list is shared between the two. */
+	private val quickSettingsTabButtons by lazy {
+		listOf(
+			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
+			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies, panel.quickSettingsTabFriends
+		)
+	}
+
 	private val pyluxAccentColor: Int = TypedValue().let {
 		activity.theme.resolveAttribute(R.attr.pyluxAccent, it, true)
 		it.data
@@ -533,15 +542,12 @@ class QuickSettingsPanel(
 		}
 		showTab(panel.quickSettingsTabToggle.checkedButtonId)
 
-		// Buttons are focusable by default but not focusableInTouchMode — open() explicitly
-		// focuses the checked tab as soon as the panel appears, before the user's first D-pad
-		// press has had a chance to exit touch mode, so that requestFocus() call would otherwise
-		// silently fail right when the panel first opens (all later D-pad-driven focus moves are
-		// unaffected, since a real key event has exited touch mode by then).
-		listOf(
-			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
-			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies, panel.quickSettingsTabFriends
-		).forEach { it.isFocusableInTouchMode = true }
+		// Buttons are focusable by default but deliberately NOT focusableInTouchMode as a
+		// standing property — confirmed on-device that leaving it set makes a touchscreen tap
+		// on one of these only *focus* it (highlight), requiring a second tap to actually select
+		// the tab (same quirk as [enableFocusableInTouchModeForTv]). open()'s post{} block below
+		// toggles it on only for the instant of its own requestFocus() call — see that block's
+		// comment for why it needs it at all.
 
 		// These buttons' colour selectors only vary by checked state (see
 		// quick_settings_display_mode_tint.xml) — a focused-but-unchecked tab would otherwise
@@ -549,11 +555,8 @@ class QuickSettingsPanel(
 		// sign that D-pad navigation moved anywhere. The rail (tabs, close, disconnect) gets a
 		// translucent white highlight; everything inside a tab's content gets the theme-coloured
 		// one below, matching the Controller tab's remap list.
-		listOf(
-			panel.quickSettingsTabGeneral, panel.quickSettingsTabController,
-			panel.quickSettingsTabSession, panel.quickSettingsTabTrophies, panel.quickSettingsTabFriends,
-			panel.quickSettingsCloseButton, panel.quickSettingsDisconnectButton
-		).forEach { addFocusHighlight(it, Color.WHITE, useForeground = true) }
+		(quickSettingsTabButtons + listOf(panel.quickSettingsCloseButton, panel.quickSettingsDisconnectButton))
+			.forEach { addFocusHighlight(it, Color.WHITE, useForeground = true) }
 
 		listOf(
 			panel.quickSettingsDisplayModeNormal, panel.quickSettingsDisplayModeZoom,
@@ -1276,9 +1279,19 @@ class QuickSettingsPanel(
 		// directly: right after dialog.show() the content hasn't finished its first layout pass
 		// yet, and a requestFocus() on an unlaid-out view can silently lose out to the platform's
 		// own default-focus pass once that layout completes a frame later.
+		//
+		// requestFocus() silently no-ops on a view that isn't focusableInTouchMode while the
+		// device is still in touch mode (e.g. the panel was just opened by a tap) — the tab
+		// buttons are deliberately NOT focusableInTouchMode the rest of the time (see the init
+		// block), so it's flipped on only for the instant of this call, then straight back off:
+		// once flipped off, an actual touch tap right after this runs no longer gets swallowed
+		// as a focus-only first touch. A real D-pad key exits touch mode itself, so controller
+		// navigation from here on is unaffected either way.
 		panel.root.post {
+			quickSettingsTabButtons.forEach { it.isFocusableInTouchMode = true }
 			panel.quickSettingsTabToggle.findViewById<View>(panel.quickSettingsTabToggle.checkedButtonId)
 				?.requestFocus()
+			quickSettingsTabButtons.forEach { it.isFocusableInTouchMode = false }
 		}
 
 		panel.root.animate().cancel()
