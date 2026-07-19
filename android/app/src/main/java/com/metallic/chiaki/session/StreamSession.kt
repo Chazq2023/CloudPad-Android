@@ -8,12 +8,15 @@ import android.graphics.SurfaceTexture
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.*
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.metallic.chiaki.common.LogManager
+import com.metallic.chiaki.discovery.ConsoleSleepIntent
 import com.metallic.chiaki.lib.*
 
 sealed class StreamState
@@ -24,8 +27,14 @@ data class StreamStateCreateError(val error: CreateError): StreamState()
 data class StreamStateQuit(val reason: QuitReason, val reasonString: String?): StreamState()
 data class StreamStateLoginPinRequest(val pinIncorrect: Boolean): StreamState()
 
-class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, val logVerbose: Boolean, val input: StreamInput)
+class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val logVerbose: Boolean, val input: StreamInput)
 {
+	/** Mutable so an in-stream settings change (see restartWithNewConnectInfo) can swap in a
+	 *  freshly-built ConnectInfo (new video profile / cloud allocation) without needing a new
+	 *  StreamSession instance — resume() always reconnects using whatever this currently holds. */
+	var connectInfo: ConnectInfo = connectInfo
+		private set
+
 	var session: Session? = null
 		private set
 
@@ -57,6 +66,23 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	private var micConnected = false
 	/** True only from CHIAKI_EVENT_CONNECTED until shutdown() — see setMicrophoneEnabled. */
 	private var sessionConnected = false
+
+	// ---- PSN holepunch resume cancellation (see shutdown()/resumePsnConnection()) ----
+
+	/** Bumped on every shutdown(). resumePsnConnection()'s background thread captures this at
+	 *  start and checks it at each step so a concurrent shutdown() — the Quick Settings panel's
+	 *  Apply button restarting mid-holepunch, or just the Activity being paused/stopped — can
+	 *  cancel it safely without racing its own eventual cleanup call. */
+	@Volatile private var connectGeneration = 0
+
+	/** True for the entire span of an in-flight resumePsnConnection() background thread, from
+	 *  before it first touches its HolepunchSession until it either hands that pointer off to a
+	 *  native Session or finalizes it itself. While true, shutdown() must not also fini() the
+	 *  same HolepunchSession from a second thread — confirmed on-device that racing the two
+	 *  crashes natively ("invalid pthread_t passed to pthread_join") — it just cancels the
+	 *  in-flight holepunch and bumps connectGeneration, and lets that owning thread notice and
+	 *  clean up on its own. */
+	@Volatile private var holepunchResumeInFlight = false
 
 	init
 	{
@@ -118,6 +144,33 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			session.toggleMicrophone(false)
 			stopMicCapture()
 		}
+	}
+
+	/** Remote Play only — requests the console enter rest mode. Sony's Remote Play protocol has
+	 *  no separate "power off" command (see Session.gotoBed's own doc comment for why); rest
+	 *  mode is the only remote power-state change it supports, and this is used for the in-stream
+	 *  Quick Settings panel's "Put Console to Sleep" option. Doesn't disconnect by itself — the
+	 *  console ends the stream on its own end shortly after actually entering rest mode, same as
+	 *  any other server-initiated disconnect, so the caller (QuickSettingsPanel) still finishes
+	 *  the Activity itself right after calling this rather than waiting on that.
+	 *
+	 *  Same "before fully connected" hazard as setMicrophoneEnabled's own doc comment describes —
+	 *  chiaki_ctrl_goto_bed goes through the same thread-safe queued send path, so calling it
+	 *  before CHIAKI_EVENT_CONNECTED can abort the control connection outright instead of the
+	 *  console ever seeing the request. No-ops in that case; the caller's own disconnect right
+	 *  after still proceeds regardless, it just won't have told the console to sleep first. */
+	fun requestConsoleSleep()
+	{
+		val session = session ?: return
+		if(!input.isRemotePlay)
+			return
+		if(!sessionConnected)
+		{
+			Log.w("StreamSession", "requestConsoleSleep() called before the session finished connecting; ignoring")
+			return
+		}
+		ConsoleSleepIntent.markPendingSleep(connectInfo.host)
+		session.gotoBed()
 	}
 
 	private fun startMicCapture(nativeSession: Session)
@@ -194,9 +247,20 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 		audioRecord = null
 	}
 
-	fun shutdown()
+	/** [onFullyStopped], if given, fires once teardown has *actually* finished — not just been
+	 *  kicked off — including the video decoder's AMediaCodec teardown when a native Session
+	 *  existed. Only [restartWithNewConnectInfo] needs that: starting a new AMediaCodec on the
+	 *  same Surface before the old one's AMediaCodec_delete() truly completes crashes natively
+	 *  (confirmed on-device: MediaCodec's own "CHECK(mActivityNotify == NULL)" assertion in
+	 *  frameworks/av), so resume() can't just follow shutdown() immediately the way [pause]'s
+	 *  plain shutdown()-with-nothing-following does. May run [onFullyStopped] synchronously
+	 *  (before returning) or from a background thread depending on which branch below runs —
+	 *  callers needing the main thread (i.e. resume(), which touches LiveData) must hop back to
+	 *  it themselves; see restartWithNewConnectInfo. */
+	fun shutdown(onFullyStopped: (() -> Unit)? = null)
 	{
 		Log.i("StreamSession", "shutdown: session=${session != null}")
+		connectGeneration++
 		// Mic capture thread must be fully joined before the native session pointer can be
 		// freed below (on the background dispose thread) — otherwise a concurrent
 		// sendMicFrame() call could race the native free.
@@ -214,9 +278,23 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 			Thread {
 				sessionToDispose?.dispose()
 				Log.i("StreamSession", "Session disposed on background thread")
+				onFullyStopped?.invoke()
 			}.start()
 			session = null
 			holepunchSession = null // consumed by native Session
+		}
+		else if(holepunchResumeInFlight)
+		{
+			// resumePsnConnection()'s background thread currently owns holepunchSession and is
+			// actively calling into it. cancel() is the native holepunch API's own cross-thread
+			// interrupt signal (safe to call from here); it unblocks that thread's current step,
+			// which then runs its own existing error-path fini() and exits. connectGeneration++
+			// above also means that thread will recognize it's stale and finalize/abort itself
+			// even in the unlikely case its current step returns success right as this races it.
+			// No native Session (hence no video decoder) exists yet on this path, so there's
+			// nothing for a subsequent resume() to race — safe to call onFullyStopped right away.
+			holepunchSession?.cancel()
+			onFullyStopped?.invoke()
 		}
 		else
 		{
@@ -227,6 +305,9 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				Log.i("StreamSession", "Holepunch session finalized on background thread")
 			}.start()
 			holepunchSession = null
+			// Same reasoning as the holepunchResumeInFlight branch above — no video decoder to
+			// race here either.
+			onFullyStopped?.invoke()
 		}
 		_state.value = StreamStateIdle
 		//surfaceTexture?.release()
@@ -236,6 +317,35 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	{
 		Log.i("StreamSession", "pause")
 		shutdown()
+	}
+
+	/** Tears down the current connection and reconnects with [newConnectInfo] — used by the
+	 *  in-stream Quick Settings panel's Apply button to pick up a changed video profile (Remote
+	 *  Play) or freshly-allocated cloud session (Cloud Play) without leaving StreamActivity.
+	 *  Waits for the old connection's teardown to actually finish (see shutdown()'s
+	 *  onFullyStopped doc) before creating the replacement, hopping back to the main thread
+	 *  first since that teardown may complete on a background thread and resume() touches
+	 *  LiveData. [onResuming], if given, fires right before the new resume() — StreamViewModel
+	 *  uses it to drop its own "restart in progress" flag at exactly that point, not any sooner:
+	 *  tearing down the *old* session here calls its stop(), which — for a Remote Play session
+	 *  that was still actually connected — synchronously fires a QuitEvent(reason=Stopped) on
+	 *  the *old* native Session, and that event is indistinguishable from a real disconnect to
+	 *  StreamActivity unless the caller's "restart in progress" flag is still up to suppress it
+	 *  (confirmed on-device: without this, that stray Stopped quit reaches StreamActivity's
+	 *  ordinary StreamStateQuit handling, which — since Stopped isn't flagged as an error — takes
+	 *  its non-error branch and calls finish(), tearing down the whole Activity mid-restart and
+	 *  racing this method's own still-in-flight teardown from a second angle entirely). */
+	fun restartWithNewConnectInfo(newConnectInfo: ConnectInfo, onResuming: (() -> Unit)? = null)
+	{
+		Log.i("StreamSession", "restartWithNewConnectInfo")
+		val mainHandler = Handler(Looper.getMainLooper())
+		shutdown {
+			mainHandler.post {
+				onResuming?.invoke()
+				connectInfo = newConnectInfo
+				resume()
+			}
+		}
 	}
 
 	fun resume()
@@ -269,12 +379,35 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 	 */
 	private fun resumePsnConnection(duid: String)
 	{
+		val myGeneration = connectGeneration
+		holepunchResumeInFlight = true
 		Thread {
+			// True once a concurrent shutdown() has bumped connectGeneration past what this
+			// thread started with — checked between every blocking holepunch step so a
+			// cancellation is noticed even if the in-flight step happens to still report
+			// success (see shutdown()'s doc comment for why cancel() alone isn't enough).
+			fun isCancelled() = connectGeneration != myGeneration
+			fun abortCancelled(hpSession: HolepunchSession)
+			{
+				Log.i("StreamSession", "resumePsnConnection: cancelled, finalizing holepunch session")
+				hpSession.fini()
+				holepunchSession = null
+				holepunchResumeInFlight = false
+			}
+
 			try
 			{
 				Log.i("StreamSession", "Starting PSN holepunch connection (duid=$duid)")
 
-				// Step 1: Initialize holepunch session
+				// Step 1: Initialize holepunch session. No cancellation checkpoint here or after
+				// Step 2 below (unlike every later step) — chiaki_holepunch_session_fini()
+				// unconditionally joins the native websocket thread, but that thread isn't
+				// created until Step 3's chiaki_holepunch_session_create() actually runs
+				// (confirmed in holepunch.c); calling fini() any earlier tries to join a thread
+				// that was never started and crashes natively ("invalid pthread_t passed to
+				// pthread_join" — hit this on-device before adding this comment). A cancellation
+				// noticed this early just falls through to Step 3 and is caught there instead,
+				// where fini() is finally safe.
 				val hpSession = HolepunchSession(connectInfo.psnToken!!)
 				holepunchSession = hpSession
 
@@ -290,10 +423,12 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 					Log.e("StreamSession", "Holepunch session create failed: $createErr")
 					hpSession.fini()
 					holepunchSession = null
+					holepunchResumeInFlight = false
 					_state.postValue(StreamStateCreateError(CreateError(createErr)))
 					return@Thread
 				}
 				Log.i("StreamSession", "Holepunch session created")
+				if(isCancelled()) { abortCancelled(hpSession); return@Thread }
 
 				// Step 4: Create offer for control connection
 				val offerErr = hpSession.createOffer()
@@ -302,10 +437,12 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 					Log.e("StreamSession", "Holepunch create offer failed: $offerErr")
 					hpSession.fini()
 					holepunchSession = null
+					holepunchResumeInFlight = false
 					_state.postValue(StreamStateCreateError(CreateError(offerErr)))
 					return@Thread
 				}
 				Log.i("StreamSession", "Holepunch offer created for CTRL")
+				if(isCancelled()) { abortCancelled(hpSession); return@Thread }
 
 				// Step 5: Start session for specific console
 				val duidBytes = hexStringToBytes(duid)
@@ -316,10 +453,12 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 					Log.e("StreamSession", "Holepunch session start failed: $startErr")
 					hpSession.fini()
 					holepunchSession = null
+					holepunchResumeInFlight = false
 					_state.postValue(StreamStateCreateError(CreateError(startErr)))
 					return@Thread
 				}
 				Log.i("StreamSession", "Holepunch session started")
+				if(isCancelled()) { abortCancelled(hpSession); return@Thread }
 
 				// Step 6: Punch hole for control connection
 				val punchErr = hpSession.punchHole(HolepunchPortType.CTRL)
@@ -328,27 +467,44 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 					Log.e("StreamSession", "Holepunch punch hole (CTRL) failed: $punchErr")
 					hpSession.fini()
 					holepunchSession = null
+					holepunchResumeInFlight = false
 					_state.postValue(StreamStateCreateError(CreateError(punchErr)))
 					return@Thread
 				}
 				Log.i("StreamSession", "Holepunch CTRL hole punched!")
+				if(isCancelled()) { abortCancelled(hpSession); return@Thread }
 
 				// Step 7: Create Session with holepunch session pointer
 				// The native session_init() will use this for the streaming connection
 				// (data hole punching happens inside the native session thread)
 				val psnConnectInfo = connectInfo.copy(holepunchSessionPtr = hpSession.getPtr())
 				val session = Session(psnConnectInfo, logManager.createNewFile().file.absolutePath, logVerbose)
+				if(isCancelled())
+				{
+					// The new Session now owns the holepunch pointer (see shutdown()'s own
+					// "consumed by native Session" comment) — discard it the same way shutdown()
+					// discards a live one, rather than fini()-ing holepunchSession separately
+					// (which would double-free).
+					Log.i("StreamSession", "resumePsnConnection: cancelled after Session create, discarding")
+					session.stop()
+					Thread { session.dispose() }.start()
+					holepunchSession = null
+					holepunchResumeInFlight = false
+					return@Thread
+				}
 				session.eventCallback = this::eventCallback
 				session.start()
 				val surface = surface
 				if(surface != null)
 					session.setSurface(surface)
 				this.session = session
+				holepunchResumeInFlight = false
 			}
 			catch(e: CreateError)
 			{
 				holepunchSession?.fini()
 				holepunchSession = null
+				holepunchResumeInFlight = false
 				_state.postValue(StreamStateCreateError(e))
 			}
 			catch(e: Exception)
@@ -356,6 +512,7 @@ class StreamSession(val connectInfo: ConnectInfo, val logManager: LogManager, va
 				Log.e("StreamSession", "PSN connection failed", e)
 				holepunchSession?.fini()
 				holepunchSession = null
+				holepunchResumeInFlight = false
 				_state.postValue(StreamStateCreateError(CreateError(ErrorCode(-1))))
 			}
 		}.start()

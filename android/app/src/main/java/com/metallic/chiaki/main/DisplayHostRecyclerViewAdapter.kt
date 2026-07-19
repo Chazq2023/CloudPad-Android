@@ -20,6 +20,7 @@ import com.metallic.chiaki.common.PsnDisplayHost
 import com.metallic.chiaki.common.ext.inflate
 import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
 import com.pylux.stream.databinding.ItemDisplayHostBinding
+import com.metallic.chiaki.discovery.ConsoleSleepIntent
 import com.metallic.chiaki.lib.DiscoveryHost
 
 class DisplayHostDiffCallback(val old: List<DisplayHost>, val new: List<DisplayHost>): DiffUtil.Callback()
@@ -45,6 +46,12 @@ class DisplayHostRecyclerViewAdapter(
 			diff.dispatchUpdatesTo(this)
 		}
 
+	/** Host IDs currently mid-wake-transition — see MainViewModel.hostTransitions' doc comment.
+	 *  Set directly by the fragment (not part of [hosts]/DiffUtil, since it doesn't change which
+	 *  hosts are shown, only how one already-shown tile reads) alongside an explicit
+	 *  notifyDataSetChanged() to force the affected row(s) to actually rebind. */
+	var hostTransitions: Map<String, HostTransitionState> = emptyMap()
+
 	class ViewHolder(val binding: ItemDisplayHostBinding): RecyclerView.ViewHolder(binding.root)
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int)
@@ -62,10 +69,29 @@ class DisplayHostRecyclerViewAdapter(
 			it.headerNameTextView.text = host.name
 			
 			// Platform badge (4 or 5)
-			it.platformBadge.text = if(host.isPS5) "5" else "4"
-			it.platformTextView.text = if(host.isPS5) "PS5" else "PS4"
-			
-			// For PSN hosts: just show "Remote Console" and ready icon
+			val platformLabel = if(host.isPS5) "PS5" else "PS4"
+			it.platformBadge.text = platformLabel
+			it.platformTextView.text = platformLabel
+
+			// Takes priority over every other status below — see MainViewModel.hostTransitions'
+			// doc comment for why discovery alone reporting READY (or even a successful raw TCP
+			// check) isn't good enough to call a just-woken console "Ready" yet.
+			val transition = host.id?.let { hostTransitions[it] }
+			// Only meaningful for a host with a real address (PsnDisplayHost.host is always
+			// blank) — see ConsoleSleepIntent's doc comment. Cleared once discovery confirms
+			// STANDBY, so this is false again well before "Asleep" below would otherwise apply.
+			val isPendingSleep = ConsoleSleepIntent.isPendingSleep(host.host)
+
+			// For PSN hosts: just show "Remote Console" and a "Getting Console Status" status.
+			// Deliberately not "Ready" — PSN presence only means this console is associated with
+			// the account, not that it's actually powered on right now (e.g. right after a
+			// wakeup packet, it can take many seconds to boot before local discovery confirms
+			// it's really up, and this tile is what's shown in that gap — see
+			// MainViewModel.combine()'s discovered/psnDisplayHosts split). "Ready" is reserved
+			// for the locally-confirmed green state below so the two can never be confused for
+			// the same thing. Colour is hardcoded here rather than reusing R.color.psn_blue,
+			// which despite its name is actually the app's pink theme accent (#FF149D) — this
+			// status needs to visually read as "blue", distinct from ready/asleep/offline.
 			if(host is PsnDisplayHost)
 			{
 				it.hostTextView.text = "Remote Console"
@@ -73,8 +99,36 @@ class DisplayHostRecyclerViewAdapter(
 				it.hostTextView.textSize = 16f
 				it.idTextView.visibility = View.GONE
 				it.statusLayout.visibility = View.VISIBLE
-				it.statusTextView.text = "Ready"
-				it.statusIcon.setColorFilter(context.getColor(R.color.psn_blue))
+				when
+				{
+					transition == HostTransitionState.WAKING ->
+					{
+						it.statusTextView.text = "Waking console"
+						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#F97316")) // Orange-500
+					}
+					transition == HostTransitionState.CONFIRMED_ON_WAITING ->
+					{
+						it.statusTextView.text = "Console on, please wait until in Ready state"
+						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#22C55E")) // Green-500
+					}
+					// This tile only shows once local discovery has stopped seeing the console (a
+					// still-discovered one renders as a DiscoveredDisplayHost instead — see below).
+					// For a short window after that it's still plausibly just mid-boot or
+					// mid-lookup; past it, genuinely offline. See PsnDisplayHost.confirmedOffline's
+					// doc comment — this is a fixed real-time grace, not session history, so a
+					// console that was already off before the app was even opened still gets a
+					// definitive verdict instead of sitting in "Getting Console Status" forever.
+					host.confirmedOffline ->
+					{
+						it.statusTextView.text = "Console Offline"
+						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#EF4444")) // Red-500
+					}
+					else ->
+					{
+						it.statusTextView.text = "Getting Console Status"
+						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#3B82F6")) // Blue-500
+					}
+				}
 			}
 			else
 			{
@@ -82,7 +136,7 @@ class DisplayHostRecyclerViewAdapter(
 				it.hostTextView.text = context.getString(R.string.display_host_host, host.host)
 				it.hostTextView.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
 				it.hostTextView.textSize = 15f
-				
+
 				// Device ID (MAC address)
 				val id = host.id
 				if(id != null)
@@ -99,36 +153,30 @@ class DisplayHostRecyclerViewAdapter(
 				{
 					it.idTextView.visibility = View.GONE
 				}
-				
-				// State/Status with colored dot on the right
-				val stateText = when
+
+				// State/Status with colored dot on the right. A ManualDisplayHost never carries a
+				// live discovery state at all (manual hosts and discovered hosts are always
+				// separate, undeduplicated rows — see MainViewModel.combine()), so the console
+				// it points at not currently showing up here means exactly one thing either way:
+				// it's not reachable right now, i.e. Offline.
+				val (stateText, statusIconTint) = when
 				{
-					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY -> "Ready"
-					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY -> "Standby"
-					else -> null
+					transition == HostTransitionState.WAKING ->
+						"Waking console" to android.graphics.Color.parseColor("#F97316") // Orange-500
+					transition == HostTransitionState.CONFIRMED_ON_WAITING ->
+						"Console on, please wait until in Ready state" to android.graphics.Color.parseColor("#22C55E") // Green-500
+					isPendingSleep && !(host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY) ->
+						"Console sleeping, please wait" to android.graphics.Color.parseColor("#EAB308") // Yellow-500
+					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY ->
+						"Ready" to android.graphics.Color.parseColor("#22C55E") // Green-500
+					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY ->
+						"Asleep" to android.graphics.Color.parseColor("#EAB308") // Yellow-500
+					else ->
+						"Offline" to android.graphics.Color.parseColor("#EF4444") // Red-500
 				}
-				
-				if(stateText != null)
-				{
-					it.statusTextView.text = stateText
-					it.statusLayout.visibility = View.VISIBLE
-					
-					// Set status dot color
-					val statusIconTint = when
-					{
-						host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY -> 
-							android.graphics.Color.parseColor("#22C55E") // Green-500
-						host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY -> 
-							android.graphics.Color.parseColor("#F97316") // Orange-500
-						else -> 
-							android.graphics.Color.parseColor("#9CA3AF") // Gray-400
-					}
-					it.statusIcon.setColorFilter(statusIconTint)
-				}
-				else
-				{
-					it.statusLayout.visibility = View.GONE
-				}
+				it.statusTextView.text = stateText
+				it.statusLayout.visibility = View.VISIBLE
+				it.statusIcon.setColorFilter(statusIconTint)
 			}
 			// Bottom info (app/game running)
 			val bottomInfo = (host as? DiscoveredDisplayHost)?.discoveredHost?.let { discoveredHost ->

@@ -4,6 +4,22 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
+        app:key="category_about"
+        app:title="@string/preferences_category_title_about">
+        <Preference
+            app:key="app_version"
+            app:title="@string/preferences_app_version_title"
+            app:selectable="false"
+            app:icon="@drawable/ic_log"/>
+
+        <Preference
+            app:key="view_license"
+            app:summary="@string/preferences_view_license_summary"
+            app:title="@string/preferences_view_license_title"
+            app:icon="@drawable/ic_log"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="category_appearance"
         app:title="@string/preferences_category_title_appearance">
         <ListPreference
@@ -223,16 +239,6 @@
             app:summary="@string/preferences_import_settings_summary"
             app:title="@string/preferences_import_settings_title"
             app:icon="@drawable/ic_import"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        app:key="category_about"
-        app:title="@string/preferences_category_title_about">
-        <Preference
-            app:key="view_license"
-            app:summary="@string/preferences_view_license_summary"
-            app:title="@string/preferences_view_license_title"
-            app:icon="@drawable/ic_log"/>
     </PreferenceCategory>
 
     <PreferenceCategory

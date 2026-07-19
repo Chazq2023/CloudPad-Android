@@ -28,10 +28,12 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.friends.ChatMessage
@@ -51,6 +53,10 @@ import com.metallic.chiaki.session.ControllerAction
 import com.metallic.chiaki.session.ControllerRemapCapture
 import com.metallic.chiaki.session.PhysicalInput
 import com.metallic.chiaki.session.StreamInput
+import com.metallic.chiaki.session.StreamStateConnected
+import com.metallic.chiaki.session.StreamStateConnecting
+import com.metallic.chiaki.session.StreamStateCreateError
+import com.metallic.chiaki.session.StreamStateQuit
 import com.metallic.chiaki.settings.RemapAdapter
 import com.metallic.chiaki.settings.RemapItem
 import com.metallic.chiaki.trophy.TrophyAdapter
@@ -84,9 +90,21 @@ import org.json.JSONArray
  * waiting for anything else.
  *
  * The Session tab's settings are baked into the stream at connect time (video profile / cloud
- * allocation), so changing them here can't take effect live on the current stream — a static
- * notice at the bottom of that tab tells the user as much, and that restarting the stream is
- * required for changes there to take effect.
+ * allocation), so they can't take effect live on the current stream by themselves. Unlike every
+ * other row in this panel, its rows don't apply — or persist to [preferences] — immediately:
+ * edits are held in [pendingRemotePlaySettings]/[pendingCloudSettings] only, so closing the
+ * panel or disconnecting without ever tapping Apply leaves Preferences exactly as they were.
+ * A pinned Apply button appears at the bottom of the tab's content area as soon as a row differs
+ * from whatever the live stream actually last (re)started with, and disappears again if reverted
+ * back. Tapping it commits the pending edits to Preferences (see [commitPendingSessionSettings])
+ * and kicks off a restart: Remote Play reconnects with a freshly-built video profile — near-instant
+ * for a direct-IP LAN console, but for a PSN one it redoes the full holepunch handshake first
+ * (same cost as the original connect, since the profile only ever goes out in the same one-time
+ * handshake that creates the native session), so it can take just as long. Cloud Play re-runs the
+ * Gaikai allocation flow for a brand new session first and only swaps the live one over once that
+ * succeeds, so a failed allocation leaves the current stream untouched rather than disconnecting
+ * the user. See [StreamViewModel.restartRemotePlaySession] / [StreamViewModel.restartCloudSession]
+ * and [updateSessionApplyVisibility].
  *
  * Hosted in its own [Dialog] (a separate window) rather than a View inside
  * activity_stream.xml. It used to share the activity's window with the video SurfaceView,
@@ -189,6 +207,53 @@ class QuickSettingsPanel(
 	private val capture: ControllerRemapCapture
 
 	private val sessionType: StreamSessionType = viewModel.connectInfo.sessionType
+
+	// ---- Session tab: Apply-gated restart (see class doc comment) ----
+
+	private data class RemotePlaySettingsSnapshot(
+		val resolution: Preferences.Resolution,
+		val fps: Preferences.FPS,
+		val bitrate: Int?,
+		val codec: Preferences.Codec
+	)
+
+	private data class CloudSettingsSnapshot(
+		val resolution: Int,
+		val datacenter: String,
+		val bitrateKbps: Int
+	)
+
+	/** Snapshot of the settings the live stream actually last (re)started with, i.e. what's
+	 *  currently in [preferences] as of the last successful Apply. Only one of the two is ever
+	 *  non-null, matching [sessionType]. Advanced to the current values once a restart they
+	 *  triggered reaches [StreamStateConnected]; left alone on failure so Apply stays available
+	 *  to retry. */
+	private var remotePlayBaseline: RemotePlaySettingsSnapshot? = null
+	private var cloudBaseline: CloudSettingsSnapshot? = null
+
+	/** The Session tab's not-yet-applied edits. Rows write here, not straight to [preferences]
+	 *  like every other row in this panel — [commitPendingSessionSettings] is what actually
+	 *  copies these into Preferences, called only from [applySessionSettings] right before the
+	 *  restart that picks them up. Confirmed on-device this needed fixing: previously rows wrote
+	 *  straight through, so a value changed here and never Applied was already permanently saved
+	 *  the moment it was picked — even if the user disconnected instead of tapping Apply — and
+	 *  would come back the next time a session was opened despite never having taken effect on
+	 *  the one it was changed in. Initialised to match the baseline whenever the tab's rows are
+	 *  (re)built, and only ever compared against — never assigned from — the live values in
+	 *  Preferences. Only one of the two is ever non-null, matching [sessionType]. */
+	private var pendingRemotePlaySettings: RemotePlaySettingsSnapshot? = null
+	private var pendingCloudSettings: CloudSettingsSnapshot? = null
+
+	/** True from the moment Apply is tapped until the restart it triggered resolves (either
+	 *  outcome) — gates whether the next [StreamStateConnected]/error transition should advance
+	 *  the baseline above. Without this, the panel's very first connection on open() would also
+	 *  count. */
+	private var pendingSessionRestart = false
+
+	/** Every dropdown/seekbar/edittext control added to the Session tab's rows, so they can all
+	 *  be disabled while a restart is in flight — otherwise a further edit made mid-restart would
+	 *  be silently folded into the baseline once that restart's (unrelated) success lands. */
+	private val sessionRowControls = mutableListOf<View>()
 
 	private val trophyRepository = TrophyRepository(preferences)
 	private val trophyAdapter = TrophyAdapter(onTrophyClick = { trophy -> showTrophyDetailDialog(activity, trophy) })
@@ -408,9 +473,54 @@ class QuickSettingsPanel(
 		}
 
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
-		panel.quickSettingsDisconnectButton.setOnClickListener { dismissImmediately(); activity.finish() }
+		panel.quickSettingsDisconnectButton.setOnClickListener { showDisconnectOptions() }
 
 		buildSessionSettingsTab()
+
+		panel.quickSettingsSessionApplyButton.setOnClickListener { applySessionSettings() }
+
+		// Cloud Play's allocation flow (the pre-reconnect half of a restart) has no equivalent
+		// StreamState — worse, the account-level session lock it goes through forces the *old*
+		// cloud session closed server-side partway through (confirmed on-device: it arrives on
+		// the still-live StreamSession as a Quit event), so a stray StreamStateQuit during this
+		// window is an expected side effect of the restart, not its outcome. Its own progress/
+		// failure is tracked separately here instead; once a new ConnectInfo is actually handed
+		// off, this goes back to Idle and the ordinary StreamState observer below takes over for
+		// the real outcome. A Failed outcome gets its own recovery dialog from StreamActivity
+		// (Retry/Quit) rather than a toast here — the old session is near-certainly already dead
+		// by that point (see above), so a passive toast alone would leave the user stranded on a
+		// frozen frame with no way back in.
+		viewModel.sessionRestartState.observe(activity, Observer { state ->
+			if(state is SessionRestartState.Failed)
+				pendingSessionRestart = false
+			updateSessionApplyVisibility()
+		})
+
+		// Drives the reconnect half of a restart (both session types funnel through here once a
+		// new ConnectInfo is handed to StreamSession) — advances the baseline on success, leaves
+		// it alone on failure so Apply reappears for a retry. Quit/CreateError while
+		// sessionRestartState is still InProgress is the stray old-session-killed side effect
+		// above, not this attempt's outcome, so it's ignored here too — the real failure (if any)
+		// arrives after sessionRestartState drops back to Idle, once restartWithNewConnectInfo has
+		// actually been called. StreamActivity's own observer on this same LiveData already shows
+		// the user-facing error dialog for that real failure case.
+		viewModel.session.state.observe(activity, Observer { state ->
+			if(pendingSessionRestart)
+			{
+				val allocating = viewModel.sessionRestartState.value is SessionRestartState.InProgress
+				when(state)
+				{
+					is StreamStateConnected -> {
+						remotePlayBaseline = currentRemotePlaySnapshot()
+						cloudBaseline = currentCloudSnapshot()
+						pendingSessionRestart = false
+					}
+					is StreamStateCreateError, is StreamStateQuit -> if(!allocating) pendingSessionRestart = false
+					else -> { }
+				}
+			}
+			updateSessionApplyVisibility()
+		})
 
 		// Left-hand tab rail: General Settings / Controller Mapping / Session Settings. Only
 		// one section is visible at a time; the toggle group's own checked-state colouring
@@ -478,6 +588,17 @@ class QuickSettingsPanel(
 			if(checkedButtonId == R.id.quickSettingsTabTrophies) View.VISIBLE else View.GONE
 		panel.quickSettingsFriendsSection.visibility =
 			if(checkedButtonId == R.id.quickSettingsTabFriends) View.VISIBLE else View.GONE
+
+		// Whichever container just became visible needs its focus-blocking synced to the
+		// current scope (see exitToRailScope()'s doc comment) — the container that was blocked
+		// before is now GONE and irrelevant, but a freshly-shown one defaults to unblocked
+		// (its layout-declared descendantFocusability) unless set here.
+		currentTabContentContainer()?.descendantFocusability =
+			if(inTabContent) ViewGroup.FOCUS_BEFORE_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
+
+		// See updateSessionApplyVisibility's doc comment — the Apply bar doesn't belong to any
+		// one tab's container, so leaving this tab (or returning to it) needs to re-evaluate it.
+		updateSessionApplyVisibility()
 
 		// Fetched lazily the first time this tab is opened rather than at construction time
 		// (unlike the Session tab's static rows) since it's a live network call — the refresh
@@ -791,46 +912,62 @@ class QuickSettingsPanel(
 
 	private fun buildRemotePlayRows(container: LinearLayout)
 	{
+		remotePlayBaseline = currentRemotePlaySnapshot()
+		pendingRemotePlaySettings = remotePlayBaseline
+
 		addSectionLabel(container, R.string.preferences_category_title_stream)
 
-		addDropdownRow(
+		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_resolution_title,
 			entries = Preferences.resolutionAll.map { activity.getString(it.title) },
 			values = Preferences.resolutionAll.map { it.value },
 			currentValue = preferences.resolution.value
 		) { value ->
-			Preferences.resolutionAll.firstOrNull { it.value == value }?.let { preferences.resolution = it }
+			Preferences.resolutionAll.firstOrNull { it.value == value }?.let { res ->
+				pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(resolution = res)
+			}
+			updateSessionApplyVisibility()
 		}
 
-		addDropdownRow(
+		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_fps_title,
 			entries = Preferences.fpsAll.map { activity.getString(it.title) },
 			values = Preferences.fpsAll.map { it.value },
 			currentValue = preferences.fps.value
 		) { value ->
-			Preferences.fpsAll.firstOrNull { it.value == value }?.let { preferences.fps = it }
+			Preferences.fpsAll.firstOrNull { it.value == value }?.let { fps ->
+				pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(fps = fps)
+			}
+			updateSessionApplyVisibility()
 		}
 
-		addEditTextRow(
+		sessionRowControls += addEditTextRow(
 			container, R.string.preferences_bitrate_title,
 			hint = activity.getString(R.string.preferences_bitrate_auto, preferences.bitrateAuto),
 			currentValue = preferences.bitrate
 		) { value ->
-			preferences.bitrate = value
+			pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(bitrate = value)
+			updateSessionApplyVisibility()
 		}
 
-		addDropdownRow(
+		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_codec_title,
 			entries = Preferences.codecAll.map { activity.getString(it.title) },
 			values = Preferences.codecAll.map { it.value },
 			currentValue = preferences.codec.value
 		) { value ->
-			Preferences.codecAll.firstOrNull { it.value == value }?.let { preferences.codec = it }
+			Preferences.codecAll.firstOrNull { it.value == value }?.let { codec ->
+				pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(codec = codec)
+			}
+			updateSessionApplyVisibility()
 		}
 	}
 
 	private fun buildCloudRows(container: LinearLayout, isLibrary: Boolean)
 	{
+		cloudBaseline = currentCloudSnapshot()
+		pendingCloudSettings = cloudBaseline
+
 		addSectionLabel(
 			container,
 			if(isLibrary) R.string.preferences_category_title_game_library else R.string.preferences_category_title_game_catalog
@@ -843,34 +980,144 @@ class QuickSettingsPanel(
 			if(isLibrary) R.array.cloud_resolution_pscloud_values else R.array.cloud_resolution_psnow_values
 		).toList()
 		val currentRes = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow()
-		addDropdownRow(
+		sessionRowControls += addDropdownRow(
 			container,
 			if(isLibrary) R.string.preferences_cloud_resolution_pscloud_title else R.string.preferences_cloud_resolution_psnow_title,
 			resEntries, resValues, currentRes.toString()
 		) { value ->
 			val intValue = value.toIntOrNull() ?: return@addDropdownRow
-			if(isLibrary) preferences.setCloudResolutionPscloud(intValue) else preferences.setCloudResolutionPsnow(intValue)
+			pendingCloudSettings = pendingCloudSettings?.copy(resolution = intValue)
+			updateSessionApplyVisibility()
 		}
 
 		val (dcEntries, dcValues) = datacenterEntries(
 			if(isLibrary) preferences.getCloudDatacentersJsonPscloud() else preferences.getCloudDatacentersJsonPsnow()
 		)
 		val currentDc = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow()
-		addDropdownRow(
+		sessionRowControls += addDropdownRow(
 			container,
 			if(isLibrary) R.string.preferences_cloud_datacenter_pscloud_title else R.string.preferences_cloud_datacenter_psnow_title,
 			dcEntries, dcValues, currentDc
 		) { value ->
-			if(isLibrary) preferences.setCloudDatacenterPscloud(value) else preferences.setCloudDatacenterPsnow(value)
+			pendingCloudSettings = pendingCloudSettings?.copy(datacenter = value)
+			updateSessionApplyVisibility()
 		}
 
 		val bitrateSummaryRes = if(isLibrary) R.string.preferences_cloud_bitrate_pscloud_summary else R.string.preferences_cloud_bitrate_psnow_summary
 		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
-		addSeekBarRow(
+		sessionRowControls += addSeekBarRow(
 			container, bitrateSummaryRes,
 			min = 2, max = 200, currentValue = currentBitrateMbps
 		) { valueMbps ->
-			if(isLibrary) preferences.setCloudBitratePscloud(valueMbps * 1000) else preferences.setCloudBitratePsnow(valueMbps * 1000)
+			pendingCloudSettings = pendingCloudSettings?.copy(bitrateKbps = valueMbps * 1000)
+			updateSessionApplyVisibility()
+		}
+	}
+
+	/** Writes this tab's pending, not-yet-persisted edits into [preferences] — see
+	 *  [pendingRemotePlaySettings]/[pendingCloudSettings]'s doc comment. Called only from
+	 *  [applySessionSettings], right before the restart that reads these back out of
+	 *  Preferences to build the new video profile / cloud allocation. */
+	private fun commitPendingSessionSettings()
+	{
+		when(sessionType)
+		{
+			StreamSessionType.REMOTE_PLAY -> pendingRemotePlaySettings?.let { pending ->
+				preferences.resolution = pending.resolution
+				preferences.fps = pending.fps
+				preferences.bitrate = pending.bitrate
+				preferences.codec = pending.codec
+			}
+			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
+				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
+				{
+					preferences.setCloudResolutionPscloud(pending.resolution)
+					preferences.setCloudDatacenterPscloud(pending.datacenter)
+					preferences.setCloudBitratePscloud(pending.bitrateKbps)
+				}
+				else
+				{
+					preferences.setCloudResolutionPsnow(pending.resolution)
+					preferences.setCloudDatacenterPsnow(pending.datacenter)
+					preferences.setCloudBitratePsnow(pending.bitrateKbps)
+				}
+			}
+		}
+	}
+
+	private fun currentRemotePlaySnapshot() = RemotePlaySettingsSnapshot(
+		resolution = preferences.resolution,
+		fps = preferences.fps,
+		bitrate = preferences.bitrate,
+		codec = preferences.codec
+	)
+
+	/** Reads whichever of the Catalog (PSNow)/Library (PSCloud) preference keys applies to this
+	 *  session — safe to call for either [sessionType], since it's only ever compared against
+	 *  [cloudBaseline], which is equally session-type-specific. */
+	private fun currentCloudSnapshot(): CloudSettingsSnapshot
+	{
+		val isLibrary = sessionType == StreamSessionType.LIBRARY_PSCLOUD
+		return CloudSettingsSnapshot(
+			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
+			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
+			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
+		)
+	}
+
+	private val isSessionRestarting: Boolean get() =
+		viewModel.sessionRestartState.value is SessionRestartState.InProgress ||
+		viewModel.session.state.value is StreamStateConnecting
+
+	private fun applySessionSettings()
+	{
+		if(isSessionRestarting) return
+		commitPendingSessionSettings()
+		pendingSessionRestart = true
+		updateSessionApplyVisibility()
+		when(sessionType)
+		{
+			StreamSessionType.REMOTE_PLAY -> viewModel.restartRemotePlaySession()
+			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> viewModel.restartCloudSession()
+		}
+	}
+
+	/** Single source of truth for the Session tab's Apply bar — called after every row edit and
+	 *  from both the [StreamViewModel.sessionRestartState] and [StreamSession.state] observers,
+	 *  since any of those can flip whether there's a pending change or a restart in flight. Also
+	 *  called from [showTab] on every tab switch: the bar is a layout sibling of the Session
+	 *  ScrollView pinned to the bottom of the whole panel (not a child of it), so nothing about
+	 *  switching tabs would otherwise touch its visibility — a change left pending on the Session
+	 *  tab would keep the Apply bar showing over Trophies, Friends, etc. instead of only where
+	 *  the setting it applies to actually lives. */
+	private fun updateSessionApplyVisibility()
+	{
+		val dirty = when(sessionType)
+		{
+			StreamSessionType.REMOTE_PLAY -> remotePlayBaseline != null && remotePlayBaseline != pendingRemotePlaySettings
+			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD ->
+				cloudBaseline != null && cloudBaseline != pendingCloudSettings
+		}
+		val restarting = isSessionRestarting
+		val sessionTabActive = panel.quickSettingsTabToggle.checkedButtonId == R.id.quickSettingsTabSession
+
+		panel.quickSettingsSessionApplyBar.visibility = if((dirty || restarting) && sessionTabActive) View.VISIBLE else View.GONE
+		panel.quickSettingsSessionApplyButton.visibility = if(restarting) View.GONE else View.VISIBLE
+		panel.quickSettingsSessionApplyStatusText.visibility = if(restarting) View.VISIBLE else View.GONE
+		if(restarting)
+		{
+			panel.quickSettingsSessionApplyStatusText.text =
+				(viewModel.sessionRestartState.value as? SessionRestartState.InProgress)?.message
+					?: activity.getString(R.string.quick_settings_session_restarting)
+		}
+		setSessionRowsEnabled(!restarting)
+	}
+
+	private fun setSessionRowsEnabled(enabled: Boolean)
+	{
+		sessionRowControls.forEach {
+			it.isEnabled = enabled
+			it.alpha = if(enabled) 1f else 0.5f
 		}
 	}
 
@@ -914,7 +1161,7 @@ class QuickSettingsPanel(
 		values: List<String>,
 		currentValue: String,
 		onSelected: (String) -> Unit
-	)
+	): View
 	{
 		val row = ItemQuickSettingsDropdownBinding.inflate(activity.layoutInflater, container, true)
 		row.quickSettingsDropdownLabel.text = activity.getString(labelRes)
@@ -935,6 +1182,7 @@ class QuickSettingsPanel(
 			override fun onNothingSelected(parent: AdapterView<*>?) {}
 		}
 		addFocusHighlight(row.quickSettingsDropdownSpinner, pyluxAccentColor)
+		return row.quickSettingsDropdownSpinner
 	}
 
 	private fun updateCasSeekBarLabel(value: Int)
@@ -950,7 +1198,7 @@ class QuickSettingsPanel(
 		max: Int,
 		currentValue: Int,
 		onChanged: (Int) -> Unit
-	)
+	): View
 	{
 		val row = ItemQuickSettingsSeekbarBinding.inflate(activity.layoutInflater, container, true)
 		fun updateLabel(value: Int) { row.quickSettingsSeekBarLabel.text = activity.getString(summaryRes, value) }
@@ -973,6 +1221,7 @@ class QuickSettingsPanel(
 			override fun onStopTrackingTouch(seekBar: SeekBar) {}
 		})
 		addFocusHighlight(row.quickSettingsSeekBar, pyluxAccentColor)
+		return row.quickSettingsSeekBar
 	}
 
 	private fun addEditTextRow(
@@ -981,7 +1230,7 @@ class QuickSettingsPanel(
 		hint: String,
 		currentValue: Int?,
 		onChanged: (Int?) -> Unit
-	)
+	): View
 	{
 		val row = ItemQuickSettingsEdittextBinding.inflate(activity.layoutInflater, container, true)
 		row.quickSettingsEditTextLabel.text = activity.getString(labelRes)
@@ -989,6 +1238,7 @@ class QuickSettingsPanel(
 		row.quickSettingsEditText.setText(currentValue?.toString() ?: "")
 		row.quickSettingsEditText.doAfterTextChanged { text -> onChanged(text?.toString()?.toIntOrNull()) }
 		addFocusHighlight(row.quickSettingsEditText, pyluxAccentColor)
+		return row.quickSettingsEditText
 	}
 
 	fun open()
@@ -1054,6 +1304,37 @@ class QuickSettingsPanel(
 		if(isOpen) close() else open()
 	}
 
+	/** Remote Play only — Cloud Play's power icon keeps its original single-tap disconnect
+	 *  unchanged: "put to sleep" isn't meaningful there, since Cloud Play streams a cloud-hosted
+	 *  instance rather than a physical console the user owns. For Remote Play, offers a choice
+	 *  between putting the physical console to sleep first
+	 *  ([com.metallic.chiaki.session.StreamSession.requestConsoleSleep]) or just disconnecting —
+	 *  Sony's protocol has no distinct "power off" command, only rest mode (see that function's
+	 *  own doc comment for why). Uses the app-wide dialog styling like every other dialog in the
+	 *  app, and stays cancelable (back button / tap outside) by default so an accidental tap on
+	 *  the power icon doesn't force picking one of two disconnecting outcomes. */
+	private fun showDisconnectOptions()
+	{
+		if(sessionType != StreamSessionType.REMOTE_PLAY)
+		{
+			dismissImmediately()
+			activity.finish()
+			return
+		}
+		activity.alertDialogBuilder()
+			.setMessage(R.string.alert_message_console_power_options)
+			.setPositiveButton(R.string.action_console_sleep) { _, _ ->
+				viewModel.session.requestConsoleSleep()
+				dismissImmediately()
+				activity.finish()
+			}
+			.setNegativeButton(R.string.action_disconnect_session) { _, _ ->
+				dismissImmediately()
+				activity.finish()
+			}
+			.show()
+	}
+
 	/** Used ahead of Disconnect instead of [close]'s animated dismiss: the Dialog is created with
 	 *  the Activity as its context, so if the Activity finishes while it's still showing, Android
 	 *  throws a WindowLeaked crash — an animated close's dialog.dismiss() only runs 220ms later
@@ -1099,13 +1380,24 @@ class QuickSettingsPanel(
 	/** Drills D-pad focus from the tab rail into the currently selected tab's content — the
 	 *  rail, close and disconnect buttons are all temporarily excluded from focus search so
 	 *  D-pad navigation inside the content can't wander onto them (e.g. off the bottom of a
-	 *  scrolled list); only exitToRailScope() (Circle/Back) returns. */
+	 *  scrolled list); only exitToRailScope() (Circle/Back) returns. Un-blocks the content
+	 *  container's own descendant focusability first — exitToRailScope()/showTab() block it
+	 *  while in rail scope (see their own comments), and addFocusables()/requestFocus() below
+	 *  would silently find nothing while that's still in effect. */
 	private fun enterContentScope()
 	{
 		val container = currentTabContentContainer() ?: return
+		container.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		val focusables = ArrayList<View>()
 		container.addFocusables(focusables, View.FOCUS_DOWN)
-		val target = focusables.firstOrNull() ?: return
+		// A ScrollView (the Session/General tabs' container) is focusable by itself by default —
+		// purely so D-pad/trackball scrolling still works when nothing inside it has focus — and
+		// with descendantFocusability just set to FOCUS_BEFORE_DESCENDANTS above,
+		// addFocusables() lists that self-focusability before its children's, so
+		// firstOrNull() picked the whole scroll container instead of its first real row
+		// (confirmed on-device). Skip the container itself; fall back to it only if the tab
+		// genuinely has no focusable rows at all, so D-pad scrolling still works in that case.
+		val target = focusables.firstOrNull { it !== container } ?: focusables.firstOrNull() ?: return
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = false
 		panel.quickSettingsDisconnectButton.isFocusable = false
@@ -1113,6 +1405,12 @@ class QuickSettingsPanel(
 		target.requestFocus()
 	}
 
+	/** Blocks the current tab's content container from focus search while in rail scope — without
+	 *  this, D-pad down from the last rail button (Friends) doesn't land on the Disconnect button
+	 *  below the rail as expected: Android's focus search is geometric, not scoped to siblings,
+	 *  and the Session/Trophies/Friends tabs' own content sits to the right of and taller than the
+	 *  rail, so it can end up the nearer match and steal focus back into content that was never
+	 *  actually entered (confirmed on-device). enterContentScope() is what lifts this again. */
 	private fun exitToRailScope()
 	{
 		// Always land back on the friends list, never mid-conversation/comparison, next time this
@@ -1120,6 +1418,7 @@ class QuickSettingsPanel(
 		if(inFriendChat) backToFriendsList()
 		if(inTrophyCompare) backFromTrophyCompare()
 
+		currentTabContentContainer()?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = true
 		panel.quickSettingsDisconnectButton.isFocusable = true
@@ -1128,7 +1427,7 @@ class QuickSettingsPanel(
 			?.requestFocus()
 	}
 
-	private fun currentTabContentContainer(): View? = when(panel.quickSettingsTabToggle.checkedButtonId)
+	private fun currentTabContentContainer(): ViewGroup? = when(panel.quickSettingsTabToggle.checkedButtonId)
 	{
 		R.id.quickSettingsTabController -> panel.quickSettingsControllerSection
 		R.id.quickSettingsTabGeneral -> panel.quickSettingsGeneralScroll

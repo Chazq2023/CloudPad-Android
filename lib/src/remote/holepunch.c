@@ -356,6 +356,13 @@ typedef struct session_t
 
     char* ws_fqdn;
     ChiakiThread ws_thread;
+    // Set only once chiaki_thread_create() for ws_thread has actually succeeded inside
+    // chiaki_holepunch_session_create() — that call can fail (or be canceled) before ever
+    // reaching chiaki_thread_create(), in which case ws_thread was never populated. Guards the
+    // chiaki_thread_join() in chiaki_holepunch_session_fini(), which otherwise unconditionally
+    // joins ws_thread and crashes ("invalid pthread_t passed to pthread_join") if it was never
+    // created.
+    bool ws_thread_created;
     NotificationQueue* ws_notification_queue;
     bool ws_thread_should_stop;
     bool ws_open;
@@ -912,6 +919,7 @@ CHIAKI_EXPORT Session* chiaki_holepunch_session_init(
     session->local_candidates = NULL;
     session->our_offer_msg = NULL;
     session->ws_open = false;
+    session->ws_thread_created = false;
     session->online_id = NULL;
     memset(&session->session_id, 0, sizeof(session->session_id));
     memset(&session->console_uid, 0, sizeof(session->console_uid));
@@ -1017,6 +1025,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_holepunch_session_create(Session* session)
     err = chiaki_thread_create(&session->ws_thread, websocket_thread_func, session);
     if (err != CHIAKI_ERR_SUCCESS)
         return err;
+    session->ws_thread_created = true;
     chiaki_thread_set_name(&session->ws_thread, "Chiaki Holepunch WS");
     CHIAKI_LOGV(session->log, "chiaki_holepunch_session_create: Created websocket thread");
 
@@ -1928,10 +1937,20 @@ CHIAKI_EXPORT void chiaki_holepunch_session_fini(Session* session)
         }
     }
     
-    // ALWAYS join the websocket thread (moved outside ws_open check)
-    CHIAKI_LOGI(session->log, "chiaki_holepunch_session_fini: Joining websocket thread...");
-    chiaki_thread_join(&session->ws_thread, NULL);
-    CHIAKI_LOGI(session->log, "chiaki_holepunch_session_fini: Websocket thread joined");
+    // ALWAYS join the websocket thread (moved outside ws_open check) — but only if
+    // chiaki_holepunch_session_create() actually got far enough to create it. It can return an
+    // error (e.g. cancellation, or a websocket FQDN lookup failure) before ever calling
+    // chiaki_thread_create(), in which case ws_thread was never populated and joining it is
+    // undefined behavior (observed on-device as a native abort: "invalid pthread_t passed to
+    // pthread_join").
+    if(session->ws_thread_created)
+    {
+        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_fini: Joining websocket thread...");
+        chiaki_thread_join(&session->ws_thread, NULL);
+        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_fini: Websocket thread joined");
+    }
+    else
+        CHIAKI_LOGI(session->log, "chiaki_holepunch_session_fini: websocket thread was never created, nothing to join");
     if(session->gw.data)
     {
         if(session->local_port_ctrl != 0)

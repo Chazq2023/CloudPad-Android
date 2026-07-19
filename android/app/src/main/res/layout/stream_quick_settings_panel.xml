@@ -295,14 +295,18 @@
 
     <!-- Session tab: content depends on whether this is a Remote Play, Game Catalog (PS3/PS4)
          or Game Library (PS5) session — rows are inflated at runtime by QuickSettingsPanel
-         since the widget set genuinely differs per session type, not just its labels. -->
+         since the widget set genuinely differs per session type, not just its labels.
+         quickSettingsSessionApplyBar is a sibling (not a child) of the ScrollView so it stays
+         pinned below it regardless of scroll position — the ScrollView's own bottom constraint
+         targets the bar's top, so it collapses back down to fill the tab whenever the bar is
+         GONE (no pending changes). -->
     <ScrollView
         android:id="@+id/quickSettingsSessionScroll"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/quickSettingsHeaderDivider"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/quickSettingsSessionApplyBar"
         app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
         app:layout_constraintEnd_toEndOf="parent">
 
@@ -336,6 +340,44 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <!-- Pinned Apply bar: hidden (GONE) until a row's value differs from the settings the live
+         stream actually last (re)started with — see QuickSettingsPanel.updateSessionApplyVisibility.
+         While a restart is in flight the button itself is swapped out for the status text, which
+         doubles as the Cloud Play allocation flow's live progress display. -->
+    <LinearLayout
+        android:id="@+id/quickSettingsSessionApplyBar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/quickSettingsTabDivider"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:id="@+id/quickSettingsSessionApplyStatusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:visibility="gone" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/quickSettingsSessionApplyButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/quick_settings_session_apply"
+            android:textColor="@android:color/white"
+            app:backgroundTint="?attr/pyluxAccent" />
+
+    </LinearLayout>
 
     <!-- Trophies tab: live trophy list for whichever game this session is streaming, resolved
          by name/platform match the same way TrophiesActivity does (see QuickSettingsPanel).

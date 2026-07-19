@@ -72,12 +72,6 @@ class RemotePlayFragment : Fragment()
 		applySpeedDialFocusWhenCollapsed(binding.floatingActionButton.isExpanded)
 	}
 
-	override fun onResume()
-	{
-		super.onResume()
-		updateRefreshButtonText()
-	}
-
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
 	{
 		super.onActivityResult(requestCode, resultCode, data)
@@ -175,6 +169,15 @@ class RemotePlayFragment : Fragment()
 				binding.hostsRecyclerView.scrollToPosition(0)
 			updateEmptyInfo()
 		})
+
+		// Doesn't change *which* hosts are shown (displayHosts above already covers that), only
+		// how a given tile's status reads — DiffUtil would otherwise skip rebinding an
+		// unaffected-looking row, so this forces a full refresh instead of relying on
+		// displayHosts to re-emit on its own. See MainViewModel.hostTransitions' doc comment.
+		viewModel.hostTransitions.observe(viewLifecycleOwner, Observer { transitions ->
+			recyclerViewAdapter.hostTransitions = transitions
+			recyclerViewAdapter.notifyDataSetChanged()
+		})
 	}
 
 	private fun observeViewModel()
@@ -184,20 +187,28 @@ class RemotePlayFragment : Fragment()
 		})
 	}
 
-	override fun onStart()
+	// Deliberately onResume/onPause, not onStart/onStop: MainActivity hosts this fragment inside
+	// a ViewPager2, which only ever drops a non-current page down to STARTED (calling onPause),
+	// never all the way to onStop, so onStart/onStop effectively never fired again once this
+	// fragment was first created — discovery ran continuously in the background even while the
+	// user was sat on the Cloud Play tab. onResume/onPause are the ones that actually track
+	// whether this tab is the one currently on screen (see MainActivity.applyViewPagerPageFocusIsolation
+	// for the same ViewPager2 behaviour being worked around elsewhere).
+	override fun onResume()
 	{
-		super.onStart()
-		viewModel.discoveryManager.resume()
+		super.onResume()
+		updateRefreshButtonText()
+		viewModel.resumeDiscovery()
 		// Also refresh PSN hosts if tokens are available
 		val hasPsnTokens = Preferences(requireContext()).hasPsnRemotePlayTokens
-		Log.i(TAG, "onStart: hasPsnTokens=$hasPsnTokens")
+		Log.i(TAG, "onResume: hasPsnTokens=$hasPsnTokens")
 		if(hasPsnTokens)
 			viewModel.refreshPsnHosts()
 	}
 
-	override fun onStop()
+	override fun onPause()
 	{
-		super.onStop()
+		super.onPause()
 		viewModel.discoveryManager.pause()
 	}
 
@@ -556,6 +567,11 @@ class RemotePlayFragment : Fragment()
 	{
 		val registeredHost = host.registeredHost ?: return
 		viewModel.discoveryManager.sendWakeup(host.host, registeredHost.rpRegistKey, registeredHost.target.isPS5)
+		// Wake-on-LAN gets the console's network stack up quickly, but confirmed on-device that
+		// its actual Remote Play session-request listener takes a fair bit longer to come up —
+		// this shows "Waking console" until a real connection to that listener succeeds. See
+		// MainViewModel.markWaking's doc comment.
+		viewModel.markWaking(host)
 	}
 
 	private fun editHost(host: DisplayHost)

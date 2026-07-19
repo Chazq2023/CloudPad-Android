@@ -37,7 +37,15 @@ class DiscoveryManager
 		const val PING_MS: ULong = 500U
 		const val PORT = 987
 
-		const val DEBOUNCE_EMPTY_MS = 1000L
+		// Local UDP discovery replies aren't perfectly reliable in practice — a console can miss
+		// a beat and briefly vanish from the raw discovered-hosts list even though it's still
+		// there (confirmed on-device: gaps upward of ~1-2s between "lost" and "found again").
+		// This debounces that gap so a momentary loss doesn't propagate downstream. 1s wasn't
+		// long enough — MainViewModel.combine() falls back to showing a PSN-only tile for any
+		// host missing from the discovered list, and that fallback tile has a different identity
+		// (and status colour) than the discovered one, so a gap that leaks through causes the
+		// console's list row to visibly flicker between the two on every drop/rediscovery cycle.
+		const val DEBOUNCE_EMPTY_MS = 3000L
 	}
 
 	private var discoveryService: DiscoveryService? = null

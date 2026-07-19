@@ -162,6 +162,7 @@ private class ChiakiNative
 			@JvmStatic external fun sessionConnectMicrophone(ptr: Long)
 			@JvmStatic external fun sessionToggleMicrophone(ptr: Long, muted: Boolean)
 			@JvmStatic external fun sessionSendMicFrame(ptr: Long, pcm: ShortArray)
+			@JvmStatic external fun sessionGotoBed(ptr: Long): Int
 
 		@JvmStatic external fun sessionGetMetrics(ptr: Long): SessionMetrics?
 		@JvmStatic external fun discoveryServiceCreate(result: CreateResult, options: DiscoveryServiceOptions, javaService: DiscoveryService)
@@ -622,6 +623,14 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	{
 		ChiakiNative.sessionSendMicFrame(nativePtr, pcm)
 	}
+
+	/** Remote Play only — requests the console enter rest mode (Sony's Remote Play protocol has
+	 *  no separate "power off" command; rest mode/standby is the only remote power-state change
+	 *  it supports, matching real PS4/PS5 behavior — a fully powered-off console has no network
+	 *  listener to receive any command at all, including the discovery wakeup packet). Sent over
+	 *  the already-connected control channel, so this only makes sense to call on a live session;
+	 *  the console will end the stream on its end shortly after, same as any other disconnect. */
+	fun gotoBed(): ErrorCode = ErrorCode(ChiakiNative.sessionGotoBed(nativePtr))
 
 	fun getMetrics(): SessionMetrics? {
 		return ChiakiNative.sessionGetMetrics(nativePtr)

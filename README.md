@@ -2,6 +2,59 @@
 
 # CloudPad
 
+CloudPad streams your PlayStation games to Android — either straight from Sony's cloud catalog, or from your own console over Remote Play — with an interface built for touchscreens, handhelds, and TV-style devices.
+
+## Table of Contents
+
+* [Features](#features)
+* [Unofficial fork notice](#unofficial-fork-notice)
+* [About this fork](#about-this-fork)
+* [Releases](#releases)
+* [Documentation](#documentation)
+* [Contributing](#contributing)
+* [Work in progress / known limitations](#work-in-progress--known-limitations)
+* [Legal and responsible use](#legal-and-responsible-use)
+* [Licence](#licence)
+* [Credits](#credits)
+* [Screenshots](#screenshots)
+
+# Features
+
+### Streaming
+* **Internet Play (Cloud Play)** — stream from Sony's game catalog or your own owned PS3/PS4/PS5 library, no console required
+* **Remote Play** — stream directly from your own PlayStation console, locally or over the internet
+* **Live in-stream settings** — change resolution, FPS, bitrate, and codec mid-stream from the Quick Settings panel, no need to disconnect
+* **AMD FidelityFX CAS image sharpening** — real-time contrast-adaptive sharpening for a crisper stream image
+* Configurable video profiles per streaming mode (Remote Play, Game Library, Game Catalog)
+
+### Console management
+* Automatic local console discovery, PSN-based discovery, and registration
+* Accurate console status tiles — Ready, Asleep, Waking, Offline — reflecting the console's real state, not a guess
+* Wake consoles from rest mode, or put them to sleep, directly from the app
+* Manual console entries for consoles outside local discovery
+
+### In-stream Quick Menu
+* Trophy list, trophy details, and trophy comparison against friends — without leaving your stream
+* Friends list and direct messaging mid-session
+* On-the-fly controller remapping
+* Toggle motion controls, touch haptics, Picture-in-Picture, and image sharpening mid-session
+
+### Social & Trophies
+* Browse your PSN friends list and message friends
+* Full trophy list per game with progress and rarity
+* Trophy comparison against friends
+* Per-game playtime tracking — total time, last played, longest session
+
+### Customisation
+* Custom controller button remapping
+* Theme colours
+* Touch-friendly, Android-focused UI for handhelds, tablets, and TV-style devices
+
+### Settings & diagnostics
+* Import/export settings as JSON
+* Session logs and verbose logging for troubleshooting
+* Registered console and account management
+
 # Unofficial fork notice
 
 CloudPad is an unofficial Android-focused fork of the original Pylux project.
@@ -36,16 +89,6 @@ For the latest Android APK, see the Releases page:
 [CloudPad Android Releases](https://github.com/Chazq2023/CloudPad-Android/releases)
 
 Source code for each APK release is available from this repository. Release builds should be tied to a matching commit or tag so users can access the corresponding source code.
-
-# Features
-
-* Internet Play — stream games from the game catalog or your owned game library
-* Remote Play — stream from your PlayStation console to a supported Android device
-* Android-focused UI — tailored for Android handhelds, tablets, and TV-style devices
-* Automatic console discovery and registration
-* Touch-friendly controls
-* Performance and streaming diagnostics
-* Configurable cloud streaming settings
 
 # Documentation
 
@@ -110,3 +153,104 @@ Pylux is built on top of:
 * chiaki-ng: https://github.com/streetpea/chiaki-ng
 
 Special thanks to the original Pylux developer, the Chiaki development team, and the chiaki-ng maintainers for their excellent foundational work.
+
+# Screenshots
+
+### Login
+Sign in to your PlayStation Network account directly from the app to unlock cloud streaming and console discovery.
+
+<img src="readme%20assets/Login/Login%20Main%20Menu.png" width="420"> <img src="readme%20assets/Login/Login%20Steps.png" width="420">
+
+### Cloud Play Catalogs
+Browse the PS3, PS4, and PS5 catalogs, including your own owned library, from one screen.
+
+<table>
+<tr>
+<td align="center"><b>PS3 Catalog</b><br><img src="readme%20assets/PS3%20Catalog/PS3%20Catalog.jpg" width="400"></td>
+<td align="center"><b>PS4 Catalog</b><br><img src="readme%20assets/PS4%20Catalog/PS4%20Catalog.jpg" width="400"></td>
+</tr>
+<tr>
+<td align="center" colspan="2"><b>PS5 Library</b><br><img src="readme%20assets/PS5%20Library/PS5%20Library.jpg" width="400"></td>
+</tr>
+</table>
+
+### Remote Play
+Console tiles reflect an accurate, live state — Ready, Asleep, Waking, or Offline — instead of a stale guess.
+
+<img src="readme%20assets/Remote%20Play/Remote%20Play.jpeg" width="600">
+
+### Quick Settings Panel (In-Stream)
+Live stream settings, performance stats, controller remapping, trophies, friends, and messaging — all without ever leaving your stream.
+
+<table>
+<tr>
+<td align="center"><b>Bitrate & Resolution</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Stream%20bitrate%20resolution.png" width="380"></td>
+<td align="center"><b>Performance Overlay</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Performance%20Overlay.png" width="380"></td>
+</tr>
+<tr>
+<td align="center"><b>Controller Remap</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Remap%20Controller.jpg" width="380"></td>
+<td align="center"><b>Trophy List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20List.jpg" width="380"></td>
+</tr>
+<tr>
+<td align="center"><b>Trophy Detail</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20Detail.jpg" width="380"></td>
+<td align="center"><b>Trophy Comparison</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20Comparison.jpeg" width="380"></td>
+</tr>
+<tr>
+<td align="center"><b>Friends List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20List.jpeg" width="380"></td>
+<td align="center"><b>Friend Messaging</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20Messaging.jpeg" width="380"></td>
+</tr>
+</table>
+
+### Trophies
+Full trophy list per game, with progress, rarity, and unlock status.
+
+<img src="readme%20assets/Trophies/Trophies.jpg" width="600">
+
+### Friends List & Messaging
+Browse your PSN friends list and message them directly from the main menu.
+
+<table>
+<tr>
+<td align="center"><img src="readme%20assets/Friends%20List/Friends%20List.jpeg" width="400"></td>
+<td align="center"><img src="readme%20assets/Messaging/Friend%20Messaging.jpeg" width="400"></td>
+</tr>
+</table>
+
+### Controller Remapping
+Customise button and stick mappings for your controller.
+
+<img src="readme%20assets/Controller%20Remap/Controller%20Remap.png" width="600">
+
+### Image Sharpening (CAS)
+AMD FidelityFX Contrast Adaptive Sharpening applied in real time to the stream image.
+
+<table>
+<tr>
+<td align="center"><b>Before</b><br><img src="readme%20assets/Image%20Sharpening/Image%20Sharpening%20Before.jpg" width="420"></td>
+<td align="center"><b>After</b><br><img src="readme%20assets/Image%20Sharpening/Image%20Sharpening%20After.jpg" width="420"></td>
+</tr>
+</table>
+
+### Playtime Tracking
+Per-game playtime stats — total playtime, last played, and longest session.
+
+<img src="readme%20assets/Playtime/Playtime.jpg" width="500">
+
+### Settings
+Appearance, controls, Remote Play and Cloud Play video profiles, CAS sharpening, diagnostics, and more.
+
+<table>
+<tr>
+<td><img src="readme%20assets/Settings/Settings%201.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%202.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%203.png" width="300"></td>
+</tr>
+<tr>
+<td><img src="readme%20assets/Settings/Settings%204.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%205.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%206.png" width="300"></td>
+</tr>
+<tr>
+<td><img src="readme%20assets/Settings/Settings%207.png" width="300"></td>
+</tr>
+</table>

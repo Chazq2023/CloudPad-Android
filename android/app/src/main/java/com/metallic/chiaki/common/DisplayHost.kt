@@ -70,7 +70,15 @@ class ManualDisplayHost(
  */
 class PsnDisplayHost(
 	override val registeredHost: RegisteredHost?,
-	val psnHost: PsnHost
+	val psnHost: PsnHost,
+	/** Whether local UDP discovery has gone long enough without a reply for this console's
+	 *  nickname to call it definitively offline rather than still being searched for (see
+	 *  MainViewModel.firstMissingAt — a fixed real-time grace since first going missing, not tied
+	 *  to session history). This tile is only shown at all once local discovery has stopped
+	 *  seeing the console (otherwise it'd be a DiscoveredDisplayHost instead) — for a short window
+	 *  after that it's still plausibly just mid-boot or mid-lookup ("Getting Console Status"), but past
+	 *  that window it reads as genuinely offline, not "still being found". */
+	val confirmedOffline: Boolean = false
 ): DisplayHost()
 {
 	override val host get() = "" // No direct IP for PSN hosts
@@ -83,9 +91,14 @@ class PsnDisplayHost(
 		if(other !is PsnDisplayHost)
 			false
 		else
-			other.psnHost == psnHost && other.registeredHost == registeredHost
+			other.psnHost == psnHost && other.registeredHost == registeredHost && other.confirmedOffline == confirmedOffline
 
-	override fun hashCode() = 31 * (registeredHost?.hashCode() ?: 0) + psnHost.hashCode()
+	override fun hashCode(): Int
+	{
+		var result = 31 * (registeredHost?.hashCode() ?: 0) + psnHost.hashCode()
+		result = 31 * result + confirmedOffline.hashCode()
+		return result
+	}
 
-	override fun toString() = "PsnDisplayHost{${registeredHost}, ${psnHost}}"
+	override fun toString() = "PsnDisplayHost{${registeredHost}, ${psnHost}, confirmedOffline=$confirmedOffline}"
 }
