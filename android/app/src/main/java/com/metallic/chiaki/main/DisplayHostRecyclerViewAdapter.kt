@@ -62,10 +62,20 @@ class DisplayHostRecyclerViewAdapter(
 			it.headerNameTextView.text = host.name
 			
 			// Platform badge (4 or 5)
-			it.platformBadge.text = if(host.isPS5) "5" else "4"
-			it.platformTextView.text = if(host.isPS5) "PS5" else "PS4"
-			
-			// For PSN hosts: just show "Remote Console" and ready icon
+			val platformLabel = if(host.isPS5) "PS5" else "PS4"
+			it.platformBadge.text = platformLabel
+			it.platformTextView.text = platformLabel
+
+			// For PSN hosts: just show "Remote Console" and a "Finding console" status.
+			// Deliberately not "Ready" — PSN presence only means this console is associated with
+			// the account, not that it's actually powered on right now (e.g. right after a
+			// wakeup packet, it can take many seconds to boot before local discovery confirms
+			// it's really up, and this tile is what's shown in that gap — see
+			// MainViewModel.combine()'s discovered/psnDisplayHosts split). "Ready" is reserved
+			// for the locally-confirmed green state below so the two can never be confused for
+			// the same thing. Colour is hardcoded here rather than reusing R.color.psn_blue,
+			// which despite its name is actually the app's pink theme accent (#FF149D) — this
+			// status needs to visually read as "blue", distinct from ready/asleep/offline.
 			if(host is PsnDisplayHost)
 			{
 				it.hostTextView.text = "Remote Console"
@@ -73,8 +83,8 @@ class DisplayHostRecyclerViewAdapter(
 				it.hostTextView.textSize = 16f
 				it.idTextView.visibility = View.GONE
 				it.statusLayout.visibility = View.VISIBLE
-				it.statusTextView.text = "Ready"
-				it.statusIcon.setColorFilter(context.getColor(R.color.psn_blue))
+				it.statusTextView.text = "Finding console"
+				it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#3B82F6")) // Blue-500
 			}
 			else
 			{
@@ -100,35 +110,23 @@ class DisplayHostRecyclerViewAdapter(
 					it.idTextView.visibility = View.GONE
 				}
 				
-				// State/Status with colored dot on the right
-				val stateText = when
+				// State/Status with colored dot on the right. A ManualDisplayHost never carries a
+				// live discovery state at all (manual hosts and discovered hosts are always
+				// separate, undeduplicated rows — see MainViewModel.combine()), so the console
+				// it points at not currently showing up here means exactly one thing either way:
+				// it's not reachable right now, i.e. Offline.
+				val (stateText, statusIconTint) = when
 				{
-					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY -> "Ready"
-					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY -> "Standby"
-					else -> null
+					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY ->
+						"Ready" to android.graphics.Color.parseColor("#22C55E") // Green-500
+					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY ->
+						"Asleep" to android.graphics.Color.parseColor("#EAB308") // Yellow-500
+					else ->
+						"Offline" to android.graphics.Color.parseColor("#EF4444") // Red-500
 				}
-				
-				if(stateText != null)
-				{
-					it.statusTextView.text = stateText
-					it.statusLayout.visibility = View.VISIBLE
-					
-					// Set status dot color
-					val statusIconTint = when
-					{
-						host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY -> 
-							android.graphics.Color.parseColor("#22C55E") // Green-500
-						host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY -> 
-							android.graphics.Color.parseColor("#F97316") // Orange-500
-						else -> 
-							android.graphics.Color.parseColor("#9CA3AF") // Gray-400
-					}
-					it.statusIcon.setColorFilter(statusIconTint)
-				}
-				else
-				{
-					it.statusLayout.visibility = View.GONE
-				}
+				it.statusTextView.text = stateText
+				it.statusLayout.visibility = View.VISIBLE
+				it.statusIcon.setColorFilter(statusIconTint)
 			}
 			// Bottom info (app/game running)
 			val bottomInfo = (host as? DiscoveredDisplayHost)?.discoveredHost?.let { discoveredHost ->

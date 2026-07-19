@@ -104,6 +104,9 @@ jobs:
             - In-stream Quick Settings' Session tab now applies resolution/FPS/bitrate/codec (Remote Play) or resolution/datacenter/bitrate (Cloud Play) changes without leaving the stream: an Apply button appears once you change a setting and disappears if you revert it, and tapping it restarts the stream in place with the new settings.
             - Fixed several native crashes and a stray "session has quit" dialog that could occur when restarting a Remote Play or Cloud Play stream.
             - Fixed controller D-pad navigation in the Quick Settings panel: pressing down past the last tab icon (Friends) could re-enter that tab's content instead of moving to the Disconnect button below the tab rail.
+            - Fixed the Remote Play console list flickering between two different tile styles when local network discovery briefly missed a beat.
+            - Console status on the Remote Play list is now more specific: green "Ready" (powered on), yellow "Asleep" (rest mode), red "Offline" (manually-added console not currently reachable), or blue "Finding console" (known via PSN, not yet confirmed on the local network).
+            - The platform badge on each console tile now reads "PS5"/"PS4" instead of just "5"/"4".
 
             ### APK
             Attached release asset:

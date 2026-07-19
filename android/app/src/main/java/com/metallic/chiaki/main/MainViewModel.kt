@@ -2,6 +2,7 @@
 
 package com.metallic.chiaki.main
 
+import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MediatorLiveData
@@ -30,6 +31,17 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 	}
 
 	val psnDiscoveryManager = PsnDiscoveryManager(preferences)
+
+	/** Last known good discovered instance + when it was last actually seen, keyed by host name.
+	 *  Local UDP discovery replies aren't perfectly reliable — a console can miss a beat and
+	 *  briefly drop out of a single raw discoveredHosts batch even though it's still there and
+	 *  about to reappear a moment later (confirmed on-device). Without this, combine() below
+	 *  would immediately demote that host to the PSN-only fallback tile — a different DisplayHost
+	 *  identity with a different status colour — every single time that happens, which is exactly
+	 *  what showed up as the list row flickering between a green "Ready" and a theme-coloured one.
+	 *  A host is only actually dropped from the discovered bucket once it's been missing
+	 *  continuously for longer than [DISCOVERED_HOST_GRACE_MS]. */
+	private val discoveredHostCache = mutableMapOf<String, Pair<DiscoveredDisplayHost, Long>>()
 
 	/** Local discovered + manual hosts (without PSN) */
 	private val localDisplayHosts by lazy {
@@ -76,7 +88,7 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 
 			// Enrich discovered hosts with PSN DUID if nickname matches
 			Log.i(TAG, "psnNicknameDuids: ${psnNicknameDuids.keys}")
-			val discovered = discoveredRaw.map { host ->
+			val discoveredThisCycle = discoveredRaw.map { host ->
 				val matchedDuid = host.name?.let { psnNicknameDuids[it] }
 				Log.i(TAG, "Enriching discovered host '${host.name}': matchedDuid=${matchedDuid?.take(16)}")
 				if(matchedDuid != null)
@@ -84,6 +96,17 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 				else
 					host
 			}
+
+			// Refresh the cache with anything actually seen this cycle, then drop anything that's
+			// been missing too long — see discoveredHostCache's doc comment for why this exists.
+			val now = SystemClock.elapsedRealtime()
+			for(host in discoveredThisCycle)
+			{
+				val key = host.name ?: continue
+				discoveredHostCache[key] = host to now
+			}
+			discoveredHostCache.entries.removeAll { (_, entry) -> now - entry.second > DISCOVERED_HOST_GRACE_MS }
+			val discovered = discoveredHostCache.values.map { it.first }
 
 			// Build a set of locally discovered nicknames
 			val discoveredNicknames = discovered.mapNotNull { it.name }.toSet()
@@ -157,6 +180,7 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 	companion object
 	{
 		private const val TAG = "MainViewModel"
+		private const val DISCOVERED_HOST_GRACE_MS = 10_000L
 	}
 
 	override fun onCleared()
