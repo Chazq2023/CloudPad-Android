@@ -573,6 +573,13 @@ class QuickSettingsPanel(
 		panel.quickSettingsFriendsSection.visibility =
 			if(checkedButtonId == R.id.quickSettingsTabFriends) View.VISIBLE else View.GONE
 
+		// Whichever container just became visible needs its focus-blocking synced to the
+		// current scope (see exitToRailScope()'s doc comment) — the container that was blocked
+		// before is now GONE and irrelevant, but a freshly-shown one defaults to unblocked
+		// (its layout-declared descendantFocusability) unless set here.
+		currentTabContentContainer()?.descendantFocusability =
+			if(inTabContent) ViewGroup.FOCUS_BEFORE_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
+
 		// Fetched lazily the first time this tab is opened rather than at construction time
 		// (unlike the Session tab's static rows) since it's a live network call — the refresh
 		// button handles picking up anything unlocked after that.
@@ -1276,10 +1283,14 @@ class QuickSettingsPanel(
 	/** Drills D-pad focus from the tab rail into the currently selected tab's content — the
 	 *  rail, close and disconnect buttons are all temporarily excluded from focus search so
 	 *  D-pad navigation inside the content can't wander onto them (e.g. off the bottom of a
-	 *  scrolled list); only exitToRailScope() (Circle/Back) returns. */
+	 *  scrolled list); only exitToRailScope() (Circle/Back) returns. Un-blocks the content
+	 *  container's own descendant focusability first — exitToRailScope()/showTab() block it
+	 *  while in rail scope (see their own comments), and addFocusables()/requestFocus() below
+	 *  would silently find nothing while that's still in effect. */
 	private fun enterContentScope()
 	{
 		val container = currentTabContentContainer() ?: return
+		container.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		val focusables = ArrayList<View>()
 		container.addFocusables(focusables, View.FOCUS_DOWN)
 		val target = focusables.firstOrNull() ?: return
@@ -1290,6 +1301,12 @@ class QuickSettingsPanel(
 		target.requestFocus()
 	}
 
+	/** Blocks the current tab's content container from focus search while in rail scope — without
+	 *  this, D-pad down from the last rail button (Friends) doesn't land on the Disconnect button
+	 *  below the rail as expected: Android's focus search is geometric, not scoped to siblings,
+	 *  and the Session/Trophies/Friends tabs' own content sits to the right of and taller than the
+	 *  rail, so it can end up the nearer match and steal focus back into content that was never
+	 *  actually entered (confirmed on-device). enterContentScope() is what lifts this again. */
 	private fun exitToRailScope()
 	{
 		// Always land back on the friends list, never mid-conversation/comparison, next time this
@@ -1297,6 +1314,7 @@ class QuickSettingsPanel(
 		if(inFriendChat) backToFriendsList()
 		if(inTrophyCompare) backFromTrophyCompare()
 
+		currentTabContentContainer()?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = true
 		panel.quickSettingsDisconnectButton.isFocusable = true
@@ -1305,7 +1323,7 @@ class QuickSettingsPanel(
 			?.requestFocus()
 	}
 
-	private fun currentTabContentContainer(): View? = when(panel.quickSettingsTabToggle.checkedButtonId)
+	private fun currentTabContentContainer(): ViewGroup? = when(panel.quickSettingsTabToggle.checkedButtonId)
 	{
 		R.id.quickSettingsTabController -> panel.quickSettingsControllerSection
 		R.id.quickSettingsTabGeneral -> panel.quickSettingsGeneralScroll
