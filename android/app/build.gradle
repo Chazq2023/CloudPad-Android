@@ -234,6 +234,12 @@ dependencies {
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation 'io.coil-kt:coil:2.4.0'
     implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    // Chrome Custom Tabs — PSN sign-in has to run in a real browser, not an embedded WebView:
+    // Sony's fraud/bot detection rejects the embedded-WebView sign-in flow (confirmed on-device:
+    // POST-login SSO cookie exchange 403s from WebView, works fine in real Chrome on the exact
+    // same device/network/account) even with an otherwise-honest User-Agent. Custom Tabs opens
+    // the actual system Chrome, sharing its cookies/JS engine/fingerprint.
+    implementation 'androidx.browser:browser:1.7.0'
 
     // Play In-App Review (uses existing [Preferences.totalStreamTimeMs] from stream sessions; no extra timers)
     implementation 'com.google.android.play:review-ktx:2.0.2'

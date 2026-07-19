@@ -189,6 +189,19 @@ class MainActivity : AppCompatActivity() {
         binding.viewPager.offscreenPageLimit = 1
         // Disable swipe - only header buttons switch tabs (avoids accidental swipes when scrolling)
         binding.viewPager.isUserInputEnabled = false
+        // ViewPager2 is itself backed by an internal RecyclerView (its actual paging container,
+        // a sibling of both fragments' roots, not something applyViewPagerPageFocusIsolation's
+        // per-fragment-root blocking below ever touches) — confirmed on-device via uiautomator
+        // that this RecyclerView, not any view inside the page's own content, is what receives
+        // focus when D-pad navigating from the tab header into a page whose real target (e.g.
+        // Cloud Play's "LOGIN" button, several ViewGroups deep) isn't the nearest geometric match.
+        // Same root cause as ScrollView's own default focusability elsewhere in this app: a
+        // scrollable container is focusable by default so D-pad/trackball scrolling still works
+        // with nothing else focused, which here means the *entire visible page* shows a focus
+        // highlight instead of any real control. FOCUS_AFTER_DESCENDANTS defers to real
+        // descendants first, only falling back to the pager itself if a page has none.
+        (binding.viewPager.getChildAt(0) as? RecyclerView)?.descendantFocusability =
+            ViewGroup.FOCUS_AFTER_DESCENDANTS
 
         // Mode icon click handlers (bound to FrameLayout containers for D-pad focus support)
         binding.remotePlayButton.setOnClickListener {
