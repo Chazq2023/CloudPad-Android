@@ -91,10 +91,13 @@ import org.json.JSONArray
  *
  * The Session tab's settings are baked into the stream at connect time (video profile / cloud
  * allocation), so they can't take effect live on the current stream by themselves. Unlike every
- * other row in this panel, its rows don't apply immediately — instead a pinned Apply button
- * appears at the bottom of the tab's content area as soon as a row differs from whatever the
- * live stream actually last (re)started with, and disappears again if reverted back. Tapping it
- * kicks off a restart: Remote Play reconnects with a freshly-built video profile — near-instant
+ * other row in this panel, its rows don't apply — or persist to [preferences] — immediately:
+ * edits are held in [pendingRemotePlaySettings]/[pendingCloudSettings] only, so closing the
+ * panel or disconnecting without ever tapping Apply leaves Preferences exactly as they were.
+ * A pinned Apply button appears at the bottom of the tab's content area as soon as a row differs
+ * from whatever the live stream actually last (re)started with, and disappears again if reverted
+ * back. Tapping it commits the pending edits to Preferences (see [commitPendingSessionSettings])
+ * and kicks off a restart: Remote Play reconnects with a freshly-built video profile — near-instant
  * for a direct-IP LAN console, but for a PSN one it redoes the full holepunch handshake first
  * (same cost as the original connect, since the profile only ever goes out in the same one-time
  * handshake that creates the native session), so it can take just as long. Cloud Play re-runs the
@@ -220,14 +223,26 @@ class QuickSettingsPanel(
 		val bitrateKbps: Int
 	)
 
-	/** Snapshot of the settings the live stream actually last (re)started with — not simply "the
-	 *  values written to Preferences", since rows write straight through immediately (same as
-	 *  every other row in this panel) well before Apply is tapped. Only one of the two is ever
+	/** Snapshot of the settings the live stream actually last (re)started with, i.e. what's
+	 *  currently in [preferences] as of the last successful Apply. Only one of the two is ever
 	 *  non-null, matching [sessionType]. Advanced to the current values once a restart they
 	 *  triggered reaches [StreamStateConnected]; left alone on failure so Apply stays available
 	 *  to retry. */
 	private var remotePlayBaseline: RemotePlaySettingsSnapshot? = null
 	private var cloudBaseline: CloudSettingsSnapshot? = null
+
+	/** The Session tab's not-yet-applied edits. Rows write here, not straight to [preferences]
+	 *  like every other row in this panel — [commitPendingSessionSettings] is what actually
+	 *  copies these into Preferences, called only from [applySessionSettings] right before the
+	 *  restart that picks them up. Confirmed on-device this needed fixing: previously rows wrote
+	 *  straight through, so a value changed here and never Applied was already permanently saved
+	 *  the moment it was picked — even if the user disconnected instead of tapping Apply — and
+	 *  would come back the next time a session was opened despite never having taken effect on
+	 *  the one it was changed in. Initialised to match the baseline whenever the tab's rows are
+	 *  (re)built, and only ever compared against — never assigned from — the live values in
+	 *  Preferences. Only one of the two is ever non-null, matching [sessionType]. */
+	private var pendingRemotePlaySettings: RemotePlaySettingsSnapshot? = null
+	private var pendingCloudSettings: CloudSettingsSnapshot? = null
 
 	/** True from the moment Apply is tapped until the restart it triggered resolves (either
 	 *  outcome) — gates whether the next [StreamStateConnected]/error transition should advance
@@ -581,6 +596,10 @@ class QuickSettingsPanel(
 		currentTabContentContainer()?.descendantFocusability =
 			if(inTabContent) ViewGroup.FOCUS_BEFORE_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
 
+		// See updateSessionApplyVisibility's doc comment — the Apply bar doesn't belong to any
+		// one tab's container, so leaving this tab (or returning to it) needs to re-evaluate it.
+		updateSessionApplyVisibility()
+
 		// Fetched lazily the first time this tab is opened rather than at construction time
 		// (unlike the Session tab's static rows) since it's a live network call — the refresh
 		// button handles picking up anything unlocked after that.
@@ -894,6 +913,7 @@ class QuickSettingsPanel(
 	private fun buildRemotePlayRows(container: LinearLayout)
 	{
 		remotePlayBaseline = currentRemotePlaySnapshot()
+		pendingRemotePlaySettings = remotePlayBaseline
 
 		addSectionLabel(container, R.string.preferences_category_title_stream)
 
@@ -903,7 +923,9 @@ class QuickSettingsPanel(
 			values = Preferences.resolutionAll.map { it.value },
 			currentValue = preferences.resolution.value
 		) { value ->
-			Preferences.resolutionAll.firstOrNull { it.value == value }?.let { preferences.resolution = it }
+			Preferences.resolutionAll.firstOrNull { it.value == value }?.let { res ->
+				pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(resolution = res)
+			}
 			updateSessionApplyVisibility()
 		}
 
@@ -913,7 +935,9 @@ class QuickSettingsPanel(
 			values = Preferences.fpsAll.map { it.value },
 			currentValue = preferences.fps.value
 		) { value ->
-			Preferences.fpsAll.firstOrNull { it.value == value }?.let { preferences.fps = it }
+			Preferences.fpsAll.firstOrNull { it.value == value }?.let { fps ->
+				pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(fps = fps)
+			}
 			updateSessionApplyVisibility()
 		}
 
@@ -922,7 +946,7 @@ class QuickSettingsPanel(
 			hint = activity.getString(R.string.preferences_bitrate_auto, preferences.bitrateAuto),
 			currentValue = preferences.bitrate
 		) { value ->
-			preferences.bitrate = value
+			pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(bitrate = value)
 			updateSessionApplyVisibility()
 		}
 
@@ -932,7 +956,9 @@ class QuickSettingsPanel(
 			values = Preferences.codecAll.map { it.value },
 			currentValue = preferences.codec.value
 		) { value ->
-			Preferences.codecAll.firstOrNull { it.value == value }?.let { preferences.codec = it }
+			Preferences.codecAll.firstOrNull { it.value == value }?.let { codec ->
+				pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(codec = codec)
+			}
 			updateSessionApplyVisibility()
 		}
 	}
@@ -940,6 +966,7 @@ class QuickSettingsPanel(
 	private fun buildCloudRows(container: LinearLayout, isLibrary: Boolean)
 	{
 		cloudBaseline = currentCloudSnapshot()
+		pendingCloudSettings = cloudBaseline
 
 		addSectionLabel(
 			container,
@@ -959,7 +986,7 @@ class QuickSettingsPanel(
 			resEntries, resValues, currentRes.toString()
 		) { value ->
 			val intValue = value.toIntOrNull() ?: return@addDropdownRow
-			if(isLibrary) preferences.setCloudResolutionPscloud(intValue) else preferences.setCloudResolutionPsnow(intValue)
+			pendingCloudSettings = pendingCloudSettings?.copy(resolution = intValue)
 			updateSessionApplyVisibility()
 		}
 
@@ -972,7 +999,7 @@ class QuickSettingsPanel(
 			if(isLibrary) R.string.preferences_cloud_datacenter_pscloud_title else R.string.preferences_cloud_datacenter_psnow_title,
 			dcEntries, dcValues, currentDc
 		) { value ->
-			if(isLibrary) preferences.setCloudDatacenterPscloud(value) else preferences.setCloudDatacenterPsnow(value)
+			pendingCloudSettings = pendingCloudSettings?.copy(datacenter = value)
 			updateSessionApplyVisibility()
 		}
 
@@ -982,8 +1009,39 @@ class QuickSettingsPanel(
 			container, bitrateSummaryRes,
 			min = 2, max = 200, currentValue = currentBitrateMbps
 		) { valueMbps ->
-			if(isLibrary) preferences.setCloudBitratePscloud(valueMbps * 1000) else preferences.setCloudBitratePsnow(valueMbps * 1000)
+			pendingCloudSettings = pendingCloudSettings?.copy(bitrateKbps = valueMbps * 1000)
 			updateSessionApplyVisibility()
+		}
+	}
+
+	/** Writes this tab's pending, not-yet-persisted edits into [preferences] — see
+	 *  [pendingRemotePlaySettings]/[pendingCloudSettings]'s doc comment. Called only from
+	 *  [applySessionSettings], right before the restart that reads these back out of
+	 *  Preferences to build the new video profile / cloud allocation. */
+	private fun commitPendingSessionSettings()
+	{
+		when(sessionType)
+		{
+			StreamSessionType.REMOTE_PLAY -> pendingRemotePlaySettings?.let { pending ->
+				preferences.resolution = pending.resolution
+				preferences.fps = pending.fps
+				preferences.bitrate = pending.bitrate
+				preferences.codec = pending.codec
+			}
+			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
+				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
+				{
+					preferences.setCloudResolutionPscloud(pending.resolution)
+					preferences.setCloudDatacenterPscloud(pending.datacenter)
+					preferences.setCloudBitratePscloud(pending.bitrateKbps)
+				}
+				else
+				{
+					preferences.setCloudResolutionPsnow(pending.resolution)
+					preferences.setCloudDatacenterPsnow(pending.datacenter)
+					preferences.setCloudBitratePsnow(pending.bitrateKbps)
+				}
+			}
 		}
 	}
 
@@ -1014,6 +1072,7 @@ class QuickSettingsPanel(
 	private fun applySessionSettings()
 	{
 		if(isSessionRestarting) return
+		commitPendingSessionSettings()
 		pendingSessionRestart = true
 		updateSessionApplyVisibility()
 		when(sessionType)
@@ -1025,18 +1084,24 @@ class QuickSettingsPanel(
 
 	/** Single source of truth for the Session tab's Apply bar — called after every row edit and
 	 *  from both the [StreamViewModel.sessionRestartState] and [StreamSession.state] observers,
-	 *  since any of those can flip whether there's a pending change or a restart in flight. */
+	 *  since any of those can flip whether there's a pending change or a restart in flight. Also
+	 *  called from [showTab] on every tab switch: the bar is a layout sibling of the Session
+	 *  ScrollView pinned to the bottom of the whole panel (not a child of it), so nothing about
+	 *  switching tabs would otherwise touch its visibility — a change left pending on the Session
+	 *  tab would keep the Apply bar showing over Trophies, Friends, etc. instead of only where
+	 *  the setting it applies to actually lives. */
 	private fun updateSessionApplyVisibility()
 	{
 		val dirty = when(sessionType)
 		{
-			StreamSessionType.REMOTE_PLAY -> remotePlayBaseline != null && remotePlayBaseline != currentRemotePlaySnapshot()
+			StreamSessionType.REMOTE_PLAY -> remotePlayBaseline != null && remotePlayBaseline != pendingRemotePlaySettings
 			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD ->
-				cloudBaseline != null && cloudBaseline != currentCloudSnapshot()
+				cloudBaseline != null && cloudBaseline != pendingCloudSettings
 		}
 		val restarting = isSessionRestarting
+		val sessionTabActive = panel.quickSettingsTabToggle.checkedButtonId == R.id.quickSettingsTabSession
 
-		panel.quickSettingsSessionApplyBar.visibility = if(dirty || restarting) View.VISIBLE else View.GONE
+		panel.quickSettingsSessionApplyBar.visibility = if((dirty || restarting) && sessionTabActive) View.VISIBLE else View.GONE
 		panel.quickSettingsSessionApplyButton.visibility = if(restarting) View.GONE else View.VISIBLE
 		panel.quickSettingsSessionApplyStatusText.visibility = if(restarting) View.VISIBLE else View.GONE
 		if(restarting)
@@ -1325,7 +1390,14 @@ class QuickSettingsPanel(
 		container.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		val focusables = ArrayList<View>()
 		container.addFocusables(focusables, View.FOCUS_DOWN)
-		val target = focusables.firstOrNull() ?: return
+		// A ScrollView (the Session/General tabs' container) is focusable by itself by default —
+		// purely so D-pad/trackball scrolling still works when nothing inside it has focus — and
+		// with descendantFocusability just set to FOCUS_BEFORE_DESCENDANTS above,
+		// addFocusables() lists that self-focusability before its children's, so
+		// firstOrNull() picked the whole scroll container instead of its first real row
+		// (confirmed on-device). Skip the container itself; fall back to it only if the tab
+		// genuinely has no focusable rows at all, so D-pad scrolling still works in that case.
+		val target = focusables.firstOrNull { it !== container } ?: focusables.firstOrNull() ?: return
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = false
 		panel.quickSettingsDisconnectButton.isFocusable = false
