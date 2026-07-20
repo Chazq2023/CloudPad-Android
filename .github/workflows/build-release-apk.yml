@@ -129,6 +129,7 @@ jobs:
             - Fixed Quick Settings controller navigation: pressing right from the Monitor or Settings tab icon could land focus on the whole content panel instead of the close button.
             - Reverted the Quick Settings panel's card-styled layout back to its original look per feedback.
             - Renamed "RTT" to "Ping" in the in-session performance overlay and smoothed the reading over a short rolling window so it no longer jumps around as much between updates.
+            - Actually fixed the release signing bug that caused "package conflicts with an existing package" on update: a wrong keystore file path meant every release was still silently falling back to a random per-build debug key despite an earlier attempted fix. Verified against the last 5 published releases before landing this.
 
             ### APK
             Attached release asset:
