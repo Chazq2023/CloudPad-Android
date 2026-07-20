@@ -180,7 +180,7 @@
     <string name="quick_settings_trophies_tab_description">Trophies</string>
     <string name="quick_settings_trophies_header_label">Refresh Trophy List</string>
     <string name="quick_settings_trophies_refresh">Refresh trophies</string>
-    <string name="quick_settings_trophies_empty">No trophy data could be retrieved for %1$s, please launch the game and allow the trophy to be synched.\n\nThis can take around 5-10 minutes during a session. Then you can refresh the trophy list and the trophy data should appear.\n\nIf the trophy data is still missing, please raise an issue on the CloudPad github repository to be looked into</string>
+    <string name="quick_settings_trophies_empty">No trophy data could be retrieved for %1$s, please launch the game and allow the trophy data to be synched.\n\nThis can take around 5-10 minutes during a session. Then you can refresh the trophy list and the trophy data should appear.\n\nIf the trophy data is still missing, please raise an issue on the CloudPad github repository to be looked into</string>
     <string name="trophy_unlock_popup_header">Trophy unlocked!</string>
     <string name="action_friends">Friends</string>
     <string name="friends_empty_state">No friends found on this PSN account.</string>

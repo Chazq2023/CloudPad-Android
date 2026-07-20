@@ -6,6 +6,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Rect
 import android.os.Bundle
 import android.util.Log
 import android.util.TypedValue
@@ -382,7 +383,7 @@ class CloudPlayFragment : Fragment() {
         binding.gamesRecyclerView.adapter = null
 
         // Recreate layout manager to ensure fresh state
-        val newLayoutManager = GridLayoutManager(requireContext(), spanCount)
+        val newLayoutManager = InstantScrollGridLayoutManager(spanCount)
         binding.gamesRecyclerView.layoutManager = newLayoutManager
 
         // Reattach adapter
@@ -676,7 +677,13 @@ class CloudPlayFragment : Fragment() {
         updateFilterButtonText()
         updateFavoritesIcon()
 
-        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = true)
+        // Not forceRefresh — this runs on every tab click, tab restore on app launch, and
+        // shortcut routing into this section, so forcing a network refetch every time was
+        // hitting the network far more than needed. CloudGameRepository.fetchOwnedPs5Games
+        // already serves the on-disk cache instantly when present; the header refresh button
+        // (refreshCurrentSectionInternal) and the settings FAB's refresh action still force one
+        // explicitly, which is the manual mechanism this is meant to defer to.
+        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = false)
     }
 
     private fun updateOwnedToggleButton() {
@@ -1018,7 +1025,7 @@ class CloudPlayFragment : Fragment() {
         binding.gamesRecyclerView.descendantFocusability =
             android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
         val spanCount = calculateSpanCount()
-        binding.gamesRecyclerView.layoutManager = GridLayoutManager(requireContext(), spanCount)
+        binding.gamesRecyclerView.layoutManager = InstantScrollGridLayoutManager(spanCount)
 
         // Setup fast scroller
         setupFastScroller()
@@ -1136,8 +1143,18 @@ class CloudPlayFragment : Fragment() {
 
             handlePendingShortcutLaunch(sortedGames)
 
-            // Auto-focus first item after games are loaded, but not while search bar is active
-            if (sortedGames.isNotEmpty() && !isSearchExpanded && pendingShortcutProductId == null) {
+            // Auto-focus first item after games are loaded, but not while search bar is active,
+            // and not while the user is actively working a header control (e.g. cycling the
+            // streamability filter re-fires this same observer on every state change via
+            // cycleStreamabilityFilter()'s setSortedGames() call — without this check, focus
+            // would jump to the grid on every press instead of staying on the button being
+            // cycled).
+            val headerButtons = setOf(
+                binding.headerFavoritesButton, binding.headerStreamabilityFilterButton,
+                binding.headerSortButton, binding.headerSearchButton, binding.headerRefreshButton
+            )
+            val headerHasFocus = activity?.currentFocus?.let { it in headerButtons } ?: false
+            if (sortedGames.isNotEmpty() && !isSearchExpanded && !headerHasFocus && pendingShortcutProductId == null) {
                 focusFirstGame()
             }
         })
@@ -1716,6 +1733,23 @@ class CloudPlayFragment : Fragment() {
                 allocationGameImageView = null
             }, 300)
         }
+    }
+
+    /**
+     * GridLayoutManager that forces instant (non-smooth) scroll when D-pad focus moves to an
+     * off-screen item. The default smooth-scroll behaviour lets multiple fast D-pad presses queue
+     * up, causing the grid to overshoot and leave the focused card off-screen.
+     */
+    private inner class InstantScrollGridLayoutManager(spanCount: Int) :
+        GridLayoutManager(requireContext(), spanCount) {
+
+        override fun requestChildRectangleOnScreen(
+            parent: RecyclerView,
+            child: View,
+            rect: Rect,
+            immediate: Boolean,
+            focusedChildVisible: Boolean
+        ): Boolean = super.requestChildRectangleOnScreen(parent, child, rect, true, focusedChildVisible)
     }
 }
 

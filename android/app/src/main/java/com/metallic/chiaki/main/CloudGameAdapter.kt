@@ -14,6 +14,14 @@ import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
 import com.pylux.stream.databinding.ItemCloudGameBinding
 
+/** Shared by every Modern-Grid-Deck-style card's focus highlight (grid tiles, Remote Play host
+ *  cards) so they all track the user's selected theme accent instead of a hardcoded color. */
+internal fun resolveThemeColor(context: android.content.Context, attr: Int): Int {
+    val tv = android.util.TypedValue()
+    context.theme.resolveAttribute(attr, tv, true)
+    return tv.data
+}
+
 class CloudGameAdapter(
     private val onGameClick: (CloudGame) -> Unit,
     private val onFavoriteClick: (CloudGame, Boolean) -> Unit,
@@ -23,12 +31,19 @@ class CloudGameAdapter(
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
-        setHasStableIds(false)
+        // Lets Coil's memory cache carry an already-loaded tile's image straight through a
+        // refresh instead of visibly reloading it — without a stable ID, notifyDataSetChanged()
+        // gives every visible ViewHolder no identity to match against the previous list, so Coil
+        // treats each one as a brand new load target. productId alone isn't safe as the raw key
+        // (the same game can legitimately appear twice — once per platform/service variant — and
+        // duplicate stable IDs crash RecyclerView), so it's combined with platform/serviceType,
+        // with a defensive dedupe below closing off any remaining collision case.
+        setHasStableIds(true)
     }
 
     var games: List<CloudGame> = emptyList()
         set(value) {
-            field = value
+            field = value.distinctBy { stableKey(it) }
             notifyDataSetChanged()
         }
 
@@ -40,9 +55,9 @@ class CloudGameAdapter(
 
     var isScrollingFast = false
 
-    override fun getItemId(position: Int): Long {
-        return RecyclerView.NO_ID
-    }
+    private fun stableKey(game: CloudGame) = "${game.productId}|${game.platform}|${game.serviceType}"
+
+    override fun getItemId(position: Int): Long = stableKey(games[position]).hashCode().toLong()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CloudGameViewHolder {
         val binding = ItemCloudGameBinding.inflate(
@@ -137,12 +152,15 @@ class CloudGameAdapter(
             if (game.imageUrl.isEmpty()) {
                 binding.gameImageView.setImageResource(android.R.drawable.ic_menu_gallery)
             } else {
-                // During fast scroll: only serve from memory cache (no network/disk I/O).
-                // This prevents OOM from hundreds of concurrent image loads while flinging.
+                // During fast scroll: memory + disk cache stay on (local, cheap — and with the
+                // whole catalog prefetched to disk up front by CloudPlayFragment.prefetchArtwork,
+                // most tiles are already there), only network is skipped. That avoids the slow
+                // network-fetch-mid-fling jank the memory-only version of this policy was
+                // originally guarding against, without reintroducing it for already-cached tiles.
                 // No crossfade to prevent flash when recycled views rebind.
                 binding.gameImageView.load(game.imageUrl) {
                     memoryCachePolicy(CachePolicy.ENABLED)
-                    diskCachePolicy(if (isScrollingFast) CachePolicy.DISABLED else CachePolicy.ENABLED)
+                    diskCachePolicy(CachePolicy.ENABLED)
                     networkCachePolicy(if (isScrollingFast) CachePolicy.DISABLED else CachePolicy.ENABLED)
                     crossfade(false)
                 }
@@ -161,6 +179,23 @@ class CloudGameAdapter(
             }
 
             binding.favoriteButton.setOnClickListener { toggleFavorite() }
+            binding.trophiesButton.setOnClickListener { onTrophiesClick(game) }
+            binding.playtimeButton.setOnClickListener { onPlaytimeClick(game) }
+
+            binding.root.onFocusChangeListener = android.view.View.OnFocusChangeListener { v, hasFocus ->
+                val card = v as com.google.android.material.card.MaterialCardView
+                if (hasFocus) {
+                    card.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccent)
+                    card.strokeWidth = (2 * v.resources.displayMetrics.density).toInt()
+                } else {
+                    card.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccentA20)
+                    card.strokeWidth = (1 * v.resources.displayMetrics.density).toInt()
+                }
+            }
+
+            // Playtime/Trophies are now direct icons on the tile (trophiesButton/playtimeButton
+            // above) rather than menu-only — kept here would just be a redundant second path to
+            // the same action.
             binding.root.setOnLongClickListener {
                 val popup = androidx.appcompat.widget.PopupMenu(binding.root.context, binding.root)
 
@@ -180,20 +215,6 @@ class CloudGameAdapter(
                     "Add to Home Screen"
                 )
 
-                popup.menu.add(
-                    0,
-                    3,
-                    2,
-                    "Playtime"
-                )
-
-                popup.menu.add(
-                    0,
-                    4,
-                    3,
-                    "Trophies"
-                )
-
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         1 -> {
@@ -203,16 +224,6 @@ class CloudGameAdapter(
 
                         2 -> {
                             onAddShortcutClick(game)
-                            true
-                        }
-
-                        3 -> {
-                            onPlaytimeClick(game)
-                            true
-                        }
-
-                        4 -> {
-                            onTrophiesClick(game)
                             true
                         }
 

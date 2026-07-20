@@ -165,7 +165,7 @@
     <style name="AppTheme.AlertDialog.NonMaterial" parent="Theme.AppCompat.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="materialButtonStyle">@style/AppTheme.AlertDialog.Button</item>
-        <item name="colorControlActivated">@color/accent</item>
+        <item name="colorControlActivated">?attr/pyluxAccent</item>
     </style>
 
     <style name="AppTheme.AlertDialog.Button" parent="Widget.MaterialComponents.Button.TextButton.Dialog">

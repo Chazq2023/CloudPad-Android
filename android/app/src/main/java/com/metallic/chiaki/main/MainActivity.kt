@@ -296,7 +296,15 @@ class MainActivity : AppCompatActivity() {
         // Any of these are valid focus targets but dead-end D-pad navigation since none of them
         // are a real tile — game/host tiles are always CardViews, never RecyclerViews. Treat
         // this the same as "nothing focused" and recover onto the first visible tile.
-        if (focused == null || focused is RecyclerView) {
+        //
+        // !focused.isAttachedToWindow catches a related case: holding/repeatedly pressing D-pad
+        // down can recycle the focused card faster than the platform's own focus-restoration
+        // resolves a replacement, leaving currentFocus pointing at a view that's been detached
+        // (recycled) but not yet nulled out — neither of the checks above catches that, and
+        // routing it into super.dispatchKeyEvent() below lets Android's default focus search run
+        // against a stale/detached view, which is what actually produced the reported "focus
+        // jumps all the way up to the toolbar" symptom during a fast press burst.
+        if (focused == null || focused is RecyclerView || !focused.isAttachedToWindow) {
             if (currentPage == 1) {
                 val lm = cloudRv?.layoutManager as? GridLayoutManager
                 lm?.findViewByPosition(lm.findFirstVisibleItemPosition())?.let {
@@ -399,7 +407,12 @@ class MainActivity : AppCompatActivity() {
                         focusSecondaryHeader(); return true
                     }
 
-                    // Cloud game card in first row → secondary header
+                    // Cloud game card in first row → secondary header; otherwise let native
+                    // focus search move up one row — CloudPlayFragment's games grid uses
+                    // InstantScrollGridLayoutManager, which forces the resulting bring-into-view
+                    // scroll to be immediate rather than animated, so a fast/held burst can't
+                    // queue up overlapping smooth-scroll animations and overshoot or leave focus
+                    // in a transient nowhere-state.
                     focusedInCloud != null -> {
                         val pos = cloudRv!!.getChildAdapterPosition(focusedInCloud)
                         val span = (cloudRv.layoutManager as? GridLayoutManager)?.spanCount ?: 2
@@ -471,11 +484,13 @@ class MainActivity : AppCompatActivity() {
                     // Login button → consume (nothing below it)
                     isLoginButton -> return true
 
-                    // Cloud game card: stop at last item
+                    // Cloud game card: stop once already on the last item, otherwise let native
+                    // focus search move down one row (see the InstantScrollGridLayoutManager note
+                    // in the DPAD_UP branch above for why that's safe under a fast/held burst).
                     focusedInCloud != null -> {
                         val pos = cloudRv!!.getChildAdapterPosition(focusedInCloud)
                         val lastLoaded = (cloudRv.adapter?.itemCount ?: 0) - 1
-                        if (pos < 0 || pos >= lastLoaded) return true
+                        if (pos == RecyclerView.NO_POSITION || pos >= lastLoaded) return true
                         return super.dispatchKeyEvent(event)
                     }
 
