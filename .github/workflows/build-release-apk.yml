@@ -118,6 +118,7 @@ jobs:
             - The PS5 Library tab no longer re-fetches over the network every time you switch into it or on app launch — it now shows the cached list instantly, same as the PS3/PS4 tabs. The manual refresh button still forces a real refresh.
             - Fixed Quick Settings controller navigation: pressing right from the Monitor or Settings tab icon could land focus on the whole content panel instead of the close button.
             - Reverted the Quick Settings panel's card-styled layout back to its original look per feedback.
+            - Renamed "RTT" to "Ping" in the in-session performance overlay and smoothed the reading over a short rolling window so it no longer jumps around as much between updates.
 
             ### APK
             Attached release asset:

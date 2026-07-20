@@ -29,7 +29,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelDFPS = metricRow("DFPS")
     private val labelBT = metricRow("BT")
     private val labelRes = metricRow("Res")
-    private val labelRTT = metricRow("RTT")
+    private val labelRTT = metricRow("Ping")
     private val labelJit = metricRow("Jit")
     private val labelDT = metricRow("DT")
     private val labelVL = metricRow("VL")
@@ -141,7 +141,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
 
         headerView.text = data.header
 
-        val oneWay = m.ping / 2.0
+        val oneWay = data.smoothedPing / 2.0
         val totalLatency = oneWay + m.decodeTime
 
         labelValue(
@@ -189,11 +189,11 @@ class PerformanceOverlayView @JvmOverloads constructor(
         labelRes.text = String.format(Locale.US, "Res %6s", resString)
 
         val rttColor = when {
-            m.ping < 30.0 -> Color.rgb(0, 220, 100)
-            m.ping < 80.0 -> Color.rgb(255, 200, 40)
+            data.smoothedPing < 30.0 -> Color.rgb(0, 220, 100)
+            data.smoothedPing < 80.0 -> Color.rgb(255, 200, 40)
             else -> Color.rgb(255, 80, 80)
         }
-        labelRTT.text = String.format(Locale.US, "RTT %5.1f ms", m.ping)
+        labelRTT.text = String.format(Locale.US, "Ping %5.1f ms", data.smoothedPing)
         labelRTT.setTextColor(rttColor)
 
         val jitColor = when {

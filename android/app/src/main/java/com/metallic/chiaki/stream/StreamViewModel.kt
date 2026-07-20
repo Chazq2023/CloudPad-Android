@@ -26,6 +26,7 @@ import kotlin.math.sqrt
 data class OverlayData(
 	val metrics: SessionMetrics,
 	val jitter: Double,
+	val smoothedPing: Double,
 	val header: String,
 	val fpsHistory: List<Float>
 )
@@ -81,6 +82,14 @@ class StreamViewModel(
 	private val maxRttSamples = 30
 	private val maxFpsHistory = 60
 
+	// The console/server only reports RTT when it feels like sending a new CONNECTIONQUALITY
+	// message — not necessarily every poll tick — so the raw per-second value can hold stale then
+	// jump, reading as "all over the place" next to other apps' more tightly-smoothed ping. A
+	// short rolling average (much shorter than maxRttSamples' 30s jitter window, which needs to
+	// span a longer period to mean anything as a stability stat) smooths that out while staying
+	// responsive to real changes.
+	private val pingDisplayWindow = 3
+
 	private val header: String = buildString {
 		val isCloud = !connectInfo.cloudSessionId.isNullOrBlank()
 
@@ -116,6 +125,7 @@ class StreamViewModel(
 					}
 
 					val jitter = computeJitter()
+					val smoothedPing = rttSamples.takeLast(pingDisplayWindow).average()
 
 					fpsHistory.addLast(metrics.fps)
 
@@ -127,6 +137,7 @@ class StreamViewModel(
 						OverlayData(
 							metrics = metrics,
 							jitter = jitter,
+							smoothedPing = smoothedPing,
 							header = header,
 							fpsHistory = fpsHistory.toList()
 						)
