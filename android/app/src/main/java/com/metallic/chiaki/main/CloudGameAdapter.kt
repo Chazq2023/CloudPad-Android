@@ -14,6 +14,14 @@ import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
 import com.pylux.stream.databinding.ItemCloudGameBinding
 
+/** Shared by every Modern-Grid-Deck-style card's focus highlight (grid tiles, Remote Play host
+ *  cards) so they all track the user's selected theme accent instead of a hardcoded color. */
+internal fun resolveThemeColor(context: android.content.Context, attr: Int): Int {
+    val tv = android.util.TypedValue()
+    context.theme.resolveAttribute(attr, tv, true)
+    return tv.data
+}
+
 class CloudGameAdapter(
     private val onGameClick: (CloudGame) -> Unit,
     private val onFavoriteClick: (CloudGame, Boolean) -> Unit,
@@ -161,6 +169,23 @@ class CloudGameAdapter(
             }
 
             binding.favoriteButton.setOnClickListener { toggleFavorite() }
+            binding.trophiesButton.setOnClickListener { onTrophiesClick(game) }
+            binding.playtimeButton.setOnClickListener { onPlaytimeClick(game) }
+
+            binding.root.onFocusChangeListener = android.view.View.OnFocusChangeListener { v, hasFocus ->
+                val card = v as com.google.android.material.card.MaterialCardView
+                if (hasFocus) {
+                    card.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccent)
+                    card.strokeWidth = (2 * v.resources.displayMetrics.density).toInt()
+                } else {
+                    card.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccentA20)
+                    card.strokeWidth = (1 * v.resources.displayMetrics.density).toInt()
+                }
+            }
+
+            // Playtime/Trophies are now direct icons on the tile (trophiesButton/playtimeButton
+            // above) rather than menu-only — kept here would just be a redundant second path to
+            // the same action.
             binding.root.setOnLongClickListener {
                 val popup = androidx.appcompat.widget.PopupMenu(binding.root.context, binding.root)
 
@@ -180,20 +205,6 @@ class CloudGameAdapter(
                     "Add to Home Screen"
                 )
 
-                popup.menu.add(
-                    0,
-                    3,
-                    2,
-                    "Playtime"
-                )
-
-                popup.menu.add(
-                    0,
-                    4,
-                    3,
-                    "Trophies"
-                )
-
                 popup.setOnMenuItemClickListener { item ->
                     when (item.itemId) {
                         1 -> {
@@ -203,16 +214,6 @@ class CloudGameAdapter(
 
                         2 -> {
                             onAddShortcutClick(game)
-                            true
-                        }
-
-                        3 -> {
-                            onPlaytimeClick(game)
-                            true
-                        }
-
-                        4 -> {
-                            onTrophiesClick(game)
                             true
                         }
 

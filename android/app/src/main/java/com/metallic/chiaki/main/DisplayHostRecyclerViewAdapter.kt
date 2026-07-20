@@ -249,21 +249,17 @@ class DisplayHostRecyclerViewAdapter(
 			it.menuButton.isFocusable = false
 			it.menuButton.isFocusableInTouchMode = false
 			it.menuButton.isClickable = canWakeup || canEditDelete
-			it.root.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
+			it.root.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
+				val density = v.resources.displayMetrics.density
 				if (hasFocus)
 				{
-					it.root.strokeWidth = 4
-					it.root.strokeColor = android.graphics.Color.parseColor("#FFFFD700")
-					it.root.foreground = android.graphics.drawable.GradientDrawable().apply {
-						shape = android.graphics.drawable.GradientDrawable.RECTANGLE
-						cornerRadius = 40f
-						setColor(0x22FFD700.toInt())
-					}
+					it.root.strokeWidth = (2 * density).toInt()
+					it.root.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccent)
 				}
 				else
 				{
-					it.root.strokeWidth = 0
-					it.root.foreground = null
+					it.root.strokeWidth = (1 * density).toInt()
+					it.root.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccentA20)
 				}
 			}
 			if (canWakeup || canEditDelete)

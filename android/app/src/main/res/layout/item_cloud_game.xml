@@ -5,8 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="4dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="?attr/pyluxAccentA20"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground">
@@ -29,19 +31,51 @@
             android:layout_gravity="center"
             android:visibility="gone" />
 
-        <ImageButton
-            android:id="@+id/favoriteButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_gravity="top|start"
             android:layout_margin="6dp"
-            android:padding="4dp"
-            android:src="@drawable/ic_star_outline"
-            android:background="@android:color/transparent"
-            android:contentDescription="Favorite"
-            android:clickable="false"
-            android:focusable="false"
-            android:scaleType="fitCenter" />
+            android:orientation="vertical">
+
+            <ImageButton
+                android:id="@+id/favoriteButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="4dp"
+                android:src="@drawable/ic_star_outline"
+                android:background="@android:color/transparent"
+                android:contentDescription="Favorite"
+                android:clickable="false"
+                android:focusable="false"
+                android:scaleType="fitCenter" />
+
+            <ImageButton
+                android:id="@+id/trophiesButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_trophy"
+                android:tint="#FFFFFFFF"
+                android:background="@android:color/transparent"
+                android:contentDescription="Trophies"
+                android:clickable="false"
+                android:focusable="false"
+                android:scaleType="fitCenter" />
+
+            <ImageButton
+                android:id="@+id/playtimeButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_playtime"
+                android:background="@android:color/transparent"
+                android:contentDescription="Playtime"
+                android:clickable="false"
+                android:focusable="false"
+                android:scaleType="fitCenter" />
+
+        </LinearLayout>
 
         <FrameLayout
             android:id="@+id/streamabilityBadge"
