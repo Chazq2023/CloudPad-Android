@@ -106,7 +106,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added an "Obtain Account ID" button to the manual console registration screen — if you're already logged in via CloudPad, this fills in the Account ID field for you instead of requiring a manual lookup on an external website.
+            - Modernised the PS3/PS4/PS5 catalog grid and Remote Play console list with Material-style elevated cards and a theme-coloured focus highlight.
+            - Added Trophies and Playtime icons directly on each game tile (below the favourite star) for one-tap access, alongside the existing favourite star — all three now sit on a themed circular background and pick up your selected accent colour for better visibility.
+            - Restyled the in-session Quick Settings panel's General tab into grouped cards to match the rest of the refreshed look.
 
             ### APK
             Attached release asset:
