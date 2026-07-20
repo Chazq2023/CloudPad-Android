@@ -595,9 +595,14 @@ class QuickSettingsPanel(
 		// Whichever container just became visible needs its focus-blocking synced to the
 		// current scope (see exitToRailScope()'s doc comment) — the container that was blocked
 		// before is now GONE and irrelevant, but a freshly-shown one defaults to unblocked
-		// (its layout-declared descendantFocusability) unless set here.
-		currentTabContentContainer()?.descendantFocusability =
+		// (its layout-declared descendantFocusability) unless set here. isFocusable is synced
+		// alongside it for the same reason exitToRailScope() toggles it — descendantFocusability
+		// alone doesn't stop a self-focusable container (e.g. a ScrollView) from being a focus
+		// target itself.
+		val shownContainer = currentTabContentContainer()
+		shownContainer?.descendantFocusability =
 			if(inTabContent) ViewGroup.FOCUS_BEFORE_DESCENDANTS else ViewGroup.FOCUS_BLOCK_DESCENDANTS
+		shownContainer?.isFocusable = inTabContent
 
 		// See updateSessionApplyVisibility's doc comment — the Apply bar doesn't belong to any
 		// one tab's container, so leaving this tab (or returning to it) needs to re-evaluate it.
@@ -1401,6 +1406,11 @@ class QuickSettingsPanel(
 	{
 		val container = currentTabContentContainer() ?: return
 		container.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+		// The Session/General tabs' ScrollView container needs to be focusable itself again here
+		// (see exitToRailScope()'s matching isFocusable = false) so D-pad/trackball scrolling
+		// still works if the tab genuinely has no focusable rows — descendantFocusability alone
+		// only governs its *children*, not the container itself.
+		container.isFocusable = true
 		val focusables = ArrayList<View>()
 		container.addFocusables(focusables, View.FOCUS_DOWN)
 		// A ScrollView (the Session/General tabs' container) is focusable by itself by default —
@@ -1431,7 +1441,15 @@ class QuickSettingsPanel(
 		if(inFriendChat) backToFriendsList()
 		if(inTrophyCompare) backFromTrophyCompare()
 
-		currentTabContentContainer()?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+		val container = currentTabContentContainer()
+		container?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+		// FOCUS_BLOCK_DESCENDANTS above only stops the container's *children* from being focus
+		// targets — the Session/General tabs' container is itself a ScrollView, which is
+		// focusable by itself by default (so D-pad/trackball scrolling works with nothing inside
+		// it focused). Left on, D-pad right from the rail could land on the container as a whole
+		// rather than the close button, reading as focus landing on "the whole content window"
+		// (confirmed on-device). enterContentScope() turns this back on.
+		container?.isFocusable = false
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 		panel.quickSettingsCloseButton.isFocusable = true
 		panel.quickSettingsDisconnectButton.isFocusable = true

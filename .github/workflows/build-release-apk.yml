@@ -53,16 +53,23 @@ jobs:
           KEYSTORE_KEY_ALIAS: ${{ secrets.PYLUX_KEYSTORE_KEY_ALIAS }}
           KEYSTORE_KEY_PASSWORD: ${{ secrets.PYLUX_KEYSTORE_KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
-            echo "chiakiKeystore=../android/pylux-release.jks" >> local.properties
-            echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
-            echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
-            echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
-            echo "Signing enabled"
-          else
-            echo "No keystore secret found — build will use default debug signing (updates may require reinstall)"
+          # This job builds the *debug* variant (see the "Build APK" step below) and signs it
+          # with this keystore — never fall back to Android's auto-generated debug key here.
+          # That key is regenerated fresh on every ephemeral Actions runner, so a release built
+          # without it would carry a different signature than every other release; users who
+          # installed it would then hit "App not installed as package conflicts with an existing
+          # package" on their next update and have to uninstall + reinstall to recover. Failing
+          # the build here instead of silently degrading is what actually prevents that.
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_STORE_PASSWORD" ] || [ -z "$KEYSTORE_KEY_ALIAS" ] || [ -z "$KEYSTORE_KEY_PASSWORD" ]; then
+            echo "::error::One or more PYLUX_KEYSTORE_* secrets (PYLUX_KEYSTORE_BASE64, PYLUX_KEYSTORE_STORE_PASSWORD, PYLUX_KEYSTORE_KEY_ALIAS, PYLUX_KEYSTORE_KEY_PASSWORD) are missing. Refusing to build with a fallback debug signature, since that would break in-place updates for every existing user. Set the secrets in this repo's Settings > Secrets and variables > Actions, then re-run this workflow."
+            exit 1
           fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
+          echo "chiakiKeystore=../android/pylux-release.jks" >> local.properties
+          echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
+          echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
+          echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
+          echo "Signing enabled"
 
       # Runs before the build (not after, as this used to) — the version it computes is baked
       # into the APK itself via ANDROID_VERSION_NAME below, so the tag a GitHub Release is filed
@@ -106,9 +113,11 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Modernised the PS3/PS4/PS5 catalog grid and Remote Play console list with Material-style elevated cards and a theme-coloured focus highlight.
-            - Added Trophies and Playtime icons directly on each game tile (below the favourite star) for one-tap access, alongside the existing favourite star — all three now sit on a themed circular background and pick up your selected accent colour for better visibility.
-            - Restyled the in-session Quick Settings panel's General tab into grouped cards to match the rest of the refreshed look.
+            - Fixed controller D-pad navigation in the game grid: rapid down-presses could snap between tiles or crash the app — grid scrolling now uses the same reliable native focus handling as the rest of the app.
+            - Game artwork no longer reloads/pops in when the catalog list refreshes, and removed a background artwork-preload queue that was actually slowing down initial image loading rather than helping.
+            - The PS5 Library tab no longer re-fetches over the network every time you switch into it or on app launch — it now shows the cached list instantly, same as the PS3/PS4 tabs. The manual refresh button still forces a real refresh.
+            - Fixed Quick Settings controller navigation: pressing right from the Monitor or Settings tab icon could land focus on the whole content panel instead of the close button.
+            - Reverted the Quick Settings panel's card-styled layout back to its original look per feedback.
 
             ### APK
             Attached release asset:

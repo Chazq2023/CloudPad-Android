@@ -88,7 +88,7 @@ fun RecyclerView.fixFocusOnFastScroll(logTag: String = "", onFocusedChildDetache
 				val focusables = ArrayList<View>()
 				addFocusables(focusables, View.FOCUS_DOWN)
 				val target = pickRedirectTarget(focusables, lastPosition, scrollDy)
-				val targetPosition = target?.let { getChildAdapterPosition(it) }
+				val targetPosition = target?.let { findContainingItemView(it) }?.let { getChildAdapterPosition(it) }
 				val gotFocus = target?.requestFocus() ?: false
 				Log.d(TAG, "[$logTag] redirect result: candidates=${focusables.size} target=$targetPosition " +
 					"requestFocus()=$gotFocus target.isFocused=${target?.isFocused}")
@@ -101,11 +101,23 @@ private fun RecyclerView.pickRedirectTarget(focusables: List<View>, lastPosition
 {
 	if (lastPosition == RecyclerView.NO_POSITION) return focusables.firstOrNull()
 
+	// addFocusables() returns every focusable *descendant*, not just direct children of the
+	// RecyclerView — getChildAdapterPosition() requires an actual direct child (it reads the
+	// view's own LayoutParams as RecyclerView.LayoutParams), so a candidate nested inside an
+	// item's view hierarchy has to be resolved up to its containing item view first. Skipping
+	// this crashed with a ClassCastException (FrameLayout.LayoutParams cannot be cast to
+	// RecyclerView.LayoutParams) the one time a caller's item layout had a focusable descendant
+	// deeper than the item root.
+	fun positionOf(candidate: View): Int {
+		val itemView = findContainingItemView(candidate) ?: return RecyclerView.NO_POSITION
+		return getChildAdapterPosition(itemView)
+	}
+
 	// Prefer a candidate that continues the direction we were actually scrolling — falls back to
 	// the full pool (closest by absolute distance, in either direction) only when nothing exists
 	// in that direction, e.g. at the very end of the list.
 	val directional = focusables.filter { candidate ->
-		val pos = getChildAdapterPosition(candidate)
+		val pos = positionOf(candidate)
 		when
 		{
 			pos == RecyclerView.NO_POSITION -> false
@@ -116,7 +128,7 @@ private fun RecyclerView.pickRedirectTarget(focusables: List<View>, lastPosition
 	}
 	val pool = directional.ifEmpty { focusables }
 	return pool.minByOrNull { candidate ->
-		val pos = getChildAdapterPosition(candidate)
+		val pos = positionOf(candidate)
 		if (pos == RecyclerView.NO_POSITION) Int.MAX_VALUE else abs(pos - lastPosition)
 	}
 }

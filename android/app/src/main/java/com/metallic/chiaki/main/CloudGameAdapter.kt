@@ -31,12 +31,19 @@ class CloudGameAdapter(
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
-        setHasStableIds(false)
+        // Lets Coil's memory cache carry an already-loaded tile's image straight through a
+        // refresh instead of visibly reloading it — without a stable ID, notifyDataSetChanged()
+        // gives every visible ViewHolder no identity to match against the previous list, so Coil
+        // treats each one as a brand new load target. productId alone isn't safe as the raw key
+        // (the same game can legitimately appear twice — once per platform/service variant — and
+        // duplicate stable IDs crash RecyclerView), so it's combined with platform/serviceType,
+        // with a defensive dedupe below closing off any remaining collision case.
+        setHasStableIds(true)
     }
 
     var games: List<CloudGame> = emptyList()
         set(value) {
-            field = value
+            field = value.distinctBy { stableKey(it) }
             notifyDataSetChanged()
         }
 
@@ -48,9 +55,9 @@ class CloudGameAdapter(
 
     var isScrollingFast = false
 
-    override fun getItemId(position: Int): Long {
-        return RecyclerView.NO_ID
-    }
+    private fun stableKey(game: CloudGame) = "${game.productId}|${game.platform}|${game.serviceType}"
+
+    override fun getItemId(position: Int): Long = stableKey(games[position]).hashCode().toLong()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CloudGameViewHolder {
         val binding = ItemCloudGameBinding.inflate(
@@ -145,12 +152,15 @@ class CloudGameAdapter(
             if (game.imageUrl.isEmpty()) {
                 binding.gameImageView.setImageResource(android.R.drawable.ic_menu_gallery)
             } else {
-                // During fast scroll: only serve from memory cache (no network/disk I/O).
-                // This prevents OOM from hundreds of concurrent image loads while flinging.
+                // During fast scroll: memory + disk cache stay on (local, cheap — and with the
+                // whole catalog prefetched to disk up front by CloudPlayFragment.prefetchArtwork,
+                // most tiles are already there), only network is skipped. That avoids the slow
+                // network-fetch-mid-fling jank the memory-only version of this policy was
+                // originally guarding against, without reintroducing it for already-cached tiles.
                 // No crossfade to prevent flash when recycled views rebind.
                 binding.gameImageView.load(game.imageUrl) {
                     memoryCachePolicy(CachePolicy.ENABLED)
-                    diskCachePolicy(if (isScrollingFast) CachePolicy.DISABLED else CachePolicy.ENABLED)
+                    diskCachePolicy(CachePolicy.ENABLED)
                     networkCachePolicy(if (isScrollingFast) CachePolicy.DISABLED else CachePolicy.ENABLED)
                     crossfade(false)
                 }
