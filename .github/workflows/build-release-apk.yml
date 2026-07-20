@@ -65,7 +65,17 @@ jobs:
             exit 1
           fi
           echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
-          echo "chiakiKeystore=../android/pylux-release.jks" >> local.properties
+          # app/build.gradle resolves this path via Gradle's file(), which is relative to the
+          # *app* module dir (android/app), not this "android" working-directory — so reaching
+          # the keystore written one line above (at android/pylux-release.jks) needs exactly one
+          # "..", not "../android/..". The extra "android/" segment silently pointed at a file
+          # that never existed; Android Gradle Plugin doesn't hard-fail a debug build over a
+          # missing/invalid signingConfig, it just falls back to its own auto-generated debug key
+          # — so every release since the guard above was added still shipped mismatched
+          # signatures (confirmed: v0.0.23 through v0.1.4 are each signed with a different
+          # "Android Debug" cert). Matches the working local.properties convention already used
+          # for local debug builds (chiakiKeystore=../pylux-debug.jks).
+          echo "chiakiKeystore=../pylux-release.jks" >> local.properties
           echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
           echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
           echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
