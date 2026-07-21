@@ -120,10 +120,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a new "Add to Home Screen" icon to each game tile, styled to match the existing Favorite/Trophies/Playtime icons. Tapping it asks for confirmation before pinning a shortcut for that game.
-            - Removed the long-press context menu on game tiles (Favorites/Add to Home Screen) now that both actions have their own dedicated tile icons — holding a tile no longer does anything.
-            - Home screen shortcuts now use each game's full title instead of a truncated version.
-            - Updated the PS3 Catalog, PS4 Catalog, and PS5 Library screenshots in the README.
+            - Restored proper release signing with a new keystore, so this and future releases carry a consistent app signature again (previous few releases were signed with a mismatched debug key while this was being sorted out).
 
             ### APK
             Attached release asset:
