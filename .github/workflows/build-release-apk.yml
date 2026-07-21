@@ -54,40 +54,29 @@ jobs:
           KEYSTORE_KEY_PASSWORD: ${{ secrets.PYLUX_KEYSTORE_KEY_PASSWORD }}
         run: |
           # This job builds the *debug* variant (see the "Build APK" step below) and signs it
-          # with this keystore — ideally never falling back to Android's auto-generated debug
-          # key, since that key is regenerated fresh on every ephemeral Actions runner, so a
-          # release built without it carries a different signature than every other release;
-          # users who installed one would then hit "App not installed as package conflicts with
-          # an existing package" on their next update and have to uninstall + reinstall to
-          # recover.
-          #
-          # TEMPORARY: this used to hard-fail (exit 1) when the PYLUX_KEYSTORE_* secrets were
-          # missing, so a broken/missing secret couldn't silently ship a mismatched signature.
-          # That's disabled for now so releases keep shipping while the secrets get sorted out —
-          # re-add the guard once they're restored in this repo's
-          # Settings > Secrets and variables > Actions.
-          #
-          # When the secrets ARE missing, local.properties is deliberately left untouched (no
-          # chiakiKeystore entry at all) rather than pointed at an empty/invalid keystore file —
-          # app/build.gradle's `if(properties.containsKey("chiakiKeystore"))` check then skips
-          # local signing entirely and AGP uses its own always-valid auto-generated debug key,
-          # so the build reliably succeeds instead of risking a real keystore-open failure from
-          # a 0-byte keystore file with a non-null-but-empty password.
+          # with this keystore — never falling back to Android's auto-generated debug key,
+          # since that key is regenerated fresh on every ephemeral Actions runner, so a release
+          # built without it carries a different signature than every other release; users who
+          # installed one would then hit "App not installed as package conflicts with an
+          # existing package" on their next update and have to uninstall + reinstall to recover.
+          # Hard-fail here so a missing/misconfigured secret can't silently ship a mismatched
+          # signature.
           if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_STORE_PASSWORD" ] || [ -z "$KEYSTORE_KEY_ALIAS" ] || [ -z "$KEYSTORE_KEY_PASSWORD" ]; then
-            echo "::warning::One or more PYLUX_KEYSTORE_* secrets are missing. Building with AGP's auto-generated debug signature instead — this release will NOT match previous releases' signature, so existing users may hit an update conflict. Set the secrets in Settings > Secrets and variables > Actions to restore consistent signing."
-          else
-            echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
-            # app/build.gradle resolves this path via Gradle's file(), which is relative to the
-            # *app* module dir (android/app), not this "android" working-directory — so reaching
-            # the keystore written one line above (at android/pylux-release.jks) needs exactly
-            # one "..", not "../android/..". Matches the working local.properties convention
-            # already used for local debug builds (chiakiKeystore=../pylux-debug.jks).
-            echo "chiakiKeystore=../pylux-release.jks" >> local.properties
-            echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
-            echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
-            echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
-            echo "Signing enabled"
+            echo "::error::One or more PYLUX_KEYSTORE_* secrets (PYLUX_KEYSTORE_BASE64, PYLUX_KEYSTORE_STORE_PASSWORD, PYLUX_KEYSTORE_KEY_ALIAS, PYLUX_KEYSTORE_KEY_PASSWORD) are missing. Set them in Settings > Secrets and variables > Actions before releasing."
+            exit 1
           fi
+
+          echo "$KEYSTORE_BASE64" | base64 --decode > pylux-release.jks
+          # app/build.gradle resolves this path via Gradle's file(), which is relative to the
+          # *app* module dir (android/app), not this "android" working-directory — so reaching
+          # the keystore written one line above (at android/pylux-release.jks) needs exactly
+          # one "..", not "../android/..". Matches the working local.properties convention
+          # already used for local debug builds (chiakiKeystore=../pylux-debug.jks).
+          echo "chiakiKeystore=../pylux-release.jks" >> local.properties
+          echo "chiakiKeystorePW=${KEYSTORE_STORE_PASSWORD}" >> local.properties
+          echo "chiakiKeyAlias=${KEYSTORE_KEY_ALIAS}" >> local.properties
+          echo "chiakiKeyPW=${KEYSTORE_KEY_PASSWORD}" >> local.properties
+          echo "Signing enabled"
 
       # Runs before the build (not after, as this used to) — the version it computes is baked
       # into the APK itself via ANDROID_VERSION_NAME below, so the tag a GitHub Release is filed
@@ -131,10 +120,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a new "Add to Home Screen" icon to each game tile, styled to match the existing Favorite/Trophies/Playtime icons. Tapping it asks for confirmation before pinning a shortcut for that game.
-            - Removed the long-press context menu on game tiles (Favorites/Add to Home Screen) now that both actions have their own dedicated tile icons — holding a tile no longer does anything.
-            - Home screen shortcuts now use each game's full title instead of a truncated version.
-            - Updated the PS3 Catalog, PS4 Catalog, and PS5 Library screenshots in the README.
+            - Restored proper release signing with a new keystore, so this and future releases carry a consistent app signature again (previous few releases were signed with a mismatched debug key while this was being sorted out).
 
             ### APK
             Attached release asset:
