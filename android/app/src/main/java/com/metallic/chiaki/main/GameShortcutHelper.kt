@@ -60,8 +60,8 @@ object GameShortcutHelper {
             context,
             "cloud_game_${game.productId.replace(Regex("[^A-Za-z0-9_]"), "_")}"
         )
-            .setShortLabel(game.name.take(20))
-            .setLongLabel(game.name.take(40))
+            .setShortLabel(game.name)
+            .setLongLabel(game.name)
             .setIcon(icon)
             .setIntent(shortcutIntent)
             .build()

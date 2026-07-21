@@ -25,9 +25,9 @@ internal fun resolveThemeColor(context: android.content.Context, attr: Int): Int
 class CloudGameAdapter(
     private val onGameClick: (CloudGame) -> Unit,
     private val onFavoriteClick: (CloudGame, Boolean) -> Unit,
-    private val onAddShortcutClick: (CloudGame) -> Unit,
     private val onPlaytimeClick: (CloudGame) -> Unit,
     private val onTrophiesClick: (CloudGame) -> Unit,
+    private val onAddToHomeClick: (CloudGame) -> Unit,
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
@@ -181,6 +181,7 @@ class CloudGameAdapter(
             binding.favoriteButton.setOnClickListener { toggleFavorite() }
             binding.trophiesButton.setOnClickListener { onTrophiesClick(game) }
             binding.playtimeButton.setOnClickListener { onPlaytimeClick(game) }
+            binding.addToHomeButton.setOnClickListener { onAddToHomeClick(game) }
 
             binding.root.onFocusChangeListener = android.view.View.OnFocusChangeListener { v, hasFocus ->
                 val card = v as com.google.android.material.card.MaterialCardView
@@ -193,47 +194,10 @@ class CloudGameAdapter(
                 }
             }
 
-            // Playtime/Trophies are now direct icons on the tile (trophiesButton/playtimeButton
-            // above) rather than menu-only — kept here would just be a redundant second path to
-            // the same action.
-            binding.root.setOnLongClickListener {
-                val popup = androidx.appcompat.widget.PopupMenu(binding.root.context, binding.root)
-
-                val isFav = isFavorite(game.productId)
-
-                popup.menu.add(
-                    0,
-                    1,
-                    0,
-                    if (isFav) "Remove from favorites" else "Add to favorites"
-                )
-
-                popup.menu.add(
-                    0,
-                    2,
-                    1,
-                    "Add to Home Screen"
-                )
-
-                popup.setOnMenuItemClickListener { item ->
-                    when (item.itemId) {
-                        1 -> {
-                            toggleFavorite()
-                            true
-                        }
-
-                        2 -> {
-                            onAddShortcutClick(game)
-                            true
-                        }
-
-                        else -> false
-                    }
-                }
-
-                popup.show()
-                true
-            }
+            // Favorites/Add to Home Screen are now direct icons on the tile (favoriteButton/
+            // addToHomeButton above), so the long-press menu that used to surface them is gone —
+            // holding a tile intentionally does nothing now.
+            binding.root.setOnLongClickListener(null)
             binding.root.setOnKeyListener { _, keyCode, event ->
                 when (keyCode) {
                     android.view.KeyEvent.KEYCODE_MENU -> {

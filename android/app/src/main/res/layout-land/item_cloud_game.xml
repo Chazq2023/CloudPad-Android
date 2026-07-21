@@ -75,6 +75,20 @@
                 android:focusable="false"
                 android:scaleType="fitCenter" />
 
+            <ImageButton
+                android:id="@+id/addToHomeButton"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginTop="4dp"
+                android:padding="6dp"
+                android:src="@drawable/ic_add_to_home"
+                android:tint="?attr/pyluxAccentLight"
+                android:background="@drawable/bg_tile_icon_circle"
+                android:contentDescription="Add to Home Screen"
+                android:clickable="false"
+                android:focusable="false"
+                android:scaleType="fitCenter" />
+
         </LinearLayout>
 
         <FrameLayout
