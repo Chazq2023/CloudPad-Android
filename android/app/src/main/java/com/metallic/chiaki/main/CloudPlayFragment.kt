@@ -968,6 +968,19 @@ class CloudPlayFragment : Fragment() {
         }
     }
 
+    /** Shown from the tile's own "Add to Home Screen" icon — confirms before pinning, unlike the
+     *  long-press menu's identically-named item which pins immediately. Delegates to
+     *  [onAddShortcutClicked] on confirmation so both paths share the exact same ownership check
+     *  and pin logic. */
+    private fun confirmAddToHomeScreen(game: CloudGame) {
+        requireContext().alertDialogBuilder()
+            .setMessage("Would you like to add ${game.name} to your home screen?")
+            .setPositiveButton("Yes") { _, _ -> onAddShortcutClicked(game) }
+            .setNegativeButton("No", null)
+            .create()
+            .show()
+    }
+
     /** Shown from the long-press "Playtime" menu item — works for PS3/PS4 Catalog and PS5
      *  Library games alike since both accumulate stats under the same productId key
      *  (see StreamActivity.flushStreamTimeSegment / Preferences.recordPlaySession). */
@@ -1014,9 +1027,9 @@ class CloudPlayFragment : Fragment() {
         adapter = CloudGameAdapter(
             onGameClick = this::onGameClicked,
             onFavoriteClick = this::onGameFavoriteToggled,
-            onAddShortcutClick = this::onAddShortcutClicked,
             onPlaytimeClick = this::showPlaytimeDialog,
             onTrophiesClick = { game -> com.metallic.chiaki.trophy.TrophiesActivity.start(requireContext(), game) },
+            onAddToHomeClick = this::confirmAddToHomeScreen,
             isFavorite = { productId -> preferences.isFavoriteGame(productId) }
         )
         binding.gamesRecyclerView.adapter = adapter

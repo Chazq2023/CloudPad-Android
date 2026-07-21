@@ -123,13 +123,10 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed controller D-pad navigation in the game grid: rapid down-presses could snap between tiles or crash the app — grid scrolling now uses the same reliable native focus handling as the rest of the app.
-            - Game artwork no longer reloads/pops in when the catalog list refreshes, and removed a background artwork-preload queue that was actually slowing down initial image loading rather than helping.
-            - The PS5 Library tab no longer re-fetches over the network every time you switch into it or on app launch — it now shows the cached list instantly, same as the PS3/PS4 tabs. The manual refresh button still forces a real refresh.
-            - Fixed Quick Settings controller navigation: pressing right from the Monitor or Settings tab icon could land focus on the whole content panel instead of the close button.
-            - Reverted the Quick Settings panel's card-styled layout back to its original look per feedback.
-            - Renamed "RTT" to "Ping" in the in-session performance overlay and smoothed the reading over a short rolling window so it no longer jumps around as much between updates.
-            - Actually fixed the release signing bug that caused "package conflicts with an existing package" on update: a wrong keystore file path meant every release was still silently falling back to a random per-build debug key despite an earlier attempted fix. Verified against the last 5 published releases before landing this.
+            - Added a new "Add to Home Screen" icon to each game tile, styled to match the existing Favorite/Trophies/Playtime icons. Tapping it asks for confirmation before pinning a shortcut for that game.
+            - Removed the long-press context menu on game tiles (Favorites/Add to Home Screen) now that both actions have their own dedicated tile icons — holding a tile no longer does anything.
+            - Home screen shortcuts now use each game's full title instead of a truncated version.
+            - Updated the PS3 Catalog, PS4 Catalog, and PS5 Library screenshots in the README.
 
             ### APK
             Attached release asset:
