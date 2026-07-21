@@ -126,6 +126,7 @@ jobs:
             - Tapping the search icon no longer pops open the keyboard or puts focus in the search field automatically — both only happen once you tap into the search field yourself.
             - D-pad scrolling in the Trophies screen and the Quick Settings Trophies tab no longer overshoots on fast presses, matching the instant-scroll behaviour already used on the game tiles grid.
             - Same instant-scroll fix applied to the Friends list and the Quick Settings Friends tab.
+            - Fixed D-pad up/down on the Friends list drifting between the friend tile and the compare-trophies icon while scrolling — navigation now stays locked to whichever column you started on.
 
             ### APK
             Attached release asset:

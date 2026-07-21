@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.text.format.DateUtils
 import android.util.TypedValue
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -82,6 +83,52 @@ class FriendAdapter(
 			holder.items()?.let { onCompareTrophiesClick(it) }
 		}
 
+		// Each row has two side-by-side focusable targets (the tile and the compare-trophies
+		// button). Left to the platform's default geometric focus search, D-pad up/down can drift
+		// from one column to the other while scrolling through recycled rows — the button's much
+		// smaller bounds compared to the tile make it an unreliable target for the "nearest in this
+		// direction" heuristic once rows are being bound/recycled mid-scroll. Intercepting up/down
+		// explicitly and re-requesting focus on the *same* column of the adjacent row keeps
+		// navigation column-locked regardless of recycling.
+		val recyclerView = parent as RecyclerView
+		fun moveFocusVertically(keyCode: Int, event: KeyEvent, sameColumn: (FriendViewHolder) -> View): Boolean
+		{
+			if (event.action != KeyEvent.ACTION_DOWN) return false
+			val direction = when (keyCode)
+			{
+				KeyEvent.KEYCODE_DPAD_UP -> -1
+				KeyEvent.KEYCODE_DPAD_DOWN -> 1
+				else -> return false
+			}
+			val pos = holder.bindingAdapterPosition
+			if (pos == RecyclerView.NO_POSITION) return false
+			val targetPos = pos + direction
+			if (targetPos < 0 || targetPos >= items.size) return false
+
+			val existing = recyclerView.findViewHolderForAdapterPosition(targetPos) as? FriendViewHolder
+			if (existing != null)
+			{
+				sameColumn(existing).requestFocus()
+			}
+			else
+			{
+				// Target row has scrolled out of the view cache and isn't bound yet — bring it
+				// into view first, then focus once it's attached.
+				recyclerView.scrollToPosition(targetPos)
+				recyclerView.post {
+					(recyclerView.findViewHolderForAdapterPosition(targetPos) as? FriendViewHolder)
+						?.let { sameColumn(it).requestFocus() }
+				}
+			}
+			return true
+		}
+		binding.friendItemContent.setOnKeyListener { _, keyCode, event ->
+			moveFocusVertically(keyCode, event) { it.contentView }
+		}
+		binding.friendItemCompareTrophiesButton.setOnKeyListener { _, keyCode, event ->
+			moveFocusVertically(keyCode, event) { it.trophyButtonView }
+		}
+
 		return holder
 	}
 
@@ -93,6 +140,9 @@ class FriendAdapter(
 	{
 		private var friend: Friend? = null
 		fun items(): Friend? = friend
+
+		val contentView: View get() = binding.friendItemContent
+		val trophyButtonView: View get() = binding.friendItemCompareTrophiesButton
 
 		fun bind(friend: Friend)
 		{
