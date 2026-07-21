@@ -406,9 +406,24 @@ class CloudPlayFragment : Fragment() {
     }
 
     fun toggleSearch() {
-        isSearchExpanded = !isSearchExpanded
-
         if (isSearchExpanded) {
+            // collapseSearchBar() calls viewModel.setSearchQuery(""), which synchronously
+            // re-emits the games list through the same observer that skips its auto-focus-to-top
+            // logic while isSearchExpanded is true. Flip the flag AFTER collapsing (not before,
+            // as this used to), so that guard is still in effect for this specific re-emit —
+            // otherwise closing the search bar silently scrolled the grid back to the top and
+            // dropped whatever tile/scroll position the user was at.
+            collapseSearchBar()
+            isSearchExpanded = false
+            binding.headerSearchButton.setColorFilter(
+                resources.getColor(
+                    android.R.color.white,
+                    null
+                )
+            )
+            binding.headerSearchButton.alpha = 0.45f
+        } else {
+            isSearchExpanded = true
             binding.searchView.visibility = android.view.View.VISIBLE
             binding.searchView.layoutParams = binding.searchView.layoutParams.apply {
                 height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -427,15 +442,6 @@ class CloudPlayFragment : Fragment() {
             }
             binding.headerSearchButton.setColorFilter(resolveAccentColor())
             binding.headerSearchButton.alpha = 1.0f
-        } else {
-            collapseSearchBar()
-            binding.headerSearchButton.setColorFilter(
-                resources.getColor(
-                    android.R.color.white,
-                    null
-                )
-            )
-            binding.headerSearchButton.alpha = 0.45f
         }
     }
 
