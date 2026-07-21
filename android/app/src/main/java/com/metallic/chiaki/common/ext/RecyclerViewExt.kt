@@ -2,12 +2,34 @@
 
 package com.metallic.chiaki.common.ext
 
+import android.content.Context
+import android.graphics.Rect
 import android.util.Log
 import android.view.View
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlin.math.abs
 
 private const val TAG = "FastScrollFocusFix"
+
+/**
+ * LinearLayoutManager that forces instant (non-smooth) scroll when D-pad focus moves to an
+ * off-screen item — the same fix as CloudPlayFragment's private InstantScrollGridLayoutManager,
+ * generalised here so the Trophies list and Quick Settings Trophies tab (both plain, single-column
+ * LinearLayoutManager lists) get the same treatment: the default smooth-scroll behaviour lets
+ * multiple fast D-pad presses queue up, causing the list to overshoot and leave the focused row
+ * off-screen.
+ */
+class InstantScrollLinearLayoutManager(context: Context) : LinearLayoutManager(context)
+{
+	override fun requestChildRectangleOnScreen(
+		parent: RecyclerView,
+		child: View,
+		rect: Rect,
+		immediate: Boolean,
+		focusedChildVisible: Boolean
+	): Boolean = super.requestChildRectangleOnScreen(parent, child, rect, true, focusedChildVisible)
+}
 
 /**
  * Fixes D-pad down/up focus reliably getting "stuck" on a fast-scrolling list of focusable rows —
