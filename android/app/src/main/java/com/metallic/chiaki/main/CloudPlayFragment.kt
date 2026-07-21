@@ -409,13 +409,12 @@ class CloudPlayFragment : Fragment() {
             binding.searchView.layoutParams = binding.searchView.layoutParams.apply {
                 height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
             }
-            // Focus the inner EditText directly so TV DPad can reach it, but don't show the
-            // keyboard yet — it should only appear once the user taps into the field.
+            // Leave the inner EditText unfocused on open — focus (and the keyboard) should only
+            // land there when the user explicitly taps into the field themselves.
             val queryEditText =
                 binding.searchView.findViewById<android.view.View>(androidx.appcompat.R.id.search_src_text)
                     ?: binding.searchView
             queryEditText.isFocusableInTouchMode = true
-            queryEditText.requestFocus()
             binding.headerSearchButton.setColorFilter(resolveAccentColor())
             binding.headerSearchButton.alpha = 1.0f
         } else {

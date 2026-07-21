@@ -123,7 +123,7 @@ jobs:
             - Sort selection highlight in the game library now uses the app's selected theme colour instead of always showing blue.
             - Search bar no longer auto-closes when scrolling the game tiles list — it now stays open until you tap the search icon again.
             - Search icon now highlights in the theme colour while the search bar is open, and returns to normal when closed.
-            - Tapping the search icon no longer pops open the keyboard automatically — it only appears once you tap into the search field itself.
+            - Tapping the search icon no longer pops open the keyboard or puts focus in the search field automatically — both only happen once you tap into the search field yourself.
 
             ### APK
             Attached release asset:
