@@ -35,6 +35,12 @@ class PsnTokenManager(private val preferences: Preferences)
 
 		// v2 endpoint for account info lookup (still needed even with v3 auth)
 		private const val V2_TOKEN_URL = "https://auth.api.sonyentertainmentnetwork.com/2.0/oauth/token"
+
+		// HttpURLConnection defaults to an infinite timeout (0) — without this, a slow/dropped
+		// connection to Sony's servers left "Finalise log in" spinning forever, since the call
+		// never threw and never returned. Matches HttpClient's existing 10s timeout elsewhere.
+		private const val CONNECT_TIMEOUT_MS = 10000
+		private const val READ_TIMEOUT_MS = 10000
 	}
 
 	/**
@@ -59,25 +65,11 @@ class PsnTokenManager(private val preferences: Preferences)
 				Log.i(TAG, "Generated new DUID: $duid")
 			}
 
-			// Step 1: Get authorization code by hitting authorize endpoint with npsso cookie
-			Log.i(TAG, "Step 1: Getting authorization code...")
-			val authCode = getAuthorizationCode(npsso, duid)
-			if(authCode == null)
-			{
-				Log.e(TAG, "Step 1 FAILED: Could not get authorization code")
-				return false
-			}
-			Log.i(TAG, "Step 1 OK: Got auth code (length=${authCode.length})")
-
-			// Step 2: Exchange auth code for tokens
-			Log.i(TAG, "Step 2: Exchanging auth code for tokens...")
-			val tokens = exchangeCodeForTokens(authCode)
-			if(tokens == null)
-			{
-				Log.e(TAG, "Step 2 FAILED: Could not exchange code for tokens")
-				return false
-			}
-			Log.i(TAG, "Step 2 OK: Got tokens (accessToken length=${tokens.accessToken.length}, expiresIn=${tokens.expiresIn}s)")
+			// Steps 1+2: get an authorization code and exchange it for tokens, retrying the pair
+			// together on transient network failures (a stale auth code from a failed attempt
+			// can't just be resubmitted — it needs a fresh one from step 1).
+			val tokens = getAuthCodeAndExchangeForTokensWithRetry(npsso, duid)
+				?: return false
 
 			// Save tokens
 			preferences.psnAuthToken = tokens.accessToken
@@ -223,6 +215,55 @@ class PsnTokenManager(private val preferences: Preferences)
 	private val CLIENT_SECRET = "mvaiZkRsAsI1IBkY"
 
 	/**
+	 * Runs steps 1+2 (auth code, then token exchange) as a unit, retrying the whole pair on
+	 * transient I/O failures (timeout, dropped connection) — an authorization code is single-use
+	 * and short-lived, so a failed step 2 can't just retry with the same code from step 1; it needs
+	 * a fresh one. A definitive rejection (e.g. bad/expired npsso, no exception but no code/token
+	 * in the response) still fails fast on the first attempt without wasting the remaining retries.
+	 */
+	private fun getAuthCodeAndExchangeForTokensWithRetry(npsso: String, duid: String): TokenResponse?
+	{
+		val maxAttempts = 3
+		for(attempt in 1..maxAttempts)
+		{
+			try
+			{
+				Log.i(TAG, "Step 1: Getting authorization code (attempt $attempt/$maxAttempts)...")
+				val authCode = getAuthorizationCode(npsso, duid)
+				if(authCode == null)
+				{
+					Log.e(TAG, "Step 1 FAILED: Could not get authorization code")
+				}
+				else
+				{
+					Log.i(TAG, "Step 1 OK: Got auth code (length=${authCode.length})")
+
+					Log.i(TAG, "Step 2: Exchanging auth code for tokens (attempt $attempt/$maxAttempts)...")
+					val tokens = exchangeCodeForTokens(authCode)
+					if(tokens != null)
+					{
+						Log.i(TAG, "Step 2 OK: Got tokens (accessToken length=${tokens.accessToken.length}, expiresIn=${tokens.expiresIn}s)")
+						return tokens
+					}
+					Log.e(TAG, "Step 2 FAILED: Could not exchange code for tokens")
+				}
+			}
+			catch(e: java.io.IOException)
+			{
+				Log.w(TAG, "Network error during login exchange (attempt $attempt/$maxAttempts)", e)
+			}
+
+			if(attempt < maxAttempts)
+			{
+				val backoffMs = 1000L * attempt
+				Log.i(TAG, "Retrying login exchange in ${backoffMs}ms...")
+				Thread.sleep(backoffMs)
+			}
+		}
+		return null
+	}
+
+	/**
 	 * Step 1: GET authorize endpoint with npsso cookie to get auth code via redirect.
 	 * Mimics PSNAccountIDV3::GetPsnAccountIdFromNpsso() step 1.
 	 */
@@ -248,6 +289,8 @@ class PsnTokenManager(private val preferences: Preferences)
 		try
 		{
 			connection.requestMethod = "GET"
+			connection.connectTimeout = CONNECT_TIMEOUT_MS
+			connection.readTimeout = READ_TIMEOUT_MS
 			connection.setRequestProperty("User-Agent", USER_AGENT)
 			connection.setRequestProperty("Cookie", "npsso=$npsso")
 			connection.instanceFollowRedirects = false // We need to capture the redirect
@@ -335,6 +378,8 @@ class PsnTokenManager(private val preferences: Preferences)
 		try
 		{
 			connection.requestMethod = "GET"
+			connection.connectTimeout = CONNECT_TIMEOUT_MS
+			connection.readTimeout = READ_TIMEOUT_MS
 			connection.setRequestProperty("Authorization", basicAuth)
 			connection.setRequestProperty("Accept", "application/json")
 
@@ -382,6 +427,8 @@ class PsnTokenManager(private val preferences: Preferences)
 		try
 		{
 			connection.requestMethod = "POST"
+			connection.connectTimeout = CONNECT_TIMEOUT_MS
+			connection.readTimeout = READ_TIMEOUT_MS
 			connection.setRequestProperty("Content-Type", "application/x-www-form-urlencoded")
 			connection.setRequestProperty("User-Agent", USER_AGENT)
 			if(authHeader != null && authHeader.isNotEmpty())
