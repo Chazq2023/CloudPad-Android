@@ -120,7 +120,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Restored proper release signing with a new keystore, so this and future releases carry a consistent app signature again (previous few releases were signed with a mismatched debug key while this was being sorted out).
+            - No app changes in this release — it's a test of the restored release signing only. If it installs as an update over your existing app (no uninstall needed), signing is confirmed fixed for future releases. If it doesn't, you'll need to uninstall and reinstall this one time; every release after this point should then update normally.
 
             ### APK
             Attached release asset:
