@@ -415,6 +415,12 @@ class CloudPlayFragment : Fragment() {
                 binding.searchView.findViewById<android.view.View>(androidx.appcompat.R.id.search_src_text)
                     ?: binding.searchView
             queryEditText.isFocusableInTouchMode = true
+            // Re-apply whatever text is still sitting in the field from last time it was open —
+            // the field itself was never cleared on close, only the active filter was.
+            val previousQuery = binding.searchView.query?.toString().orEmpty()
+            if (previousQuery.isNotEmpty()) {
+                viewModel.setSearchQuery(previousQuery)
+            }
             binding.headerSearchButton.setColorFilter(resolveAccentColor())
             binding.headerSearchButton.alpha = 1.0f
         } else {
@@ -436,7 +442,9 @@ class CloudPlayFragment : Fragment() {
         binding.searchView.layoutParams = binding.searchView.layoutParams.apply {
             height = 0
         }
-        // Do NOT clear the query - keep the search filter active so the list stays filtered
+        // Drop the active filter so the full list shows again while the bar is closed, but leave
+        // the typed text in the field itself so reopening the bar restores and re-filters by it.
+        viewModel.setSearchQuery("")
         binding.searchView.clearFocus()
         // Hide keyboard
         val imm =

@@ -12,8 +12,8 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityFriendsBinding
 import kotlinx.coroutines.launch
@@ -55,7 +55,7 @@ class FriendsActivity : AppCompatActivity()
 
 		repository = FriendsRepository(prefs)
 
-		binding.friendsRecyclerView.layoutManager = LinearLayoutManager(this)
+		binding.friendsRecyclerView.layoutManager = InstantScrollLinearLayoutManager(this)
 		binding.friendsRecyclerView.adapter = adapter
 		binding.friendsRecyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
 		binding.friendsRecyclerView.setItemViewCacheSize(20)

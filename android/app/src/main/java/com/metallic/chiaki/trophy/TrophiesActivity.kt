@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.pylux.stream.R
@@ -78,7 +79,7 @@ class TrophiesActivity : AppCompatActivity()
 			binding.trophyHeaderArt.setImageResource(android.R.drawable.ic_menu_gallery)
 		}
 
-		binding.trophyRecyclerView.layoutManager = LinearLayoutManager(this)
+		binding.trophyRecyclerView.layoutManager = InstantScrollLinearLayoutManager(this)
 		binding.trophyRecyclerView.adapter = adapter
 		binding.trophyRecyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
 		binding.trophyRecyclerView.fixFocusOnFastScroll("TrophiesActivity")

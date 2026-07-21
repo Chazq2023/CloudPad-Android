@@ -33,6 +33,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import coil.load
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
@@ -325,7 +326,7 @@ class QuickSettingsPanel(
 		// focus handling has a real view to hand focus off to.
 		panel.quickSettingsRemapRecyclerView.setItemViewCacheSize(20)
 
-		panel.quickSettingsTrophiesRecyclerView.layoutManager = LinearLayoutManager(activity)
+		panel.quickSettingsTrophiesRecyclerView.layoutManager = InstantScrollLinearLayoutManager(activity)
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
 		panel.quickSettingsTrophiesRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 		panel.quickSettingsTrophiesRecyclerView.fixFocusOnFastScroll("QSTrophies") {
@@ -344,7 +345,7 @@ class QuickSettingsPanel(
 		}
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
 
-		panel.quickSettingsFriendsRecyclerView.layoutManager = LinearLayoutManager(activity)
+		panel.quickSettingsFriendsRecyclerView.layoutManager = InstantScrollLinearLayoutManager(activity)
 		panel.quickSettingsFriendsRecyclerView.adapter = friendAdapter
 		panel.quickSettingsFriendsRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 		panel.quickSettingsFriendsRecyclerView.setItemViewCacheSize(20)
