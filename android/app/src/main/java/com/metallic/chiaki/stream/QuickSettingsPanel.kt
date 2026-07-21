@@ -345,7 +345,7 @@ class QuickSettingsPanel(
 		}
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
 
-		panel.quickSettingsFriendsRecyclerView.layoutManager = LinearLayoutManager(activity)
+		panel.quickSettingsFriendsRecyclerView.layoutManager = InstantScrollLinearLayoutManager(activity)
 		panel.quickSettingsFriendsRecyclerView.adapter = friendAdapter
 		panel.quickSettingsFriendsRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 		panel.quickSettingsFriendsRecyclerView.setItemViewCacheSize(20)
