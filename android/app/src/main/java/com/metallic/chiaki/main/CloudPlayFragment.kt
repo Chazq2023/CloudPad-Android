@@ -64,6 +64,10 @@ class CloudPlayFragment : Fragment() {
     private var pendingShortcutServiceType: String? = null
     private var shortcutLaunchInProgress = false
 
+    // Set for the duration of updateGameStreamability()'s synchronous LiveData re-emit, so the
+    // games.observe auto-focus logic can tell that re-emit apart from a genuine catalog reload.
+    private var isConfirmingStreamability = false
+
     // Cloud sub-tabs now in secondary header (binding.cloudSubHeader)
     // Sort state: 0 = Default, 1 = A->Z, 2 = Z->A
     private var sortState: Int = 0
@@ -402,9 +406,24 @@ class CloudPlayFragment : Fragment() {
     }
 
     fun toggleSearch() {
-        isSearchExpanded = !isSearchExpanded
-
         if (isSearchExpanded) {
+            // collapseSearchBar() calls viewModel.setSearchQuery(""), which synchronously
+            // re-emits the games list through the same observer that skips its auto-focus-to-top
+            // logic while isSearchExpanded is true. Flip the flag AFTER collapsing (not before,
+            // as this used to), so that guard is still in effect for this specific re-emit —
+            // otherwise closing the search bar silently scrolled the grid back to the top and
+            // dropped whatever tile/scroll position the user was at.
+            collapseSearchBar()
+            isSearchExpanded = false
+            binding.headerSearchButton.setColorFilter(
+                resources.getColor(
+                    android.R.color.white,
+                    null
+                )
+            )
+            binding.headerSearchButton.alpha = 0.45f
+        } else {
+            isSearchExpanded = true
             binding.searchView.visibility = android.view.View.VISIBLE
             binding.searchView.layoutParams = binding.searchView.layoutParams.apply {
                 height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -423,15 +442,6 @@ class CloudPlayFragment : Fragment() {
             }
             binding.headerSearchButton.setColorFilter(resolveAccentColor())
             binding.headerSearchButton.alpha = 1.0f
-        } else {
-            collapseSearchBar()
-            binding.headerSearchButton.setColorFilter(
-                resources.getColor(
-                    android.R.color.white,
-                    null
-                )
-            )
-            binding.headerSearchButton.alpha = 0.45f
         }
     }
 
@@ -1075,6 +1085,19 @@ class CloudPlayFragment : Fragment() {
                 return true
             }
         })
+
+        // AppCompat's default close-button behavior clears the text but then requests focus and
+        // force-shows the keyboard. Override it so clearing the text doesn't also open the
+        // keyboard — that should only happen when the user taps into the field themselves.
+        binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
+            ?.setOnClickListener {
+                binding.searchView.setQuery("", false)
+                binding.searchView.clearFocus()
+                val imm = requireContext().getSystemService(
+                    android.content.Context.INPUT_METHOD_SERVICE
+                ) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+            }
     }
 
     private fun observeViewModel() {
@@ -1144,7 +1167,13 @@ class CloudPlayFragment : Fragment() {
                 binding.headerSortButton, binding.headerSearchButton, binding.headerRefreshButton
             )
             val headerHasFocus = activity?.currentFocus?.let { it in headerButtons } ?: false
-            if (sortedGames.isNotEmpty() && !isSearchExpanded && !headerHasFocus && pendingShortcutProductId == null) {
+            // Also skip while updateGameStreamability() is confirming a PS5 Library launch's
+            // real streamable/non-streamable outcome — that call re-emits this same LiveData
+            // (so the streamability filter can react immediately) while the clicked tile is
+            // still focused and the allocation dialog is up. Without this check the grid would
+            // silently scroll/focus back to the first tile in the background, so returning from
+            // the stream landed on the top of the list instead of the tile that was launched.
+            if (sortedGames.isNotEmpty() && !isSearchExpanded && !headerHasFocus && !isConfirmingStreamability && pendingShortcutProductId == null) {
                 focusFirstGame()
             }
         })
@@ -1621,7 +1650,12 @@ class CloudPlayFragment : Fragment() {
         // through the same games.observe pipeline that applies the streamability filter —
         // a game confirmed streamable/non-streamable immediately leaves "Not Verified" and
         // shows up under "Streamable"/"Non-streamable" if that filter is currently active.
+        // isConfirmingStreamability brackets the call because that re-emit is synchronous
+        // (LiveData.setValue on the main thread), so games.observe's auto-focus check can
+        // see the flag and skip re-focusing the grid for this specific re-emit.
+        isConfirmingStreamability = true
         viewModel.updateGameStreamableStatus(game.productId, newStatus)
+        isConfirmingStreamability = false
     }
 
     /**

@@ -120,15 +120,10 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Sort selection highlight in the game library now uses the app's selected theme colour instead of always showing blue.
-            - Search bar no longer auto-closes when scrolling the game tiles list — it now stays open until you tap the search icon again.
-            - Search icon now highlights in the theme colour while the search bar is open, and returns to normal when closed.
-            - Tapping the search icon no longer pops open the keyboard or puts focus in the search field automatically — both only happen once you tap into the search field yourself.
-            - D-pad scrolling in the Trophies screen and the Quick Settings Trophies tab no longer overshoots on fast presses, matching the instant-scroll behaviour already used on the game tiles grid.
-            - Same instant-scroll fix applied to the Friends list and the Quick Settings Friends tab.
-            - Fixed D-pad up/down on the Friends list drifting between the friend tile and the compare-trophies icon while scrolling — navigation now stays locked to whichever column you started on.
-            - Closing the search bar now clears the text filter (full game list shows again), but keeps what you typed so reopening it restores and re-applies the same search.
-            - Fixed a rare hang on "Finalise log in" where the spinner could spin forever — the PSN login requests never had a timeout set, so a slow/dropped connection would block indefinitely. Now they time out after 10s and retry automatically before failing.
+            - Fixed the search bar's clear ("X") button also popping open the keyboard — clearing the text no longer grabs focus; the keyboard now only opens when you tap into the search field yourself.
+            - Fixed the Game Library silently losing its on-disk cache after a PSN store-locale change, causing it to fetch over the network every time instead of loading instantly from cache.
+            - Fixed returning from a PS5 Library stream landing on the top of the list instead of the game tile you actually launched — matches the behaviour already working correctly for the PS3/PS4 Catalog.
+            - Fixed opening and then closing the search bar silently scrolling the game grid back to the top — closing it now leaves you exactly where you were, whether you got there by touch or D-pad, on all three tabs.
 
             ### APK
             Attached release asset:

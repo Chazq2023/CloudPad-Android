@@ -219,6 +219,41 @@ class CloudGameRepositoryTest {
         repository.clearCache()
     }
 
+    // --- invalidateCatalogCache ---
+
+    @Test
+    fun `invalidateCatalogCache removes previously cached files`() = runTest {
+        writeCacheFile("psnow_catalog.json", PSNOW_CACHE_GAME_JSON)
+        writeCacheFile("pscloud_owned.json", OWNED_PS5_CACHE_JSON)
+
+        CloudGameRepository.invalidateCatalogCache(context, "test")
+
+        val cacheDir = File(tempDir, "cloud_catalog_cache")
+        assertEquals(0, cacheDir.listFiles()?.size ?: 0)
+    }
+
+    @Test
+    fun `invalidateCatalogCache keeps the directory itself so a repository's cached path can still be written to`() = runTest {
+        // Trigger the repository's lazy cacheDir (mkdirs) via a normal cache hit, same as
+        // a real repository instance would before ever seeing an invalidation.
+        writeCacheFile("psnow_catalog.json", PSNOW_CACHE_GAME_JSON)
+        repository.fetchPsnowCatalog("", forceRefresh = false)
+
+        CloudGameRepository.invalidateCatalogCache(context, "test")
+
+        // Regression guard: invalidateCatalogCache used to delete the cache directory entry
+        // itself (deleteRecursively), so a repository instance's memoized cacheDir property —
+        // which only runs mkdirs() once, on first access — was left pointing at a removed
+        // directory. Every write for the rest of that instance's lifetime then failed silently
+        // with ENOENT, permanently disabling caching until the process restarted.
+        val cacheDir = File(tempDir, "cloud_catalog_cache")
+        assertTrue("Cache directory itself must survive invalidation", cacheDir.exists())
+
+        val probeFile = File(cacheDir, "psnow_catalog.json")
+        probeFile.writeText(PSNOW_CACHE_GAME_JSON)
+        assertTrue("Writing into the cache dir after invalidation must succeed", probeFile.exists())
+    }
+
     // --- Helpers ---
 
     private fun writeCacheFile(filename: String, json: String, ageMs: Long = 0): File {
