@@ -148,7 +148,6 @@ class CloudPlayFragment : Fragment() {
         setupCloudTabs()
         setupSearchView()
         setupSettingsFab()
-        setupScrollListener()
         setupLoginButton()
 
         // Check login status BEFORE observing ViewModel to prevent cached games from showing.
@@ -410,24 +409,14 @@ class CloudPlayFragment : Fragment() {
             binding.searchView.layoutParams = binding.searchView.layoutParams.apply {
                 height = android.view.ViewGroup.LayoutParams.WRAP_CONTENT
             }
-            // Focus the inner EditText directly so TV DPad can reach it
+            // Focus the inner EditText directly so TV DPad can reach it, but don't show the
+            // keyboard yet — it should only appear once the user taps into the field.
             val queryEditText =
                 binding.searchView.findViewById<android.view.View>(androidx.appcompat.R.id.search_src_text)
                     ?: binding.searchView
             queryEditText.isFocusableInTouchMode = true
             queryEditText.requestFocus()
-            val imm =
-                requireContext().getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-            imm.showSoftInput(
-                queryEditText,
-                android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT
-            )
-            binding.headerSearchButton.setColorFilter(
-                resources.getColor(
-                    android.R.color.white,
-                    null
-                )
-            )
+            binding.headerSearchButton.setColorFilter(resolveAccentColor())
             binding.headerSearchButton.alpha = 1.0f
         } else {
             collapseSearchBar()
@@ -439,25 +428,6 @@ class CloudPlayFragment : Fragment() {
             )
             binding.headerSearchButton.alpha = 0.45f
         }
-    }
-
-    private fun setupScrollListener() {
-        // Hide search bar when scrolling
-        binding.gamesRecyclerView.addOnScrollListener(object :
-            androidx.recyclerview.widget.RecyclerView.OnScrollListener() {
-            override fun onScrolled(
-                recyclerView: androidx.recyclerview.widget.RecyclerView,
-                dx: Int,
-                dy: Int
-            ) {
-                super.onScrolled(recyclerView, dx, dy)
-                if (dy > 0 && isSearchExpanded) {
-                    // Scrolling down - collapse search
-                    isSearchExpanded = false
-                    collapseSearchBar()
-                }
-            }
-        })
     }
 
     private var isSearchExpanded = false

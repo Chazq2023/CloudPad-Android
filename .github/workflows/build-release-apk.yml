@@ -120,7 +120,10 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - No app changes in this release — it's a test of the restored release signing only. If it installs as an update over your existing app (no uninstall needed), signing is confirmed fixed for future releases. If it doesn't, you'll need to uninstall and reinstall this one time; every release after this point should then update normally.
+            - Sort selection highlight in the game library now uses the app's selected theme colour instead of always showing blue.
+            - Search bar no longer auto-closes when scrolling the game tiles list — it now stays open until you tap the search icon again.
+            - Search icon now highlights in the theme colour while the search bar is open, and returns to normal when closed.
+            - Tapping the search icon no longer pops open the keyboard automatically — it only appears once you tap into the search field itself.
 
             ### APK
             Attached release asset:
