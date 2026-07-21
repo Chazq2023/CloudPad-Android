@@ -159,6 +159,7 @@
     <style name="AppTheme.AlertDialog" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="colorPrimary">@color/accent</item>
+        <item name="colorControlActivated">?attr/pyluxAccent</item>
         <item name="materialButtonStyle">@style/AppTheme.AlertDialog.Button</item>
     </style>
 
@@ -175,21 +176,25 @@
     <style name="AppTheme.AlertDialog.Blue" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="colorPrimary">@color/accent_blue</item>
+        <item name="colorControlActivated">?attr/pyluxAccent</item>
     </style>
 
     <style name="AppTheme.AlertDialog.Green" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="colorPrimary">@color/accent_green</item>
+        <item name="colorControlActivated">?attr/pyluxAccent</item>
     </style>
 
     <style name="AppTheme.AlertDialog.Yellow" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="colorPrimary">@color/accent_yellow</item>
+        <item name="colorControlActivated">?attr/pyluxAccent</item>
     </style>
 
     <style name="AppTheme.AlertDialog.Orange" parent="Theme.MaterialComponents.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="colorPrimary">@color/accent_orange</item>
+        <item name="colorControlActivated">?attr/pyluxAccent</item>
     </style>
 
     <style name="MageTheme" parent="Theme.MaterialComponents.NoActionBar">
