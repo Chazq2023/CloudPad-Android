@@ -1075,6 +1075,19 @@ class CloudPlayFragment : Fragment() {
                 return true
             }
         })
+
+        // AppCompat's default close-button behavior clears the text but then requests focus and
+        // force-shows the keyboard. Override it so clearing the text doesn't also open the
+        // keyboard — that should only happen when the user taps into the field themselves.
+        binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
+            ?.setOnClickListener {
+                binding.searchView.setQuery("", false)
+                binding.searchView.clearFocus()
+                val imm = requireContext().getSystemService(
+                    android.content.Context.INPUT_METHOD_SERVICE
+                ) as android.view.inputmethod.InputMethodManager
+                imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+            }
     }
 
     private fun observeViewModel() {

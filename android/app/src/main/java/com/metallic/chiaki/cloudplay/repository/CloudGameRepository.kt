@@ -33,7 +33,11 @@ class CloudGameRepository(
 			try
 			{
 				val dir = File(context.cacheDir, CACHE_DIR)
-				if (dir.exists()) dir.deleteRecursively()
+				// Delete only the cached files, not the directory itself — a repository instance's
+				// `cacheDir` property creates the directory once (lazily) and never recreates it, so
+				// removing the directory entry here would leave every later write failing silently
+				// with ENOENT for the rest of that instance's lifetime.
+				dir.listFiles()?.forEach { it.delete() }
 				Log.i(TAG, "Catalog cache invalidated" + if (reason.isNotEmpty()) " ($reason)" else "")
 			}
 			catch (e: Exception)
