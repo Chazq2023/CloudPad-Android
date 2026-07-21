@@ -64,6 +64,10 @@ class CloudPlayFragment : Fragment() {
     private var pendingShortcutServiceType: String? = null
     private var shortcutLaunchInProgress = false
 
+    // Set for the duration of updateGameStreamability()'s synchronous LiveData re-emit, so the
+    // games.observe auto-focus logic can tell that re-emit apart from a genuine catalog reload.
+    private var isConfirmingStreamability = false
+
     // Cloud sub-tabs now in secondary header (binding.cloudSubHeader)
     // Sort state: 0 = Default, 1 = A->Z, 2 = Z->A
     private var sortState: Int = 0
@@ -1157,7 +1161,13 @@ class CloudPlayFragment : Fragment() {
                 binding.headerSortButton, binding.headerSearchButton, binding.headerRefreshButton
             )
             val headerHasFocus = activity?.currentFocus?.let { it in headerButtons } ?: false
-            if (sortedGames.isNotEmpty() && !isSearchExpanded && !headerHasFocus && pendingShortcutProductId == null) {
+            // Also skip while updateGameStreamability() is confirming a PS5 Library launch's
+            // real streamable/non-streamable outcome — that call re-emits this same LiveData
+            // (so the streamability filter can react immediately) while the clicked tile is
+            // still focused and the allocation dialog is up. Without this check the grid would
+            // silently scroll/focus back to the first tile in the background, so returning from
+            // the stream landed on the top of the list instead of the tile that was launched.
+            if (sortedGames.isNotEmpty() && !isSearchExpanded && !headerHasFocus && !isConfirmingStreamability && pendingShortcutProductId == null) {
                 focusFirstGame()
             }
         })
@@ -1634,7 +1644,12 @@ class CloudPlayFragment : Fragment() {
         // through the same games.observe pipeline that applies the streamability filter —
         // a game confirmed streamable/non-streamable immediately leaves "Not Verified" and
         // shows up under "Streamable"/"Non-streamable" if that filter is currently active.
+        // isConfirmingStreamability brackets the call because that re-emit is synchronous
+        // (LiveData.setValue on the main thread), so games.observe's auto-focus check can
+        // see the flag and skip re-focusing the grid for this specific re-emit.
+        isConfirmingStreamability = true
         viewModel.updateGameStreamableStatus(game.productId, newStatus)
+        isConfirmingStreamability = false
     }
 
     /**

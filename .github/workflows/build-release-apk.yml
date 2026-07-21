@@ -122,6 +122,7 @@ jobs:
             ### Updates
             - Fixed the search bar's clear ("X") button also popping open the keyboard — clearing the text no longer grabs focus; the keyboard now only opens when you tap into the search field yourself.
             - Fixed the Game Library silently losing its on-disk cache after a PSN store-locale change, causing it to fetch over the network every time instead of loading instantly from cache.
+            - Fixed returning from a PS5 Library stream landing on the top of the list instead of the game tile you actually launched — matches the behaviour already working correctly for the PS3/PS4 Catalog.
 
             ### APK
             Attached release asset:
