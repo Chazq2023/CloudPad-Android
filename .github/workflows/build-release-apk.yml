@@ -121,6 +121,8 @@ jobs:
 
             ### Updates
             - Added full controller D-pad navigation to and from the back button on the Trophies, Friends, Friends Message, Trophy Comparison, Settings, and Controller Layout screens — previously only reachable by touch.
+            - Fixed D-pad down from the refresh button on Friends, Friends Message, and Trophy Comparison doing nothing — now behaves the same as navigating down from the back button.
+            - Fixed the Quick Menu's Friends tab highlighting the wrong control (a friend's trophy-compare icon instead of their tile) when navigating down from the refresh button.
             - Centred the header title on those same screens — it previously sat close against the back button.
             - Reworked message history scrolling in the Friends Message screen and in-stream Quick Menu: select the conversation with the D-pad, press Cross/A (or tap) to enter it, then up/down scrolls the chat; press Circle/B to exit back to normal navigation.
             - Fixed D-pad down past the message history landing on the send button instead of the message input field.

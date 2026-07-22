@@ -76,9 +76,7 @@ class TrophyCompareActivity : AppCompatActivity()
 
 		setSupportActionBar(binding.toolbar)
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
-		binding.backButton.redirectDpadDownTo {
-			(binding.trophyCompareRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
-		}
+		binding.backButton.redirectDpadDownTo { firstComparisonRow() }
 
 		accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID) ?: ""
 		onlineId = intent.getStringExtra(EXTRA_ONLINE_ID) ?: ""
@@ -137,10 +135,21 @@ class TrophyCompareActivity : AppCompatActivity()
 		binding.trophyCompareEmptyStateText.visibility = View.VISIBLE
 	}
 
+	/** First row of [binding.trophyCompareRecyclerView], the shared D-pad-down target for both
+	 *  backButton and the toolbar's refresh action — see redirectDpadDownTo's doc comment for why
+	 *  this needs to be explicit rather than left to the platform's own focus search. */
+	private fun firstComparisonRow() =
+		(binding.trophyCompareRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
+
 	override fun onCreateOptionsMenu(menu: Menu): Boolean
 	{
 		menuInflater.inflate(R.menu.menu_trophy_compare, menu)
 		menu.findItem(R.id.action_refresh_trophy_compare)?.icon?.mutate()?.setTint(Color.WHITE)
+		// Same D-pad-down gap as backButton — this view isn't created until the toolbar lays out
+		// the inflated menu, so grabbing it has to wait a frame past inflate() returning.
+		binding.toolbar.post {
+			binding.toolbar.findViewById<View>(R.id.action_refresh_trophy_compare)?.redirectDpadDownTo { firstComparisonRow() }
+		}
 		return true
 	}
 

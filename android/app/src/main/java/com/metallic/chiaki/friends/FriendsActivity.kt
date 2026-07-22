@@ -58,9 +58,7 @@ class FriendsActivity : AppCompatActivity()
 
 		setSupportActionBar(binding.toolbar)
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
-		binding.backButton.redirectDpadDownTo {
-			(binding.friendsRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
-		}
+		binding.backButton.redirectDpadDownTo { firstFriendRow() }
 
 		repository = FriendsRepository(prefs)
 
@@ -117,12 +115,23 @@ class FriendsActivity : AppCompatActivity()
 		binding.friendsEmptyStateText.visibility = View.VISIBLE
 	}
 
+	/** First row of [binding.friendsRecyclerView], the shared D-pad-down target for both
+	 *  backButton and the toolbar's refresh action — see redirectDpadDownTo's doc comment for why
+	 *  this needs to be explicit rather than left to the platform's own focus search. */
+	private fun firstFriendRow() =
+		(binding.friendsRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
+
 	override fun onCreateOptionsMenu(menu: Menu): Boolean
 	{
 		menuInflater.inflate(R.menu.menu_friends, menu)
 		// The toolbar's default menu-icon tint doesn't pick up ic_refresh's own hardcoded fill
 		// colour, rendering it dark against this dark toolbar — force white explicitly.
 		menu.findItem(R.id.action_refresh_friends)?.icon?.mutate()?.setTint(android.graphics.Color.WHITE)
+		// Same D-pad-down gap as backButton — this view isn't created until the toolbar lays out
+		// the inflated menu, so grabbing it has to wait a frame past inflate() returning.
+		binding.toolbar.post {
+			binding.toolbar.findViewById<View>(R.id.action_refresh_friends)?.redirectDpadDownTo { firstFriendRow() }
+		}
 		return true
 	}
 

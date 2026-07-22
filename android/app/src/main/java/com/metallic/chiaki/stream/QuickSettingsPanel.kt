@@ -37,6 +37,7 @@ import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.metallic.chiaki.friends.ChatMessage
 import com.metallic.chiaki.friends.ChatMessageAdapter
 import com.metallic.chiaki.friends.ConversationResult
@@ -363,6 +364,13 @@ class QuickSettingsPanel(
 		panel.quickSettingsFriendsRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 		panel.quickSettingsFriendsRecyclerView.setItemViewCacheSize(20)
 		panel.quickSettingsFriendsRefreshButton.setOnClickListener { loadFriends(forceRefresh = true) }
+		// Default focus search from the refresh button prefers the first row's compare-trophies
+		// icon over its (much wider) friend tile — same class of bug as chatRecyclerView's own
+		// DOWN redirect to chatMessageInput over chatSendButton — so this needs to be explicit
+		// rather than left to the platform's own search.
+		panel.quickSettingsFriendsRefreshButton.redirectDpadDownTo {
+			(panel.quickSettingsFriendsRecyclerView.findViewHolderForAdapterPosition(0) as? FriendAdapter.FriendViewHolder)?.contentView
+		}
 
 		panel.quickSettingsFriendChatRecyclerView.layoutManager = LinearLayoutManager(activity).apply { stackFromEnd = true }
 		panel.quickSettingsFriendChatRecyclerView.adapter = chatMessageAdapter
