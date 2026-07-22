@@ -20,7 +20,16 @@ import com.pylux.stream.databinding.ItemFriendBinding
  *  Friends tab so both present an identical friends list from the same fetched data. */
 class FriendAdapter(
 	private val onFriendClick: (Friend) -> Unit,
-	private val onCompareTrophiesClick: (Friend) -> Unit
+	private val onCompareTrophiesClick: (Friend) -> Unit,
+	/** Only supplied by [FriendsActivity] — its toolbar back button is otherwise unreachable by
+	 *  D-pad from the first row, since RecyclerView.focusSearch() contains arrow-key search to its
+	 *  own subtree rather than escaping to a sibling control outside the list (see
+	 *  [com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary] for the general case this is
+	 *  a hand-rolled variant of — moveFocusVertically below already has its own column-locked
+	 *  redirect logic, so the boundary check is folded in here instead of reusing that helper).
+	 *  Left null for [com.metallic.chiaki.stream.QuickSettingsPanel]'s Friends tab, which has no
+	 *  such button to escape to. */
+	private val onTopBoundary: (() -> Unit)? = null
 ) : RecyclerView.Adapter<FriendAdapter.FriendViewHolder>()
 {
 	companion object
@@ -103,7 +112,19 @@ class FriendAdapter(
 			val pos = holder.bindingAdapterPosition
 			if (pos == RecyclerView.NO_POSITION) return false
 			val targetPos = pos + direction
-			if (targetPos < 0 || targetPos >= items.size) return false
+			if (targetPos < 0)
+			{
+				// Top row, pressed up — nothing left within the list to move to. Redirect to the
+				// screen's back button if one was supplied (expected to flip
+				// isFocusableInTouchMode = true before requestFocus() — see
+				// redirectDpadUpAtListBoundary's doc comment for why requestFocus() alone silently
+				// fails here), otherwise fall through to default handling (unchanged from before
+				// this existed).
+				val boundary = onTopBoundary ?: return false
+				boundary()
+				return true
+			}
+			if (targetPos >= items.size) return false
 
 			val existing = recyclerView.findViewHolderForAdapterPosition(targetPos) as? FriendViewHolder
 			if (existing != null)

@@ -12,8 +12,10 @@ import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityFriendsBinding
 import kotlinx.coroutines.launch
@@ -34,7 +36,11 @@ class FriendsActivity : AppCompatActivity()
 	private lateinit var repository: FriendsRepository
 	private val adapter = FriendAdapter(
 		onFriendClick = { friend -> FriendChatActivity.start(this, friend) },
-		onCompareTrophiesClick = { friend -> TrophyCompareActivity.start(this, friend) }
+		onCompareTrophiesClick = { friend -> TrophyCompareActivity.start(this, friend) },
+		onTopBoundary = {
+			binding.backButton.isFocusableInTouchMode = true
+			binding.backButton.requestFocus()
+		}
 	)
 
 	override fun onCreate(savedInstanceState: Bundle?)
@@ -51,7 +57,10 @@ class FriendsActivity : AppCompatActivity()
 		window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
 
 		setSupportActionBar(binding.toolbar)
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+		binding.backButton.redirectDpadDownTo {
+			(binding.friendsRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
+		}
 
 		repository = FriendsRepository(prefs)
 
@@ -119,19 +128,22 @@ class FriendsActivity : AppCompatActivity()
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId)
 	{
-		android.R.id.home -> { finish(); true }
 		R.id.action_refresh_friends -> { loadFriends(forceRefresh = true); true }
 		else -> super.onOptionsItemSelected(item)
 	}
 
 	/** Triangle/Y as a controller shortcut for the refresh button — same convention MainActivity
-	 *  already uses for CloudPlayFragment's own refresh. */
+	 *  already uses for CloudPlayFragment's own refresh. Circle/B mirrors the back button, the
+	 *  same equivalence QuickSettingsPanel already treats KEYCODE_BACK/KEYCODE_BUTTON_B as. */
 	override fun dispatchKeyEvent(event: KeyEvent): Boolean
 	{
-		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_Y)
+		if (event.action == KeyEvent.ACTION_DOWN)
 		{
-			loadFriends(forceRefresh = true)
-			return true
+			when (event.keyCode)
+			{
+				KeyEvent.KEYCODE_BUTTON_Y -> { loadFriends(forceRefresh = true); return true }
+				KeyEvent.KEYCODE_BUTTON_B -> { onBackPressedDispatcher.onBackPressed(); return true }
+			}
 		}
 		return super.dispatchKeyEvent(event)
 	}

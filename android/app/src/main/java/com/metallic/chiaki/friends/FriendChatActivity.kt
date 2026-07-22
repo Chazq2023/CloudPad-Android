@@ -14,6 +14,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityFriendChatBinding
 import kotlinx.coroutines.launch
@@ -39,6 +40,12 @@ class FriendChatActivity : AppCompatActivity()
 	private val adapter = ChatMessageAdapter()
 	private var groupId: String? = null
 
+	/** True once the user has actively entered the message history for D-pad scrolling (via
+	 *  A/Cross or a tap while it's merely D-pad-highlighted) — see chatRecyclerView's key/click
+	 *  listeners below. False just means it's a normal focus target like any other control:
+	 *  up/down move focus elsewhere as usual, and B closes the screen like everywhere else. */
+	private var chatHistoryEntered = false
+
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
 		val prefs = Preferences(this)
@@ -49,7 +56,11 @@ class FriendChatActivity : AppCompatActivity()
 		setContentView(binding.root)
 
 		setSupportActionBar(binding.toolbar)
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+		binding.backButton.redirectDpadDownTo {
+			binding.chatRecyclerView.isFocusableInTouchMode = true
+			binding.chatRecyclerView
+		}
 
 		val accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID) ?: ""
 		val onlineId = intent.getStringExtra(EXTRA_ONLINE_ID) ?: ""
@@ -62,6 +73,48 @@ class FriendChatActivity : AppCompatActivity()
 		layoutManager.stackFromEnd = true
 		binding.chatRecyclerView.layoutManager = layoutManager
 		binding.chatRecyclerView.adapter = adapter
+
+		// D-pad/controller selecting the message history only highlights it, same as any other
+		// focusable control — up/down move focus elsewhere as normal until the user explicitly
+		// enters it (A/Cross, handled in dispatchKeyEvent below, or a tap, here) at which point
+		// up/down scroll the chat log instead (messages aren't individually focusable rows — this
+		// is a scrollable pane). B exits back to the same "just highlighted" state, after which
+		// up/down resume normal navigation to the input row.
+		binding.chatRecyclerView.setOnClickListener { chatHistoryEntered = true }
+		val chatScrollStepPx = (160f * resources.displayMetrics.density).toInt()
+		binding.chatRecyclerView.setOnKeyListener { v, keyCode, event ->
+			if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+			if (!chatHistoryEntered)
+			{
+				// Just D-pad-highlighted, not entered — up/down should move focus elsewhere as
+				// normal. DPAD_UP needs an explicit redirect to the back button since
+				// RecyclerView.focusSearch() contains arrow-key search to its own subtree rather
+				// than escaping to a sibling control outside it (see
+				// redirectDpadUpAtListBoundary's doc comment for the general case; this is a
+				// hand-rolled variant since the container itself, not a row, holds focus here).
+				if (keyCode == KeyEvent.KEYCODE_DPAD_UP)
+				{
+					val next = v.focusSearch(View.FOCUS_UP)
+					if (next == null || next == v)
+					{
+						// isFocusableInTouchMode flip needed — confirmed on-device that
+						// requestFocus() alone silently fails here (still in touch mode at this
+						// point), same as redirectDpadUpAtListBoundary's doc comment.
+						binding.backButton.isFocusableInTouchMode = true
+						binding.backButton.requestFocus()
+						return@setOnKeyListener true
+					}
+				}
+				return@setOnKeyListener false
+			}
+			when (keyCode)
+			{
+				KeyEvent.KEYCODE_DPAD_UP -> { binding.chatRecyclerView.smoothScrollBy(0, -chatScrollStepPx); true }
+				KeyEvent.KEYCODE_DPAD_DOWN -> { binding.chatRecyclerView.smoothScrollBy(0, chatScrollStepPx); true }
+				KeyEvent.KEYCODE_BUTTON_B -> { chatHistoryEntered = false; true }
+				else -> false
+			}
+		}
 
 		binding.chatSendButton.setOnClickListener { sendCurrentMessage() }
 
@@ -149,7 +202,6 @@ class FriendChatActivity : AppCompatActivity()
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId)
 	{
-		android.R.id.home -> { finish(); true }
 		R.id.action_refresh_chat -> { refreshConversation(); true }
 		else -> super.onOptionsItemSelected(item)
 	}
@@ -174,7 +226,13 @@ class FriendChatActivity : AppCompatActivity()
 	}
 
 	/** Triangle/Y as a controller shortcut for the refresh button — same convention MainActivity
-	 *  already uses for CloudPlayFragment's own refresh. */
+	 *  already uses for CloudPlayFragment's own refresh. BUTTON_A (Cross) isn't one of Android's
+	 *  built-in "confirm" keycodes (only DPAD_CENTER/ENTER are — same gap QuickSettingsPanel's own
+	 *  key handling documents), so entering chat-scroll mode needs it translated by hand here,
+	 *  same as a tap would via chatRecyclerView's click listener above. Circle/B mirrors the back
+	 *  button, but only once the view hierarchy itself hasn't already consumed it —
+	 *  chatRecyclerView's own key listener needs first refusal so B exits chat-scroll-focus
+	 *  instead of closing this whole screen while the message history is entered. */
 	override fun dispatchKeyEvent(event: KeyEvent): Boolean
 	{
 		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_Y)
@@ -182,6 +240,18 @@ class FriendChatActivity : AppCompatActivity()
 			refreshConversation()
 			return true
 		}
-		return super.dispatchKeyEvent(event)
+		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_A &&
+			!chatHistoryEntered && binding.chatRecyclerView.hasFocus())
+		{
+			chatHistoryEntered = true
+			return true
+		}
+		if (super.dispatchKeyEvent(event)) return true
+		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_B)
+		{
+			onBackPressedDispatcher.onBackPressed()
+			return true
+		}
+		return false
 	}
 }

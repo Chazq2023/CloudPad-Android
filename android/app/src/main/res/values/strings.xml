@@ -9,6 +9,7 @@
     <string name="action_retry">Retry</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_back">Back</string>
 
     <string name="controller_remap_title">Controller Layout</string>
     <string name="controller_remap_preference_title">Remap Controller</string>

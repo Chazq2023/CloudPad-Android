@@ -4,6 +4,7 @@ package com.metallic.chiaki.settings
 
 import android.content.res.Resources
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
@@ -30,6 +31,7 @@ class SettingsActivity: AppCompatActivity(), PreferenceFragmentCompat.OnPreferen
 		setContentView(binding.root)
 		title = ""
 		setSupportActionBar(binding.toolbar)
+		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
 		val rootFragment = SettingsFragment()
 		replaceFragment(rootFragment, false)
@@ -38,6 +40,20 @@ class SettingsActivity: AppCompatActivity(), PreferenceFragmentCompat.OnPreferen
 			binding.titleTextView.text = titleFragment.getTitle(resources)
 		}
 		binding.titleTextView.text = rootFragment.getTitle(resources)
+	}
+
+	/** Circle/B as a controller shortcut for the back button — same equivalence QuickSettingsPanel
+	 *  already treats KEYCODE_BACK/KEYCODE_BUTTON_B as. onBackPressedDispatcher (rather than a
+	 *  plain finish()) correctly pops back to the root preference screen first if a sub-screen
+	 *  like Registered Hosts is open, matching what the hardware back key already does here. */
+	override fun dispatchKeyEvent(event: KeyEvent): Boolean
+	{
+		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_B)
+		{
+			onBackPressedDispatcher.onBackPressed()
+			return true
+		}
+		return super.dispatchKeyEvent(event)
 	}
 
 	override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference) = when(pref.fragment)

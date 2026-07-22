@@ -120,7 +120,9 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed the favourites toggle icon in the games library header showing a hardcoded yellow color when active instead of matching the app's theme color.
+            - Added full controller D-pad navigation to and from the back button on the Trophies, Friends, Friends Message, and Trophy Comparison screens — previously only reachable by touch.
+            - Reworked message history scrolling in the Friends Message screen and in-stream Quick Menu: select the conversation with the D-pad, press Cross/A (or tap) to enter it, then up/down scrolls the chat; press Circle/B to exit back to normal navigation.
+            - Fixed a crash opening the Friends screen.
 
             ### APK
             Attached release asset:
