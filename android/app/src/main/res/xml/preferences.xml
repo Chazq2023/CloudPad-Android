@@ -9,7 +9,7 @@
         <Preference
             app:key="app_version"
             app:title="@string/preferences_app_version_title"
-            app:selectable="false"
+            app:selectable="true"
             app:icon="@drawable/ic_log"/>
 
         <Preference
@@ -53,14 +53,14 @@
             app:key="locale_display"
             app:title="@string/preferences_locale_title"
             app:summary="@string/preferences_locale_summary_not_set"
-            app:selectable="false"
+            app:selectable="true"
             app:icon="@drawable/ic_locale"/>
 
         <Preference
             app:key="cached_locale_display"
             app:title="@string/preferences_cached_locale_title"
             app:summary="@string/preferences_cached_locale_summary_not_set"
-            app:selectable="false"
+            app:selectable="true"
             app:icon="@drawable/ic_locale"/>
 
         <Preference
@@ -247,19 +247,51 @@
         <Preference
             app:key="icon_key_streamable"
             app:title="@string/preferences_icon_key_streamable_title"
-            app:selectable="false"
+            app:selectable="true"
             app:icon="@drawable/badge_key_streamable"/>
 
         <Preference
             app:key="icon_key_not_streamable"
             app:title="@string/preferences_icon_key_not_streamable_title"
-            app:selectable="false"
+            app:selectable="true"
             app:icon="@drawable/badge_key_not_streamable"/>
 
         <Preference
             app:key="icon_key_unknown"
             app:title="@string/preferences_icon_key_unknown_title"
-            app:selectable="false"
+            app:selectable="true"
             app:icon="@drawable/badge_key_unknown"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_controller_shortcuts"
+        app:title="@string/preferences_category_title_controller_shortcuts">
+        <Preference
+            app:key="controller_shortcut_playtime"
+            app:title="@string/preferences_controller_shortcut_playtime_title"
+            app:summary="@string/preferences_controller_shortcut_playtime_summary"
+            app:selectable="true"
+            app:icon="@drawable/ic_shortcut_square"/>
+
+        <Preference
+            app:key="controller_shortcut_trophies"
+            app:title="@string/preferences_controller_shortcut_trophies_title"
+            app:summary="@string/preferences_controller_shortcut_trophies_summary"
+            app:selectable="true"
+            app:icon="@drawable/ic_shortcut_square"/>
+
+        <Preference
+            app:key="controller_shortcut_add_to_home"
+            app:title="@string/preferences_controller_shortcut_add_to_home_title"
+            app:summary="@string/preferences_controller_shortcut_add_to_home_summary"
+            app:selectable="true"
+            app:icon="@drawable/ic_shortcut_start"/>
+
+        <Preference
+            app:key="controller_shortcut_quick_menu"
+            app:title="@string/preferences_controller_shortcut_quick_menu_title"
+            app:summary="@string/preferences_controller_shortcut_quick_menu_summary"
+            app:selectable="true"
+            app:icon="@drawable/ic_shortcut_back"/>
     </PreferenceCategory>
 </PreferenceScreen>

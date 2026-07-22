@@ -238,6 +238,17 @@ class CloudGameAdapter(
                             else -> false
                         }
                     }
+                    // Start — a plain press triggers the same confirmation dialog as tapping
+                    // addToHomeButton directly (same immediate-on-ACTION_DOWN shape as MENU/
+                    // favorite above, since there's no hold/short-press distinction to make here).
+                    android.view.KeyEvent.KEYCODE_BUTTON_START -> {
+                        if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                            // repeatCount guard so holding it doesn't re-open the dialog on every
+                            // auto-repeated DOWN event.
+                            if (event.repeatCount == 0) onAddToHomeClick(game)
+                            true
+                        } else false
+                    }
                     else -> false
                 }
             }
