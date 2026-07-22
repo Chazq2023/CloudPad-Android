@@ -11,16 +11,29 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         android:theme="@style/AppTheme.Toolbar">
-        <LinearLayout
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_height="match_parent">
+
+            <androidx.appcompat.widget.AppCompatTextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:gravity="center"
+                android:paddingStart="56dp"
+                android:paddingEnd="56dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:fontFamily="sans-serif-condensed"
+                android:text="Friends"
+                android:textColor="?attr/colorOnPrimary"
+                android:textSize="20dp"/>
 
             <ImageButton
                 android:id="@+id/backButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_gravity="start|center_vertical"
                 android:padding="12dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:foreground="@drawable/bg_focus_highlight"
@@ -28,16 +41,7 @@
                 android:contentDescription="@string/action_back"
                 android:src="@drawable/ic_arrow_back"
                 android:tint="?attr/colorOnPrimary"/>
-
-            <androidx.appcompat.widget.AppCompatTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:fontFamily="sans-serif-condensed"
-                android:text="Friends"
-                android:textColor="?attr/colorOnPrimary"
-                android:textSize="20dp"/>
-        </LinearLayout>
+        </FrameLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
     <ProgressBar
