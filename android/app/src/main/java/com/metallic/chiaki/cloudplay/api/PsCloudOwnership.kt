@@ -43,8 +43,8 @@ object PsCloudOwnership
 				!ent.skuType.contains("trial", ignoreCase = true) &&
 				!ent.name.contains(Regex("\\bdemo\\b", RegexOption.IGNORE_CASE)) &&
 				!ent.name.contains(Regex("\\btrial\\b", RegexOption.IGNORE_CASE))
-			if (keep) Log.d(TAG, "filter: kept '${ent.name}' id=${ent.id} productId=${ent.productId} skuType=${ent.skuType} packageType=${ent.packageType} featureType=${ent.featureType}")
-			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} skuType=${ent.skuType} active=${ent.activeFlag}")
+			if (keep) Log.d(TAG, "filter: kept '${ent.name}' id=${ent.id} productId=${ent.productId} skuType=${ent.skuType} packageType=${ent.packageType} featureType=${ent.featureType} iconUrl=${ent.iconUrl}")
+			else Log.i(TAG, "filter: excluded '${ent.name}' id=${ent.id} productId=${ent.productId} featureType=${ent.featureType} packageType=${ent.packageType} skuType=${ent.skuType} active=${ent.activeFlag} iconUrl=${ent.iconUrl}")
 			keep
 		}
 	}
@@ -154,6 +154,7 @@ object PsCloudOwnership
 		Regex("^the\\s+art\\s+of\\s+", RegexOption.IGNORE_CASE), // "The Art of Starfield"-style artbook naming
 		Regex("soundtrack", RegexOption.IGNORE_CASE),
 		Regex("content\\s*viewer", RegexOption.IGNORE_CASE),
+		Regex("bonus\\s*content", RegexOption.IGNORE_CASE), // e.g. "METAL GEAR SOLID: MASTER COLLECTION Vol.1 BONUS CONTENT"
 	)
 
 	private fun isDigitalExtra(name: String): Boolean = DIGITAL_EXTRA_NAME_PATTERNS.any { it.containsMatchIn(name) }
@@ -197,13 +198,20 @@ object PsCloudOwnership
 		val byConceptId = buildConceptIdIndex(combined)
 
 		return ownedGames.map { game ->
-			val stable = productIdStableKey(game.productId)
-			val match = byProductId[game.productId]
-				?: byProductId[game.entitlementId]
-				?: byProductId[game.storeProductId]
-				?: stable?.let { byStableKey[it] }
-				?: game.conceptId.takeIf { it.isNotEmpty() }?.let { byConceptId[it] }
-				?: return@map game
+			val exactMatch = byProductId[game.productId] ?: byProductId[game.entitlementId]
+			val match = exactMatch ?: run {
+				// storeProductId is the entitlement's raw product_id, which Sony sometimes shares
+				// across unrelated titles bought as one bundle (e.g. San Andreas and Vice City are
+				// both entitled under the same "Grand Theft Auto: The Trilogy" bundle SKU). A hit via
+				// storeProductId/stable-key/conceptId only counts if the matched catalog title
+				// actually is this game — otherwise every bundle sibling without its own catalog
+				// listing collapses onto the bundle's cover art instead of keeping its own icon.
+				val stable = productIdStableKey(game.productId)
+				val fallback = byProductId[game.storeProductId]
+					?: stable?.let { byStableKey[it] }
+					?: game.conceptId.takeIf { it.isNotEmpty() }?.let { byConceptId[it] }
+				fallback?.takeIf { normalizeTitle(it.name) == normalizeTitle(game.name) }
+			} ?: return@map game
 
 			game.copy(
 				imageUrl = match.imageUrl.ifEmpty { game.imageUrl },

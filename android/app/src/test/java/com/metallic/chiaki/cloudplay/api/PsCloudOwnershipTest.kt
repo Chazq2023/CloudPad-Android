@@ -711,6 +711,22 @@ class PsCloudOwnershipTest {
     }
 
     @Test
+    fun `'BONUS CONTENT' naming style is excluded`() {
+        // Metal Gear Solid: Master Collection Vol.1-style: a separate entitlement literally named
+        // "... BONUS CONTENT", same PSGD/featureType=3 shape as a real game.
+        val ents = listOf(
+            entitlement(
+                id = "EP0101-PPSA16257_00-MGSBONUSCONTENTS",
+                productId = "EP0101-PPSA16257_00-MGSBONUSCONTENTS",
+                packageType = "PSGD",
+                name = "METAL GEAR SOLID: MASTER COLLECTION Vol.1 BONUS CONTENT"
+            )
+        )
+
+        assertTrue(PsCloudOwnership.buildOwnedGamesFromEntitlements(ents).isEmpty())
+    }
+
+    @Test
     fun `real PS5 game with PSGD package type is not affected by the media-app filter`() {
         val ents = listOf(
             entitlement(
@@ -803,6 +819,33 @@ class PsCloudOwnershipTest {
         val result = PsCloudOwnership.enrichWithCatalogArt(listOf(owned), listOf(catalogEntry))
 
         assertEquals("https://icon/square.png", result.first().imageUrl)
+    }
+
+    @Test
+    fun `bundle sibling without its own catalog listing keeps its own icon, not the bundle's art`() {
+        // GTA Trilogy-style: San Andreas and Vice City are both entitled under the same bundle
+        // product_id (storeProductId), but only the bundle itself has a catalog listing — San
+        // Andreas has none of its own. Falling back to storeProductId must not hand it the
+        // bundle's box art, since that would also collide with every other bundle sibling.
+        val sanAndreas = CloudGame(
+            productId = "EP1004-PPSA03525_00-GTASANANDREAS001", name = "Grand Theft Auto: San Andreas – The Definitive Edition",
+            imageUrl = "https://icon/sanandreas.png", platform = "ps5", serviceType = "pscloud", isOwned = true,
+            storeProductId = "EP1004-PPSA05805_00-GTATRILOGYBUNDLE"
+        )
+        val viceCity = CloudGame(
+            productId = "EP1004-PPSA03531_00-GTAVICECITY00001", name = "Grand Theft Auto: Vice City – The Definitive Edition",
+            imageUrl = "https://icon/vicecity.png", platform = "ps5", serviceType = "pscloud", isOwned = true,
+            storeProductId = "EP1004-PPSA05805_00-GTATRILOGYBUNDLE"
+        )
+        val bundleCatalogEntry = CloudGame(
+            productId = "EP1004-PPSA05805_00-GTATRILOGYBUNDLE", name = "Grand Theft Auto: The Trilogy – The Definitive Edition",
+            imageUrl = "https://cover/trilogy-bundle.jpg", platform = "ps5", serviceType = "pscloud"
+        )
+
+        val result = PsCloudOwnership.enrichWithCatalogArt(listOf(sanAndreas, viceCity), listOf(bundleCatalogEntry))
+
+        assertEquals("https://icon/sanandreas.png", result[0].imageUrl)
+        assertEquals("https://icon/vicecity.png", result[1].imageUrl)
     }
 
     @Test

@@ -107,9 +107,9 @@ jobs:
         run: |
           mkdir -p release
           cp android/app/build/outputs/apk/debug/app-debug.apk release/cloudpad-android.apk
-          cp android/app/src/main/assets/FrontendArt/cloudpad-hero.png release/cloudpad-hero.png
-          cp android/app/src/main/assets/FrontendArt/cloudpad-icon.png release/cloudpad-icon.png
-          cp android/app/src/main/assets/FrontendArt/cloudpad-logo.png release/cloudpad-logo.png
+          cp "frontend assets/cloudpad-hero.png" release/cloudpad-hero.png
+          cp "frontend assets/cloudpad-icon.png" release/cloudpad-icon.png
+          cp "frontend assets/cloudpad-logo.png" release/cloudpad-logo.png
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -120,10 +120,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed the search bar's clear ("X") button also popping open the keyboard — clearing the text no longer grabs focus; the keyboard now only opens when you tap into the search field yourself.
-            - Fixed the Game Library silently losing its on-disk cache after a PSN store-locale change, causing it to fetch over the network every time instead of loading instantly from cache.
-            - Fixed returning from a PS5 Library stream landing on the top of the list instead of the game tile you actually launched — matches the behaviour already working correctly for the PS3/PS4 Catalog.
-            - Fixed opening and then closing the search bar silently scrolling the game grid back to the top — closing it now leaves you exactly where you were, whether you got there by touch or D-pad, on all three tabs.
+            - Fixed bundled bonus-content entitlements (e.g. Metal Gear Solid: Master Collection Vol.1's "BONUS CONTENT") showing up in the PS5 Library as if they were their own playable game.
+            - Fixed games bought as part of a bundle (e.g. GTA: San Andreas and Vice City, both part of the GTA Trilogy bundle) sharing the bundle's cover art instead of keeping their own box art when they don't have their own individual PS Store catalog listing.
 
             ### APK
             Attached release asset:
