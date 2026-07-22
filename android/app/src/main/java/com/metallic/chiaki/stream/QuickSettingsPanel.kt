@@ -381,7 +381,21 @@ class QuickSettingsPanel(
 		panel.quickSettingsFriendChatRecyclerView.setOnClickListener { inChatScroll = true }
 		val chatScrollStepPx = (160f * activity.resources.displayMetrics.density).toInt()
 		panel.quickSettingsFriendChatRecyclerView.setOnKeyListener { _, keyCode, event ->
-			if (event.action != KeyEvent.ACTION_DOWN || !inChatScroll) return@setOnKeyListener false
+			if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+			if (!inChatScroll)
+			{
+				// Just D-pad-highlighted, not entered — DOWN needs an explicit redirect to the
+				// input field rather than relying on the platform's own focus search, which
+				// prefers quickSettingsFriendChatSendButton instead despite the input spanning
+				// most of the row's width — confirmed on-device — landing on the button first
+				// reads as skipping straight past typing.
+				if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
+				{
+					panel.quickSettingsFriendChatInput.requestFocus()
+					return@setOnKeyListener true
+				}
+				return@setOnKeyListener false
+			}
 			when (keyCode)
 			{
 				KeyEvent.KEYCODE_DPAD_UP -> { panel.quickSettingsFriendChatRecyclerView.smoothScrollBy(0, -chatScrollStepPx); true }

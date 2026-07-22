@@ -87,11 +87,14 @@ class FriendChatActivity : AppCompatActivity()
 			if (!chatHistoryEntered)
 			{
 				// Just D-pad-highlighted, not entered — up/down should move focus elsewhere as
-				// normal. DPAD_UP needs an explicit redirect to the back button since
-				// RecyclerView.focusSearch() contains arrow-key search to its own subtree rather
-				// than escaping to a sibling control outside it (see
-				// redirectDpadUpAtListBoundary's doc comment for the general case; this is a
-				// hand-rolled variant since the container itself, not a row, holds focus here).
+				// normal, but both directions need an explicit redirect rather than relying on
+				// the platform's own focus search: UP because RecyclerView.focusSearch() contains
+				// arrow-key search to its own subtree rather than escaping to a sibling control
+				// outside it (see redirectDpadUpAtListBoundary's doc comment for the general case;
+				// this is a hand-rolled variant since the container itself, not a row, holds focus
+				// here), and DOWN because default search prefers chatSendButton over
+				// chatMessageInput despite the input spanning most of the row's width — confirmed
+				// on-device — landing on the button first reads as skipping straight past typing.
 				if (keyCode == KeyEvent.KEYCODE_DPAD_UP)
 				{
 					val next = v.focusSearch(View.FOCUS_UP)
@@ -104,6 +107,11 @@ class FriendChatActivity : AppCompatActivity()
 						binding.backButton.requestFocus()
 						return@setOnKeyListener true
 					}
+				}
+				if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
+				{
+					binding.chatMessageInput.requestFocus()
+					return@setOnKeyListener true
 				}
 				return@setOnKeyListener false
 			}
