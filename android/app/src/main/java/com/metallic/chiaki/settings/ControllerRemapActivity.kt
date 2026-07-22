@@ -35,7 +35,7 @@ class ControllerRemapActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
         binding.titleTextView.text = getString(R.string.controller_remap_title)
 
         preferences = Preferences(this)
@@ -66,7 +66,6 @@ class ControllerRemapActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        android.R.id.home -> { finish(); true }
         R.id.action_reset_mapping -> { confirmReset(); true }
         else -> super.onOptionsItemSelected(item)
     }
@@ -74,7 +73,15 @@ class ControllerRemapActivity : AppCompatActivity() {
     // ---- Activity-level dispatch (handles events when no dialog is showing) ----
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (capture.isListening && capture.handleCaptureKeyEvent(event)) return true
+        if (capture.isListening) {
+            // Mid-capture, B is a candidate remap input like any other button — must not be
+            // stolen for back navigation here, unlike everywhere else in this Activity.
+            return if (capture.handleCaptureKeyEvent(event)) true else super.dispatchKeyEvent(event)
+        }
+        if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_B) {
+            onBackPressedDispatcher.onBackPressed()
+            return true
+        }
         return super.dispatchKeyEvent(event)
     }
 

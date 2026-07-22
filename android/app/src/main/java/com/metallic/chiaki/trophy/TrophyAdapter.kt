@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary
 import com.metallic.chiaki.trophy.model.Trophy
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.metallic.chiaki.trophy.model.TrophyType
@@ -122,7 +123,14 @@ fun showTrophyDetailDialog(context: Context, trophy: Trophy)
 		.show()
 }
 
-class TrophyAdapter(private val onTrophyClick: (Trophy) -> Unit = {}) : RecyclerView.Adapter<RecyclerView.ViewHolder>()
+class TrophyAdapter(
+	private val onTrophyClick: (Trophy) -> Unit = {},
+	/** Only supplied by [TrophiesActivity] — its toolbar back button is otherwise unreachable by
+	 *  D-pad past the group header sitting above the first row (see
+	 *  [com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary]). Left null for
+	 *  [QuickSettingsPanel]'s Trophies tab, which has no such button to escape to. */
+	private val onTopBoundary: (() -> Unit)? = null
+) : RecyclerView.Adapter<RecyclerView.ViewHolder>()
 {
 	companion object
 	{
@@ -153,6 +161,7 @@ class TrophyAdapter(private val onTrophyClick: (Trophy) -> Unit = {}) : Recycler
 			itemView.isFocusableInTouchMode = true
 			itemView.disableDefaultFocusHighlight()
 			itemView.setOnClickListener { items()?.let { onTrophyClick(it) } }
+			onTopBoundary?.let { boundary -> itemView.redirectDpadUpAtListBoundary(boundary) }
 
 			val tv = TypedValue()
 			itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)

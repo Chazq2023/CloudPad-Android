@@ -37,6 +37,7 @@ import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.metallic.chiaki.friends.ChatMessage
 import com.metallic.chiaki.friends.ChatMessageAdapter
 import com.metallic.chiaki.friends.ConversationResult
@@ -179,6 +180,13 @@ class QuickSettingsPanel(
 				{
 					when
 					{
+						// One level below inFriendChat: while the message history is actively
+						// entered for scrolling (see its own key/click handling below), B only
+						// exits *that* back to plain D-pad-highlighted — checked first since
+						// inFriendChat is also true at this point. If the list is merely
+						// highlighted (not entered), this falls through to the normal inFriendChat
+						// handling, same as pressing B anywhere else in the chat.
+						inChatScroll -> inChatScroll = false
 						inTrophyCompare -> backFromTrophyCompare()
 						inFriendChat -> backToFriendsList()
 						inTabContent -> exitToRailScope()
@@ -280,6 +288,12 @@ class QuickSettingsPanel(
 	 *  its friends-list sub-view — a third nesting level below inTabContent, see the panel's
 	 *  BACK/BUTTON_B key handling. */
 	private var inFriendChat = false
+	/** True once the user has actively entered the message history for D-pad scrolling (via
+	 *  BUTTON_A or a tap while it's merely D-pad-highlighted) — a fourth nesting level below
+	 *  inFriendChat, see quickSettingsFriendChatRecyclerView's own key/click handling and the
+	 *  Dialog's key listener's matching branch above. Reset whenever chat itself is entered/left
+	 *  so a fresh chat session never inherits a stale scroll-entered state. */
+	private var inChatScroll = false
 	private var currentChatGroupId: String? = null
 
 	private val trophyCompareRepository = TrophyCompareRepository(preferences, trophyRepository)
@@ -350,10 +364,53 @@ class QuickSettingsPanel(
 		panel.quickSettingsFriendsRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 		panel.quickSettingsFriendsRecyclerView.setItemViewCacheSize(20)
 		panel.quickSettingsFriendsRefreshButton.setOnClickListener { loadFriends(forceRefresh = true) }
+		// Default focus search from the refresh button prefers the first row's compare-trophies
+		// icon over its (much wider) friend tile — same class of bug as chatRecyclerView's own
+		// DOWN redirect to chatMessageInput over chatSendButton — so this needs to be explicit
+		// rather than left to the platform's own search.
+		panel.quickSettingsFriendsRefreshButton.redirectDpadDownTo {
+			(panel.quickSettingsFriendsRecyclerView.findViewHolderForAdapterPosition(0) as? FriendAdapter.FriendViewHolder)?.contentView
+		}
 
 		panel.quickSettingsFriendChatRecyclerView.layoutManager = LinearLayoutManager(activity).apply { stackFromEnd = true }
 		panel.quickSettingsFriendChatRecyclerView.adapter = chatMessageAdapter
 		panel.quickSettingsFriendChatRecyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+		// Messages themselves aren't individually focusable (a scrollable pane, not a list to
+		// navigate item by item), so with zero focusable descendants FOCUS_AFTER_DESCENDANTS above
+		// falls straight through to the RecyclerView itself once this is set — letting D-pad
+		// selection land on the message history as a whole, same as any other focusable control.
+		// Merely being highlighted there doesn't yet scroll anything: the user has to actively
+		// enter it first (BUTTON_A, handled by the Dialog's own key listener above calling
+		// performClick() on whatever's focused; or a tap, here) — inChatScroll gates that. Once
+		// entered, up/down scroll instead of moving focus; B exits back to plain highlighted
+		// (see the Dialog's key listener's matching branch), after which up/down resume normal
+		// navigation to the input row.
+		panel.quickSettingsFriendChatRecyclerView.isFocusable = true
+		panel.quickSettingsFriendChatRecyclerView.setOnClickListener { inChatScroll = true }
+		val chatScrollStepPx = (160f * activity.resources.displayMetrics.density).toInt()
+		panel.quickSettingsFriendChatRecyclerView.setOnKeyListener { _, keyCode, event ->
+			if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+			if (!inChatScroll)
+			{
+				// Just D-pad-highlighted, not entered — DOWN needs an explicit redirect to the
+				// input field rather than relying on the platform's own focus search, which
+				// prefers quickSettingsFriendChatSendButton instead despite the input spanning
+				// most of the row's width — confirmed on-device — landing on the button first
+				// reads as skipping straight past typing.
+				if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
+				{
+					panel.quickSettingsFriendChatInput.requestFocus()
+					return@setOnKeyListener true
+				}
+				return@setOnKeyListener false
+			}
+			when (keyCode)
+			{
+				KeyEvent.KEYCODE_DPAD_UP -> { panel.quickSettingsFriendChatRecyclerView.smoothScrollBy(0, -chatScrollStepPx); true }
+				KeyEvent.KEYCODE_DPAD_DOWN -> { panel.quickSettingsFriendChatRecyclerView.smoothScrollBy(0, chatScrollStepPx); true }
+				else -> false
+			}
+		}
 		panel.quickSettingsFriendChatBackButton.setOnClickListener { backToFriendsList() }
 		panel.quickSettingsFriendChatRefreshButton.setOnClickListener { refreshFriendChat() }
 		panel.quickSettingsFriendChatSendButton.setOnClickListener { sendFriendChatMessage() }
@@ -576,6 +633,8 @@ class QuickSettingsPanel(
 			panel.quickSettingsTrophyCompareBackButton, panel.quickSettingsTrophyCompareRefreshButton
 		).forEach { addFocusHighlight(it, pyluxAccentColor) }
 
+		addFocusHighlight(panel.quickSettingsFriendChatRecyclerView, pyluxAccentColor, useForeground = true)
+
 		// Start off-screen (closed).
 		panel.root.translationX = panelWidthPx
 	}
@@ -724,6 +783,7 @@ class QuickSettingsPanel(
 	private fun showFriendChat(friend: Friend)
 	{
 		inFriendChat = true
+		inChatScroll = false
 		panel.quickSettingsFriendsListGroup.visibility = View.GONE
 		panel.quickSettingsFriendsChatGroup.visibility = View.VISIBLE
 		panel.quickSettingsFriendChatTitle.text = friend.onlineId
@@ -823,6 +883,7 @@ class QuickSettingsPanel(
 	private fun backToFriendsList()
 	{
 		inFriendChat = false
+		inChatScroll = false
 		currentChatGroupId = null
 		panel.quickSettingsFriendsChatGroup.visibility = View.GONE
 		panel.quickSettingsFriendsListGroup.visibility = View.VISIBLE

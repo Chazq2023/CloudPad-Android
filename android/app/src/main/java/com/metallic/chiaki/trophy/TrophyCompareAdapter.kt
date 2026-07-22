@@ -9,12 +9,19 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemTrophyCompareGameBinding
 
 /** Shared by [com.metallic.chiaki.friends.TrophyCompareActivity] and
  *  [com.metallic.chiaki.stream.QuickSettingsPanel]'s inline Trophy Compare sub-view. */
-class TrophyCompareAdapter : RecyclerView.Adapter<TrophyCompareAdapter.GameViewHolder>()
+class TrophyCompareAdapter(
+	/** Only supplied by TrophyCompareActivity — its toolbar back button is otherwise
+	 *  unreachable by D-pad from the first row (see
+	 *  [com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary]). Left null for
+	 *  QuickSettingsPanel's inline copy, which has no such button to escape to. */
+	private val onTopBoundary: (() -> Unit)? = null
+) : RecyclerView.Adapter<TrophyCompareAdapter.GameViewHolder>()
 {
 	var items: List<SharedGameComparison> = emptyList()
 		set(value) { field = value; notifyDataSetChanged() }
@@ -29,6 +36,7 @@ class TrophyCompareAdapter : RecyclerView.Adapter<TrophyCompareAdapter.GameViewH
 		binding.root.isFocusable = true
 		binding.root.isFocusableInTouchMode = true
 		binding.root.disableDefaultFocusHighlight()
+		onTopBoundary?.let { boundary -> binding.root.redirectDpadUpAtListBoundary(boundary) }
 
 		val accent = resolvePyluxAccent(binding.root.context)
 		binding.root.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->

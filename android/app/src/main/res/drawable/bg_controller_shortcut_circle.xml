@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared circular backdrop for the Controller Shortcuts preference icons — theme-coloured so
+     it tracks the user's selected accent, same as everywhere else in the app. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/pyluxAccent"/>
+</shape>

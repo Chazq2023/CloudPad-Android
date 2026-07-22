@@ -12,10 +12,13 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.addMarginEnd
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.metallic.chiaki.trophy.TrophyCompareAdapter
 import com.metallic.chiaki.trophy.TrophyCompareRepository
 import com.metallic.chiaki.trophy.TrophyComparisonResult
@@ -50,7 +53,10 @@ class TrophyCompareActivity : AppCompatActivity()
 
 	private lateinit var binding: ActivityTrophyCompareBinding
 	private lateinit var repository: TrophyCompareRepository
-	private val adapter = TrophyCompareAdapter()
+	private val adapter = TrophyCompareAdapter(onTopBoundary = {
+		binding.backButton.isFocusableInTouchMode = true
+		binding.backButton.requestFocus()
+	})
 	private var accountId: String = ""
 	private var onlineId: String = ""
 	private var avatarUrl: String = ""
@@ -71,7 +77,8 @@ class TrophyCompareActivity : AppCompatActivity()
 		window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
 
 		setSupportActionBar(binding.toolbar)
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+		binding.backButton.redirectDpadDownTo { firstComparisonRow() }
 
 		accountId = intent.getStringExtra(EXTRA_ACCOUNT_ID) ?: ""
 		onlineId = intent.getStringExtra(EXTRA_ONLINE_ID) ?: ""
@@ -130,28 +137,50 @@ class TrophyCompareActivity : AppCompatActivity()
 		binding.trophyCompareEmptyStateText.visibility = View.VISIBLE
 	}
 
+	/** First row of [binding.trophyCompareRecyclerView], the shared D-pad-down target for both
+	 *  backButton and the toolbar's refresh action — see redirectDpadDownTo's doc comment for why
+	 *  this needs to be explicit rather than left to the platform's own focus search. */
+	private fun firstComparisonRow() =
+		(binding.trophyCompareRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
+
 	override fun onCreateOptionsMenu(menu: Menu): Boolean
 	{
 		menuInflater.inflate(R.menu.menu_trophy_compare, menu)
 		menu.findItem(R.id.action_refresh_trophy_compare)?.icon?.mutate()?.setTint(Color.WHITE)
+		// Same D-pad-down gap as backButton — this view isn't created until the toolbar lays out
+		// the inflated menu, so grabbing it has to wait a frame past inflate() returning.
+		binding.toolbar.post {
+			val refreshButton = binding.toolbar.findViewById<View>(R.id.action_refresh_trophy_compare)
+			// Same focus ring as backButton — an auto-generated ActionMenuItemView gets none of
+			// the app's own focus-highlight styling by default.
+			refreshButton?.foreground = ContextCompat.getDrawable(this, R.drawable.bg_focus_highlight)
+			// Same nudge as FriendsActivity's refresh button (see its own comment for why this
+			// targets the ActionMenuView container, not the button itself), for a consistent
+			// position across all three of these toolbars.
+			(refreshButton?.parent as? View)?.addMarginEnd(9f)
+			refreshButton?.redirectDpadDownTo { firstComparisonRow() }
+		}
 		return true
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId)
 	{
-		android.R.id.home -> { finish(); true }
 		R.id.action_refresh_trophy_compare -> { loadComparison(); true }
 		else -> super.onOptionsItemSelected(item)
 	}
 
 	/** Triangle/Y as a controller shortcut for the refresh button — same convention as the
-	 *  Friends list and chat screens. */
+	 *  Friends list and chat screens. Circle/B mirrors the back button, same equivalence
+	 *  QuickSettingsPanel already treats KEYCODE_BACK/KEYCODE_BUTTON_B as. */
 	override fun dispatchKeyEvent(event: KeyEvent): Boolean
 	{
-		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_Y)
+		if (event.action == KeyEvent.ACTION_DOWN)
 		{
-			loadComparison()
-			return true
+			when (event.keyCode)
+			{
+				KeyEvent.KEYCODE_BUTTON_Y -> { loadComparison(); return true }
+				KeyEvent.KEYCODE_BUTTON_B -> { onBackPressedDispatcher.onBackPressed(); return true }
+			}
 		}
 		return super.dispatchKeyEvent(event)
 	}

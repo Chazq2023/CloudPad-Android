@@ -9,6 +9,7 @@
     <string name="action_retry">Retry</string>
     <string name="action_ok">OK</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_back">Back</string>
 
     <string name="controller_remap_title">Controller Layout</string>
     <string name="controller_remap_preference_title">Remap Controller</string>
@@ -134,6 +135,15 @@
     <string name="preferences_icon_key_streamable_title">Game is verified as streamable</string>
     <string name="preferences_icon_key_not_streamable_title">Game is verified as non-streamable</string>
     <string name="preferences_icon_key_unknown_title">Game is not verified as streamable or non-streamable. Please launch game to verify status.</string>
+    <string name="preferences_category_title_controller_shortcuts">Controller Shortcuts</string>
+    <string name="preferences_controller_shortcut_playtime_title">Square (press) — while a game is highlighted</string>
+    <string name="preferences_controller_shortcut_playtime_summary">Shows the game\'s playtime</string>
+    <string name="preferences_controller_shortcut_trophies_title">Square (hold) — while a game is highlighted</string>
+    <string name="preferences_controller_shortcut_trophies_summary">Opens the game\'s trophies</string>
+    <string name="preferences_controller_shortcut_add_to_home_title">Start (press) — while a game is highlighted</string>
+    <string name="preferences_controller_shortcut_add_to_home_summary">Opens the add to home screen confirmation</string>
+    <string name="preferences_controller_shortcut_quick_menu_title">Back — while streaming</string>
+    <string name="preferences_controller_shortcut_quick_menu_summary">Opens and closes the Quick Menu</string>
     <string name="preferences_registered_hosts_summary">Currently registered: %d</string>
     <string name="preferences_resolution_title">Resolution</string>
     <string name="preferences_fps_title">FPS</string>

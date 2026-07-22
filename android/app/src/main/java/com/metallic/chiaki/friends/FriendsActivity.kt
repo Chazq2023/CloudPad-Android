@@ -11,9 +11,13 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
+import com.metallic.chiaki.common.ext.addMarginEnd
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityFriendsBinding
 import kotlinx.coroutines.launch
@@ -34,7 +38,11 @@ class FriendsActivity : AppCompatActivity()
 	private lateinit var repository: FriendsRepository
 	private val adapter = FriendAdapter(
 		onFriendClick = { friend -> FriendChatActivity.start(this, friend) },
-		onCompareTrophiesClick = { friend -> TrophyCompareActivity.start(this, friend) }
+		onCompareTrophiesClick = { friend -> TrophyCompareActivity.start(this, friend) },
+		onTopBoundary = {
+			binding.backButton.isFocusableInTouchMode = true
+			binding.backButton.requestFocus()
+		}
 	)
 
 	override fun onCreate(savedInstanceState: Bundle?)
@@ -51,7 +59,8 @@ class FriendsActivity : AppCompatActivity()
 		window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
 
 		setSupportActionBar(binding.toolbar)
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+		binding.backButton.redirectDpadDownTo { firstFriendRow() }
 
 		repository = FriendsRepository(prefs)
 
@@ -108,30 +117,55 @@ class FriendsActivity : AppCompatActivity()
 		binding.friendsEmptyStateText.visibility = View.VISIBLE
 	}
 
+	/** First row of [binding.friendsRecyclerView], the shared D-pad-down target for both
+	 *  backButton and the toolbar's refresh action — see redirectDpadDownTo's doc comment for why
+	 *  this needs to be explicit rather than left to the platform's own focus search. */
+	private fun firstFriendRow() =
+		(binding.friendsRecyclerView.layoutManager as? LinearLayoutManager)?.findViewByPosition(0)
+
 	override fun onCreateOptionsMenu(menu: Menu): Boolean
 	{
 		menuInflater.inflate(R.menu.menu_friends, menu)
 		// The toolbar's default menu-icon tint doesn't pick up ic_refresh's own hardcoded fill
 		// colour, rendering it dark against this dark toolbar — force white explicitly.
 		menu.findItem(R.id.action_refresh_friends)?.icon?.mutate()?.setTint(android.graphics.Color.WHITE)
+		// Same D-pad-down gap as backButton — this view isn't created until the toolbar lays out
+		// the inflated menu, so grabbing it has to wait a frame past inflate() returning.
+		binding.toolbar.post {
+			val refreshButton = binding.toolbar.findViewById<View>(R.id.action_refresh_friends)
+			// Same focus ring as backButton — an auto-generated ActionMenuItemView gets none of
+			// the app's own focus-highlight styling by default.
+			refreshButton?.foreground = ContextCompat.getDrawable(this, R.drawable.bg_focus_highlight)
+			// Brings it in line with the trophy-icon column in the row below — confirmed on-device.
+			// Nudges the ActionMenuView container itself, not the button — ActionMenuView's own
+			// onLayout() ignores margins on its individual item children entirely (confirmed
+			// on-device: setting marginEnd directly on the button changed its LayoutParams but its
+			// laid-out bounds never moved), but Toolbar's own layout pass does respect margins on
+			// its direct children, of which ActionMenuView (the refresh icon's actual parent) is one.
+			(refreshButton?.parent as? View)?.addMarginEnd(9f)
+			refreshButton?.redirectDpadDownTo { firstFriendRow() }
+		}
 		return true
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId)
 	{
-		android.R.id.home -> { finish(); true }
 		R.id.action_refresh_friends -> { loadFriends(forceRefresh = true); true }
 		else -> super.onOptionsItemSelected(item)
 	}
 
 	/** Triangle/Y as a controller shortcut for the refresh button — same convention MainActivity
-	 *  already uses for CloudPlayFragment's own refresh. */
+	 *  already uses for CloudPlayFragment's own refresh. Circle/B mirrors the back button, the
+	 *  same equivalence QuickSettingsPanel already treats KEYCODE_BACK/KEYCODE_BUTTON_B as. */
 	override fun dispatchKeyEvent(event: KeyEvent): Boolean
 	{
-		if (event.action == KeyEvent.ACTION_DOWN && event.keyCode == KeyEvent.KEYCODE_BUTTON_Y)
+		if (event.action == KeyEvent.ACTION_DOWN)
 		{
-			loadFriends(forceRefresh = true)
-			return true
+			when (event.keyCode)
+			{
+				KeyEvent.KEYCODE_BUTTON_Y -> { loadFriends(forceRefresh = true); return true }
+				KeyEvent.KEYCODE_BUTTON_B -> { onBackPressedDispatcher.onBackPressed(); return true }
+			}
 		}
 		return super.dispatchKeyEvent(event)
 	}

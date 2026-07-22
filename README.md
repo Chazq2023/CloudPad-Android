@@ -252,5 +252,6 @@ Appearance, controls, Remote Play and Cloud Play video profiles, CAS sharpening,
 </tr>
 <tr>
 <td><img src="readme%20assets/Settings/Settings%207.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%208.png" width="300"></td>
 </tr>
 </table>
