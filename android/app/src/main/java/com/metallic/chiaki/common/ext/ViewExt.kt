@@ -90,3 +90,20 @@ fun View.redirectDpadDownTo(target: () -> View?)
 		true
 	}
 }
+
+/**
+ * Nudges this view [extraDp] further in from its current end edge. Used to bring a toolbar's
+ * auto-generated refresh action into the same horizontal position as the trophy-icon column in
+ * the list below it — confirmed on-device that `app:contentInsetEndWithActions` on the Toolbar
+ * has no effect on where AppCompat places `ActionMenuView`'s items in this app's toolbars (the
+ * measured bounds were pixel-identical with and without it), so the fix has to reach past that
+ * and adjust the action view's own margin directly instead.
+ */
+fun View.addMarginEnd(extraDp: Float)
+{
+	val extraPx = (extraDp * resources.displayMetrics.density).toInt()
+	(layoutParams as? ViewGroup.MarginLayoutParams)?.let {
+		it.marginEnd += extraPx
+		layoutParams = it
+	}
+}

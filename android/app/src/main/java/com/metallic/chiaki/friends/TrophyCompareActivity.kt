@@ -12,9 +12,11 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.addMarginEnd
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.metallic.chiaki.trophy.TrophyCompareAdapter
@@ -148,7 +150,15 @@ class TrophyCompareActivity : AppCompatActivity()
 		// Same D-pad-down gap as backButton — this view isn't created until the toolbar lays out
 		// the inflated menu, so grabbing it has to wait a frame past inflate() returning.
 		binding.toolbar.post {
-			binding.toolbar.findViewById<View>(R.id.action_refresh_trophy_compare)?.redirectDpadDownTo { firstComparisonRow() }
+			val refreshButton = binding.toolbar.findViewById<View>(R.id.action_refresh_trophy_compare)
+			// Same focus ring as backButton — an auto-generated ActionMenuItemView gets none of
+			// the app's own focus-highlight styling by default.
+			refreshButton?.foreground = ContextCompat.getDrawable(this, R.drawable.bg_focus_highlight)
+			// Same nudge as FriendsActivity's refresh button (see its own comment for why this
+			// targets the ActionMenuView container, not the button itself), for a consistent
+			// position across all three of these toolbars.
+			(refreshButton?.parent as? View)?.addMarginEnd(9f)
+			refreshButton?.redirectDpadDownTo { firstComparisonRow() }
 		}
 		return true
 	}

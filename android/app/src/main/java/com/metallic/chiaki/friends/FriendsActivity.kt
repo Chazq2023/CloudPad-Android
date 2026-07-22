@@ -11,10 +11,12 @@ import android.view.MenuItem
 import android.view.View
 import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
+import com.metallic.chiaki.common.ext.addMarginEnd
 import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityFriendsBinding
@@ -130,7 +132,18 @@ class FriendsActivity : AppCompatActivity()
 		// Same D-pad-down gap as backButton — this view isn't created until the toolbar lays out
 		// the inflated menu, so grabbing it has to wait a frame past inflate() returning.
 		binding.toolbar.post {
-			binding.toolbar.findViewById<View>(R.id.action_refresh_friends)?.redirectDpadDownTo { firstFriendRow() }
+			val refreshButton = binding.toolbar.findViewById<View>(R.id.action_refresh_friends)
+			// Same focus ring as backButton — an auto-generated ActionMenuItemView gets none of
+			// the app's own focus-highlight styling by default.
+			refreshButton?.foreground = ContextCompat.getDrawable(this, R.drawable.bg_focus_highlight)
+			// Brings it in line with the trophy-icon column in the row below — confirmed on-device.
+			// Nudges the ActionMenuView container itself, not the button — ActionMenuView's own
+			// onLayout() ignores margins on its individual item children entirely (confirmed
+			// on-device: setting marginEnd directly on the button changed its LayoutParams but its
+			// laid-out bounds never moved), but Toolbar's own layout pass does respect margins on
+			// its direct children, of which ActionMenuView (the refresh icon's actual parent) is one.
+			(refreshButton?.parent as? View)?.addMarginEnd(9f)
+			refreshButton?.redirectDpadDownTo { firstFriendRow() }
 		}
 		return true
 	}

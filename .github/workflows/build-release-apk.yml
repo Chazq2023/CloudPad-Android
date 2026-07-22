@@ -120,10 +120,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a new controller shortcut: press Start while a game is highlighted to open the Add to Home Screen confirmation.
-            - Added a "Controller Shortcuts" section at the bottom of Settings listing every shortcut (Square press/hold, Start press, Back while streaming) with themed icons.
-            - Made the PS5 Library Icon Key and Controller Shortcuts rows, plus App Version/Locale/Cached Locale, focusable via D-pad so controller users can scroll all the way to the bottom of Settings.
-            - Added a new Settings screenshot to the README.
+            - Fixed the refresh button on Friends, Friends Message, and Trophy Comparison having no D-pad focus highlight — now matches the back button's theme-coloured rounded box.
+            - Nudged that same refresh button left so it lines up with the trophy icon column below it, instead of sitting flush against the screen edge.
 
             ### APK
             Attached release asset:
