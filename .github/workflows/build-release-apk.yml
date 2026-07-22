@@ -107,9 +107,9 @@ jobs:
         run: |
           mkdir -p release
           cp android/app/build/outputs/apk/debug/app-debug.apk release/cloudpad-android.apk
-          cp android/app/src/main/assets/FrontendArt/cloudpad-hero.png release/cloudpad-hero.png
-          cp android/app/src/main/assets/FrontendArt/cloudpad-icon.png release/cloudpad-icon.png
-          cp android/app/src/main/assets/FrontendArt/cloudpad-logo.png release/cloudpad-logo.png
+          cp "frontend assets/cloudpad-hero.png" release/cloudpad-hero.png
+          cp "frontend assets/cloudpad-icon.png" release/cloudpad-icon.png
+          cp "frontend assets/cloudpad-logo.png" release/cloudpad-logo.png
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
