@@ -545,7 +545,7 @@ class CloudPlayFragment : Fragment() {
             if (favActive) R.drawable.ic_star else R.drawable.ic_star_outline
         )
         binding.headerFavoritesButton.setColorFilter(
-            if (favActive) resources.getColor(android.R.color.holo_orange_light, null)
+            if (favActive) resolveAccentColor()
             else resources.getColor(android.R.color.white, null)
         )
         binding.headerFavoritesButton.alpha = if (favActive) 1.0f else 0.45f

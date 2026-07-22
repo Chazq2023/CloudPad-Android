@@ -120,8 +120,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed bundled bonus-content entitlements (e.g. Metal Gear Solid: Master Collection Vol.1's "BONUS CONTENT") showing up in the PS5 Library as if they were their own playable game.
-            - Fixed games bought as part of a bundle (e.g. GTA: San Andreas and Vice City, both part of the GTA Trilogy bundle) sharing the bundle's cover art instead of keeping their own box art when they don't have their own individual PS Store catalog listing.
+            - Fixed the favourites toggle icon in the games library header showing a hardcoded yellow color when active instead of matching the app's theme color.
 
             ### APK
             Attached release asset:
