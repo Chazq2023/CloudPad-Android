@@ -206,6 +206,11 @@ Full trophy list per game, with progress, rarity, and unlock status.
 
 <img src="readme%20assets/Trophies/Trophies.jpg" width="600">
 
+### Trophy Unlocked Notification
+An in-stream toast pops up the moment you unlock a trophy, without interrupting gameplay.
+
+<img src="readme%20assets/Trophy%20Unlocked%20Notification/Trophy%20Unlocked%20Notification.jpg" width="600">
+
 ### Friends List & Messaging
 Browse your PSN friends list and message them directly from the main menu.
 
