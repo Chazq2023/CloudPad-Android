@@ -1038,7 +1038,6 @@ class CloudPlayFragment : Fragment() {
             touchZone = binding.fastScrollerTouchZone,
             sectionIndicator = binding.sectionIndicator,
             gameCountText = binding.gameCountText,
-            adapter = adapter,
             gamesProvider = { adapter.games }
         )
         fastScrollerHelper.setup()

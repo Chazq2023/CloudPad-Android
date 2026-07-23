@@ -5,8 +5,6 @@ package com.metallic.chiaki.main
 import android.app.UiModeManager
 import android.content.Context
 import android.content.res.Configuration
-import android.os.Handler
-import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.widget.TextView
@@ -26,7 +24,6 @@ class FastScrollerHelper(
 	private val touchZone: View,
 	private val sectionIndicator: TextView,
 	private val gameCountText: TextView,
-	private val adapter: CloudGameAdapter,
 	private val gamesProvider: () -> List<CloudGame>
 ) {
 	private val isTv: Boolean by lazy {
@@ -34,26 +31,12 @@ class FastScrollerHelper(
 		uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
 	}
 	private var isDragging = false
-	private val idleHandler = Handler(Looper.getMainLooper())
-	private val idleRunnable = Runnable {
-		adapter.isScrollingFast = false
-		// Reload images for visible cards that got a placeholder during fast scroll.
-		// Debounced so rapid key presses don't trigger a rebind mid-navigation (which drops focus).
-		val lm = recyclerView.layoutManager as? GridLayoutManager ?: return@Runnable
-		val first = lm.findFirstVisibleItemPosition()
-		val last = lm.findLastVisibleItemPosition()
-		if (first >= 0 && last >= first) {
-			adapter.notifyItemRangeChanged(first, last - first + 1, PAYLOAD_RELOAD_IMAGE)
-		}
-	}
 
 	private val scrollListener = object : RecyclerView.OnScrollListener() {
 		override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
 			when (newState) {
 				RecyclerView.SCROLL_STATE_DRAGGING,
 				RecyclerView.SCROLL_STATE_SETTLING -> {
-					idleHandler.removeCallbacks(idleRunnable)
-					adapter.isScrollingFast = true
 					// Transfer focus from the focused card to the RecyclerView itself.
 					// This prevents Android from auto-focusing the header when the
 					// focused card view is recycled off-screen during scroll.
@@ -66,36 +49,24 @@ class FastScrollerHelper(
 				RecyclerView.SCROLL_STATE_IDLE -> {
 					// Restore normal descendant focus so D-pad can navigate into cards again.
 					recyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
-					// Debounce the image reload so rapid key presses don't rebind mid-navigation.
-					idleHandler.removeCallbacks(idleRunnable)
-					idleHandler.postDelayed(idleRunnable, 250)
 				}
 			}
 		}
-		
+
 		override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
 			if (isDragging) return
 			updateThumbPosition()
 			updateGameCountScroll()
 		}
 	}
-	
-	private fun setFastScrolling(fast: Boolean) {
-		adapter.isScrollingFast = fast
-	}
 
-	companion object {
-		const val PAYLOAD_RELOAD_IMAGE = "reload_image"
-	}
-	
 	fun setup() {
 		recyclerView.isNestedScrollingEnabled = false
 		recyclerView.addOnScrollListener(scrollListener)
 		setupTouchHandler()
 	}
-	
+
 	fun cleanup() {
-		idleHandler.removeCallbacks(idleRunnable)
 		recyclerView.removeOnScrollListener(scrollListener)
 		touchZone.setOnTouchListener(null)
 	}
@@ -136,7 +107,6 @@ class FastScrollerHelper(
 			when (event.action) {
 				MotionEvent.ACTION_DOWN -> {
 					isDragging = true
-					setFastScrolling(true)
 					recyclerView.stopScroll()
 					thumbView.y = event.y.coerceIn(0f, maxThumbY)
 					sectionIndicator.visibility = View.VISIBLE
@@ -153,7 +123,6 @@ class FastScrollerHelper(
 				MotionEvent.ACTION_CANCEL -> {
 					recyclerView.stopScroll()
 					isDragging = false
-					setFastScrolling(false)
 					sectionIndicator.postDelayed({
 						sectionIndicator.visibility = View.GONE
 					}, 500)
