@@ -236,6 +236,21 @@ Per-game playtime stats — total playtime, last played, and longest session.
 
 <img src="readme%20assets/Playtime/Playtime.jpg" width="500">
 
+### Theme Showcase
+Pick an accent colour and the whole UI updates to match.
+
+<table>
+<tr>
+<td align="center"><b>Neon Blue</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Blue%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Green</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Green%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Orange</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Orange%20Theme.jpg" width="300"></td>
+</tr>
+<tr>
+<td align="center"><b>Neon Pink</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Pink%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Yellow</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Yellow%20Theme.jpg" width="300"></td>
+</tr>
+</table>
+
 ### Settings
 Appearance, controls, Remote Play and Cloud Play video profiles, CAS sharpening, diagnostics, and more.
 
