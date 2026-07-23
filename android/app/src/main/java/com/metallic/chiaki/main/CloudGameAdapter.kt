@@ -53,8 +53,6 @@ class CloudGameAdapter(
             notifyDataSetChanged()
         }
 
-    var isScrollingFast = false
-
     private fun stableKey(game: CloudGame) = "${game.productId}|${game.platform}|${game.serviceType}"
 
     override fun getItemId(position: Int): Long = stableKey(games[position]).hashCode().toLong()
@@ -71,19 +69,6 @@ class CloudGameAdapter(
 
     override fun onBindViewHolder(holder: CloudGameViewHolder, position: Int) {
         holder.bind(games[position])
-    }
-
-    override fun onBindViewHolder(
-        holder: CloudGameViewHolder,
-        position: Int,
-        payloads: MutableList<Any>
-    ) {
-        if (payloads.contains(FastScrollerHelper.PAYLOAD_RELOAD_IMAGE)) {
-            // Only reload the image — don't rebind the whole card (avoids flash)
-            holder.reloadImage(games[position])
-        } else {
-            super.onBindViewHolder(holder, position, payloads)
-        }
     }
 
     override fun onViewRecycled(holder: CloudGameViewHolder) {
@@ -108,17 +93,6 @@ class CloudGameAdapter(
         fun cancelPendingLongPress() {
             pendingTrophiesRunnable?.let { longPressHandler.removeCallbacks(it) }
             pendingTrophiesRunnable = null
-        }
-
-        fun reloadImage(game: CloudGame) {
-            if (game.imageUrl.isNotEmpty()) {
-                binding.gameImageView.load(game.imageUrl) {
-                    memoryCachePolicy(CachePolicy.ENABLED)
-                    diskCachePolicy(CachePolicy.ENABLED)
-                    networkCachePolicy(CachePolicy.ENABLED)
-                    crossfade(false)
-                }
-            }
         }
 
         fun bind(game: CloudGame) {
@@ -152,17 +126,13 @@ class CloudGameAdapter(
             if (game.imageUrl.isEmpty()) {
                 binding.gameImageView.setImageResource(android.R.drawable.ic_menu_gallery)
             } else {
-                // During fast scroll: memory + disk cache stay on (local, cheap — and with the
-                // whole catalog prefetched to disk up front by CloudPlayFragment.prefetchArtwork,
-                // most tiles are already there), only network is skipped. That avoids the slow
-                // network-fetch-mid-fling jank the memory-only version of this policy was
-                // originally guarding against, without reintroducing it for already-cached tiles.
                 // No crossfade to prevent flash when recycled views rebind.
                 binding.gameImageView.load(game.imageUrl) {
                     memoryCachePolicy(CachePolicy.ENABLED)
                     diskCachePolicy(CachePolicy.ENABLED)
-                    networkCachePolicy(if (isScrollingFast) CachePolicy.DISABLED else CachePolicy.ENABLED)
+                    networkCachePolicy(CachePolicy.ENABLED)
                     crossfade(false)
+                    error(android.R.drawable.ic_menu_gallery)
                 }
             }
 

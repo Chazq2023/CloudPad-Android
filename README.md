@@ -206,6 +206,11 @@ Full trophy list per game, with progress, rarity, and unlock status.
 
 <img src="readme%20assets/Trophies/Trophies.jpg" width="600">
 
+### Trophy Unlocked Notification
+An in-stream toast pops up the moment you unlock a trophy, without interrupting gameplay.
+
+<img src="readme%20assets/Trophy%20Unlocked%20Notification/Trophy%20Unlocked%20Notification.jpg" width="600">
+
 ### Friends List & Messaging
 Browse your PSN friends list and message them directly from the main menu.
 
@@ -235,6 +240,21 @@ AMD FidelityFX Contrast Adaptive Sharpening applied in real time to the stream i
 Per-game playtime stats — total playtime, last played, and longest session.
 
 <img src="readme%20assets/Playtime/Playtime.jpg" width="500">
+
+### Theme Showcase
+Pick an accent colour and the whole UI updates to match.
+
+<table>
+<tr>
+<td align="center"><b>Neon Blue</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Blue%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Green</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Green%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Orange</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Orange%20Theme.jpg" width="300"></td>
+</tr>
+<tr>
+<td align="center"><b>Neon Pink</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Pink%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Yellow</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Yellow%20Theme.jpg" width="300"></td>
+</tr>
+</table>
 
 ### Settings
 Appearance, controls, Remote Play and Cloud Play video profiles, CAS sharpening, diagnostics, and more.
