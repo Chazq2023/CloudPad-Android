@@ -268,6 +268,22 @@ class MainActivity : AppCompatActivity() {
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         if (event.keyCode == KeyEvent.KEYCODE_BACK) return super.dispatchKeyEvent(event)
 
+        // While a tile's favourite/trophies/playtime/shortcut icons are being controller-navigated
+        // (CloudGameAdapter.isIconNavActive, entered via Select), let D-pad events go straight to
+        // the focused icon's own key listener instead of this method's row/boundary logic below —
+        // that logic reasons about tile positions in the grid, not icon positions within a tile,
+        // and would otherwise block or misroute movement between the four icons.
+        if (currentPage == 1) {
+            val cloudAdapter = window.decorView.findViewById<RecyclerView>(R.id.gamesRecyclerView)?.adapter as? CloudGameAdapter
+            if (cloudAdapter?.isIconNavActive == true && event.keyCode in setOf(
+                    KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+                    KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT
+                )
+            ) {
+                return super.dispatchKeyEvent(event)
+            }
+        }
+
         if (currentPage == 1) {
             val cloudFragment = supportFragmentManager.fragments
                 .filterIsInstance<CloudPlayFragment>()
@@ -534,6 +550,16 @@ class MainActivity : AppCompatActivity() {
         val focusedInHost = focused?.let { hostRv?.findContainingItemView(it) }
         val activeHeader =
             if (currentPage == 0) binding.remotePlayButton else binding.cloudPlayButton
+
+        // Back should back out of controller icon-navigation mode first, same as a second Select
+        // press — otherwise it'd jump focus straight to the header below and leave the adapter's
+        // icon-nav state pointing at a tile that's no longer being navigated.
+        (cloudRv?.adapter as? CloudGameAdapter)?.let { adapter ->
+            if (adapter.isIconNavActive) {
+                adapter.exitIconNav()
+                return
+            }
+        }
 
         when {
             focusedInCloud != null || focusedInHost != null ||
