@@ -359,42 +359,38 @@ class MainActivity : AppCompatActivity() {
         val isSpeedDialOpen =
             window.decorView.findViewById<View>(R.id.addManualButton)?.isShown == true
 
+        // None of the five helpers below need to flip isFocusableInTouchMode on before their
+        // requestFocusFromTouch() call: they're only ever invoked from inside dispatchKeyEvent,
+        // which only runs for a real KeyEvent — and a real D-pad/key press always exits touch
+        // mode as part of standard input dispatch before Activity.dispatchKeyEvent is even
+        // called. Leaving that flag permanently true (as this used to) makes the next touchscreen
+        // tap on that view focus-only, requiring a second tap to actually click — confirmed
+        // on-device for ps3TabButton via focusSecondaryHeader (reached on nearly every D-pad
+        // up/down through the grid, unlike the other four, so it's the one that surfaced first).
+        // See ViewExt.kt's enableFocusableInTouchModeForTv doc comment for the general pattern.
         fun focusPrimaryHeader() {
             val btn = if (currentPage == 0) binding.remotePlayButton else binding.cloudPlayButton
-            btn.isFocusableInTouchMode = true
             btn.requestFocusFromTouch()
         }
 
         fun focusSecondaryHeader() {
-            window.decorView.findViewById<View>(R.id.ps3TabButton)?.let {
-                it.isFocusableInTouchMode = true
-                it.requestFocusFromTouch()
-            }
+            window.decorView.findViewById<View>(R.id.ps3TabButton)?.requestFocusFromTouch()
         }
 
         fun focusFab() {
-            window.decorView.findViewById<View>(R.id.floatingActionButton)?.let {
-                it.isFocusableInTouchMode = true
-                it.requestFocusFromTouch()
-            }
+            window.decorView.findViewById<View>(R.id.floatingActionButton)?.requestFocusFromTouch()
         }
 
         fun focusLastConsole() {
             val count = hostRv?.adapter?.itemCount ?: 0
             if (count <= 0) return
             val lastView = hostRv?.layoutManager?.findViewByPosition(count - 1)
-            lastView?.let {
-                it.isFocusableInTouchMode = true
-                it.requestFocusFromTouch()
-            }
+            lastView?.requestFocusFromTouch()
         }
 
         fun focusLoginButton() {
             window.decorView.findViewById<View>(R.id.loginButton)?.let {
-                if (it.isShown) {
-                    it.isFocusableInTouchMode = true
-                    it.requestFocusFromTouch()
-                }
+                if (it.isShown) it.requestFocusFromTouch()
             }
         }
 
