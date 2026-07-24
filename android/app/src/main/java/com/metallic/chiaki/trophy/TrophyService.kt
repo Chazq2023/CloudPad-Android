@@ -42,6 +42,8 @@ object TrophyService
 			if (response.statusCode != 200)
 			{
 				Log.e(TAG, "fetchAllTrophyTitles failed for $accountId at offset=$offset: ${response.statusCode} - ${response.body}")
+				if (response.statusCode == 403)
+					throw Exception("Failed to fetch trophy titles: Please logout and back into cloudpad, if this fails, then ensure that the PS servers are up and running")
 				throw Exception("Failed to fetch trophy titles: HTTP ${response.statusCode}")
 			}
 

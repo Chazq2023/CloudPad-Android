@@ -120,7 +120,8 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed game artwork sometimes failing to load right after logging in and scrolling the library — network image loading was being disabled during scroll based on a caching assumption that no longer held.
+            - Updated the "Streaming Unavailable" error dialog to also suggest checking whether PS servers are down.
+            - Trophy list and friends list fetch failures now show a clearer message when caused by an HTTP 403 (suggests logging out/back in, then checking PS server status), instead of a raw HTTP status code.
 
             ### APK
             Attached release asset:

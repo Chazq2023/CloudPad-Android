@@ -26,6 +26,8 @@ object FriendsService
 		if (response.statusCode != 200)
 		{
 			Log.e(TAG, "fetchFriendAccountIds failed: ${response.statusCode} - ${response.body}")
+			if (response.statusCode == 403)
+				throw Exception("Failed to fetch friends list: Please logout and back into cloudpad, if this fails, then ensure that the PS servers are up and running")
 			throw Exception("Failed to fetch friends list: HTTP ${response.statusCode}")
 		}
 		val json = JSONObject(response.body)

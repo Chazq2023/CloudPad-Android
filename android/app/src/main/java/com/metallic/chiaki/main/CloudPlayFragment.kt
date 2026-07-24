@@ -1668,7 +1668,7 @@ class CloudPlayFragment : Fragment() {
         val message = if (serviceType == "psnow")
             "Please ensure that you have a PS Plus Premium subscription and PS Now streaming is available in your region"
         else
-            "Please ensure that you have a PS Plus Premium subscription, that the game is available for PS Cloud Streaming and PS Cloud streaming is available in your region"
+            "Please ensure that you have a PS Plus Premium subscription, that the game is available for PS Cloud Streaming, that PS Cloud streaming is available in your region and that the PS servers are not currently down"
 
         requireContext().alertDialogBuilder()
             .setTitle("Streaming Unavailable")
