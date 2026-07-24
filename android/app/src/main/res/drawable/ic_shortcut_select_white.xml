@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Two overlapping squares — the common Select/Share/Create glyph abstraction, since PS/Xbox
+     controllers don't share a single consistent icon for this button the way Square/Start do. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="256dp"
+    android:height="256dp"
+    android:viewportWidth="67.73333"
+    android:viewportHeight="67.73334">
+    <path
+        android:pathData="M8,8 L36,8 L36,36 L8,36 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"/>
+    <path
+        android:pathData="M31,31 L59,31 L59,59 L31,59 Z"
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"/>
+</vector>

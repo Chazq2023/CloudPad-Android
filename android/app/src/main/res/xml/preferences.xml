@@ -288,6 +288,13 @@
             app:icon="@drawable/ic_shortcut_start"/>
 
         <Preference
+            app:key="controller_shortcut_icon_nav"
+            app:title="@string/preferences_controller_shortcut_icon_nav_title"
+            app:summary="@string/preferences_controller_shortcut_icon_nav_summary"
+            app:selectable="true"
+            app:icon="@drawable/ic_shortcut_select"/>
+
+        <Preference
             app:key="controller_shortcut_quick_menu"
             app:title="@string/preferences_controller_shortcut_quick_menu_title"
             app:summary="@string/preferences_controller_shortcut_quick_menu_summary"

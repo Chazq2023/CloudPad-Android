@@ -135,6 +135,11 @@ class TrophyCompareActivity : AppCompatActivity()
 		binding.trophyCompareContentGroup.visibility = View.GONE
 		binding.trophyCompareEmptyStateText.text = message
 		binding.trophyCompareEmptyStateText.visibility = View.VISIBLE
+
+		// No list means nothing else on screen to carry D-pad focus to backButton/refresh via
+		// onTopBoundary/redirectDpadDownTo — land it there directly, same fix as onTopBoundary.
+		binding.backButton.isFocusableInTouchMode = true
+		binding.backButton.requestFocus()
 	}
 
 	/** First row of [binding.trophyCompareRecyclerView], the shared D-pad-down target for both

@@ -206,6 +206,11 @@ Full trophy list per game, with progress, rarity, and unlock status.
 
 <img src="readme%20assets/Trophies/Trophies.jpg" width="600">
 
+### Trophy Comparison
+Compare your trophy progress against a friend, game by game, from the main menu.
+
+<img src="readme%20assets/Trophy%20Comparison/Trophy%20Comparison.png" width="600">
+
 ### Trophy Unlocked Notification
 An in-stream toast pops up the moment you unlock a trophy, without interrupting gameplay.
 

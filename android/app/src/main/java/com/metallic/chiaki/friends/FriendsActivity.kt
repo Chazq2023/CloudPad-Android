@@ -115,6 +115,11 @@ class FriendsActivity : AppCompatActivity()
 		binding.friendsRecyclerView.visibility = View.GONE
 		binding.friendsEmptyStateText.text = message
 		binding.friendsEmptyStateText.visibility = View.VISIBLE
+
+		// No list means nothing else on screen to carry D-pad focus to backButton/refresh via
+		// onTopBoundary/redirectDpadDownTo — land it there directly, same fix as onTopBoundary.
+		binding.backButton.isFocusableInTouchMode = true
+		binding.backButton.requestFocus()
 	}
 
 	/** First row of [binding.friendsRecyclerView], the shared D-pad-down target for both

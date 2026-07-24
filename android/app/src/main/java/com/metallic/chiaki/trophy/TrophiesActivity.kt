@@ -162,6 +162,11 @@ class TrophiesActivity : AppCompatActivity()
 		binding.trophyRecyclerView.visibility = View.GONE
 		binding.trophyEmptyStateText.text = message
 		binding.trophyEmptyStateText.visibility = View.VISIBLE
+
+		// No list means nothing else on screen to carry D-pad focus to backButton/refresh via
+		// onTopBoundary/redirectDpadDownTo — land it there directly, same fix as onTopBoundary.
+		binding.backButton.isFocusableInTouchMode = true
+		binding.backButton.requestFocus()
 	}
 
 	/** Circle/B as a controller shortcut for the back button — same equivalence QuickSettingsPanel

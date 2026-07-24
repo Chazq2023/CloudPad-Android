@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Controller icon-nav focus state for the favourite/trophies/playtime/shortcut tile icons —
+     mirrors the game tile card's own focused-vs-unfocused stroke treatment. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="?attr/pyluxAccentA50" />
+    <stroke
+        android:width="2dp"
+        android:color="?attr/pyluxAccent" />
+</shape>
