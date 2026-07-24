@@ -359,38 +359,43 @@ class MainActivity : AppCompatActivity() {
         val isSpeedDialOpen =
             window.decorView.findViewById<View>(R.id.addManualButton)?.isShown == true
 
-        // None of the five helpers below need to flip isFocusableInTouchMode on before their
-        // requestFocusFromTouch() call: they're only ever invoked from inside dispatchKeyEvent,
-        // which only runs for a real KeyEvent — and a real D-pad/key press always exits touch
-        // mode as part of standard input dispatch before Activity.dispatchKeyEvent is even
-        // called. Leaving that flag permanently true (as this used to) makes the next touchscreen
-        // tap on that view focus-only, requiring a second tap to actually click — confirmed
-        // on-device for ps3TabButton via focusSecondaryHeader (reached on nearly every D-pad
-        // up/down through the grid, unlike the other four, so it's the one that surfaced first).
-        // See ViewExt.kt's enableFocusableInTouchModeForTv doc comment for the general pattern.
+        // requestFocusFromTouch() can still silently fail here even though this only ever runs
+        // from a real KeyEvent (confirmed on-device — same gotcha documented on
+        // redirectDpadUpAtListBoundary/chatHistoryTarget: the device can still read as "in touch
+        // mode" at this exact point), so isFocusableInTouchMode has to be flipped on for the call
+        // to reliably land. It's flipped back off immediately after, rather than left standing —
+        // leaving it permanently true is what caused the ps3TabButton "needs two touches" bug
+        // (focusSecondaryHeader is reached on nearly every D-pad up/down through the grid, so it's
+        // the one that surfaced first, but all five of these had the same latent issue).
+        fun View.focusFromTouchThenClearFlag() {
+            isFocusableInTouchMode = true
+            requestFocusFromTouch()
+            isFocusableInTouchMode = false
+        }
+
         fun focusPrimaryHeader() {
             val btn = if (currentPage == 0) binding.remotePlayButton else binding.cloudPlayButton
-            btn.requestFocusFromTouch()
+            btn.focusFromTouchThenClearFlag()
         }
 
         fun focusSecondaryHeader() {
-            window.decorView.findViewById<View>(R.id.ps3TabButton)?.requestFocusFromTouch()
+            window.decorView.findViewById<View>(R.id.ps3TabButton)?.focusFromTouchThenClearFlag()
         }
 
         fun focusFab() {
-            window.decorView.findViewById<View>(R.id.floatingActionButton)?.requestFocusFromTouch()
+            window.decorView.findViewById<View>(R.id.floatingActionButton)?.focusFromTouchThenClearFlag()
         }
 
         fun focusLastConsole() {
             val count = hostRv?.adapter?.itemCount ?: 0
             if (count <= 0) return
             val lastView = hostRv?.layoutManager?.findViewByPosition(count - 1)
-            lastView?.requestFocusFromTouch()
+            lastView?.focusFromTouchThenClearFlag()
         }
 
         fun focusLoginButton() {
             window.decorView.findViewById<View>(R.id.loginButton)?.let {
-                if (it.isShown) it.requestFocusFromTouch()
+                if (it.isShown) it.focusFromTouchThenClearFlag()
             }
         }
 
