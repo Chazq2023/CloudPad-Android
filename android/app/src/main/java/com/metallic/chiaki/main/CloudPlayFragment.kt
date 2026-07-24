@@ -564,14 +564,18 @@ class CloudPlayFragment : Fragment() {
     }
 
     private fun updateStreamabilityFilterButton() {
-        val (icon, colorRes) = when (streamabilityFilterState) {
-            1 -> R.drawable.ic_check_white to android.R.color.holo_green_light
-            2 -> R.drawable.ic_close_white to android.R.color.holo_red_light
-            3 -> R.drawable.ic_question_white to android.R.color.holo_orange_light
-            else -> R.drawable.ic_apps to android.R.color.white
+        val icon = when (streamabilityFilterState) {
+            1 -> R.drawable.ic_check_white
+            2 -> R.drawable.ic_close_white
+            3 -> R.drawable.ic_question_white
+            else -> R.drawable.ic_apps
         }
+        val color = if (streamabilityFilterState == 0)
+            resources.getColor(android.R.color.white, null)
+        else
+            resolveAccentColor()
         binding.headerStreamabilityFilterButton.setImageResource(icon)
-        binding.headerStreamabilityFilterButton.setColorFilter(resources.getColor(colorRes, null))
+        binding.headerStreamabilityFilterButton.setColorFilter(color)
         binding.headerStreamabilityFilterButton.alpha = if (streamabilityFilterState == 0) 0.45f else 1.0f
     }
 
