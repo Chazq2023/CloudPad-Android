@@ -196,6 +196,12 @@ class FriendChatActivity : AppCompatActivity()
 		binding.chatRecyclerView.visibility = View.GONE
 		binding.chatEmptyStateText.text = message
 		binding.chatEmptyStateText.visibility = View.VISIBLE
+
+		// No history means nothing else on screen to carry D-pad focus to backButton/refresh via
+		// chatHistoryTarget/redirectDpadDownTo — land it there directly, same fix as the UP-arrow
+		// redirect inside chatRecyclerView's own key listener above.
+		binding.backButton.isFocusableInTouchMode = true
+		binding.backButton.requestFocus()
 	}
 
 	/** Shared D-pad-down target for both backButton and the toolbar's refresh action — see

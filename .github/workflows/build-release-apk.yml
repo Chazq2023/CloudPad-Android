@@ -124,6 +124,7 @@ jobs:
             - Trophy list and friends list fetch failures now show a clearer message when caused by an HTTP 403 (suggests logging out/back in, then checking PS server status), instead of a raw HTTP status code.
             - The check/cross/question-mark icons on the PS5 Library streamability filter now use the selected theme's accent colour instead of hardcoded green/red/orange; the "All" state is unchanged.
             - Added controller navigation for a game tile's Favorite/Trophies/Playtime/Shortcut icons: press Select while a tile is highlighted to focus the Favorite icon, then navigate down through the four; press Select again to return to the tile. Documented under Settings > Controller Shortcuts.
+            - Fixed the back/refresh buttons being unreachable by D-pad on the Friends, Trophies, Friend Messaging and Trophy Comparison screens whenever there was no data to show — focus now lands on the back button automatically in that case.
 
             ### APK
             Attached release asset:
