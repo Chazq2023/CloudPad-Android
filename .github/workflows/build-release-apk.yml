@@ -123,6 +123,7 @@ jobs:
             - Added a Video Pacing setting (Smooth/Standard) to Settings and the in-stream Quick Menu. Smooth (default) keeps the buffered frame scheduling for steadier motion; Standard presents each frame the instant it decodes for the lowest latency. Changes apply immediately in the Quick Menu without a reconnect.
             - Smooth pacing's buffering is now adaptive instead of a fixed cushion: it grows quickly for a few seconds after real network jitter causes a stutter, then shrinks back down to a low-latency floor once things are calm again, rather than holding extra latency all the time regardless of need.
             - Fixed Cloud Play (PS Now/PS Cloud) streams sometimes getting stuck at a noticeably lower bitrate/quality than requested, with visible frame drops once a higher bitrate did come through. Root cause: the client was always reporting 0% network packet loss to the server regardless of actual conditions, so the server's own adaptive bitrate stepping had no real signal to react to. It now reports real conditions, so the server can back off gracefully instead of pushing a bitrate the network can't sustain.
+            - Fixed D-pad navigation getting stuck on the PS5 Library's Streamability filter icon: pressing up or down from it didn't reach the cloud icon or the games grid, since it was missing from the main screen's manual focus-routing table.
 
             ### APK
             Attached release asset:
