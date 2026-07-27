@@ -539,6 +539,14 @@ class QuickSettingsPanel(
 			onDisplayModeChanged(TransformMode.fromButton(checkedId))
 		}
 
+		// Video Pacing: live JNI-backed setting, no reconnect — see Session.setVideoPacingStandard.
+		panel.quickSettingsVideoPacingToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
+			if(!isChecked) return@addOnButtonCheckedListener
+			val pacing = if(checkedId == R.id.quickSettingsVideoPacingStandard) Preferences.VideoPacing.STANDARD else Preferences.VideoPacing.SMOOTH
+			preferences.videoPacing = pacing
+			viewModel.session.setVideoPacingStandard(pacing.standard)
+		}
+
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
 		panel.quickSettingsDisconnectButton.setOnClickListener { showDisconnectOptions() }
 
@@ -618,7 +626,8 @@ class QuickSettingsPanel(
 
 		listOf(
 			panel.quickSettingsDisplayModeNormal, panel.quickSettingsDisplayModeZoom,
-			panel.quickSettingsDisplayModeStretch
+			panel.quickSettingsDisplayModeStretch,
+			panel.quickSettingsVideoPacingSmooth, panel.quickSettingsVideoPacingStandard
 		).forEach { addFocusHighlight(it, pyluxAccentColor, useForeground = true) }
 
 		listOf(
@@ -1333,6 +1342,10 @@ class QuickSettingsPanel(
 		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.casSharpeningEnabled) View.VISIBLE else View.GONE
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
 		updateCasSeekBarLabel(preferences.casSharpeningLevel)
+
+		panel.quickSettingsVideoPacingToggle.check(
+			if(preferences.videoPacing == Preferences.VideoPacing.STANDARD) R.id.quickSettingsVideoPacingStandard else R.id.quickSettingsVideoPacingSmooth
+		)
 
 		panel.root.translationX = panelWidthPx
 		if(!dialog.isShowing) dialog.show()

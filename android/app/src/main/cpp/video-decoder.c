@@ -40,6 +40,8 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->output_frames_total = 0;
 	decoder->next_render_ns = 0;
 	decoder->input_timeouts = 0;
+	decoder->queue_evictions = 0;
+	decoder->pacing_standard = false;
 
 	decoder->frame_queue_head = 0;
 	decoder->frame_queue_tail = 0;
@@ -231,6 +233,17 @@ beach:
 	chiaki_mutex_unlock(&decoder->codec_mutex);
 }
 
+// Live-adjustable from any thread: a plain bool write/read is enough here since the output
+// thread only ever reads the latest value once per decoded frame, same as output_frames_total.
+void android_chiaki_video_decoder_set_pacing(AndroidChiakiVideoDecoder *decoder, bool standard)
+{
+	// Logged unconditionally (not just on change) so the initial call at stream start — which
+	// often matches the just-initialized default and so wouldn't be a "change" — still leaves
+	// a clear record of which mode is active for this session.
+	CHIAKI_LOGI(decoder->log, "Video pacing set to %s", standard ? "Standard" : "Smooth");
+	decoder->pacing_standard = standard;
+}
+
 // Called on the stream thread. Copies the frame into the ring buffer and signals
 // the input thread, then returns immediately — the stream thread is never blocked
 // waiting for MediaCodec input buffers.
@@ -262,6 +275,7 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 		free(decoder->frame_queue[decoder->frame_queue_head].data);
 		decoder->frame_queue_head = (decoder->frame_queue_head + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
 		decoder->frame_queue_count--;
+		decoder->queue_evictions++;
 	}
 
 	decoder->frame_queue[decoder->frame_queue_tail].data = data;
@@ -357,15 +371,32 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	const int64_t short_threshold_us = vsync_period_ns * 6 / 10000LL;  // 0.6 × vsync in µs
 	const int64_t long_threshold_us  = vsync_period_ns * 15 / 10000LL; // 1.5 × vsync in µs
 
+	// Adaptive baseline bounds (Smooth pacing only). Unlike a fixed cushion, this grows
+	// quickly when the grid actually has to reset (meaning the current cushion wasn't enough
+	// to absorb whatever jitter just happened) and shrinks slowly when there's been comfortable
+	// spare headroom for a while — fast attack / slow decay, the same asymmetry real adaptive
+	// jitter buffers (e.g. WebRTC's NetEq) use, so ordinary calm conditions stay low-latency and
+	// rough patches get more cushion without needing a human to guess a single fixed constant.
+	const int64_t baseline_min_ns  = 2 * vsync_period_ns;  // 33ms at 60fps — calm-network floor
+	const int64_t baseline_max_ns  = 9 * vsync_period_ns;  // 150ms at 60fps — rough-network ceiling
+	const int64_t baseline_grow_ns = 2 * vsync_period_ns;  // fast attack: +33ms per bad second
+	const int64_t baseline_shrink_ns = vsync_period_ns;    // slow decay: -16.7ms per good second
+	// Cap sits well above baseline_max_ns so ordinary operation at any adapted baseline never
+	// bumps into the "drifted too far ahead" reset path (see cap-overflow comment below).
+	const int64_t cap_ns = 20 * vsync_period_ns; // 333ms at 60fps
+
 	// Per-second diagnostics
 	int64_t bucket_start_ns   = 0;
 	int     bucket_frames     = 0;
 	int     short_intervals   = 0; // < 0.6× vsync — frame bunching
 	int     long_intervals    = 0; // > 1.5× vsync — frame stalls or drops
+	int     bucket_resets     = 0; // grid resets this bucket — signals the baseline wasn't enough
 	int64_t last_frame_ns     = 0;
 	int32_t last_input_timeouts = 0;
+	int32_t last_queue_evictions = 0;
 	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
 	int64_t ema_inter_frame_ns = vsync_period_ns; // EMA of actual inter-frame interval
+	int64_t adaptive_baseline_ns = baseline_min_ns; // current Smooth-pacing cushion target
 
 	decoder->next_render_ns = 0;
 
@@ -404,45 +435,82 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int32_t cur_timeouts = decoder->input_timeouts;
 					int32_t new_timeouts = cur_timeouts - last_input_timeouts;
 					last_input_timeouts = cur_timeouts;
+					int32_t cur_evictions = decoder->queue_evictions;
+					int32_t new_evictions = cur_evictions - last_queue_evictions;
+					last_queue_evictions = cur_evictions;
 					int min_hdm_ms = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
-					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d",
+					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d q_evict=%d min_hdm=%d base_ms=%d resets=%d",
 						bucket_frames * 1e9f / (float)elapsed_ns,
-						short_intervals, long_intervals, new_timeouts, min_hdm_ms);
+						short_intervals, long_intervals, new_timeouts, new_evictions, min_hdm_ms,
+						(int)(adaptive_baseline_ns / 1000000LL), bucket_resets);
+
+					// Adapt the cushion for next second: fast attack if the grid actually had to
+					// reset (current baseline wasn't enough), slow decay if there was comfortable
+					// spare headroom the whole bucket (more cushion than currently needed).
+					if(bucket_resets > 0)
+					{
+						adaptive_baseline_ns += baseline_grow_ns;
+						if(adaptive_baseline_ns > baseline_max_ns)
+							adaptive_baseline_ns = baseline_max_ns;
+					}
+					else if(min_headroom_ns != INT64_MAX && min_headroom_ns > adaptive_baseline_ns / 2)
+					{
+						adaptive_baseline_ns -= baseline_shrink_ns;
+						if(adaptive_baseline_ns < baseline_min_ns)
+							adaptive_baseline_ns = baseline_min_ns;
+					}
+
 					bucket_start_ns   = now_ns;
 					bucket_frames     = 0;
 					short_intervals   = 0;
 					long_intervals    = 0;
+					bucket_resets     = 0;
 					min_headroom_ns   = INT64_MAX;
 				}
 
-				// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
-				// (one period after the previous frame) so SurfaceFlinger never receives two
-				// frames in the same window.
-				//
-				// 2x vsync (33ms at 60fps) baseline minimises display-side input latency.
-				// Cap at 8x vsync (133ms at 60fps) as a safety net for extreme jitter bursts.
-				const int64_t baseline_ns = 2 * vsync_period_ns;
-				const int64_t cap_ns      = 8 * vsync_period_ns;
-				int64_t render_ns = decoder->next_render_ns;
-				int64_t headroom_ns = render_ns - now_ns;
-				// Skip headroom recording on the very first frame (next_render_ns==0
-				// gives a boot-time-sized negative that pollutes the min_hdm log).
-				if(decoder->next_render_ns > 0 && headroom_ns < min_headroom_ns)
-					min_headroom_ns = headroom_ns;
-				if(headroom_ns <= 1000000LL || headroom_ns > cap_ns)
-					render_ns = now_ns + baseline_ns;
+				if(decoder->pacing_standard)
+				{
+					// Standard pacing: present the instant the frame is decoded, for the
+					// lowest possible latency. Uneven arrival timing shows through as motion
+					// hitches instead of being smoothed over by the grid below.
+					AMediaCodec_releaseOutputBuffer(decoder->codec, (size_t)status, true);
+					decoder->next_render_ns = 0; // let Smooth's grid re-baseline cleanly if toggled back on
+				}
+				else
+				{
+					// Vsync-grid presentation: schedule each frame for a distinct vsync boundary
+					// (one period after the previous frame) so SurfaceFlinger never receives two
+					// frames in the same window. adaptive_baseline_ns (see above) replaces what
+					// used to be a single fixed constant — it grows/shrinks itself based on
+					// recently observed jitter instead of committing to one guessed value.
+					int64_t render_ns = decoder->next_render_ns;
+					int64_t headroom_ns = render_ns - now_ns;
+					// Skip headroom recording on the very first frame (next_render_ns==0
+					// gives a boot-time-sized negative that pollutes the min_hdm log).
+					if(decoder->next_render_ns > 0 && headroom_ns < min_headroom_ns)
+						min_headroom_ns = headroom_ns;
+					if(headroom_ns <= 1000000LL || headroom_ns > cap_ns)
+					{
+						render_ns = now_ns + adaptive_baseline_ns;
+						// Don't count the very first frame's expected reset (next_render_ns==0,
+						// same case min_hdm recording above skips) as a jitter signal — only
+						// resets after the grid was already running reflect real conditions.
+						if(decoder->next_render_ns > 0)
+							bucket_resets++;
+					}
 
-				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				// Target baseline headroom: when above baseline use vsync_period so excess
-				// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
-				// counteract systematic drain if server delivers slightly below 60fps.
-				// This keeps headroom near baseline and prevents cap-overflow resets, which
-				// cause timestamp inversions (newer frame scheduled before older frame in
-				// SurfaceFlinger queue → visible stutter every ~13s).
-				int64_t advance_ns = (headroom_ns > baseline_ns)
-					? vsync_period_ns
-					: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
-				decoder->next_render_ns = render_ns + advance_ns;
+					AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
+					// Target baseline headroom: when above baseline use vsync_period so excess
+					// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
+					// counteract systematic drain if server delivers slightly below 60fps.
+					// This keeps headroom near baseline and prevents cap-overflow resets, which
+					// cause timestamp inversions (newer frame scheduled before older frame in
+					// SurfaceFlinger queue → visible stutter every ~13s).
+					int64_t advance_ns = (headroom_ns > adaptive_baseline_ns)
+						? vsync_period_ns
+						: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
+					decoder->next_render_ns = render_ns + advance_ns;
+				}
 				decoder->output_frames_total++;
 			}
 			else
