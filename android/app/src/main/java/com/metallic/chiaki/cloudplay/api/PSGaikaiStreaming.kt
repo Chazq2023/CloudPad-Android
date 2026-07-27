@@ -1597,8 +1597,10 @@ catch (e: Exception)
 			spec.put("ps3AuthCode", ps3AuthCode)
 			spec.put("streamServerAuthCode", ps3AuthCode)
 			
-			// Capabilities
-			capabilitiesArray.put("kratos")
+			// Capabilities — must match the virtType requested when fetching client IDs in
+			// Step 0 (kratos/cronos/konan), or Gaikai rejects PS5 titles served via the psnow
+			// entitlement flow with "noGameForEntitlementId" even though the entitlement is valid.
+			capabilitiesArray.put(virtType)
 		}
 		
 		// Set capabilities (common, but content differs by service)

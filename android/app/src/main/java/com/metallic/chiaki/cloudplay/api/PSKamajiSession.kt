@@ -796,16 +796,19 @@ class PSKamajiSession(
 				if (candidate.has("playable_platform"))
 				{
 					val playablePlatform = candidate.getJSONArray("playable_platform")
+					var hasPS5 = false
 					var hasPS4 = false
 					var hasPS3 = false
 					for (i in 0 until playablePlatform.length())
 					{
 						val platformStr = playablePlatform.getString(i)
-						if (platformStr.contains("PS4", ignoreCase = true)) hasPS4 = true
+						if (platformStr.contains("PS5", ignoreCase = true)) hasPS5 = true
+						else if (platformStr.contains("PS4", ignoreCase = true)) hasPS4 = true
 						else if (platformStr.contains("PS3", ignoreCase = true)) hasPS3 = true
 					}
 					detectedPlatform = when
 					{
+						hasPS5 -> "ps5"
 						hasPS4 -> "ps4"
 						hasPS3 -> "ps3"
 						else -> "ps4"
@@ -822,16 +825,19 @@ class PSKamajiSession(
 						if (playablePlatformObj.has("values"))
 						{
 							val values = playablePlatformObj.getJSONArray("values")
+							var hasPS5 = false
 							var hasPS4 = false
 							var hasPS3 = false
 							for (i in 0 until values.length())
 							{
 								val platformStr = values.getString(i)
-								if (platformStr.contains("PS4", ignoreCase = true)) hasPS4 = true
+								if (platformStr.contains("PS5", ignoreCase = true)) hasPS5 = true
+								else if (platformStr.contains("PS4", ignoreCase = true)) hasPS4 = true
 								else if (platformStr.contains("PS3", ignoreCase = true)) hasPS3 = true
 							}
 							detectedPlatform = when
 							{
+								hasPS5 -> "ps5"
 								hasPS4 -> "ps4"
 								hasPS3 -> "ps3"
 								else -> "ps4"
@@ -859,7 +865,11 @@ class PSKamajiSession(
 					// Only CUSA = PS4 and PPSA = PS5; everything else is PS3.
 					if (detectedPlatform == "ps4") {
 						val titlePrefix = Regex("-([A-Z]{4})\\d").find(productId)?.groupValues?.get(1)
-						if (titlePrefix != null && titlePrefix != "CUSA" && titlePrefix != "PPSA") {
+						if (titlePrefix == "PPSA") {
+							detectedPlatform = "ps5"
+							Log.i(TAG, "Step 0.5d: Refined platform to 'ps5' from title prefix '$titlePrefix' (store gave no playable_platform)")
+						}
+						else if (titlePrefix != null && titlePrefix != "CUSA") {
 							detectedPlatform = "ps3"
 							Log.i(TAG, "Step 0.5d: Refined platform to 'ps3' from title prefix '$titlePrefix' (store gave no playable_platform)")
 						}
