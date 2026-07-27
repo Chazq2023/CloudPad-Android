@@ -121,6 +121,7 @@ jobs:
 
             ### Updates
             - Fixed PS5 titles served through the classic PS Now catalogue (e.g. Nioh 2 Remastered) failing to launch with "no game for this entitlement". The client never recognised PS5 in the store's platform data, so it silently requested a PS4 streaming session for a PS5-only title; it now detects PS5 correctly and requests the right session type.
+            - Reverted the Video Pacing setting and the associated Cloud Play bitrate/diagnostics changes, keeping only the D-pad navigation fix for the Streamability filter icon from that changeset.
 
             ### APK
             Attached release asset:

@@ -43,15 +43,6 @@ class Preferences(context: Context)
 		CODEC_H265("h265", R.string.preferences_codec_title_h265, com.metallic.chiaki.lib.Codec.CODEC_H265)
 	}
 
-	// How decoded frames reach the screen. Smooth (default) keeps the existing vsync-grid
-	// buffering for steadier motion; Standard presents each frame as soon as it decodes for
-	// the lowest latency. See AndroidChiakiVideoDecoder's pacing_standard doc comment.
-	enum class VideoPacing(val value: String, @StringRes val title: Int, val standard: Boolean)
-	{
-		SMOOTH("smooth", R.string.preferences_video_pacing_title_smooth, false),
-		STANDARD("standard", R.string.preferences_video_pacing_title_standard, true)
-	}
-
 	companion object {
 		val resolutionDefault = Resolution.RES_720P
 		val resolutionAll = Resolution.values()
@@ -59,8 +50,6 @@ class Preferences(context: Context)
 		val fpsAll = FPS.values()
 		val codecDefault = Codec.CODEC_H265
 		val codecAll = Codec.values()
-		val videoPacingDefault = VideoPacing.SMOOTH
-		val videoPacingAll = VideoPacing.values()
 
 		const val CLOUD_BITRATE_MIN_KBPS = 2000
 		const val CLOUD_BITRATE_MAX_KBPS = 200000
@@ -183,13 +172,6 @@ class Preferences(context: Context)
 			Codec.values().firstOrNull { it.value == value }
 		}  ?: codecDefault
 		set(value) { sharedPreferences.edit().putString(codecKey, value.value).apply() }
-
-	val videoPacingKey get() = resources.getString(R.string.preferences_video_pacing_key)
-	var videoPacing
-		get() = sharedPreferences.getString(videoPacingKey, videoPacingDefault.value)?.let { value ->
-			VideoPacing.values().firstOrNull { it.value == value }
-		} ?: videoPacingDefault
-		set(value) { sharedPreferences.edit().putString(videoPacingKey, value.value).apply() }
 
 	private val videoProfileDefaultBitrate get() = ConnectVideoProfile.preset(resolution.preset, fps.preset, codec.codec)
 	val videoProfile get() = videoProfileDefaultBitrate.let {

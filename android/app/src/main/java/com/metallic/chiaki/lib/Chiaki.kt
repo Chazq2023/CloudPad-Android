@@ -157,7 +157,6 @@ private class ChiakiNative
 		@JvmStatic external fun sessionStop(ptr: Long): Int
 		@JvmStatic external fun sessionJoin(ptr: Long): Int
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
-		@JvmStatic external fun sessionSetVideoPacingStandard(ptr: Long, standard: Boolean)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
 			@JvmStatic external fun sessionConnectMicrophone(ptr: Long)
@@ -598,13 +597,6 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun setSurface(surface: Surface?)
 	{
 		ChiakiNative.sessionSetSurface(nativePtr, surface)
-	}
-
-	/** Live-adjustable, no reconnect required — see AndroidChiakiVideoDecoder's pacing_standard
-	 *  doc comment. true = Standard (lowest latency), false = Smooth (steadier motion, default). */
-	fun setVideoPacingStandard(standard: Boolean)
-	{
-		ChiakiNative.sessionSetVideoPacingStandard(nativePtr, standard)
 	}
 
 	fun setControllerState(controllerState: ControllerState)

@@ -146,16 +146,6 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		}
 	}
 
-	/** Live-adjustable, unlike [setMicrophoneEnabled]/[requestConsoleSleep] above: this only
-	 *  flips a plain field the video decoder's output thread reads before scheduling each
-	 *  frame's presentation, not something sent over chiaki_ctrl's queued send path — so there's
-	 *  no "before fully connected" hazard and no Remote-Play-only restriction (Cloud Play uses
-	 *  the same decoder). Safe to call any time the session object exists. */
-	fun setVideoPacingStandard(standard: Boolean)
-	{
-		session?.setVideoPacingStandard(standard)
-	}
-
 	/** Remote Play only — requests the console enter rest mode. Sony's Remote Play protocol has
 	 *  no separate "power off" command (see Session.gotoBed's own doc comment for why); rest
 	 *  mode is the only remote power-state change it supports, and this is used for the in-stream
