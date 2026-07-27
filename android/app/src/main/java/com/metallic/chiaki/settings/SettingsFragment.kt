@@ -60,6 +60,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.fpsKey -> preferences.fps.value
 		preferences.bitrateKey -> preferences.bitrate?.toString() ?: ""
 		preferences.codecKey -> preferences.codec.value
+		preferences.videoPacingKey -> preferences.videoPacing.value
 		preferences.cloudResolutionPscloudKey -> preferences.getCloudResolutionPscloud().toString()
 		preferences.cloudResolutionPsnowKey -> preferences.getCloudResolutionPsnow().toString()
 		preferences.cloudDatacenterPsnowKey -> preferences.getCloudDatacenterPsnow()
@@ -87,6 +88,11 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			{
 				val codec = Preferences.Codec.values().firstOrNull { it.value == value } ?: return
 				preferences.codec = codec
+			}
+			preferences.videoPacingKey ->
+			{
+				val pacing = Preferences.VideoPacing.values().firstOrNull { it.value == value } ?: return
+				preferences.videoPacing = pacing
 			}
 			preferences.cloudResolutionPscloudKey -> preferences.setCloudResolutionPscloud(value?.toIntOrNull() ?: 720)
 			preferences.cloudResolutionPsnowKey -> preferences.setCloudResolutionPsnow(value?.toIntOrNull() ?: 720)
@@ -208,6 +214,11 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_codec_key))?.let {
 			it.entryValues = Preferences.codecAll.map { codec -> codec.value }.toTypedArray()
 			it.entries = Preferences.codecAll.map { codec -> getString(codec.title) }.toTypedArray()
+		}
+
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_video_pacing_key))?.let {
+			it.entryValues = Preferences.videoPacingAll.map { pacing -> pacing.value }.toTypedArray()
+			it.entries = Preferences.videoPacingAll.map { pacing -> getString(pacing.title) }.toTypedArray()
 		}
 
 		val registeredHostsPreference = preferenceScreen.findPreference<Preference>("registered_hosts")

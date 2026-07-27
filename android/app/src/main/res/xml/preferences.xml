@@ -131,6 +131,16 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:key="category_video_pacing"
+        app:title="@string/preferences_category_title_video_pacing">
+        <ListPreference
+            app:key="@string/preferences_video_pacing_key"
+            app:title="@string/preferences_video_pacing_title"
+            app:summary="%s"
+            app:icon="@drawable/ic_resolution"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="category_stream"
         app:title="@string/preferences_category_title_stream">
         <ListPreference

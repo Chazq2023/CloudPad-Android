@@ -336,7 +336,7 @@ class MainActivity : AppCompatActivity() {
 
         val secondaryIds = setOf(
             R.id.ps3TabButton, R.id.ps4TabButton, R.id.libraryTabButton, R.id.ownedToggleButton,
-            R.id.headerFavoritesButton, R.id.headerSortButton,
+            R.id.headerFavoritesButton, R.id.headerStreamabilityFilterButton, R.id.headerSortButton,
             R.id.headerSearchButton, R.id.headerRefreshButton
         )
         val primaryIds = setOf(
@@ -539,7 +539,7 @@ class MainActivity : AppCompatActivity() {
 
         val secondaryIds = setOf(
             R.id.ps3TabButton, R.id.ps4TabButton, R.id.libraryTabButton, R.id.ownedToggleButton,
-            R.id.headerFavoritesButton, R.id.headerSortButton,
+            R.id.headerFavoritesButton, R.id.headerStreamabilityFilterButton, R.id.headerSortButton,
             R.id.headerSearchButton, R.id.headerRefreshButton
         )
         val primaryIds = setOf(

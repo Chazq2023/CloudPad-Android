@@ -286,7 +286,11 @@ static bool android_chiaki_video_sample_with_metrics(
 	session->metrics_video_frames_total++;
 
 	if(frames_lost > 0)
+	{
 		session->metrics_drops += (uint64_t)frames_lost;
+		CHIAKI_LOGW(session->log, "FRAME_LOSS frames_lost=%d frame_recovered=%d total_drops=%llu",
+			frames_lost, (int)frame_recovered, (unsigned long long)session->metrics_drops);
+	}
 
 	return android_chiaki_video_decoder_video_sample(
 			buf,
@@ -396,6 +400,12 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 
 	ChiakiConnectInfo connect_info = { 0 };
 	connect_info.ps5 = ps5;
+	// Left at the zero-init default (0.0) here would mean the congestion-control thread
+	// (lib/src/congestioncontrol.c) treats ANY nonzero measured loss as exceeding the cap and
+	// reports 0% loss to the server on every 200ms tick, regardless of actual conditions --
+	// permanently blinding the server's own bandwidth ladder to real network degradation.
+	// 0.05 (5%) matches the desktop Qt client's default (gui/src/settings.cpp GetPacketLossMax).
+	connect_info.packet_loss_max = 0.05;
 
 	const char *str_borrow = E->GetStringUTFChars(env, host_string, NULL);
 	connect_info.host = host_str = strdup(str_borrow);
@@ -794,6 +804,12 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetSurface)(JNIEnv *env, jobject obj, jlon
 {
 	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
 	android_chiaki_video_decoder_set_surface(&session->video_decoder, env, surface);
+}
+
+JNIEXPORT void JNICALL JNI_FCN(sessionSetVideoPacingStandard)(JNIEnv *env, jobject obj, jlong ptr, jboolean standard)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	android_chiaki_video_decoder_set_pacing(&session->video_decoder, standard);
 }
 
 JNIEXPORT void JNICALL JNI_FCN(sessionSetControllerState)(JNIEnv *env, jobject obj, jlong ptr, jobject controller_state_java)

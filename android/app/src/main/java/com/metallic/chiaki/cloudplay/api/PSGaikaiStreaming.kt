@@ -1449,7 +1449,12 @@ catch (e: Exception)
 		spec.put("clientWidth", clientWidth)
 		spec.put("clientHeight", clientHeight)
 		spec.put("adaptiveStreamMode", "resize")
-		spec.put("useClientBwLadder", false)
+		// Re-enabled (was flipped to false in 2334f2c9 alongside the hardcoded-50Mbps fix, likely
+		// unintentionally): with the ladder off, Gaikai pushes at/near the fixed requested bitrate
+		// regardless of whether the network can actually sustain it, so any real-world dip causes
+		// packet loss/frame drops instead of a graceful step-down. requestedBitrateKbps below still
+		// caps the ceiling the ladder steps within, so the custom bitrate setting is still honored.
+		spec.put("useClientBwLadder", true)
 
 		val requestedBitrateKbps = if (serviceType == "pscloud")
 		{
