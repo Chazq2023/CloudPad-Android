@@ -120,12 +120,6 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Updated the "Streaming Unavailable" error dialog to also suggest checking whether PS servers are down.
-            - Trophy list and friends list fetch failures now show a clearer message when caused by an HTTP 403 (suggests logging out/back in, then checking PS server status), instead of a raw HTTP status code.
-            - The check/cross/question-mark icons on the PS5 Library streamability filter now use the selected theme's accent colour instead of hardcoded green/red/orange; the "All" state is unchanged.
-            - Added controller navigation for a game tile's Favorite/Trophies/Playtime/Shortcut icons: press Select while a tile is highlighted to focus the Favorite icon, then navigate down through the four; press Select again to return to the tile. Documented under Settings > Controller Shortcuts.
-            - Fixed the back/refresh buttons being unreachable by D-pad on the Friends, Trophies, Friend Messaging and Trophy Comparison screens whenever there was no data to show — focus now lands on the back button automatically in that case.
-            - Fixed the PS3 Catalog tab needing two touches to select (the first only highlighted it) after any D-pad navigation had passed through it — a leftover isFocusableInTouchMode flag was never being cleared.
             - Added a Video Pacing setting (Smooth/Standard) to Settings and the in-stream Quick Menu. Smooth (default) keeps the buffered frame scheduling for steadier motion; Standard presents each frame the instant it decodes for the lowest latency. Changes apply immediately in the Quick Menu without a reconnect.
             - Smooth pacing's buffering is now adaptive instead of a fixed cushion: it grows quickly for a few seconds after real network jitter causes a stutter, then shrinks back down to a low-latency floor once things are calm again, rather than holding extra latency all the time regardless of need.
             - Fixed Cloud Play (PS Now/PS Cloud) streams sometimes getting stuck at a noticeably lower bitrate/quality than requested, with visible frame drops once a higher bitrate did come through. Root cause: the client was always reporting 0% network packet loss to the server regardless of actual conditions, so the server's own adaptive bitrate stepping had no real signal to react to. It now reports real conditions, so the server can back off gracefully instead of pushing a bitrate the network can't sustain.
