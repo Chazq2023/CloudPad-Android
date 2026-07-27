@@ -173,12 +173,6 @@
     <string name="preferences_motion_enabled_summary">Use device\'s motion sensors for controller motion</string>
     <string name="preferences_button_haptic_enabled_title">Touch Haptics</string>
     <string name="preferences_button_haptic_enabled_summary">Vibrate the phone on touchscreen button presses</string>
-    <string name="preferences_category_title_video_pacing">Video Pacing</string>
-    <string name="preferences_video_pacing_title">Video Pacing</string>
-    <string name="preferences_video_pacing_summary">Smooth buffers an extra frame for steadier motion. Standard shows each frame the instant it decodes, for the lowest latency.</string>
-    <string name="preferences_video_pacing_title_smooth">Smooth</string>
-    <string name="preferences_video_pacing_title_standard">Standard</string>
-    <string name="quick_settings_video_pacing_title">Video Pacing</string>
     <string name="preferences_category_title_cas_sharpening">CAS Image Sharpening</string>
     <string name="preferences_cas_sharpening_enabled_title">Enable CAS Image Sharpening</string>
     <string name="preferences_cas_sharpening_enabled_summary">Sharpens the stream image in real time using AMD FidelityFX Contrast Adaptive Sharpening</string>
@@ -347,7 +341,6 @@
     <string name="preferences_fps_key">stream_fps</string>
     <string name="preferences_bitrate_key">stream_bitrate</string>
     <string name="preferences_codec_key">stream_codec</string>
-    <string name="preferences_video_pacing_key">stream_video_pacing</string>
     <string name="preferences_cloud_datacenter_psnow_key">cloud_datacenter_psnow</string>
     <string name="preferences_cloud_datacenters_json_psnow_key">cloud_datacenters_json_psnow</string>
     <string name="preferences_cloud_datacenter_pscloud_key">cloud_datacenter_pscloud</string>

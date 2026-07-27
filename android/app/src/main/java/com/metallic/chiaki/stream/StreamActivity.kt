@@ -223,7 +223,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		val videoProfile = connectInfo.videoProfile
 		binding.surfaceView.setVideoSize(videoProfile.width, videoProfile.height)
 		binding.surfaceView.setSharpening(prefs.casSharpeningEnabled, prefs.casSharpeningLevel)
-		viewModel.session.setVideoPacingStandard(prefs.videoPacing.standard)
 		viewModel.session.attachToCasSurfaceView(binding.surfaceView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()

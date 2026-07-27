@@ -289,46 +289,6 @@
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsCasRow" />
             <include layout="@layout/item_quick_settings_seekbar" android:id="@+id/quickSettingsCasSeekBarRow" />
 
-            <com.google.android.material.divider.MaterialDivider
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp" />
-
-            <TextView
-                style="@style/QuickSettingsSectionLabel"
-                android:text="@string/quick_settings_video_pacing_title" />
-
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/quickSettingsVideoPacingToggle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginBottom="8dp"
-                app:singleSelection="true"
-                app:selectionRequired="true"
-                app:checkedButton="@id/quickSettingsVideoPacingSmooth">
-
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:id="@+id/quickSettingsVideoPacingSmooth"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/preferences_video_pacing_title_smooth"
-                    android:textColor="@color/quick_settings_display_mode_tint"
-                    app:iconTint="@color/quick_settings_display_mode_tint"
-                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
-                <com.google.android.material.button.MaterialButton
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:id="@+id/quickSettingsVideoPacingStandard"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="@string/preferences_video_pacing_title_standard"
-                    android:textColor="@color/quick_settings_display_mode_tint"
-                    app:iconTint="@color/quick_settings_display_mode_tint"
-                    app:strokeColor="@color/quick_settings_display_mode_tint"/>
-
-            </com.google.android.material.button.MaterialButtonToggleGroup>
-
         </LinearLayout>
 
     </ScrollView>
