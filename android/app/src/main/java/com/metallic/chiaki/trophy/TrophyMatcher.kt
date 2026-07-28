@@ -25,6 +25,12 @@ object TrophyMatcher
 	private val nonAlphaNumPattern = Regex("[^a-z0-9]+")
 	private val whitespacePattern = Regex("\\s+")
 
+	/**
+	 * Store/catalogue titles and Sony's own trophyTitleName are inconsistent about including
+	 * the word "the" (e.g. a catalogue entry "Tainted Grail: Fall of Avalon" vs Sony's trophy
+	 * title "Tainted Grail: The Fall of Avalon"), and the word can appear mid-title rather than
+	 * as a leading article, so it must be dropped rather than just trimmed off the start.
+	 */
 	fun normalize(name: String): String
 	{
 		var result = name.lowercase()
@@ -32,7 +38,12 @@ object TrophyMatcher
 		result = platformSuffixPattern.replace(result, "")
 		result = editionSuffixPattern.replace(result, "")
 		result = nonAlphaNumPattern.replace(result, " ")
-		return whitespacePattern.replace(result, " ").trim()
+		result = whitespacePattern.replace(result, " ").trim()
+
+		return result
+			.split(" ")
+			.filter { token -> token != "the" }
+			.joinToString(" ")
 	}
 
 	/**

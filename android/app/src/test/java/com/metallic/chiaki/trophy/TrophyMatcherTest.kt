@@ -38,7 +38,15 @@ class TrophyMatcherTest {
 
     @Test
     fun `normalize strips edition suffix`() {
-        assertEquals("the last of us part ii", TrophyMatcher.normalize("The Last of Us Part II - Digital Edition"))
+        assertEquals("last of us part ii", TrophyMatcher.normalize("The Last of Us Part II - Digital Edition"))
+    }
+
+    @Test
+    fun `normalize drops standalone the tokens anywhere in the title`() {
+        assertEquals(
+            "tainted grail fall of avalon",
+            TrophyMatcher.normalize("Tainted Grail: The Fall of Avalon")
+        )
     }
 
     @Test
@@ -131,6 +139,13 @@ class TrophyMatcherTest {
         val titles = listOf(title("NPWR001_00", "Uncharted 3", platform = "PS4"))
         val match = TrophyMatcher.findBestMatch("Uncharted II", "ps4", titles)
         assertNull(match)
+    }
+
+    @Test
+    fun `matches a catalogue title missing a mid-title the against Sony's trophy title`() {
+        val titles = listOf(title("NPWR001_00", "Tainted Grail: The Fall of Avalon", platform = "PS5"))
+        val match = TrophyMatcher.findBestMatch("Tainted Grail: Fall of Avalon", "ps5", titles)
+        assertEquals("NPWR001_00", match?.npCommunicationId)
     }
 
     @Test
