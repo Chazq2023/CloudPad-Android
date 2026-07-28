@@ -120,8 +120,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed PS5 titles served through the classic PS Now catalogue (e.g. Nioh 2 Remastered) failing to launch with "no game for this entitlement". The client never recognised PS5 in the store's platform data, so it silently requested a PS4 streaming session for a PS5-only title; it now detects PS5 correctly and requests the right session type.
-            - Reverted the Video Pacing setting and the associated Cloud Play bitrate/diagnostics changes, keeping only the D-pad navigation fix for the Streamability filter icon from that changeset.
+            - Fixed trophy lists failing to appear for games whose store title omits a "the" that Sony's own trophy title includes mid-name (e.g. "Tainted Grail: Fall of Avalon" vs "Tainted Grail: The Fall of Avalon"). The trophy matcher now ignores standalone "the" tokens anywhere in the title when comparing names.
 
             ### APK
             Attached release asset:
