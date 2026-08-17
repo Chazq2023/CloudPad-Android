@@ -60,6 +60,8 @@ class Preferences(context: Context)
 		const val CAS_SHARPENING_LEVEL_DEFAULT = 1
 
 		private const val CLOUD_STORE_LOCALE_KEY = "cloud_store_locale"
+		private const val CLOUD_ACCOUNT_LOCALE_KEY = "cloud_account_locale"
+		private const val CLOUD_STORE_LOCALE_USER_SELECTED_KEY = "cloud_store_locale_user_selected"
 		private const val LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY = "cloud_language_pscloud"
 
 		private const val CLOUD_GAME_LANGUAGE_KEY = "cloud_game_language"
@@ -420,9 +422,18 @@ class Preferences(context: Context)
 		CloudGameRepository.invalidateCatalogCache(appContext, "locale change")
 	}
 
+	fun setUserSelectedCloudStoreLocale(value: String)
+	{
+		sharedPreferences.edit()
+			.putBoolean(CLOUD_STORE_LOCALE_USER_SELECTED_KEY, true)
+			.apply()
+		setCloudStoreLocale(value)
+	}
+
 	fun noteCloudStoreLocaleSettled(value: String)
 	{
 		if (value.isEmpty()) return
+		if (sharedPreferences.getBoolean(CLOUD_STORE_LOCALE_USER_SELECTED_KEY, false)) return
 		if (isCloudStoreLocaleConfigured() && getCloudStoreLocale() == value) return
 
 		sharedPreferences.edit()
@@ -436,6 +447,16 @@ class Preferences(context: Context)
 	{
 		val locale = com.metallic.chiaki.cloudplay.CloudLocale.fromSession(language, country)
 			?: return
+
+		sharedPreferences.edit()
+			.putString(CLOUD_ACCOUNT_LOCALE_KEY, locale)
+			.apply()
+
+		if (sharedPreferences.getBoolean(CLOUD_STORE_LOCALE_USER_SELECTED_KEY, false))
+		{
+			Log.i("Preferences", "Keeping user-selected store locale ${getCloudStoreLocale()}")
+			return
+		}
 
 		if (isCloudStoreLocaleConfigured())
 		{
@@ -548,7 +569,8 @@ class Preferences(context: Context)
 	fun setCloudLanguageFromSession(language: String?, country: String?) = setCloudStoreLocaleFromSession(language, country)
 
 	fun getRawStoredLocale(): String? =
-		sharedPreferences.getString(CLOUD_STORE_LOCALE_KEY, null)
+		sharedPreferences.getString(CLOUD_ACCOUNT_LOCALE_KEY, null)
+			?: sharedPreferences.getString(CLOUD_STORE_LOCALE_KEY, null)
 			?: sharedPreferences.getString(LEGACY_CLOUD_LANGUAGE_PSCLOUD_KEY, null)
 	
 	// Cloud resolution settings (matching Qt GetCloudResolutionPSNOW/SetCloudResolutionPSNOW)

@@ -65,6 +65,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.cloudDatacenterPsnowKey -> preferences.getCloudDatacenterPsnow()
 		preferences.cloudDatacenterPscloudKey -> preferences.getCloudDatacenterPscloud()
 		preferences.themeColourKey -> preferences.getThemeColour()
+		"locale_display" -> preferences.getCloudStoreLocale()
 		else -> defValue
 	}
 
@@ -93,6 +94,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudDatacenterPsnowKey -> preferences.setCloudDatacenterPsnow(value ?: "Auto")
 			preferences.cloudDatacenterPscloudKey -> preferences.setCloudDatacenterPscloud(value ?: "Auto")
 			preferences.themeColourKey -> preferences.setThemeColour(value ?: "pink")
+			"locale_display" -> value?.let(preferences::setUserSelectedCloudStoreLocale)
 		}
 	}
 
@@ -117,6 +119,19 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 	companion object
 	{
 		private const val PICK_SETTINGS_JSON_REQUEST = 1
+		private val CLOUD_LOCALES = listOf(
+			"en-US" to "English",
+			"en-GB" to "English (UK)",
+			"de-DE" to "Deutsch",
+			"fr-FR" to "Français",
+			"fi-FI" to "Suomi",
+			"it-IT" to "Italiano",
+			"es-ES" to "Español",
+			"nl-NL" to "Nederlands",
+			"pt-BR" to "Português (BR)",
+			"ja-JP" to "日本語",
+			"ko-KR" to "한국어"
+		)
 	}
 
 	private var disposable = CompositeDisposable()
@@ -227,11 +242,19 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		logoutPreference?.isVisible = preferences.hasNpssoToken()
 		logoutPreference?.setOnPreferenceClickListener { showLogoutConfirmation(preferences); true }
 
-		val localePreference = preferenceScreen.findPreference<Preference>("locale_display")
+		val localePreference = preferenceScreen.findPreference<ListPreference>("locale_display")
 		if (preferences.hasNpssoToken())
-			localePreference?.summary = preferences.getCloudLanguage()
+		{
+			localePreference?.entries = CLOUD_LOCALES.map { "${it.second} (${it.first})" }.toTypedArray()
+			localePreference?.entryValues = CLOUD_LOCALES.map { it.first }.toTypedArray()
+			localePreference?.value = preferences.getCloudStoreLocale()
+			localePreference?.summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+		}
 		else
+		{
+			localePreference?.isEnabled = false
 			localePreference?.summary = getString(R.string.preferences_locale_summary_not_set)
+		}
 
 		val cachedLocalePreference = preferenceScreen.findPreference<Preference>("cached_locale_display")
 		val rawStored = preferences.getRawStoredLocale()
