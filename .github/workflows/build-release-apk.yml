@@ -11,6 +11,10 @@ permissions:
 jobs:
   build-release:
     runs-on: ubuntu-latest
+    env:
+      RELEASE_NOTES: >-
+        Added a user-selectable cloud locale setting while retaining the PSN
+        account locale as a separate cached value.
 
     steps:
       - name: Checkout repo
@@ -40,6 +44,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y protobuf-compiler
           python3 -m pip install grpcio-tools
+
+      - name: Validate Discord release webhook
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASE_WEBHOOK_URL }}
+        run: |
+          case "$DISCORD_WEBHOOK_URL" in
+            https://discord.com/api/webhooks/*|https://discordapp.com/api/webhooks/*) ;;
+            *)
+              echo "::error::DISCORD_RELEASE_WEBHOOK_URL is missing or is not a valid Discord webhook URL."
+              exit 1
+              ;;
+          esac
 
       - name: Run unit tests
         working-directory: android
@@ -120,7 +136,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Added a user-selectable cloud locale setting while retaining the PSN account locale as a separate cached value.
+            - ${{ env.RELEASE_NOTES }}
 
             ### APK
             Attached release asset:
@@ -131,3 +147,32 @@ jobs:
             release/cloudpad-hero.png
             release/cloudpad-icon.png
             release/cloudpad-logo.png
+
+      - name: Announce release on Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASE_WEBHOOK_URL }}
+          RELEASE_URL: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ env.TAG }}
+        run: |
+          jq -n \
+            --arg version "$VERSION" \
+            --arg notes "$RELEASE_NOTES" \
+            --arg url "$RELEASE_URL" \
+            '{
+              username: "CloudPad Releases",
+              allowed_mentions: { parse: [] },
+              embeds: [{
+                title: ("CloudPad Beta " + $version + " is available"),
+                description: $notes,
+                url: $url,
+                color: 16738740,
+                fields: [{
+                  name: "Download",
+                  value: ("[View release and download the APK](" + $url + ")")
+                }]
+              }]
+            }' > discord-payload.json
+
+          curl --fail-with-body --retry 3 \
+            -H "Content-Type: application/json" \
+            --data @discord-payload.json \
+            "${DISCORD_WEBHOOK_URL}?wait=true"
