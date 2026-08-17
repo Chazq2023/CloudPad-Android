@@ -120,7 +120,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - Fixed trophy lists failing to appear for games whose store title omits a "the" that Sony's own trophy title includes mid-name (e.g. "Tainted Grail: Fall of Avalon" vs "Tainted Grail: The Fall of Avalon"). The trophy matcher now ignores standalone "the" tokens anywhere in the title when comparing names.
+            - Added a user-selectable cloud locale setting while retaining the PSN account locale as a separate cached value.
 
             ### APK
             Attached release asset:

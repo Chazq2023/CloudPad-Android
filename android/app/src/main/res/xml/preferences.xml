@@ -49,18 +49,17 @@
             app:summary="@string/preferences_psn_login_summary_logged_in"
             app:icon="@drawable/ic_close_white"/>
 
-        <Preference
+        <ListPreference
             app:key="locale_display"
             app:title="@string/preferences_locale_title"
             app:summary="@string/preferences_locale_summary_not_set"
-            app:selectable="true"
             app:icon="@drawable/ic_locale"/>
 
         <Preference
             app:key="cached_locale_display"
             app:title="@string/preferences_cached_locale_title"
             app:summary="@string/preferences_cached_locale_summary_not_set"
-            app:selectable="true"
+            app:selectable="false"
             app:icon="@drawable/ic_locale"/>
 
         <Preference
