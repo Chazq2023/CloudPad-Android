@@ -75,4 +75,9 @@ class GameSettingsProfileStore(context: Context)
 	{
 		storage.edit().putString(profile.key.storageKey, profile.toJson()).apply()
 	}
+
+	fun remove(key: GameProfileKey)
+	{
+		storage.edit().remove(key.storageKey).apply()
+	}
 }

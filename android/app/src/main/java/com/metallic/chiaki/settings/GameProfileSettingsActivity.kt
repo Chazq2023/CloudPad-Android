@@ -5,6 +5,7 @@ package com.metallic.chiaki.settings
 import android.content.Intent
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.SeekBar
 import android.widget.Toast
@@ -57,7 +58,8 @@ class GameProfileSettingsActivity : AppCompatActivity()
 		binding.titleTextView.setText(R.string.game_profile_settings_title)
 		binding.gameNameTextView.text = gameName
 
-		val existing = GameSettingsProfileStore(this).get(key)
+		val profileStore = GameSettingsProfileStore(this)
+		val existing = profileStore.get(key)
 		resolutionValues = if (serviceType == "pscloud") listOf(720, 1080, 1440, 2160) else listOf(720, 1080)
 		binding.resolutionSpinner.adapter = ArrayAdapter(
 			this, android.R.layout.simple_spinner_dropdown_item, resolutionValues.map { "${it}p" }
@@ -89,13 +91,20 @@ class GameProfileSettingsActivity : AppCompatActivity()
 			})
 		}
 		binding.saveProfileButton.setOnClickListener {
-			GameSettingsProfileStore(this).save(GameSettingsProfile(
+			profileStore.save(GameSettingsProfile(
 				key, gameName,
 				resolutionValues[binding.resolutionSpinner.selectedItemPosition],
 				(binding.bitrateSeekBar.progress + 2) * 1000,
 				mappingJson
 			))
 			Toast.makeText(this, R.string.game_profile_saved, Toast.LENGTH_SHORT).show()
+			setResult(RESULT_OK)
+			finish()
+		}
+		binding.removeProfileButton.visibility = if (existing != null) View.VISIBLE else View.GONE
+		binding.removeProfileButton.setOnClickListener {
+			profileStore.remove(key)
+			Toast.makeText(this, R.string.game_profile_removed, Toast.LENGTH_SHORT).show()
 			setResult(RESULT_OK)
 			finish()
 		}
