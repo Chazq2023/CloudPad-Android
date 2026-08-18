@@ -36,101 +36,132 @@
 
                     <!-- L1 hint indicator (non-focusable decoration) -->
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="32dp"
+                        android:layout_weight="0.55"
                         android:text="&lt; L1"
                         android:textSize="11sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
-                        android:paddingHorizontal="8dp"
+                        android:paddingHorizontal="2dp"
                         android:paddingVertical="0dp"
-                        android:layout_marginEnd="4dp"
+                        android:maxLines="1"
                         android:focusable="false"
                         android:clickable="false"
                         android:importantForAccessibility="no"
-                        android:background="?attr/pyluxAccentA20" />
+                        android:background="?attr/pyluxAccentA20"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="7sp"
+                        app:autoSizeMaxTextSize="11sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <!-- PS3 Catalog tab -->
                     <TextView
                         android:id="@+id/ps3TabButton"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="32dp"
+                        android:layout_weight="1"
                         android:text="PS3 Catalog"
                         android:textSize="13sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
-                        android:paddingHorizontal="12dp"
+                        android:paddingHorizontal="2dp"
                         android:paddingVertical="0dp"
+                        android:maxLines="1"
                         android:focusable="true"
                         android:clickable="true"
-                        android:background="@android:color/transparent" />
+                        android:background="@android:color/transparent"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="7sp"
+                        app:autoSizeMaxTextSize="13sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <!-- PS4 Catalog tab -->
                     <TextView
                         android:id="@+id/ps4TabButton"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="32dp"
+                        android:layout_weight="1"
                         android:text="PS4 Catalog"
                         android:textSize="13sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
-                        android:paddingHorizontal="12dp"
+                        android:paddingHorizontal="2dp"
                         android:paddingVertical="0dp"
-                        android:layout_marginStart="2dp"
+                        android:maxLines="1"
                         android:focusable="true"
                         android:clickable="true"
-                        android:background="@android:color/transparent" />
+                        android:background="@android:color/transparent"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="7sp"
+                        app:autoSizeMaxTextSize="13sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <!-- PS5 Library tab -->
                     <TextView
                         android:id="@+id/libraryTabButton"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="32dp"
+                        android:layout_weight="1"
                         android:text="PS5 Library"
                         android:textSize="13sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
-                        android:paddingHorizontal="12dp"
+                        android:paddingHorizontal="2dp"
                         android:paddingVertical="0dp"
-                        android:layout_marginStart="2dp"
+                        android:maxLines="1"
                         android:focusable="true"
 
                         android:clickable="true"
-                        android:background="@android:color/transparent" />
+                        android:background="@android:color/transparent"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="7sp"
+                        app:autoSizeMaxTextSize="13sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <!-- R1 hint indicator (non-focusable decoration) -->
                     <TextView
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="32dp"
+                        android:layout_weight="0.55"
                         android:text="R1 &gt;"
                         android:textSize="11sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
-                        android:paddingHorizontal="8dp"
+                        android:paddingHorizontal="2dp"
                         android:paddingVertical="0dp"
-                        android:layout_marginStart="4dp"
+                        android:maxLines="1"
                         android:focusable="false"
                         android:clickable="false"
                         android:importantForAccessibility="no"
-                        android:background="?attr/pyluxAccentA20" />
+                        android:background="?attr/pyluxAccentA20"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="7sp"
+                        app:autoSizeMaxTextSize="11sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                     <!-- All/Owned toggle (Library only) -->
                     <TextView
                         android:id="@+id/ownedToggleButton"
-                        android:layout_width="wrap_content"
+                        android:layout_width="0dp"
                         android:layout_height="26dp"
+                        android:layout_weight="0.55"
                         android:text="All"
                         android:textSize="11sp"
                         android:textColor="#FFFFFF"
                         android:gravity="center"
-                        android:paddingHorizontal="8dp"
+                        android:paddingHorizontal="2dp"
                         android:paddingVertical="0dp"
-                        android:layout_marginStart="4dp"
+                        android:maxLines="1"
                         android:visibility="gone"
                         android:focusable="true"
 
                         android:clickable="true"
-                        android:background="@android:color/transparent" />
+                        android:background="@android:color/transparent"
+                        app:autoSizeTextType="uniform"
+                        app:autoSizeMinTextSize="7sp"
+                        app:autoSizeMaxTextSize="11sp"
+                        app:autoSizeStepGranularity="1sp" />
 
                 </LinearLayout>
 
@@ -499,4 +530,3 @@
         android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
-
