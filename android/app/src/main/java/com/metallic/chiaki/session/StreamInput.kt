@@ -16,7 +16,8 @@ import kotlin.math.pow
 class StreamInput(
 	val context: Context,
 	val preferences: Preferences,
-	val isRemotePlay: Boolean = false
+	val isRemotePlay: Boolean = false,
+	private var mappingOverride: Map<ControllerAction, PhysicalInput>? = null
 ) {
 	var controllerStateChangedCallback: ((ControllerState) -> Unit)? = null
 
@@ -89,9 +90,10 @@ class StreamInput(
 	 * Save button after a remap edit, so a live session picks up the new mapping without
 	 * needing to reconnect.
 	 */
-	fun reloadMapping()
+	fun reloadMapping(override: Map<ControllerAction, PhysicalInput>? = mappingOverride)
 	{
-		activeMapping = PhysicalInput.resolveMapping(preferences.loadControllerMapping())
+		mappingOverride = override
+		activeMapping = PhysicalInput.resolveMapping(override ?: preferences.loadControllerMapping())
 
 		singleKeyToActions = activeMapping.entries
 			.filter { it.value is PhysicalInput.Button }

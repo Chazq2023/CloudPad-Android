@@ -13,8 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Avoid Ubuntu package mirror stalls during release builds by using the
-        existing Python protoc fallback.
+        Added per-game profiles for controller mapping, resolution and bitrate,
+        with profile-aware game tiles and in-stream Quick Settings.
+        Added the option to remove a saved game profile and return to global settings.
+        Matched profile actions to the app theme, aligned and consistently sized
+        the profile cogs, and added controller navigation to them.
+        Trophy tile icons now fill only when the matching game's platinum is unlocked.
 
     steps:
       - name: Checkout repo

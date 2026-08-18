@@ -61,6 +61,7 @@ class CloudStreamingBackend(
 		gameIdentifier: String,
 		gameName: String,
 		npssoToken: String,
+		gameProfile: com.metallic.chiaki.common.GameSettingsProfile? = null,
 		ownedEntitlementId: String = "",
 		ownedPlatform: String = "",
 		onProgress: ((String) -> Unit)? = null,
@@ -107,6 +108,7 @@ class CloudStreamingBackend(
 				sharedDuid = sharedDuid,
 				ownedEntitlementId = ownedEntitlementId,
 				ownedPlatform = ownedPlatform,
+				gameProfile = gameProfile,
 				onProgress = onProgress,
 				isCancelled = isCancelled
 			)
@@ -132,6 +134,7 @@ class CloudStreamingBackend(
 		sharedDuid: String,
 		ownedEntitlementId: String = "",
 		ownedPlatform: String = "",
+		gameProfile: com.metallic.chiaki.common.GameSettingsProfile? = null,
 		forceFullEntitlementFlow: Boolean = false,
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
@@ -237,6 +240,8 @@ class CloudStreamingBackend(
 				platform = finalPlatform,
 				npssoToken = npssoToken,
 				preferences = preferences,
+				resolutionOverride = gameProfile?.resolution,
+				bitrateOverrideKbps = gameProfile?.bitrateKbps,
 				onProgress = onProgress,
 				isCancelled = isCancelled
 			)
@@ -266,6 +271,7 @@ class CloudStreamingBackend(
 						sharedDuid = sharedDuid,
 						ownedEntitlementId = "",
 						ownedPlatform = "",
+						gameProfile = gameProfile,
 						forceFullEntitlementFlow = true,
 						onProgress = onProgress,
 						isCancelled = isCancelled
@@ -289,6 +295,7 @@ class CloudStreamingBackend(
 						sharedDuid = sharedDuid,
 						ownedEntitlementId = "",
 						ownedPlatform = ownedPlatform,
+						gameProfile = gameProfile,
 						forceFullEntitlementFlow = forceFullEntitlementFlow,
 						onProgress = onProgress,
 						isCancelled = isCancelled
@@ -420,4 +427,3 @@ class CloudStreamingBackend(
 		}
 	}
 }
-

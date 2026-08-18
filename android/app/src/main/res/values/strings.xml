@@ -21,6 +21,12 @@
     <string name="controller_remap_reset_title">Reset to Defaults</string>
     <string name="controller_remap_reset_message">Reset all button mappings to the default layout?</string>
     <string name="controller_remap_reset_confirm">Reset</string>
+    <string name="game_profile_settings_title">Game Settings</string>
+    <string name="game_profile_save">Save Profile</string>
+    <string name="game_profile_saved">Profile saved</string>
+    <string name="game_profile_remove">Remove Saved Profile</string>
+    <string name="game_profile_removed">Saved profile removed</string>
+    <string name="game_profile_settings_content_description">Game-specific settings</string>
     <string name="alert_message_standby_wakeup">The Console is currently in standby mode. Do you want to send a Wakeup packet instead of trying to connect immediately?</string>
     <string name="alert_message_session_quit">Session has quit: %s</string>
     <string name="alert_message_session_create_error">Failed to create Session: %s</string>

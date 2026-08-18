@@ -57,6 +57,8 @@ class CloudPlayFragment : Fragment() {
     private lateinit var binding: FragmentCloudPlayBinding
     private lateinit var adapter: CloudGameAdapter
     private lateinit var preferences: Preferences
+	private lateinit var gameProfileStore: com.metallic.chiaki.common.GameSettingsProfileStore
+    private var cachedTrophyTitles: List<com.metallic.chiaki.trophy.model.TrophyTitleSummary> = emptyList()
     private lateinit var fastScrollerHelper: FastScrollerHelper
 
     // Shortcut launch state
@@ -87,6 +89,8 @@ class CloudPlayFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+		refreshCachedTrophyTitles()
+		if (::adapter.isInitialized) adapter.notifyDataSetChanged()
         // Unlock orientation when returning from StreamActivity
         // This allows the device to return to the correct orientation based on its physical position
         if (savedOrientation != -1) {
@@ -136,6 +140,8 @@ class CloudPlayFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         preferences = Preferences(requireContext())
+		gameProfileStore = com.metallic.chiaki.common.GameSettingsProfileStore(requireContext())
+		refreshCachedTrophyTitles()
 
         // Library should always show owned games only.
         preferences.setPsCloudFilterOwned(true)
@@ -149,6 +155,7 @@ class CloudPlayFragment : Fragment() {
         }).get(CloudPlayViewModel::class.java)
 
         setupRecyclerView()
+		loadTrophyTileStates()
         setupCloudTabs()
         setupSearchView()
         setupSettingsFab()
@@ -1021,6 +1028,13 @@ class CloudPlayFragment : Fragment() {
             onPlaytimeClick = this::showPlaytimeDialog,
             onTrophiesClick = { game -> com.metallic.chiaki.trophy.TrophiesActivity.start(requireContext(), game) },
             onAddToHomeClick = this::confirmAddToHomeScreen,
+			onProfileClick = this::openGameProfileSettings,
+			hasProfile = { game -> gameProfileStore.has(com.metallic.chiaki.common.GameProfileKey.from(game)) },
+			hasPlatinumTrophy = { game ->
+				com.metallic.chiaki.trophy.TrophyMatcher.hasUnlockedPlatinum(
+					game.name, game.platform, cachedTrophyTitles
+				)
+			},
             isFavorite = { productId -> preferences.isFavoriteGame(productId) }
         )
         binding.gamesRecyclerView.adapter = adapter
@@ -1034,6 +1048,35 @@ class CloudPlayFragment : Fragment() {
         // Setup fast scroller
         setupFastScroller()
     }
+
+	private fun openGameProfileSettings(game: CloudGame)
+	{
+		startActivity(android.content.Intent(requireContext(), com.metallic.chiaki.settings.GameProfileSettingsActivity::class.java).apply {
+			putExtra(com.metallic.chiaki.settings.GameProfileSettingsActivity.EXTRA_PRODUCT_ID, game.productId)
+			putExtra(com.metallic.chiaki.settings.GameProfileSettingsActivity.EXTRA_PLATFORM, game.platform)
+			putExtra(com.metallic.chiaki.settings.GameProfileSettingsActivity.EXTRA_SERVICE_TYPE, game.serviceType)
+			putExtra(com.metallic.chiaki.settings.GameProfileSettingsActivity.EXTRA_GAME_NAME, game.name)
+		})
+	}
+
+	private fun refreshCachedTrophyTitles()
+	{
+		cachedTrophyTitles = preferences.getCachedTrophyTitlesJson()
+			?.let(com.metallic.chiaki.trophy.TrophyService::deserializeTitles)
+			.orEmpty()
+	}
+
+	private fun loadTrophyTileStates()
+	{
+		viewLifecycleOwner.lifecycleScope.launch {
+			val titles = com.metallic.chiaki.trophy.TrophyRepository(preferences).fetchMyTrophyTitles()
+			if (titles != null)
+			{
+				cachedTrophyTitles = titles
+				if (::adapter.isInitialized) adapter.notifyDataSetChanged()
+			}
+		}
+	}
 
     private fun setupFastScroller() {
         fastScrollerHelper = FastScrollerHelper(
@@ -1524,6 +1567,7 @@ class CloudPlayFragment : Fragment() {
         // Get NPSSO token from secure storage
         val npssoToken = preferences.getNpssoToken()
         val serviceType = PsCloudOwnership.streamServiceType(game)
+		val gameProfile = gameProfileStore.get(com.metallic.chiaki.common.GameProfileKey.from(game))
 
         // Start cloud session in coroutine
         lifecycleScope.launch {
@@ -1534,6 +1578,7 @@ class CloudPlayFragment : Fragment() {
                     gameIdentifier = PsCloudOwnership.streamIdentifier(game),
                     gameName = game.name,
                     npssoToken = npssoToken,
+					gameProfile = gameProfile,
                     ownedEntitlementId = game.entitlementId,
                     ownedPlatform = PsCloudOwnership.streamPlatform(game),
                     onProgress = { message ->
@@ -1546,7 +1591,7 @@ class CloudPlayFragment : Fragment() {
 
                 result.onSuccess { session ->
                     updateGameStreamability(game, streamable = true)
-                    launchCloudStream(session, PsCloudOwnership.streamIdentifier(game), game.productId, game.imageUrl)
+					launchCloudStream(session, PsCloudOwnership.streamIdentifier(game), game.productId, game.imageUrl, gameProfile)
                 }
 
                 result.onFailure { error ->
@@ -1729,12 +1774,20 @@ class CloudPlayFragment : Fragment() {
     /**
      * Launch StreamActivity with cloud stream session
      */
-    private fun launchCloudStream(session: com.metallic.chiaki.cloudplay.model.CloudStreamSession, gameIdentifier: String, gameProductId: String? = null, gameImageUrl: String = "") {
+	private fun launchCloudStream(
+		session: com.metallic.chiaki.cloudplay.model.CloudStreamSession,
+		gameIdentifier: String,
+		gameProductId: String? = null,
+		gameImageUrl: String = "",
+		gameProfile: com.metallic.chiaki.common.GameSettingsProfile? = null
+	) {
 
         // ConnectInfo building (codec/resolution/bitrate selection) lives in
         // CloudConnectInfoBuilder so the in-stream Quick Settings "refresh" action can build
         // an identical ConnectInfo when re-allocating a session for the same game later.
-        val connectInfo = com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder.build(session, preferences, gameIdentifier, gameProductId)
+		val connectInfo = com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder.build(
+			session, preferences, gameIdentifier, gameProductId, gameProfile
+		)
 
         // Launch StreamActivity
         val intent = android.content.Intent(
@@ -1779,4 +1832,3 @@ class CloudPlayFragment : Fragment() {
         ): Boolean = super.requestChildRectangleOnScreen(parent, child, rect, true, focusedChildVisible)
     }
 }
-

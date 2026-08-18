@@ -219,7 +219,9 @@ class QuickSettingsPanel(
 	}
 
 	private val currentMapping: MutableMap<ControllerAction, PhysicalInput> =
-		PhysicalInput.resolveMapping(preferences.loadControllerMapping()).toMutableMap()
+		PhysicalInput.resolveMapping(
+			viewModel.gameProfile?.controllerMapping() ?: preferences.loadControllerMapping()
+		).toMutableMap()
 
 	private val remapAdapter: RemapAdapter
 	private val capture: ControllerRemapCapture
@@ -1049,7 +1051,8 @@ class QuickSettingsPanel(
 		val resValues = activity.resources.getStringArray(
 			if(isLibrary) R.array.cloud_resolution_pscloud_values else R.array.cloud_resolution_psnow_values
 		).toList()
-		val currentRes = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow()
+		val currentRes = viewModel.gameProfile?.resolution
+			?: if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow()
 		sessionRowControls += addDropdownRow(
 			container,
 			if(isLibrary) R.string.preferences_cloud_resolution_pscloud_title else R.string.preferences_cloud_resolution_psnow_title,
@@ -1074,7 +1077,8 @@ class QuickSettingsPanel(
 		}
 
 		val bitrateSummaryRes = if(isLibrary) R.string.preferences_cloud_bitrate_pscloud_summary else R.string.preferences_cloud_bitrate_psnow_summary
-		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
+		val currentBitrateMbps = (viewModel.gameProfile?.bitrateKbps
+			?: if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
 		sessionRowControls += addSeekBarRow(
 			container, bitrateSummaryRes,
 			min = 2, max = 200, currentValue = currentBitrateMbps
@@ -1099,7 +1103,20 @@ class QuickSettingsPanel(
 				preferences.codec = pending.codec
 			}
 			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
-				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
+				val profile = viewModel.gameProfile
+				if(profile != null)
+				{
+					viewModel.saveGameProfile(profile.copy(
+						resolution = pending.resolution,
+						bitrateKbps = pending.bitrateKbps
+					))
+					// Datacenter is deliberately not one of the game-profile fields requested;
+					// retain its existing service-wide behavior while scoping resolution/bitrate.
+					if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
+						preferences.setCloudDatacenterPscloud(pending.datacenter)
+					else preferences.setCloudDatacenterPsnow(pending.datacenter)
+				}
+				else if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
 				{
 					preferences.setCloudResolutionPscloud(pending.resolution)
 					preferences.setCloudDatacenterPscloud(pending.datacenter)
@@ -1129,9 +1146,11 @@ class QuickSettingsPanel(
 	{
 		val isLibrary = sessionType == StreamSessionType.LIBRARY_PSCLOUD
 		return CloudSettingsSnapshot(
-			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
+			resolution = viewModel.gameProfile?.resolution
+				?: if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
 			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
-			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
+			bitrateKbps = viewModel.gameProfile?.bitrateKbps
+				?: if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
 		)
 	}
 
@@ -1539,11 +1558,18 @@ class QuickSettingsPanel(
 
 	private fun saveMappingAndRefresh()
 	{
-		preferences.saveControllerMapping(currentMapping)
+		val profile = viewModel.gameProfile
+		if(profile != null)
+		{
+			viewModel.saveGameProfile(profile.copy(
+				controllerMappingJson = PhysicalInput.mappingToJson(currentMapping)
+			))
+		}
+		else preferences.saveControllerMapping(currentMapping)
 		remapAdapter.updateItems(buildRemapItems())
 		// Rebuild StreamInput's mapping lookup tables immediately so the live session picks
 		// up the edit right away — there's no Save button to defer this to any more.
-		streamInput.reloadMapping()
+		streamInput.reloadMapping(if(profile != null) currentMapping else null)
 	}
 
 	private fun buildRemapItems(): List<RemapItem>

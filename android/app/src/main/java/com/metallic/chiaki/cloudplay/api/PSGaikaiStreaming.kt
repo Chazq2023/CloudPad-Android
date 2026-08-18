@@ -41,6 +41,8 @@ class PSGaikaiStreaming(
 	private var platform: String,      // "ps3", "ps4", or "ps5"
 	private val npssoToken: String,
 	private val preferences: com.metallic.chiaki.common.Preferences,
+	private val resolutionOverride: Int? = null,
+	private val bitrateOverrideKbps: Int? = null,
 	private val onProgress: ((String) -> Unit)? = null,  // Progress callback (message)
 	private val isCancelled: () -> Boolean = { false }  // Cancellation check
 )
@@ -1192,7 +1194,7 @@ catch (e: Exception)
 		body.put("dataCenter", selectedDatacenter)
 		
 		// Network info from ping results
-		val requestedBitrateKbps = if (serviceType == "pscloud")
+		val requestedBitrateKbps = bitrateOverrideKbps ?: if (serviceType == "pscloud")
 		{
 			preferences.getCloudBitratePscloud()
 		}
@@ -1410,7 +1412,7 @@ catch (e: Exception)
 	spec.put("redirectUri", redirectUriUrl)
 		
 		// Video Resolution (read from settings based on service type)
-		val resolution = if (serviceType == "pscloud")
+		val resolution = resolutionOverride ?: if (serviceType == "pscloud")
 		{
 			preferences.getCloudResolutionPscloud()  // PSCloud supports up to 4K
 		}
@@ -1450,7 +1452,7 @@ catch (e: Exception)
 		spec.put("adaptiveStreamMode", "resize")
 		spec.put("useClientBwLadder", false)
 
-		val requestedBitrateKbps = if (serviceType == "pscloud")
+		val requestedBitrateKbps = bitrateOverrideKbps ?: if (serviceType == "pscloud")
 		{
 			preferences.getCloudBitratePscloud()
 		}

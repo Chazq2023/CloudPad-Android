@@ -28,6 +28,9 @@ class CloudGameAdapter(
     private val onPlaytimeClick: (CloudGame) -> Unit,
     private val onTrophiesClick: (CloudGame) -> Unit,
     private val onAddToHomeClick: (CloudGame) -> Unit,
+	private val onProfileClick: (CloudGame) -> Unit,
+	private val hasProfile: (CloudGame) -> Boolean,
+    private val hasPlatinumTrophy: (CloudGame) -> Boolean,
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
@@ -80,7 +83,7 @@ class CloudGameAdapter(
 
     override fun getItemCount(): Int = games.size
 
-    /** The tile whose favourite/trophies/playtime/shortcut icons are currently being
+    /** The tile whose favourite/trophies/playtime/shortcut/profile icons are currently being
      *  controller-navigated (entered via Select on that tile), or null if no tile is in that
      *  mode. Only one tile can be in icon-nav mode at a time. */
     private var iconNavHolder: CloudGameViewHolder? = null
@@ -105,7 +108,7 @@ class CloudGameAdapter(
         /** Top-to-bottom order matches the tile layout, and is what Select-press icon-nav
          *  navigates through. */
         private val icons by lazy {
-            listOf(binding.favoriteButton, binding.trophiesButton, binding.playtimeButton, binding.addToHomeButton)
+			listOf(binding.favoriteButton, binding.trophiesButton, binding.playtimeButton, binding.addToHomeButton, binding.profileButton)
         }
 
         fun cancelImage() {
@@ -117,7 +120,7 @@ class CloudGameAdapter(
             pendingTrophiesRunnable = null
         }
 
-        /** Select (1st press): focuses the favourite icon and makes all four icons reachable by
+        /** Select (1st press): focuses the favourite icon and makes all five icons reachable by
          *  D-pad — they're non-focusable the rest of the time so normal grid navigation can't
          *  wander into them by accident. */
         fun enterIconNav() {
@@ -129,7 +132,7 @@ class CloudGameAdapter(
             binding.favoriteButton.requestFocusFromTouch()
         }
 
-        /** Select (2nd press), Back, or picking one of the four icons: returns focus to this
+        /** Select (2nd press) or Back returns focus to this
          *  tile and makes the icons non-focusable again. No-op if this holder isn't the one
          *  currently in icon-nav mode (e.g. a stray call after the icon action navigated away). */
         fun exitIconNav() {
@@ -169,6 +172,12 @@ class CloudGameAdapter(
             binding.favoriteButton.setImageResource(
                 if (isFav) R.drawable.ic_star_filled else R.drawable.ic_star_outline
             )
+			binding.trophiesButton.setImageResource(
+				if (hasPlatinumTrophy(game)) R.drawable.ic_trophy else R.drawable.ic_trophy_outline
+			)
+			binding.profileButton.setImageResource(
+				if (hasProfile(game)) R.drawable.ic_settings else R.drawable.ic_settings_outline
+			)
 
             // Rebinding (e.g. a recycled view scrolling back into place) always starts from
             // "not in icon-nav mode" — if this exact holder was the active one, clear it too, so
@@ -212,7 +221,7 @@ class CloudGameAdapter(
                 )
             }
 
-            // Picking any of the four icons while controller-navigating them (icons list, above)
+            // Picking any icon while controller-navigating it (icons list, above)
             // leaves the user right where they were — still on that icon, in icon-nav mode —
             // rather than kicking them back out to the tile. Only an explicit 2nd Select press
             // or Back exits icon-nav mode.
@@ -220,6 +229,7 @@ class CloudGameAdapter(
             binding.trophiesButton.setOnClickListener { onTrophiesClick(game) }
             binding.playtimeButton.setOnClickListener { onPlaytimeClick(game) }
             binding.addToHomeButton.setOnClickListener { onAddToHomeClick(game) }
+			binding.profileButton.setOnClickListener { onProfileClick(game) }
 
             icons.forEachIndexed { index, icon ->
                 icon.setOnKeyListener { _, keyCode, event ->
@@ -236,9 +246,18 @@ class CloudGameAdapter(
                             }
                             true
                         }
-                        // Left/right can't leave the tile while navigating its icons — there's
-                        // nowhere else within it for them to go.
-                        android.view.KeyEvent.KEYCODE_DPAD_LEFT, android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> true
+                        android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                            if (event.action == android.view.KeyEvent.ACTION_DOWN && icon !== binding.profileButton) {
+                                binding.profileButton.requestFocusFromTouch()
+                            }
+                            true
+                        }
+                        android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                            if (event.action == android.view.KeyEvent.ACTION_DOWN && icon === binding.profileButton) {
+                                binding.addToHomeButton.requestFocusFromTouch()
+                            }
+                            true
+                        }
                         android.view.KeyEvent.KEYCODE_BUTTON_SELECT -> {
                             if (event.action == android.view.KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                                 exitIconNav()
@@ -331,4 +350,3 @@ class CloudGameAdapter(
         }
     }
 }
-

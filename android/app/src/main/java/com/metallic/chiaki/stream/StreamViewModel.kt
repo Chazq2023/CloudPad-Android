@@ -11,6 +11,9 @@ import com.metallic.chiaki.cloudplay.CloudConnectInfoBuilder
 import com.metallic.chiaki.cloudplay.api.CloudStreamingBackend
 import com.metallic.chiaki.common.LogManager
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.GameProfileKey
+import com.metallic.chiaki.common.GameSettingsProfile
+import com.metallic.chiaki.common.GameSettingsProfileStore
 import com.metallic.chiaki.lib.*
 import com.metallic.chiaki.session.StreamInput
 import com.metallic.chiaki.session.StreamSession
@@ -55,8 +58,19 @@ class StreamViewModel(
 ) : ViewModel() {
 
 	val preferences = Preferences(application)
+	private val gameProfileStore = GameSettingsProfileStore(application)
+	var gameProfile: GameSettingsProfile? = connectInfo.cloudGameProductId?.let { productId ->
+		val platform = connectInfo.cloudGamePlatform ?: return@let null
+		val serviceType = connectInfo.serviceType ?: return@let null
+		gameProfileStore.get(GameProfileKey(productId, platform, serviceType))
+	}
+		private set
 	val logManager = LogManager(application)
-	val input = StreamInput(application, preferences, isRemotePlay = connectInfo.cloudSessionId.isNullOrBlank())
+	val input = StreamInput(
+		application, preferences,
+		isRemotePlay = connectInfo.cloudSessionId.isNullOrBlank(),
+		mappingOverride = gameProfile?.controllerMapping()
+	)
 	val session = StreamSession(connectInfo, logManager, preferences.logVerbose, input)
 
 	private var _onScreenControlsEnabled = MutableLiveData(preferences.onScreenControlsEnabled)
@@ -241,13 +255,14 @@ class StreamViewModel(
 				gameIdentifier = gameIdentifier,
 				gameName = connectInfo.cloudGameName ?: "",
 				npssoToken = preferences.getNpssoToken(),
+				gameProfile = gameProfile,
 				ownedEntitlementId = connectInfo.cloudOwnedEntitlementId ?: "",
 				ownedPlatform = connectInfo.cloudGamePlatform ?: "",
 				onProgress = { message -> _sessionRestartState.postValue(SessionRestartState.InProgress(message)) }
 			)
 			result.onSuccess { cloudStreamSession ->
 				val newConnectInfo = CloudConnectInfoBuilder.build(
-					cloudStreamSession, preferences, gameIdentifier, connectInfo.cloudGameProductId
+					cloudStreamSession, preferences, gameIdentifier, connectInfo.cloudGameProductId, gameProfile
 				)
 				_sessionRestartState.value = SessionRestartState.Idle
 				session.restartWithNewConnectInfo(newConnectInfo)
@@ -256,6 +271,12 @@ class StreamViewModel(
 				_sessionRestartState.value = SessionRestartState.Failed(error.message ?: "Failed to apply new settings")
 			}
 		}
+	}
+
+	fun saveGameProfile(profile: GameSettingsProfile)
+	{
+		gameProfileStore.save(profile)
+		gameProfile = profile
 	}
 
 	/** Called once the Quick Settings panel has shown the user a [SessionRestartState.Failed]
