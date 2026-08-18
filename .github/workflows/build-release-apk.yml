@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Made the cloud library tabs and controller hints resize to remain
-        visible on narrow portrait screens.
+        Preserve measured datacenter ping times in Settings when a later ping
+        attempt times out or returns an incomplete result.
 
     steps:
       - name: Checkout repo
