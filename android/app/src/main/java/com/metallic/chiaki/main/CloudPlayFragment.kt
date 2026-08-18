@@ -58,6 +58,7 @@ class CloudPlayFragment : Fragment() {
     private lateinit var adapter: CloudGameAdapter
     private lateinit var preferences: Preferences
 	private lateinit var gameProfileStore: com.metallic.chiaki.common.GameSettingsProfileStore
+    private var cachedTrophyTitles: List<com.metallic.chiaki.trophy.model.TrophyTitleSummary> = emptyList()
     private lateinit var fastScrollerHelper: FastScrollerHelper
 
     // Shortcut launch state
@@ -88,6 +89,7 @@ class CloudPlayFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+		refreshCachedTrophyTitles()
 		if (::adapter.isInitialized) adapter.notifyDataSetChanged()
         // Unlock orientation when returning from StreamActivity
         // This allows the device to return to the correct orientation based on its physical position
@@ -139,6 +141,7 @@ class CloudPlayFragment : Fragment() {
 
         preferences = Preferences(requireContext())
 		gameProfileStore = com.metallic.chiaki.common.GameSettingsProfileStore(requireContext())
+		refreshCachedTrophyTitles()
 
         // Library should always show owned games only.
         preferences.setPsCloudFilterOwned(true)
@@ -152,6 +155,7 @@ class CloudPlayFragment : Fragment() {
         }).get(CloudPlayViewModel::class.java)
 
         setupRecyclerView()
+		loadTrophyTileStates()
         setupCloudTabs()
         setupSearchView()
         setupSettingsFab()
@@ -1026,6 +1030,11 @@ class CloudPlayFragment : Fragment() {
             onAddToHomeClick = this::confirmAddToHomeScreen,
 			onProfileClick = this::openGameProfileSettings,
 			hasProfile = { game -> gameProfileStore.has(com.metallic.chiaki.common.GameProfileKey.from(game)) },
+			hasPlatinumTrophy = { game ->
+				com.metallic.chiaki.trophy.TrophyMatcher.hasUnlockedPlatinum(
+					game.name, game.platform, cachedTrophyTitles
+				)
+			},
             isFavorite = { productId -> preferences.isFavoriteGame(productId) }
         )
         binding.gamesRecyclerView.adapter = adapter
@@ -1048,6 +1057,25 @@ class CloudPlayFragment : Fragment() {
 			putExtra(com.metallic.chiaki.settings.GameProfileSettingsActivity.EXTRA_SERVICE_TYPE, game.serviceType)
 			putExtra(com.metallic.chiaki.settings.GameProfileSettingsActivity.EXTRA_GAME_NAME, game.name)
 		})
+	}
+
+	private fun refreshCachedTrophyTitles()
+	{
+		cachedTrophyTitles = preferences.getCachedTrophyTitlesJson()
+			?.let(com.metallic.chiaki.trophy.TrophyService::deserializeTitles)
+			.orEmpty()
+	}
+
+	private fun loadTrophyTileStates()
+	{
+		viewLifecycleOwner.lifecycleScope.launch {
+			val titles = com.metallic.chiaki.trophy.TrophyRepository(preferences).fetchMyTrophyTitles()
+			if (titles != null)
+			{
+				cachedTrophyTitles = titles
+				if (::adapter.isInitialized) adapter.notifyDataSetChanged()
+			}
+		}
 	}
 
     private fun setupFastScroller() {

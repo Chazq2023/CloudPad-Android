@@ -18,6 +18,7 @@ jobs:
         Added the option to remove a saved game profile and return to global settings.
         Matched profile actions to the app theme, aligned and consistently sized
         the profile cogs, and added controller navigation to them.
+        Trophy tile icons now fill only when the matching game's platinum is unlocked.
 
     steps:
       - name: Checkout repo

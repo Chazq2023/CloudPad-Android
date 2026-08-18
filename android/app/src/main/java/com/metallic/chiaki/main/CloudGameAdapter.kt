@@ -30,6 +30,7 @@ class CloudGameAdapter(
     private val onAddToHomeClick: (CloudGame) -> Unit,
 	private val onProfileClick: (CloudGame) -> Unit,
 	private val hasProfile: (CloudGame) -> Boolean,
+    private val hasPlatinumTrophy: (CloudGame) -> Boolean,
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
@@ -171,6 +172,9 @@ class CloudGameAdapter(
             binding.favoriteButton.setImageResource(
                 if (isFav) R.drawable.ic_star_filled else R.drawable.ic_star_outline
             )
+			binding.trophiesButton.setImageResource(
+				if (hasPlatinumTrophy(game)) R.drawable.ic_trophy else R.drawable.ic_trophy_outline
+			)
 			binding.profileButton.setImageResource(
 				if (hasProfile(game)) R.drawable.ic_settings else R.drawable.ic_settings_outline
 			)

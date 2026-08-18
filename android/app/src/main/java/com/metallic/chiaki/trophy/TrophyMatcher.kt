@@ -250,6 +250,12 @@ object TrophyMatcher
 		return null
 	}
 
+	fun hasUnlockedPlatinum(
+		gameName: String,
+		platform: String,
+		titles: List<TrophyTitleSummary>
+	): Boolean = findBestMatch(gameName, platform, titles)?.earnedTrophies?.platinum?.let { it > 0 } == true
+
 	private fun pickByPlatform(
 		matches: List<TrophyTitleSummary>,
 		platformToken: String
