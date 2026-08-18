@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added a user-selectable cloud locale setting while retaining the PSN
-        account locale as a separate cached value.
+        Made the cloud library tabs and controller hints resize to remain
+        visible on narrow portrait screens.
 
     steps:
       - name: Checkout repo
