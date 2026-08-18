@@ -17,11 +17,16 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityControllerRemapBinding
 
 class ControllerRemapActivity : AppCompatActivity() {
+	companion object {
+		const val EXTRA_PROFILE_EDIT_MODE = "profile_edit_mode"
+		const val EXTRA_MAPPING_JSON = "mapping_json"
+	}
 
     private lateinit var binding: ActivityControllerRemapBinding
     private lateinit var preferences: Preferences
     private lateinit var adapter: RemapAdapter
     private lateinit var capture: ControllerRemapCapture
+	private var profileEditMode = false
 
     private val currentMapping: MutableMap<ControllerAction, PhysicalInput> = mutableMapOf()
 
@@ -39,7 +44,11 @@ class ControllerRemapActivity : AppCompatActivity() {
         binding.titleTextView.text = getString(R.string.controller_remap_title)
 
         preferences = Preferences(this)
-        currentMapping.putAll(PhysicalInput.resolveMapping(preferences.loadControllerMapping()))
+		profileEditMode = intent.getBooleanExtra(EXTRA_PROFILE_EDIT_MODE, false)
+		val initialMapping = if (profileEditMode)
+			PhysicalInput.mappingFromJson(intent.getStringExtra(EXTRA_MAPPING_JSON).orEmpty())
+		else preferences.loadControllerMapping()
+		currentMapping.putAll(PhysicalInput.resolveMapping(initialMapping))
 
         capture = ControllerRemapCapture(
             context = this,
@@ -109,7 +118,7 @@ class ControllerRemapActivity : AppCompatActivity() {
             .setPositiveButton(R.string.controller_remap_reset_confirm) { _, _ ->
                 currentMapping.clear()
                 currentMapping.putAll(PhysicalInput.DEFAULT_MAPPING)
-                preferences.clearControllerMapping()
+				if (profileEditMode) publishProfileDraft() else preferences.clearControllerMapping()
                 adapter.updateItems(buildItems())
             }
             .setNegativeButton(R.string.action_cancel, null)
@@ -117,9 +126,16 @@ class ControllerRemapActivity : AppCompatActivity() {
     }
 
     private fun saveAndRefresh() {
-        preferences.saveControllerMapping(currentMapping)
+		if (profileEditMode) publishProfileDraft() else preferences.saveControllerMapping(currentMapping)
         adapter.updateItems(buildItems())
     }
+
+	private fun publishProfileDraft() {
+		if (!profileEditMode) return
+		setResult(RESULT_OK, android.content.Intent().putExtra(
+			EXTRA_MAPPING_JSON, PhysicalInput.mappingToJson(currentMapping)
+		))
+	}
 
     private fun buildItems(): List<RemapItem> {
         val items = mutableListOf<RemapItem>()

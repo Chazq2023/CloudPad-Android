@@ -28,6 +28,8 @@ class CloudGameAdapter(
     private val onPlaytimeClick: (CloudGame) -> Unit,
     private val onTrophiesClick: (CloudGame) -> Unit,
     private val onAddToHomeClick: (CloudGame) -> Unit,
+	private val onProfileClick: (CloudGame) -> Unit,
+	private val hasProfile: (CloudGame) -> Boolean,
     private val isFavorite: (String) -> Boolean
 ) : RecyclerView.Adapter<CloudGameAdapter.CloudGameViewHolder>() {
     init {
@@ -105,7 +107,7 @@ class CloudGameAdapter(
         /** Top-to-bottom order matches the tile layout, and is what Select-press icon-nav
          *  navigates through. */
         private val icons by lazy {
-            listOf(binding.favoriteButton, binding.trophiesButton, binding.playtimeButton, binding.addToHomeButton)
+			listOf(binding.favoriteButton, binding.trophiesButton, binding.playtimeButton, binding.addToHomeButton, binding.profileButton)
         }
 
         fun cancelImage() {
@@ -169,6 +171,9 @@ class CloudGameAdapter(
             binding.favoriteButton.setImageResource(
                 if (isFav) R.drawable.ic_star_filled else R.drawable.ic_star_outline
             )
+			binding.profileButton.setImageResource(
+				if (hasProfile(game)) R.drawable.ic_settings else R.drawable.ic_settings_outline
+			)
 
             // Rebinding (e.g. a recycled view scrolling back into place) always starts from
             // "not in icon-nav mode" — if this exact holder was the active one, clear it too, so
@@ -220,6 +225,7 @@ class CloudGameAdapter(
             binding.trophiesButton.setOnClickListener { onTrophiesClick(game) }
             binding.playtimeButton.setOnClickListener { onPlaytimeClick(game) }
             binding.addToHomeButton.setOnClickListener { onAddToHomeClick(game) }
+			binding.profileButton.setOnClickListener { onProfileClick(game) }
 
             icons.forEachIndexed { index, icon ->
                 icon.setOnKeyListener { _, keyCode, event ->
@@ -331,4 +337,3 @@ class CloudGameAdapter(
         }
     }
 }
-

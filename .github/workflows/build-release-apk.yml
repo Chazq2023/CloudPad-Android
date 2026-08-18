@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Avoid Ubuntu package mirror stalls during release builds by using the
-        existing Python protoc fallback.
+        Added per-game profiles for controller mapping, resolution and bitrate,
+        with profile-aware game tiles and in-stream Quick Settings.
 
     steps:
       - name: Checkout repo
