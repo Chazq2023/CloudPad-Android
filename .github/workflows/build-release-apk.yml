@@ -16,8 +16,8 @@ jobs:
         Added per-game profiles for controller mapping, resolution and bitrate,
         with profile-aware game tiles and in-stream Quick Settings.
         Added the option to remove a saved game profile and return to global settings.
-        Matched profile actions to the app theme, aligned the portrait profile cog,
-        and added controller navigation to it.
+        Matched profile actions to the app theme, aligned and consistently sized
+        the profile cogs, and added controller navigation to them.
 
     steps:
       - name: Checkout repo
