@@ -40,7 +40,8 @@ jobs:
         run: sdkmanager "cmake;3.30.4"
 
       - name: Install Python grpc tools
-        run: python3 -m pip install --only-binary=:all: grpcio-tools
+        run: |
+          python3 -m pip install --only-binary=:all: grpcio-tools
 
       - name: Validate Discord release webhook
         env:
