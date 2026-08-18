@@ -1021,18 +1021,6 @@ catch (e: Exception)
 		{
 			if (datacenters.length() == 0) return null
 			
-			// Save datacenters to settings (Qt lines 1194-1200)
-			// This saves the raw datacenter list before pinging
-			val datacentersJsonString = datacenters.toString()
-			if (serviceType == "pscloud")
-			{
-				preferences.setCloudDatacentersJsonPscloud(datacentersJsonString)
-			}
-			else  // psnow
-			{
-				preferences.setCloudDatacentersJsonPsnow(datacentersJsonString)
-			}
-			
 			// Check if a specific datacenter is selected (Qt lines 1203-1228)
 			val selectedDatacenterSetting = if (serviceType == "pscloud")
 			{
@@ -1078,6 +1066,9 @@ catch (e: Exception)
 				dummyPingResult.put("port", selectedDc.getInt("port"))
 				dummyPingResult.put("publicIp", selectedDc.getString("publicIp"))
 				dummyPingResult.put("maxBandwidth", selectedDc.getInt("maxBandwidth"))
+				// Keep a real prior measurement when available; the forced selection's
+				// synthetic 20 ms result is only used to seed a new picker entry.
+				persistDatacenterPicker(datacenters, JSONArray().put(dummyPingResult), preferPrior = true)
 				
 				Log.i(TAG, "Bypassing ping tests - using manually selected datacenter: $selectedDatacenterSetting")
 				Log.i(TAG, "Using dummy ping values: RTT=20ms, MTU in=1454, MTU out=1254")
@@ -1100,20 +1091,9 @@ catch (e: Exception)
 				serviceType
 			)
 			
-			// Save ping results to settings (Qt lines 1314-1322)
-			if (pingResults.length() > 0)
-			{
-				val pingResultsJsonString = pingResults.toString()
-				if (serviceType == "pscloud")
-				{
-					preferences.setCloudDatacentersJsonPscloud(pingResultsJsonString)
-				}
-				else  // psnow
-				{
-					preferences.setCloudDatacentersJsonPsnow(pingResultsJsonString)
-				}
-				Log.i(TAG, "Saved ${pingResults.length()} datacenter ping results to settings")
-			}
+			// Persist a complete picker list. Current results win, while datacenters omitted
+			// by a timeout retain their prior RTT instead of being replaced by raw API rows.
+			persistDatacenterPicker(datacenters, pingResults)
 			
 			// Select best datacenter based on ping results (Qt lines 1310-1365)
 			val bestPingResult = if (pingResults.length() > 0)
@@ -1167,6 +1147,25 @@ catch (e: Exception)
 			Log.e(TAG, "Step 12 error", e)
 			return null
 		}
+	}
+
+	private fun persistDatacenterPicker(
+		datacenters: JSONArray,
+		pingResults: JSONArray,
+		preferPrior: Boolean = false
+	)
+	{
+		val priorJson = if (serviceType == "pscloud")
+			preferences.getCloudDatacentersJsonPscloud()
+		else
+			preferences.getCloudDatacentersJsonPsnow()
+		val merged = DatacenterPickerResults.merge(datacenters, pingResults, priorJson, preferPrior).toString()
+
+		if (serviceType == "pscloud")
+			preferences.setCloudDatacentersJsonPscloud(merged)
+		else
+			preferences.setCloudDatacentersJsonPsnow(merged)
+		Log.i(TAG, "Saved merged datacenter picker results to settings")
 	}
 	
 	/**
