@@ -13,12 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added per-game profiles for controller mapping, resolution and bitrate,
-        with profile-aware game tiles and in-stream Quick Settings.
-        Added the option to remove a saved game profile and return to global settings.
-        Matched profile actions to the app theme, aligned and consistently sized
-        the profile cogs, and added controller navigation to them.
-        Trophy tile icons now fill only when the matching game's platinum is unlocked.
+        Added per-button size and transparency customisation for on-screen controls,
+        with persistent settings and a one-tap restore to defaults.
+        Added real-time previews, draggable control positioning and optional always-visible sticks.
 
     steps:
       - name: Checkout repo

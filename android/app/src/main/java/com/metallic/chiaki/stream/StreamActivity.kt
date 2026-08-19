@@ -69,6 +69,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private lateinit var viewModel: StreamViewModel
 	private lateinit var binding: ActivityStreamBinding
 	private lateinit var quickSettingsPanel: QuickSettingsPanel
+	private var defaultTouchControlsFragment: DefaultTouchControlsFragment? = null
 	private lateinit var trophyUnlockPopupPresenter: TrophyUnlockPopupPresenter
 
 	/** Only created for cloud sessions (Catalog/Library), which are the only ones with a known
@@ -199,7 +200,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				pendingMicPermissionCallback = onResult
 				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 			},
-			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) }
+			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) },
+			onTouchControlsCustomizationChanged = { defaultTouchControlsFragment?.applyCustomization() },
+			onTouchControlsCustomizationVisibilityChanged = { visible ->
+				defaultTouchControlsFragment?.setCustomizationPanelVisible(visible)
+			},
+			onMoveTouchControl = { control, onSaved ->
+				defaultTouchControlsFragment?.startMoveMode(control, onSaved)
+			}
 		)
 
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch,
@@ -288,6 +296,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		super.onAttachFragment(fragment)
 		if(fragment is TouchControlsFragment)
 		{
+			if(fragment is DefaultTouchControlsFragment) defaultTouchControlsFragment = fragment
 			if (isTv()) {
 				// Force controls hidden on TV by giving the fragment a LiveData that always emits false
 				fragment.onScreenControlsEnabled = androidx.lifecycle.MutableLiveData(false)

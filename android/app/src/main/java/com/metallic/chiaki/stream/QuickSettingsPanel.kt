@@ -23,6 +23,7 @@ import android.view.Window
 import android.view.WindowManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.TextView
@@ -71,7 +72,10 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
 import com.pylux.stream.databinding.ItemQuickSettingsSeekbarBinding
+import com.pylux.stream.databinding.DialogTouchControlsCustomiseBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
+import com.metallic.chiaki.touchcontrols.TouchControl
+import com.metallic.chiaki.touchcontrols.TouchControlStyle
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 
@@ -125,7 +129,10 @@ class QuickSettingsPanel(
 	private val getDisplayMode: () -> TransformMode,
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
 	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit,
-	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit
+	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit,
+	private val onTouchControlsCustomizationChanged: () -> Unit,
+	private val onTouchControlsCustomizationVisibilityChanged: (Boolean) -> Unit,
+	private val onMoveTouchControl: (TouchControl, () -> Unit) -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater).apply {
 		// root.focusable=true (see stream_quick_settings_panel.xml) exists only so a touch tap
@@ -210,6 +217,7 @@ class QuickSettingsPanel(
 	/** True while D-pad focus is inside the currently selected tab's content rather than on the
 	 *  rail — see enterContentScope()/exitToRailScope(). */
 	private var inTabContent = false
+	private var customizationView: View? = null
 
 	/** Debounces re-enabling the trophies refresh button's focusability after a burst of
 	 *  scroll-driven row detaches — see the trophies RecyclerView's OnChildAttachStateChangeListener. */
@@ -468,7 +476,9 @@ class QuickSettingsPanel(
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setOnScreenControlsEnabled(checked)
+			panel.quickSettingsOscCustomiseButton.visibility = if(checked) View.VISIBLE else View.GONE
 		}
+		panel.quickSettingsOscCustomiseButton.setOnClickListener { showTouchControlsCustomiseDialog() }
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setTouchpadOnlyEnabled(checked)
@@ -1340,6 +1350,8 @@ class QuickSettingsPanel(
 		// and Touchpad Only off), so the panel must not show stale state from last time.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked = viewModel.showPerformanceOverlay.value ?: false
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = viewModel.onScreenControlsEnabled.value ?: false
+		panel.quickSettingsOscCustomiseButton.visibility =
+			if(panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked) View.VISIBLE else View.GONE
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = viewModel.touchpadOnlyEnabled.value ?: false
 		panel.quickSettingsDisplayModeToggle.check(buttonIdFor(getDisplayMode()))
 
@@ -1401,6 +1413,109 @@ class QuickSettingsPanel(
 	fun toggle()
 	{
 		if(isOpen) close() else open()
+	}
+
+	private fun showTouchControlsCustomiseDialog()
+	{
+		dismissImmediately()
+		customizationView?.let { (it.parent as? ViewGroup)?.removeView(it) }
+		val binding = DialogTouchControlsCustomiseBinding.inflate(activity.layoutInflater)
+		val controls = TouchControl.values()
+		val labels = controls.map { activity.getString(it.labelRes) }
+		binding.touchControlSpinner.adapter = ArrayAdapter(
+			activity,
+			R.layout.item_touch_control_spinner,
+			labels
+		).apply { setDropDownViewResource(R.layout.item_touch_control_spinner) }
+
+		binding.touchControlSizeSeekBar.max = TouchControlStyle.MAX_SIZE_PERCENT - TouchControlStyle.MIN_SIZE_PERCENT
+		binding.touchControlSizeSeekBar.keyProgressIncrement = 5
+		binding.touchControlOpacitySeekBar.max = TouchControlStyle.MAX_OPACITY_PERCENT - TouchControlStyle.MIN_OPACITY_PERCENT
+		binding.touchControlOpacitySeekBar.keyProgressIncrement = 10
+
+		var loadingControl = false
+		fun selectedStyle(): TouchControlStyle
+		{
+			val existing = preferences.touchControlStyle(controls[binding.touchControlSpinner.selectedItemPosition])
+			return TouchControlStyle(
+			binding.touchControlSizeSeekBar.progress + TouchControlStyle.MIN_SIZE_PERCENT,
+			binding.touchControlOpacitySeekBar.progress + TouchControlStyle.MIN_OPACITY_PERCENT,
+			existing.offsetXPermille,
+			existing.offsetYPermille,
+			binding.touchControlAlwaysShowCheckBox.isChecked
+			)
+		}
+		fun applySelectedStyle()
+		{
+			if(loadingControl) return
+			preferences.setTouchControlStyle(controls[binding.touchControlSpinner.selectedItemPosition], selectedStyle())
+			onTouchControlsCustomizationChanged()
+		}
+		fun updateLabels()
+		{
+			val style = selectedStyle()
+			binding.touchControlSizeLabel.text = activity.getString(R.string.touch_controls_size, style.sizePercent)
+			binding.touchControlOpacityLabel.text = activity.getString(R.string.touch_controls_opacity, style.opacityPercent)
+		}
+		fun loadControl(position: Int)
+		{
+			loadingControl = true
+			val style = preferences.touchControlStyle(controls[position])
+			binding.touchControlSizeSeekBar.progress = style.sizePercent - TouchControlStyle.MIN_SIZE_PERCENT
+			binding.touchControlOpacitySeekBar.progress = style.opacityPercent - TouchControlStyle.MIN_OPACITY_PERCENT
+			binding.touchControlAlwaysShowCheckBox.visibility =
+				if(controls[position] == TouchControl.LEFT_STICK || controls[position] == TouchControl.RIGHT_STICK) View.VISIBLE else View.GONE
+			binding.touchControlAlwaysShowCheckBox.isChecked = style.alwaysShow
+			updateLabels()
+			loadingControl = false
+		}
+
+		binding.touchControlSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener
+		{
+			override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = loadControl(position)
+			override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+		}
+		val sliderListener = object: SeekBar.OnSeekBarChangeListener
+		{
+			override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean)
+			{
+				updateLabels()
+				if(fromUser) applySelectedStyle()
+			}
+			override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+			override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+		}
+		binding.touchControlSizeSeekBar.setOnSeekBarChangeListener(sliderListener)
+		binding.touchControlOpacitySeekBar.setOnSeekBarChangeListener(sliderListener)
+		binding.touchControlAlwaysShowCheckBox.setOnCheckedChangeListener { _, _ -> applySelectedStyle() }
+
+		val streamRoot = activity.findViewById<FrameLayout>(R.id.mainStreamLayout)
+		fun dismissCustomization()
+		{
+			(streamRoot.findViewById<View>(binding.root.id)?.parent as? ViewGroup)?.removeView(binding.root)
+			if(binding.root.parent === streamRoot) streamRoot.removeView(binding.root)
+			customizationView = null
+			onTouchControlsCustomizationVisibilityChanged(false)
+		}
+		binding.touchControlMoveButton.setOnClickListener {
+			val control = controls[binding.touchControlSpinner.selectedItemPosition]
+			dismissCustomization()
+			onMoveTouchControl(control) { showTouchControlsCustomiseDialog() }
+		}
+		binding.touchControlFinishButton.setOnClickListener {
+			dismissCustomization()
+			open()
+		}
+		binding.touchControlRestoreButton.setOnClickListener {
+			preferences.restoreTouchControlStyles()
+			onTouchControlsCustomizationChanged()
+			loadControl(binding.touchControlSpinner.selectedItemPosition)
+		}
+		val width = (360f * activity.resources.displayMetrics.density).toInt()
+			.coerceAtMost(activity.resources.displayMetrics.widthPixels - 32)
+		streamRoot.addView(binding.root, FrameLayout.LayoutParams(width, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
+		customizationView = binding.root
+		onTouchControlsCustomizationVisibilityChanged(true)
 	}
 
 	/** Remote Play only — Cloud Play's power icon keeps its original single-tap disconnect
