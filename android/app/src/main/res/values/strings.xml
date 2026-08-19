@@ -142,6 +142,8 @@
     <string name="preferences_icon_key_not_streamable_title">Game is verified as non-streamable</string>
     <string name="preferences_icon_key_unknown_title">Game is not verified as streamable or non-streamable. Please launch game to verify status.</string>
     <string name="preferences_category_title_controller_shortcuts">Controller Shortcuts</string>
+    <string name="preferences_controller_shortcut_refresh_title">Triangle (press)</string>
+    <string name="preferences_controller_shortcut_refresh_summary">Refresh the currently selected game catalog/library</string>
     <string name="preferences_controller_shortcut_playtime_title">Square (press) — while a game is highlighted</string>
     <string name="preferences_controller_shortcut_playtime_summary">Shows the game\'s playtime</string>
     <string name="preferences_controller_shortcut_trophies_title">Square (hold) — while a game is highlighted</string>
