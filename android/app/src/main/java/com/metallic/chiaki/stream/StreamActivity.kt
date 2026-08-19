@@ -709,6 +709,14 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	{
 		if(quickSettingsPanel.isCapturingInput && quickSettingsPanel.handleCaptureKeyEvent(event))
 			return true
+		// The customisation popup is part of the stream view rather than a separate Dialog window.
+		// While it is visible, let its focused Spinner/SeekBars/CheckBox/buttons consume controller
+		// navigation before StreamInput can forward those same presses to the remote console.
+		if(quickSettingsPanel.isCustomisingTouchControls)
+		{
+			if(quickSettingsPanel.handleTouchControlsCustomizationKeyEvent(event)) return true
+			return super.dispatchKeyEvent(event)
+		}
 		return viewModel.input.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
 	}
 
@@ -716,6 +724,9 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	{
 		if(quickSettingsPanel.isCapturingInput && quickSettingsPanel.handleCaptureMotionEvent(event))
 			return true
+		if(quickSettingsPanel.isCustomisingTouchControls)
+			return quickSettingsPanel.handleTouchControlsCustomizationMotionEvent(event) ||
+				super.onGenericMotionEvent(event)
 		return viewModel.input.onGenericMotionEvent(event) || super.onGenericMotionEvent(event)
 	}
 }

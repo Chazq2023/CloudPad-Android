@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added per-button size and transparency customisation for on-screen controls,
-        with persistent settings and a one-tap restore to defaults.
-        Added real-time previews, draggable control positioning and optional always-visible sticks.
+        Added controller navigation and fine-grained slider adjustment to the customisation popup.
+        Added the Triangle refresh action to the Controller Shortcuts reference.
+        Clarified the Select shortcut navigation description in Settings.
 
     steps:
       - name: Checkout repo

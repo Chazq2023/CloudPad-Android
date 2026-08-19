@@ -266,6 +266,13 @@
         app:key="category_controller_shortcuts"
         app:title="@string/preferences_category_title_controller_shortcuts">
         <Preference
+            app:key="controller_shortcut_refresh"
+            app:title="@string/preferences_controller_shortcut_refresh_title"
+            app:summary="@string/preferences_controller_shortcut_refresh_summary"
+            app:selectable="true"
+            app:icon="@drawable/ic_shortcut_triangle"/>
+
+        <Preference
             app:key="controller_shortcut_playtime"
             app:title="@string/preferences_controller_shortcut_playtime_title"
             app:summary="@string/preferences_controller_shortcut_playtime_summary"

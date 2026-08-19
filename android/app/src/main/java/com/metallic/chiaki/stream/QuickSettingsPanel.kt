@@ -218,6 +218,23 @@ class QuickSettingsPanel(
 	 *  rail — see enterContentScope()/exitToRailScope(). */
 	private var inTabContent = false
 	private var customizationView: View? = null
+	private var customizationFirstFocus: View? = null
+	private var customizationFocusables: List<View> = emptyList()
+	private var customizationHatX = 0
+	private var customizationHatY = 0
+	private val customizationRepeatHandler = Handler(Looper.getMainLooper())
+	private val repeatCustomizationSlider = object: Runnable
+	{
+		override fun run()
+		{
+			val seekBar = activity.currentFocus as? SeekBar ?: return
+			val direction = customizationHatX
+			if(direction == 0 || !isCustomisingTouchControls) return
+			seekBar.progress = (seekBar.progress + direction * seekBar.keyProgressIncrement)
+				.coerceIn(0, seekBar.max)
+			customizationRepeatHandler.postDelayed(this, 50L)
+		}
+	}
 
 	/** Debounces re-enabling the trophies refresh button's focusability after a burst of
 	 *  scroll-driven row detaches — see the trophies RecyclerView's OnChildAttachStateChangeListener. */
@@ -321,6 +338,7 @@ class QuickSettingsPanel(
 	 *  while remapping isn't also sent to the console. Kept even though the panel's own
 	 *  Dialog window already naturally intercepts input ahead of the activity while shown. */
 	val isCapturingInput: Boolean get() = capture.isListening
+	val isCustomisingTouchControls: Boolean get() = customizationView != null
 
 	init {
 		capture = ControllerRemapCapture(
@@ -1429,9 +1447,9 @@ class QuickSettingsPanel(
 		).apply { setDropDownViewResource(R.layout.item_touch_control_spinner) }
 
 		binding.touchControlSizeSeekBar.max = TouchControlStyle.MAX_SIZE_PERCENT - TouchControlStyle.MIN_SIZE_PERCENT
-		binding.touchControlSizeSeekBar.keyProgressIncrement = 5
+		binding.touchControlSizeSeekBar.keyProgressIncrement = 1
 		binding.touchControlOpacitySeekBar.max = TouchControlStyle.MAX_OPACITY_PERCENT - TouchControlStyle.MIN_OPACITY_PERCENT
-		binding.touchControlOpacitySeekBar.keyProgressIncrement = 10
+		binding.touchControlOpacitySeekBar.keyProgressIncrement = 1
 
 		var loadingControl = false
 		fun selectedStyle(): TouchControlStyle
@@ -1480,7 +1498,7 @@ class QuickSettingsPanel(
 			override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean)
 			{
 				updateLabels()
-				if(fromUser) applySelectedStyle()
+				applySelectedStyle()
 			}
 			override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
 			override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
@@ -1495,6 +1513,11 @@ class QuickSettingsPanel(
 			(streamRoot.findViewById<View>(binding.root.id)?.parent as? ViewGroup)?.removeView(binding.root)
 			if(binding.root.parent === streamRoot) streamRoot.removeView(binding.root)
 			customizationView = null
+			customizationFirstFocus = null
+			customizationFocusables = emptyList()
+			customizationHatX = 0
+			customizationHatY = 0
+			customizationRepeatHandler.removeCallbacks(repeatCustomizationSlider)
 			onTouchControlsCustomizationVisibilityChanged(false)
 		}
 		binding.touchControlMoveButton.setOnClickListener {
@@ -1513,9 +1536,37 @@ class QuickSettingsPanel(
 		}
 		val width = (360f * activity.resources.displayMetrics.density).toInt()
 			.coerceAtMost(activity.resources.displayMetrics.widthPixels - 32)
+		customizationFocusables = listOf(
+			binding.touchControlSpinner,
+			binding.touchControlSizeSeekBar,
+			binding.touchControlOpacitySeekBar,
+			binding.touchControlAlwaysShowCheckBox,
+			binding.touchControlMoveButton,
+			binding.touchControlFinishButton,
+			binding.touchControlRestoreButton
+		)
+		customizationFocusables.forEach { view ->
+			// HAT-axis D-pads do not make Android leave touch mode. Every destination must
+			// therefore remain focusableInTouchMode or requestFocus() silently fails when
+			// moving away from the initially focused Spinner.
+			view.isFocusableInTouchMode = true
+			val isMaterialButton = view === binding.touchControlMoveButton ||
+				view === binding.touchControlFinishButton || view === binding.touchControlRestoreButton
+			addFocusHighlight(view, pyluxAccentColor, useForeground = isMaterialButton)
+		}
 		streamRoot.addView(binding.root, FrameLayout.LayoutParams(width, FrameLayout.LayoutParams.WRAP_CONTENT, Gravity.CENTER))
 		customizationView = binding.root
+		customizationFirstFocus = binding.touchControlSpinner
 		onTouchControlsCustomizationVisibilityChanged(true)
+
+		// This panel lives in the Activity's stream hierarchy rather than in the Quick Settings
+		// Dialog window. Give it an initial focus target once attached so the first controller
+		// D-pad press can navigate, even when it was opened with a touch while Android is still
+		// in touch mode. All popup controls remain focusableInTouchMode for the lifetime of this
+		// in-stream overlay because a HAT-axis D-pad never exits touch mode by itself.
+		binding.root.post {
+			binding.touchControlSpinner.requestFocus()
+		}
 	}
 
 	/** Remote Play only — Cloud Play's power icon keeps its original single-tap disconnect
@@ -1563,6 +1614,90 @@ class QuickSettingsPanel(
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)
 	fun handleCaptureMotionEvent(event: MotionEvent): Boolean = capture.handleCaptureMotionEvent(event)
+
+	/** Android handles D-pad focus, Spinner selection, SeekBar adjustment, and checkbox/button
+	 * activation once StreamActivity sends events to its view hierarchy. Re-establish the first
+	 * focus target if the stream hierarchy clears it, and translate Cross/A explicitly because
+	 * every Android widget does not consistently treat that gamepad key as a click. */
+	fun handleTouchControlsCustomizationKeyEvent(event: KeyEvent): Boolean
+	{
+		if(!isCustomisingTouchControls) return false
+		val focused = activity.currentFocus
+		val focusIsInPopup = focused != null && generateSequence(focused) { it.parent as? View }
+			.any { it === customizationView }
+		if(!focusIsInPopup && event.action == KeyEvent.ACTION_DOWN)
+		{
+			customizationFirstFocus?.requestFocus()
+			return true
+		}
+		if(event.keyCode == KeyEvent.KEYCODE_DPAD_UP || event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN)
+		{
+			if(event.action == KeyEvent.ACTION_DOWN)
+			{
+				val available = customizationFocusables.filter { it.visibility == View.VISIBLE && it.isEnabled }
+				val currentIndex = available.indexOf(focused).coerceAtLeast(0)
+				val direction = if(event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) 1 else -1
+				available.getOrNull((currentIndex + direction).coerceIn(0, available.lastIndex))?.requestFocus()
+			}
+			return true
+		}
+		if(focused === customizationFirstFocus &&
+			(event.keyCode == KeyEvent.KEYCODE_DPAD_LEFT || event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT))
+		{
+			if(event.action == KeyEvent.ACTION_DOWN)
+			{
+				val spinner = focused as android.widget.Spinner
+				val direction = if(event.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) 1 else -1
+				spinner.setSelection((spinner.selectedItemPosition + direction)
+					.coerceIn(0, spinner.count - 1))
+			}
+			return true
+		}
+		if(event.keyCode == KeyEvent.KEYCODE_BUTTON_A)
+		{
+			if(event.action == KeyEvent.ACTION_UP) focused?.performClick()
+			return true
+		}
+		return false
+	}
+
+	/** Some controllers expose their D-pad as HAT_X/HAT_Y joystick axes instead of keycodes.
+	 * Apply the first step immediately, then repeat a focused slider after the normal key-repeat
+	 * delay until the axis returns to neutral, matching Android SeekBar key behaviour. */
+	fun handleTouchControlsCustomizationMotionEvent(event: MotionEvent): Boolean
+	{
+		if(!isCustomisingTouchControls || event.action != MotionEvent.ACTION_MOVE) return false
+		fun direction(value: Float) = when {
+			value > 0.5f -> 1
+			value < -0.5f -> -1
+			else -> 0
+		}
+		val x = direction(event.getAxisValue(MotionEvent.AXIS_HAT_X))
+		val y = direction(event.getAxisValue(MotionEvent.AXIS_HAT_Y))
+		if(y != 0 && y != customizationHatY)
+		{
+			val available = customizationFocusables.filter { it.visibility == View.VISIBLE && it.isEnabled }
+			val currentIndex = available.indexOf(activity.currentFocus).coerceAtLeast(0)
+			available.getOrNull((currentIndex + y).coerceIn(0, available.lastIndex))?.requestFocus()
+		}
+		if(x != 0 && x != customizationHatX)
+		{
+			customizationRepeatHandler.removeCallbacks(repeatCustomizationSlider)
+			when(val focused = activity.currentFocus)
+			{
+				is android.widget.Spinner -> focused.setSelection(
+					(focused.selectedItemPosition + x).coerceIn(0, focused.count - 1))
+				is SeekBar -> focused.progress =
+					(focused.progress + x * focused.keyProgressIncrement).coerceIn(0, focused.max)
+			}
+			if(activity.currentFocus is SeekBar)
+				customizationRepeatHandler.postDelayed(repeatCustomizationSlider, 400L)
+		}
+		else if(x == 0) customizationRepeatHandler.removeCallbacks(repeatCustomizationSlider)
+		customizationHatX = x
+		customizationHatY = y
+		return x != 0 || y != 0
+	}
 
 	/** Translucent focus highlight — a low-alpha fill plus a stronger-alpha stroke, matching
 	 *  the treatment TrophyAdapter/RemapAdapter's list rows already use. [useForeground] draws
