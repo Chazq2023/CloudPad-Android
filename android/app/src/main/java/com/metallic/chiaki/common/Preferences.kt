@@ -60,6 +60,9 @@ class Preferences(context: Context)
 		const val CAS_SHARPENING_LEVEL_MIN = 1
 		const val CAS_SHARPENING_LEVEL_MAX = 10
 		const val CAS_SHARPENING_LEVEL_DEFAULT = 1
+		const val FSR_SHARPENING_MIN = 0
+		const val FSR_SHARPENING_MAX = 100
+		const val FSR_SHARPENING_DEFAULT = 50
 
 		private const val CLOUD_STORE_LOCALE_KEY = "cloud_store_locale"
 		private const val CLOUD_ACCOUNT_LOCALE_KEY = "cloud_account_locale"
@@ -184,6 +187,21 @@ class Preferences(context: Context)
 	var casSharpeningLevel
 		get() = sharedPreferences.getInt(casSharpeningLevelKey, CAS_SHARPENING_LEVEL_DEFAULT).coerceIn(CAS_SHARPENING_LEVEL_MIN, CAS_SHARPENING_LEVEL_MAX)
 		set(value) { sharedPreferences.edit().putInt(casSharpeningLevelKey, value.coerceIn(CAS_SHARPENING_LEVEL_MIN, CAS_SHARPENING_LEVEL_MAX)).apply() }
+
+	val fsrEnabledKey get() = resources.getString(R.string.preferences_fsr_enabled_key)
+	var fsrEnabled
+		get() = sharedPreferences.getBoolean(fsrEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(fsrEnabledKey, value).apply() }
+
+	val fsrUpscalingEnabledKey get() = resources.getString(R.string.preferences_fsr_upscaling_enabled_key)
+	var fsrUpscalingEnabled
+		get() = sharedPreferences.getBoolean(fsrUpscalingEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(fsrUpscalingEnabledKey, value).apply() }
+
+	val fsrSharpeningKey get() = resources.getString(R.string.preferences_fsr_sharpening_key)
+	var fsrSharpening
+		get() = sharedPreferences.getInt(fsrSharpeningKey, FSR_SHARPENING_DEFAULT).coerceIn(FSR_SHARPENING_MIN, FSR_SHARPENING_MAX)
+		set(value) { sharedPreferences.edit().putInt(fsrSharpeningKey, value.coerceIn(FSR_SHARPENING_MIN, FSR_SHARPENING_MAX)).apply() }
 
 	val swapCrossMoonKey get() = resources.getString(R.string.preferences_swap_cross_moon_key)
 	var swapCrossMoon

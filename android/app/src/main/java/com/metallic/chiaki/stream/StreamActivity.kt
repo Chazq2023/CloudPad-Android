@@ -201,6 +201,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 			},
 			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) },
+			onFsrChanged = { enabled, upscale, sharpening -> binding.surfaceView.setFsr(enabled, upscale, sharpening) },
 			onTouchControlsCustomizationChanged = { defaultTouchControlsFragment?.applyCustomization() },
 			onTouchControlsCustomizationVisibilityChanged = { visible ->
 				defaultTouchControlsFragment?.setCustomizationPanelVisible(visible)
@@ -229,8 +230,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 		//viewModel.session.attachToTextureView(textureView)
 		val videoProfile = connectInfo.videoProfile
+		if(prefs.fsrEnabled && prefs.casSharpeningEnabled)
+			prefs.casSharpeningEnabled = false
 		binding.surfaceView.setVideoSize(videoProfile.width, videoProfile.height)
 		binding.surfaceView.setSharpening(prefs.casSharpeningEnabled, prefs.casSharpeningLevel)
+		binding.surfaceView.setFsr(prefs.fsrEnabled, prefs.fsrUpscalingEnabled, prefs.fsrSharpening)
 		viewModel.session.attachToCasSurfaceView(binding.surfaceView)
 		viewModel.session.state.observe(this, Observer { this.stateChanged(it) })
 		adjustStreamViewAspect()

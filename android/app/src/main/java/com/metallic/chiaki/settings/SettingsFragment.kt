@@ -38,6 +38,8 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
 		preferences.pipEnabledKey -> preferences.pipEnabled
 		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
+		preferences.fsrEnabledKey -> preferences.fsrEnabled
+		preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled
 		else -> defValue
 	}
 
@@ -51,6 +53,8 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
 			preferences.pipEnabledKey -> preferences.pipEnabled = value
 			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
+			preferences.fsrEnabledKey -> preferences.fsrEnabled = value
+			preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled = value
 		}
 	}
 
@@ -102,6 +106,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.cloudBitratePscloudKey -> preferences.getCloudBitratePscloud() / 1000
 		preferences.cloudBitratePsnowKey -> preferences.getCloudBitratePsnow() / 1000
 		preferences.casSharpeningLevelKey -> preferences.casSharpeningLevel
+		preferences.fsrSharpeningKey -> preferences.fsrSharpening
 		else -> defValue
 	}
 
@@ -110,6 +115,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudBitratePscloudKey -> preferences.setCloudBitratePscloud(value * 1000)
 			preferences.cloudBitratePsnowKey -> preferences.setCloudBitratePsnow(value * 1000)
 			preferences.casSharpeningLevelKey -> preferences.casSharpeningLevel = value
+			preferences.fsrSharpeningKey -> preferences.fsrSharpening = value
 		}
 	}
 }
@@ -217,6 +223,32 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_cas_sharpening_enabled_key))
 			?.setOnPreferenceChangeListener { _, newValue ->
 				casLevelPreference?.isVisible = newValue as? Boolean ?: false
+				if(newValue == true)
+				{
+					preferences.fsrEnabled = false
+					preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_enabled_key))?.isChecked = false
+				}
+				true
+			}
+
+		val fsrUpscalePreference = preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_upscaling_enabled_key))
+		val fsrSharpenPreference = preferenceScreen.findPreference<SeekBarPreference>(getString(R.string.preferences_fsr_sharpening_key))
+		fun showFsrOptions(show: Boolean)
+		{
+			fsrUpscalePreference?.isVisible = show
+			fsrSharpenPreference?.isVisible = show
+		}
+		showFsrOptions(preferences.fsrEnabled)
+		preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_enabled_key))
+			?.setOnPreferenceChangeListener { _, newValue ->
+				val enabled = newValue as? Boolean ?: false
+				showFsrOptions(enabled)
+				if(enabled)
+				{
+					preferences.casSharpeningEnabled = false
+					preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_cas_sharpening_enabled_key))?.isChecked = false
+					casLevelPreference?.isVisible = false
+				}
 				true
 			}
 

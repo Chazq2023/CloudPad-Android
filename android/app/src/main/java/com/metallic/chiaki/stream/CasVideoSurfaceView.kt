@@ -47,6 +47,9 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 
 	private val mainHandler = Handler(Looper.getMainLooper())
 	private val renderer = CasRenderer()
+	private var sourceWidth = 1
+	private var sourceHeight = 1
+	private var fsrOutputEnabled = false
 
 	init
 	{
@@ -59,9 +62,33 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 	/** Stream resolution (not this view's on-screen size) — the CAS shader's tap spacing is
 	 *  sized in decoded-texture texels, matching what the decoder was actually configured with
 	 *  (see [com.metallic.chiaki.lib.ConnectVideoProfile]), not the on-screen viewport. */
-	fun setVideoSize(width: Int, height: Int) = renderer.setVideoSize(width, height)
+	fun setVideoSize(width: Int, height: Int)
+	{
+		sourceWidth = width
+		sourceHeight = height
+		renderer.setVideoSize(width, height)
+		updateOutputSize()
+	}
 
 	fun setSharpening(enabled: Boolean, level: Int) = renderer.setSharpening(enabled, level)
+	fun setFsr(enabled: Boolean, upscale: Boolean, sharpening: Int)
+	{
+		fsrOutputEnabled = enabled && upscale
+		updateOutputSize()
+		renderer.setFsr(enabled, upscale, sharpening)
+	}
+
+	private fun updateOutputSize()
+	{
+		mainHandler.post {
+			when
+			{
+				fsrOutputEnabled && sourceHeight == 720 -> holder.setFixedSize(1920, 1080)
+				fsrOutputEnabled && sourceHeight == 1080 -> holder.setFixedSize(2560, 1440)
+				else -> holder.setSizeFromLayout()
+			}
+		}
+	}
 
 	private inner class CasRenderer : Renderer
 	{
@@ -74,6 +101,12 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		private var uTexelSizeLoc = 0
 		private var uLevelLoc = 0
 		private var uEnabledLoc = 0
+		private var easuProgram = 0
+		private var rcasProgram = 0
+		private var fsrFramebuffer = 0
+		private var fsrTexture = 0
+		private var surfaceWidth = 1
+		private var surfaceHeight = 1
 
 		private val stMatrix = FloatArray(16)
 
@@ -81,6 +114,9 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		@Volatile private var videoHeight = 1
 		@Volatile private var sharpeningEnabled = false
 		@Volatile private var sharpeningLevel = Preferences.CAS_SHARPENING_LEVEL_MIN
+		@Volatile private var fsrEnabled = false
+		@Volatile private var fsrUpscale = false
+		@Volatile private var fsrSharpening = Preferences.FSR_SHARPENING_DEFAULT
 
 		fun setVideoSize(width: Int, height: Int)
 		{
@@ -92,6 +128,14 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		{
 			sharpeningEnabled = enabled
 			sharpeningLevel = level.coerceIn(Preferences.CAS_SHARPENING_LEVEL_MIN, Preferences.CAS_SHARPENING_LEVEL_MAX)
+			requestRender()
+		}
+
+		fun setFsr(enabled: Boolean, upscale: Boolean, sharpening: Int)
+		{
+			fsrEnabled = enabled
+			fsrUpscale = upscale
+			fsrSharpening = sharpening.coerceIn(Preferences.FSR_SHARPENING_MIN, Preferences.FSR_SHARPENING_MAX)
 			requestRender()
 		}
 
@@ -117,6 +161,8 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			surfaceTexture = st
 
 			program = buildProgram(VERTEX_SHADER, CAS_FRAGMENT_SHADER)
+			easuProgram = buildProgram(VERTEX_SHADER, EASU_FRAGMENT_SHADER)
+			rcasProgram = buildProgram(RCAS_VERTEX_SHADER, RCAS_FRAGMENT_SHADER)
 			aPositionLoc = GLES20.glGetAttribLocation(program, "aPosition")
 			aTexCoordLoc = GLES20.glGetAttribLocation(program, "aTexCoord")
 			uSTMatrixLoc = GLES20.glGetUniformLocation(program, "uSTMatrix")
@@ -130,7 +176,30 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 
 		override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int)
 		{
+			surfaceWidth = width.coerceAtLeast(1)
+			surfaceHeight = height.coerceAtLeast(1)
+			allocateFsrTarget(surfaceWidth, surfaceHeight)
 			GLES20.glViewport(0, 0, width, height)
+		}
+
+		private fun allocateFsrTarget(width: Int, height: Int)
+		{
+			if(fsrTexture == 0)
+			{
+				val ids = IntArray(1)
+				GLES20.glGenTextures(1, ids, 0); fsrTexture = ids[0]
+				GLES20.glGenFramebuffers(1, ids, 0); fsrFramebuffer = ids[0]
+			}
+			GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fsrTexture)
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+			GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+			GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, GLES20.GL_RGBA, width, height, 0, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, null)
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fsrFramebuffer)
+			GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, fsrTexture, 0)
+			check(GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER) == GLES20.GL_FRAMEBUFFER_COMPLETE) { "FSR framebuffer is incomplete" }
+			GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 		}
 
 		override fun onDrawFrame(gl: GL10?)
@@ -139,29 +208,51 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			st.updateTexImage()
 			st.getTransformMatrix(stMatrix)
 
-			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT)
-			GLES20.glUseProgram(program)
+			if(fsrEnabled)
+			{
+				GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fsrFramebuffer)
+				GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight)
+				drawExternal(easuProgram) {
+					GLES20.glUniform2f(GLES20.glGetUniformLocation(easuProgram, "uInputSize"), videoWidth.toFloat(), videoHeight.toFloat())
+					GLES20.glUniform2f(GLES20.glGetUniformLocation(easuProgram, "uOutputSize"), surfaceWidth.toFloat(), surfaceHeight.toFloat())
+					GLES20.glUniform1f(GLES20.glGetUniformLocation(easuProgram, "uUpscale"), if(fsrUpscale) 1f else 0f)
+				}
+				GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+				GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight)
+				drawRcas()
+			}
+			else drawExternal(program) {
+				GLES20.glUniform2f(uTexelSizeLoc, 1f / videoWidth, 1f / videoHeight)
+				GLES20.glUniform1f(uLevelLoc, sharpeningLevel.toFloat())
+				GLES20.glUniform1f(uEnabledLoc, if(sharpeningEnabled) 1f else 0f)
+			}
+		}
 
-			GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
-			GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
+		private inline fun drawExternal(shaderProgram: Int, uniforms: () -> Unit)
+		{
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); GLES20.glUseProgram(shaderProgram)
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0); GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
+			drawQuad(shaderProgram)
+			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(shaderProgram, "uSTMatrix"), 1, false, stMatrix, 0)
+			uniforms(); GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+		}
 
-			quadVertices.position(0)
-			GLES20.glVertexAttribPointer(aPositionLoc, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadVertices)
-			GLES20.glEnableVertexAttribArray(aPositionLoc)
-
-			quadTexCoords.position(0)
-			GLES20.glVertexAttribPointer(aTexCoordLoc, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadTexCoords)
-			GLES20.glEnableVertexAttribArray(aTexCoordLoc)
-
-			GLES20.glUniformMatrix4fv(uSTMatrixLoc, 1, false, stMatrix, 0)
-			GLES20.glUniform2f(uTexelSizeLoc, 1f / videoWidth, 1f / videoHeight)
-			GLES20.glUniform1f(uLevelLoc, sharpeningLevel.toFloat())
-			GLES20.glUniform1f(uEnabledLoc, if(sharpeningEnabled) 1f else 0f)
-
+		private fun drawRcas()
+		{
+			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); GLES20.glUseProgram(rcasProgram)
+			GLES20.glActiveTexture(GLES20.GL_TEXTURE0); GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fsrTexture)
+			drawQuad(rcasProgram)
+			GLES20.glUniform2f(GLES20.glGetUniformLocation(rcasProgram, "uTexelSize"), 1f / surfaceWidth, 1f / surfaceHeight)
+			GLES20.glUniform1f(GLES20.glGetUniformLocation(rcasProgram, "uSharpness"), fsrSharpening / 100f)
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
+		}
 
-			GLES20.glDisableVertexAttribArray(aPositionLoc)
-			GLES20.glDisableVertexAttribArray(aTexCoordLoc)
+		private fun drawQuad(shaderProgram: Int)
+		{
+			val position = GLES20.glGetAttribLocation(shaderProgram, "aPosition")
+			val texCoord = GLES20.glGetAttribLocation(shaderProgram, "aTexCoord")
+			quadVertices.position(0); GLES20.glVertexAttribPointer(position, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadVertices); GLES20.glEnableVertexAttribArray(position)
+			quadTexCoords.position(0); GLES20.glVertexAttribPointer(texCoord, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadTexCoords); GLES20.glEnableVertexAttribArray(texCoord)
 		}
 	}
 
@@ -201,6 +292,13 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 				gl_Position = aPosition;
 				vTexCoord = (uSTMatrix * vec4(aTexCoord, 0.0, 1.0)).xy;
 			}
+		"""
+
+		private const val RCAS_VERTEX_SHADER = """
+			attribute vec4 aPosition;
+			attribute vec2 aTexCoord;
+			varying vec2 vTexCoord;
+			void main() { gl_Position = aPosition; vTexCoord = aTexCoord; }
 		"""
 
 		// AMD FidelityFX CAS (sharpen-only, no upscale), 5-tap "plus" pattern. Matches the
@@ -253,6 +351,96 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 
 				vec3 sharpened = clamp(mix(centerColor, casOutput, uLevel * 0.5), 0.0, 1.0);
 				gl_FragColor = vec4(sharpened, 1.0);
+			}
+		"""
+
+		// Direct GLSL ES port of AMD FidelityFX FSR 1's reference FsrEasuF routine.
+		private const val EASU_FRAGMENT_SHADER = """
+			#extension GL_OES_EGL_image_external : require
+			precision highp float;
+			uniform samplerExternalOES sTexture;
+			uniform mat4 uSTMatrix;
+			uniform vec2 uInputSize;
+			uniform vec2 uOutputSize;
+			uniform float uUpscale;
+			varying vec2 vTexCoord;
+
+			vec3 loadPixel(vec2 p) {
+				vec2 uv = (p + 0.5) / uInputSize;
+				uv = (uSTMatrix * vec4(uv, 0.0, 1.0)).xy;
+				return texture2D(sTexture, uv).rgb;
+			}
+			float luma2(vec3 c) { return c.b * 0.5 + c.r * 0.5 + c.g; }
+			void easuSet(inout vec2 dir, inout float len, vec2 pp, float w,
+				float a, float b, float c, float d, float e) {
+				float dc=d-c, cb=c-b, lenX=max(abs(dc),abs(cb));
+				float dirX=d-b; dir.x += dirX*w;
+				lenX=clamp(abs(dirX)/max(lenX,0.00001),0.0,1.0); len += lenX*lenX*w;
+				float ec=e-c, ca=c-a, lenY=max(abs(ec),abs(ca));
+				float dirY=e-a; dir.y += dirY*w;
+				lenY=clamp(abs(dirY)/max(lenY,0.00001),0.0,1.0); len += lenY*lenY*w;
+			}
+			void easuTap(inout vec3 color, inout float weight, vec2 off, vec2 dir,
+				vec2 len2, float lob, float clp, vec3 tap) {
+				vec2 v=vec2(off.x*dir.x+off.y*dir.y, off.x*(-dir.y)+off.y*dir.x)*len2;
+				float d2=min(dot(v,v),clp);
+				float wB=0.4*d2-1.0, wA=lob*d2-1.0;
+				wB=wB*wB; wA=wA*wA;
+				float w=(1.5625*wB-0.5625)*wA;
+				color += tap*w; weight += w;
+			}
+			void main() {
+				if(uUpscale < 0.5) { gl_FragColor=texture2D(sTexture,vTexCoord); return; }
+				vec2 p=(gl_FragCoord.xy-0.5)*(uInputSize/uOutputSize)-0.5;
+				vec2 fp=floor(p), pp=p-fp;
+				vec3 b=loadPixel(fp+vec2(0.0,-1.0)), c=loadPixel(fp+vec2(1.0,-1.0));
+				vec3 e=loadPixel(fp+vec2(-1.0,0.0)), f=loadPixel(fp), g=loadPixel(fp+vec2(1.0,0.0)), h=loadPixel(fp+vec2(2.0,0.0));
+				vec3 i=loadPixel(fp+vec2(-1.0,1.0)), j=loadPixel(fp+vec2(0.0,1.0)), k=loadPixel(fp+vec2(1.0,1.0)), l=loadPixel(fp+vec2(2.0,1.0));
+				vec3 n=loadPixel(fp+vec2(0.0,2.0)), o=loadPixel(fp+vec2(1.0,2.0));
+				float bL=luma2(b),cL=luma2(c),eL=luma2(e),fL=luma2(f),gL=luma2(g),hL=luma2(h);
+				float iL=luma2(i),jL=luma2(j),kL=luma2(k),lL=luma2(l),nL=luma2(n),oL=luma2(o);
+				vec2 dir=vec2(0.0); float len=0.0;
+				easuSet(dir,len,pp,(1.0-pp.x)*(1.0-pp.y),bL,eL,fL,gL,jL);
+				easuSet(dir,len,pp,pp.x*(1.0-pp.y),cL,fL,gL,hL,kL);
+				easuSet(dir,len,pp,(1.0-pp.x)*pp.y,fL,iL,jL,kL,nL);
+				easuSet(dir,len,pp,pp.x*pp.y,gL,jL,kL,lL,oL);
+				float dirR=dot(dir,dir); if(dirR<0.000030517578125) dir=vec2(1.0,0.0); else dir*=inversesqrt(dirR);
+				len=0.5*len; len*=len;
+				float stretch=dot(dir,dir)/max(max(abs(dir.x),abs(dir.y)),0.00001);
+				vec2 len2=vec2(1.0+(stretch-1.0)*len,1.0-0.5*len);
+				float lob=0.5+(0.21-0.5)*len, clp=1.0/lob;
+				vec3 min4=min(min(f,g),min(j,k)), max4=max(max(f,g),max(j,k));
+				vec3 ac=vec3(0.0); float aw=0.0;
+				easuTap(ac,aw,vec2(0,-1)-pp,dir,len2,lob,clp,b); easuTap(ac,aw,vec2(1,-1)-pp,dir,len2,lob,clp,c);
+				easuTap(ac,aw,vec2(-1,1)-pp,dir,len2,lob,clp,i); easuTap(ac,aw,vec2(0,1)-pp,dir,len2,lob,clp,j);
+				easuTap(ac,aw,vec2(0,0)-pp,dir,len2,lob,clp,f); easuTap(ac,aw,vec2(-1,0)-pp,dir,len2,lob,clp,e);
+				easuTap(ac,aw,vec2(1,1)-pp,dir,len2,lob,clp,k); easuTap(ac,aw,vec2(2,1)-pp,dir,len2,lob,clp,l);
+				easuTap(ac,aw,vec2(2,0)-pp,dir,len2,lob,clp,h); easuTap(ac,aw,vec2(1,0)-pp,dir,len2,lob,clp,g);
+				easuTap(ac,aw,vec2(1,2)-pp,dir,len2,lob,clp,o); easuTap(ac,aw,vec2(0,2)-pp,dir,len2,lob,clp,n);
+				gl_FragColor=vec4(clamp(ac/aw,min4,max4),1.0);
+			}
+		"""
+
+		// Direct GLSL ES port of AMD FidelityFX FSR 1's FsrRcasF routine.
+		private const val RCAS_FRAGMENT_SHADER = """
+			precision highp float;
+			uniform sampler2D sTexture;
+			uniform vec2 uTexelSize;
+			uniform float uSharpness;
+			varying vec2 vTexCoord;
+			float luma2(vec3 c){return c.b*0.5+c.r*0.5+c.g;}
+			void main(){
+				vec3 b=texture2D(sTexture,vTexCoord-vec2(0.0,uTexelSize.y)).rgb;
+				vec3 d=texture2D(sTexture,vTexCoord-vec2(uTexelSize.x,0.0)).rgb;
+				vec3 e=texture2D(sTexture,vTexCoord).rgb;
+				vec3 f=texture2D(sTexture,vTexCoord+vec2(uTexelSize.x,0.0)).rgb;
+				vec3 h=texture2D(sTexture,vTexCoord+vec2(0.0,uTexelSize.y)).rgb;
+				vec3 mn4=min(min(b,d),min(f,h)), mx4=max(max(b,d),max(f,h));
+				vec3 hitMin=min(mn4,e)/max(4.0*mx4,vec3(0.00001));
+				vec3 hitMax=(vec3(1.0)-max(mx4,e))/min(4.0*mn4-vec3(4.0),vec3(-0.00001));
+				vec3 lobes=max(-hitMin,hitMax);
+				float lobe=max(-0.1875,min(max(lobes.r,max(lobes.g,lobes.b)),0.0))*uSharpness;
+				gl_FragColor=vec4(clamp((lobe*(b+d+f+h)+e)/(4.0*lobe+1.0),0.0,1.0),1.0);
 			}
 		"""
 

@@ -130,6 +130,32 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        app:key="category_fsr"
+        app:title="@string/preferences_category_title_fsr">
+        <SwitchPreference
+            app:key="@string/preferences_fsr_enabled_key"
+            app:title="@string/preferences_fsr_enabled_title"
+            app:summary="@string/preferences_fsr_enabled_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_resolution"/>
+        <SwitchPreference
+            app:key="@string/preferences_fsr_upscaling_enabled_key"
+            app:title="@string/preferences_fsr_upscaling_title"
+            app:summary="@string/preferences_fsr_upscaling_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_resolution"/>
+        <SeekBarPreference
+            app:key="@string/preferences_fsr_sharpening_key"
+            app:title="@string/preferences_fsr_sharpening_title"
+            app:min="0"
+            android:max="100"
+            app:seekBarIncrement="1"
+            app:defaultValue="50"
+            app:showSeekBarValue="true"
+            app:icon="@drawable/ic_resolution"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
         app:key="category_stream"
         app:title="@string/preferences_category_title_stream">
         <ListPreference
