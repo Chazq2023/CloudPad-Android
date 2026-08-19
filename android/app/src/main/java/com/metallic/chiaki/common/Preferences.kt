@@ -74,6 +74,9 @@ class Preferences(context: Context)
 		private const val LEGACY_CLOUD_FALLBACK_REGION_KEY = "cloud_fallback_region"
 		private const val TOUCH_CONTROL_SIZE_PREFIX = "touch_control_size_"
 		private const val TOUCH_CONTROL_OPACITY_PREFIX = "touch_control_opacity_"
+		private const val TOUCH_CONTROL_OFFSET_X_PREFIX = "touch_control_offset_x_"
+		private const val TOUCH_CONTROL_OFFSET_Y_PREFIX = "touch_control_offset_y_"
+		private const val TOUCH_CONTROL_ALWAYS_SHOW_PREFIX = "touch_control_always_show_"
 
 		private const val CLOUD_CATALOG_NATIVE_MODE_KEY = "cloud_catalog_native_mode"
 	}
@@ -107,7 +110,10 @@ class Preferences(context: Context)
 		sharedPreferences.getInt(
 			TOUCH_CONTROL_OPACITY_PREFIX + control.name,
 			TouchControlStyle.DEFAULT_PERCENT
-		).coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT)
+		).coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT),
+		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_X_PREFIX + control.name, 0),
+		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_Y_PREFIX + control.name, 0),
+		sharedPreferences.getBoolean(TOUCH_CONTROL_ALWAYS_SHOW_PREFIX + control.name, false)
 	)
 
 	fun setTouchControlStyle(control: TouchControl, style: TouchControlStyle)
@@ -115,6 +121,9 @@ class Preferences(context: Context)
 		sharedPreferences.edit()
 			.putInt(TOUCH_CONTROL_SIZE_PREFIX + control.name, style.sizePercent.coerceIn(TouchControlStyle.MIN_SIZE_PERCENT, TouchControlStyle.MAX_SIZE_PERCENT))
 			.putInt(TOUCH_CONTROL_OPACITY_PREFIX + control.name, style.opacityPercent.coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT))
+			.putInt(TOUCH_CONTROL_OFFSET_X_PREFIX + control.name, style.offsetXPermille)
+			.putInt(TOUCH_CONTROL_OFFSET_Y_PREFIX + control.name, style.offsetYPermille)
+			.putBoolean(TOUCH_CONTROL_ALWAYS_SHOW_PREFIX + control.name, style.alwaysShow)
 			.apply()
 	}
 
@@ -124,6 +133,9 @@ class Preferences(context: Context)
 			TouchControl.values().forEach { control ->
 				remove(TOUCH_CONTROL_SIZE_PREFIX + control.name)
 				remove(TOUCH_CONTROL_OPACITY_PREFIX + control.name)
+				remove(TOUCH_CONTROL_OFFSET_X_PREFIX + control.name)
+				remove(TOUCH_CONTROL_OFFSET_Y_PREFIX + control.name)
+				remove(TOUCH_CONTROL_ALWAYS_SHOW_PREFIX + control.name)
 			}
 		}.apply()
 	}

@@ -194,6 +194,9 @@
     <string name="touch_controls_size">Size: %1$d%%</string>
     <string name="touch_controls_opacity">Transparency level: %1$d%%</string>
     <string name="touch_controls_save">Save</string>
+    <string name="touch_controls_move_button">Move Button</string>
+    <string name="touch_controls_finish">Finish</string>
+    <string name="touch_controls_always_show">Always show</string>
     <string name="touch_controls_restore_default">Restore to default</string>
     <string name="touch_control_dpad">D-pad</string>
     <string name="touch_control_left_stick">Left stick</string>

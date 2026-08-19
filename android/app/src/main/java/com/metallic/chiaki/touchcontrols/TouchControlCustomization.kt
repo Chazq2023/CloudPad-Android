@@ -26,7 +26,13 @@ enum class TouchControl(@StringRes val labelRes: Int)
 	PS(R.string.touch_control_ps)
 }
 
-data class TouchControlStyle(val sizePercent: Int, val opacityPercent: Int)
+data class TouchControlStyle(
+	val sizePercent: Int,
+	val opacityPercent: Int,
+	val offsetXPermille: Int = 0,
+	val offsetYPermille: Int = 0,
+	val alwaysShow: Boolean = false
+)
 {
 	companion object
 	{

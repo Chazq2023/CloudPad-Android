@@ -56,12 +56,30 @@
 		android:progressTint="?attr/pyluxAccent"
 		android:thumbTint="?attr/pyluxAccent" />
 
+	<CheckBox
+		android:id="@+id/touchControlAlwaysShowCheckBox"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="8dp"
+		android:buttonTint="?attr/pyluxAccent"
+		android:text="@string/touch_controls_always_show"
+		android:textColor="@android:color/white"
+		android:visibility="gone" />
+
 	<com.google.android.material.button.MaterialButton
-		android:id="@+id/touchControlSaveButton"
+		android:id="@+id/touchControlMoveButton"
 		android:layout_width="match_parent"
 		android:layout_height="wrap_content"
 		android:layout_marginTop="16dp"
-		android:text="@string/touch_controls_save"
+		android:text="@string/touch_controls_move_button"
+		android:textColor="@android:color/white"
+		app:backgroundTint="?attr/pyluxAccent" />
+
+	<com.google.android.material.button.MaterialButton
+		android:id="@+id/touchControlFinishButton"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="@string/touch_controls_finish"
 		android:textColor="@android:color/white"
 		app:backgroundTint="?attr/pyluxAccent" />
 

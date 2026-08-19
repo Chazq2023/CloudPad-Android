@@ -37,6 +37,16 @@ class AnalogStickView @JvmOverloads constructor(
 	}
 
 	private var center: Vector? = null
+	var alwaysShow: Boolean = false
+		set(value)
+		{
+			field = value
+			if(value && center == null && width > 0 && height > 0)
+				center = Vector(width / 2f, height / 2f)
+			else if(!value && state == Vector(0f, 0f))
+				center = null
+			invalidate()
+		}
 
 	/**
 	 * Same as state, but scaled to the circle
@@ -74,6 +84,12 @@ class AnalogStickView @JvmOverloads constructor(
 		}
 	}
 
+	override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int)
+	{
+		super.onSizeChanged(w, h, oldw, oldh)
+		if(alwaysShow && state == Vector(0f, 0f)) center = Vector(w / 2f, h / 2f)
+	}
+
 	private fun updateState(position: Vector?)
 	{
 		if(radius <= 0f)
@@ -81,7 +97,7 @@ class AnalogStickView @JvmOverloads constructor(
 
 		if(position == null)
 		{
-			center = null
+			center = if(alwaysShow) Vector(width / 2f, height / 2f) else null
 			state = Vector(0f, 0f)
 			handlePosition = Vector(0f, 0f)
 			invalidate()

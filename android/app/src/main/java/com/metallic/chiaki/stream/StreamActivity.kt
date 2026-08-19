@@ -201,7 +201,13 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 			},
 			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) },
-			onTouchControlsCustomizationChanged = { defaultTouchControlsFragment?.applyCustomization() }
+			onTouchControlsCustomizationChanged = { defaultTouchControlsFragment?.applyCustomization() },
+			onTouchControlsCustomizationVisibilityChanged = { visible ->
+				defaultTouchControlsFragment?.setCustomizationPanelVisible(visible)
+			},
+			onMoveTouchControl = { control, onSaved ->
+				defaultTouchControlsFragment?.startMoveMode(control, onSaved)
+			}
 		)
 
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch,

@@ -15,6 +15,7 @@ jobs:
       RELEASE_NOTES: >-
         Added per-button size and transparency customisation for on-screen controls,
         with persistent settings and a one-tap restore to defaults.
+        Added real-time previews, draggable control positioning and optional always-visible sticks.
 
     steps:
       - name: Checkout repo
