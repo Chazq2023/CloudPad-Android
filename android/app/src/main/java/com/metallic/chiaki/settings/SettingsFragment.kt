@@ -70,7 +70,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.cloudDatacenterPscloudKey -> preferences.getCloudDatacenterPscloud()
 		preferences.themeColourKey -> preferences.getThemeColour()
 		preferences.imageProcessingKey -> preferences.imageProcessing
-		preferences.qualityPresetKey -> preferences.qualityPreset
 		"locale_display" -> preferences.getCloudStoreLocale()
 		else -> defValue
 	}
@@ -101,7 +100,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudDatacenterPscloudKey -> preferences.setCloudDatacenterPscloud(value ?: "Auto")
 			preferences.themeColourKey -> preferences.setThemeColour(value ?: "pink")
 			preferences.imageProcessingKey -> preferences.imageProcessing = value ?: "off"
-			preferences.qualityPresetKey -> preferences.applyQualityPreset(value ?: "custom")
 			"locale_display" -> value?.let(preferences::setUserSelectedCloudStoreLocale)
 		}
 	}
@@ -235,29 +233,44 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 				true
 			}
 
-		val displayShortEdge = resources.displayMetrics.run { minOf(widthPixels, heightPixels) }
-		fun updateUpscaleSummary(resolution: Preferences.Resolution = preferences.resolution)
+		val displayMode = requireActivity().windowManager.defaultDisplay.mode
+		val displayShortEdge = minOf(displayMode.physicalWidth, displayMode.physicalHeight)
+		fun outputSummary(resolution: Int) = when(resolution)
 		{
-			fsrUpscalePreference?.summary = when(resolution)
-			{
-				Preferences.Resolution.RES_720P -> getString(R.string.preferences_fsr_output_720)
-				Preferences.Resolution.RES_1080P -> if(displayShortEdge < 1440)
-					getString(R.string.preferences_fsr_output_downsample, displayShortEdge) else getString(R.string.preferences_fsr_output_1080)
-				else -> getString(R.string.preferences_fsr_upscaling_summary)
-			}
+			720 -> getString(R.string.preferences_fsr_output_720)
+			1080 -> if(displayShortEdge < 1440) getString(R.string.preferences_fsr_output_downsample, displayShortEdge)
+				else getString(R.string.preferences_fsr_output_1080)
+			else -> getString(R.string.preferences_fsr_output_unchanged, resolution)
+		}
+		fun remotePlayHeight(resolution: Preferences.Resolution) = when(resolution)
+		{
+			Preferences.Resolution.RES_360P -> 360
+			Preferences.Resolution.RES_540P -> 540
+			Preferences.Resolution.RES_720P -> 720
+			Preferences.Resolution.RES_1080P -> 1080
+		}
+		fun updateUpscaleSummary(remotePlay: Int = remotePlayHeight(preferences.resolution),
+			gameLibrary: Int = preferences.getCloudResolutionPscloud(),
+			gameCatalog: Int = preferences.getCloudResolutionPsnow())
+		{
+			fsrUpscalePreference?.summary = getString(
+				R.string.preferences_fsr_output_all,
+				outputSummary(remotePlay), outputSummary(gameLibrary), outputSummary(gameCatalog)
+			)
 		}
 		updateUpscaleSummary()
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_resolution_key))
 			?.setOnPreferenceChangeListener { _, newValue ->
-				Preferences.resolutionAll.firstOrNull { it.value == newValue }?.let(::updateUpscaleSummary)
-				preferences.qualityPreset = "custom"
+				Preferences.resolutionAll.firstOrNull { it.value == newValue }?.let { updateUpscaleSummary(remotePlay = remotePlayHeight(it)) }
 				true
 			}
-		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_quality_preset_key))
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_cloud_resolution_pscloud_key))
 			?.setOnPreferenceChangeListener { _, newValue ->
-				preferences.applyQualityPreset(newValue as? String ?: "custom")
-				requireActivity().recreate()
-				false
+				updateUpscaleSummary(gameLibrary = (newValue as? String)?.toIntOrNull() ?: preferences.getCloudResolutionPscloud()); true
+			}
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_cloud_resolution_psnow_key))
+			?.setOnPreferenceChangeListener { _, newValue ->
+				updateUpscaleSummary(gameCatalog = (newValue as? String)?.toIntOrNull() ?: preferences.getCloudResolutionPsnow()); true
 			}
 		preferenceScreen.findPreference<Preference>("reset_image_quality")?.setOnPreferenceClickListener {
 			preferences.resetImageQuality(); requireActivity().recreate(); true

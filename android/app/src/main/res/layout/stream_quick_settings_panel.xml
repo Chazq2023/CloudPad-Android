@@ -299,7 +299,6 @@
                 style="@style/QuickSettingsSectionLabel"
                 android:text="@string/quick_settings_image_quality" />
 
-            <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsQualityPresetRow" />
             <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsProcessingRow" />
             <include layout="@layout/item_quick_settings_seekbar" android:id="@+id/quickSettingsCasSeekBarRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsFsrUpscalingRow" />
@@ -307,16 +306,16 @@
                 android:id="@+id/quickSettingsFsrOutputStatus"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="6dp"
-                android:textColor="?attr/pyluxAccent" android:textSize="12sp" />
+                android:textColor="@android:color/white" android:textSize="12sp" />
             <include layout="@layout/item_quick_settings_seekbar" android:id="@+id/quickSettingsFsrSharpeningRow" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/quickSettingsResetImageQuality"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent" android:layout_height="wrap_content"
                 android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
                 android:text="@string/preferences_quality_reset_title"
-                android:textColor="@android:color/white" app:strokeColor="?attr/pyluxAccent" />
+                android:textColor="@android:color/white"
+                app:backgroundTint="?attr/pyluxAccent" />
 
         </LinearLayout>
 

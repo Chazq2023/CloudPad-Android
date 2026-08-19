@@ -13,8 +13,8 @@
     <color name="floating_action_button_speed_dial_background">#FF149D</color>
     <color name="floating_action_button_speed_dial_tint">#ffffff</color>
 
-    <color name="control_primary">#22ffffff</color>
-    <color name="control_pressed">#88ffffff</color>
+    <color name="control_primary">#ffd0d0d0</color>
+    <color name="control_pressed">#ffffffff</color>
     <color name="item_delete_background">#B71C1C</color>
 
     <!-- Neutral grey used for the disclaimer dialog box, independent of the active accent theme -->

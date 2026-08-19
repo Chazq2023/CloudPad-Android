@@ -117,15 +117,6 @@
             app:selectable="false"
             app:icon="@drawable/ic_resolution"/>
         <ListPreference
-            app:key="@string/preferences_quality_preset_key"
-            app:title="@string/preferences_quality_preset_title"
-            app:summary="%s"
-            app:entries="@array/quality_preset_entries"
-            app:entryValues="@array/quality_preset_values"
-            app:defaultValue="custom"
-            app:icon="@drawable/ic_resolution"/>
-
-        <ListPreference
             app:key="@string/preferences_image_processing_key"
             app:title="@string/preferences_image_processing_title"
             app:summary="%s"
@@ -160,6 +151,17 @@
             app:defaultValue="50"
             app:showSeekBarValue="true"
             app:icon="@drawable/ic_resolution"/>
+
+        <Preference
+            app:key="reset_image_quality"
+            app:title="@string/preferences_quality_reset_title"
+            app:summary="@string/preferences_quality_reset_summary"
+            app:icon="@drawable/ic_resolution"/>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:key="category_stream"
+        app:title="@string/preferences_category_title_stream">
         <ListPreference
             app:key="@string/preferences_resolution_key"
             app:title="@string/preferences_resolution_title"
@@ -183,12 +185,6 @@
             app:title="@string/preferences_codec_title"
             app:summary="%s"
             app:icon="@drawable/ic_codec"/>
-
-        <Preference
-            app:key="reset_image_quality"
-            app:title="@string/preferences_quality_reset_title"
-            app:summary="@string/preferences_quality_reset_summary"
-            app:icon="@drawable/ic_resolution"/>
     </PreferenceCategory>
 
     <PreferenceCategory

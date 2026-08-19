@@ -19,7 +19,6 @@ import android.view.ViewParent
 import androidx.core.view.isGone
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -103,7 +102,6 @@ class MainActivity : AppCompatActivity() {
         }).get(MainViewModel::class.java)
 
         setupNavigation()
-        observeViewModel()
 
         // Restore last selected tab
         val lastTab = preferences.getLastMainTab()
@@ -224,11 +222,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        // WiFi discovery toggle
-        binding.wifiIcon.setOnClickListener {
-            viewModel.discoveryManager.active = !(viewModel.discoveryActive.value ?: false)
-        }
-
         // Friends
         binding.friendsIcon.setOnClickListener {
             com.metallic.chiaki.friends.FriendsActivity.start(this)
@@ -257,7 +250,6 @@ class MainActivity : AppCompatActivity() {
             }
             binding.remotePlayButton.onFocusChangeListener = primaryFocusHighlight
             binding.cloudPlayButton.onFocusChangeListener = primaryFocusHighlight
-            binding.wifiIcon.onFocusChangeListener = primaryFocusHighlight
             binding.friendsIcon.onFocusChangeListener = primaryFocusHighlight
             binding.settingsIcon.onFocusChangeListener = primaryFocusHighlight
         }
@@ -341,7 +333,7 @@ class MainActivity : AppCompatActivity() {
         )
         val primaryIds = setOf(
             R.id.remotePlayButton, R.id.cloudPlayButton,
-            R.id.settingsIcon, R.id.wifiIcon, R.id.friendsIcon
+            R.id.settingsIcon, R.id.friendsIcon
         )
 
         val focusedInCloud = cloudRv?.findContainingItemView(focused)
@@ -544,7 +536,7 @@ class MainActivity : AppCompatActivity() {
         )
         val primaryIds = setOf(
             R.id.remotePlayButton, R.id.cloudPlayButton,
-            R.id.settingsIcon, R.id.wifiIcon, R.id.friendsIcon
+            R.id.settingsIcon, R.id.friendsIcon
         )
 
         val focusedInCloud = focused?.let { cloudRv?.findContainingItemView(it) }
@@ -643,17 +635,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateActionIcons() {
-        // Pylux logo always visible, WiFi icon only on Remote Play
+        // Pylux logo and shared actions remain visible on both main pages.
         binding.appTitle.visibility = View.VISIBLE
-        binding.wifiIcon.visibility = if (currentPage == 0) View.VISIBLE else View.GONE
-    }
-
-    private fun observeViewModel() {
-        viewModel.discoveryActive.observe(this, Observer { active ->
-            binding.wifiIcon.setImageResource(
-                if (active) R.drawable.ic_discover_on else R.drawable.ic_discover_off
-            )
-        })
     }
 
     override fun onDestroy() {
