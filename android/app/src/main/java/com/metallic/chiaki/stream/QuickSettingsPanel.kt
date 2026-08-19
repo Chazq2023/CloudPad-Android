@@ -130,6 +130,7 @@ class QuickSettingsPanel(
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
 	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit,
 	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit,
+	private val onFsrChanged: (enabled: Boolean, upscale: Boolean, sharpening: Int) -> Unit,
 	private val onTouchControlsCustomizationChanged: () -> Unit,
 	private val onTouchControlsCustomizationVisibilityChanged: (Boolean) -> Unit,
 	private val onMoveTouchControl: (TouchControl, () -> Unit) -> Unit
@@ -545,6 +546,11 @@ class QuickSettingsPanel(
 		panel.quickSettingsCasRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			preferences.casSharpeningEnabled = isChecked
 			panel.quickSettingsCasSeekBarRow.root.visibility = if(isChecked) View.VISIBLE else View.GONE
+			if(isChecked)
+			{
+				preferences.fsrEnabled = false
+				panel.quickSettingsFsrRow.quickSettingsRowSwitch.isChecked = false
+			}
 			onCasSharpeningChanged(isChecked, preferences.casSharpeningLevel)
 		}
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
@@ -558,6 +564,45 @@ class QuickSettingsPanel(
 					preferences.casSharpeningLevel = value
 					onCasSharpeningChanged(preferences.casSharpeningEnabled, value)
 				}
+			}
+			override fun onStartTrackingTouch(seekBar: SeekBar) {}
+			override fun onStopTrackingTouch(seekBar: SeekBar) {}
+		})
+
+		panel.quickSettingsFsrRow.quickSettingsRowLabel.apply {
+			text = activity.getString(R.string.preferences_fsr_enabled_title)
+		}
+		panel.quickSettingsFsrUpscalingRow.quickSettingsRowLabel.apply {
+			text = activity.getString(R.string.preferences_fsr_upscaling_title)
+		}
+		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.max = 100
+		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.keyProgressIncrement = 1
+		fun updateFsrVisibility(enabled: Boolean)
+		{
+			panel.quickSettingsFsrUpscalingRow.root.visibility = if(enabled) View.VISIBLE else View.GONE
+			panel.quickSettingsFsrSharpeningRow.root.visibility = if(enabled) View.VISIBLE else View.GONE
+		}
+		fun applyFsr() = onFsrChanged(preferences.fsrEnabled, preferences.fsrUpscalingEnabled, preferences.fsrSharpening)
+		panel.quickSettingsFsrRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
+			preferences.fsrEnabled = enabled
+			updateFsrVisibility(enabled)
+			if(enabled)
+			{
+				preferences.casSharpeningEnabled = false
+				panel.quickSettingsCasRow.quickSettingsRowSwitch.isChecked = false
+			}
+			applyFsr()
+		}
+		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
+			preferences.fsrUpscalingEnabled = enabled
+			applyFsr()
+		}
+		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
+		{
+			override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean)
+			{
+				panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBarLabel.text = activity.getString(R.string.quick_settings_fsr_sharpening, progress)
+				if(fromUser) { preferences.fsrSharpening = progress; applyFsr() }
 			}
 			override fun onStartTrackingTouch(seekBar: SeekBar) {}
 			override fun onStopTrackingTouch(seekBar: SeekBar) {}
@@ -656,7 +701,9 @@ class QuickSettingsPanel(
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
 			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsCasRow.quickSettingsRowSwitch,
-			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
+		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
+			panel.quickSettingsFsrRow.quickSettingsRowSwitch, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
+			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
 			panel.quickSettingsFriendChatBackButton, panel.quickSettingsFriendChatRefreshButton,
 			panel.quickSettingsFriendChatInput, panel.quickSettingsFriendChatSendButton,
@@ -1382,6 +1429,11 @@ class QuickSettingsPanel(
 		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.casSharpeningEnabled) View.VISIBLE else View.GONE
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
 		updateCasSeekBarLabel(preferences.casSharpeningLevel)
+		panel.quickSettingsFsrRow.quickSettingsRowSwitch.isChecked = preferences.fsrEnabled
+		panel.quickSettingsFsrUpscalingRow.root.visibility = if(preferences.fsrEnabled) View.VISIBLE else View.GONE
+		panel.quickSettingsFsrSharpeningRow.root.visibility = if(preferences.fsrEnabled) View.VISIBLE else View.GONE
+		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.isChecked = preferences.fsrUpscalingEnabled
+		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.progress = preferences.fsrSharpening
 
 		panel.root.translationX = panelWidthPx
 		if(!dialog.isShowing) dialog.show()

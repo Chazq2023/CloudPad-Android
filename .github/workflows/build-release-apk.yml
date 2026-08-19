@@ -13,9 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added controller navigation and fine-grained slider adjustment to the customisation popup.
-        Added the Triangle refresh action to the Controller Shortcuts reference.
-        Clarified the Select shortcut navigation description in Settings.
+        Added live AMD FSR 1 EASU upscaling and RCAS sharpening controls.
 
     steps:
       - name: Checkout repo
