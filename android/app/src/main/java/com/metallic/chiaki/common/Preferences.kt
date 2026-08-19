@@ -14,6 +14,8 @@ import com.metallic.chiaki.lib.Codec
 import com.metallic.chiaki.lib.ConnectVideoProfile
 import com.metallic.chiaki.lib.VideoFPSPreset
 import com.metallic.chiaki.lib.VideoResolutionPreset
+import com.metallic.chiaki.touchcontrols.TouchControl
+import com.metallic.chiaki.touchcontrols.TouchControlStyle
 import io.reactivex.Observable
 import io.reactivex.subjects.BehaviorSubject
 import kotlin.math.max
@@ -70,6 +72,8 @@ class Preferences(context: Context)
 		private const val CLOUD_RESOLVED_STORE_COUNTRY_KEY = "cloud_resolved_store_country"
 		private const val CLOUD_RESOLVED_STORE_LANG_KEY = "cloud_resolved_store_lang"
 		private const val LEGACY_CLOUD_FALLBACK_REGION_KEY = "cloud_fallback_region"
+		private const val TOUCH_CONTROL_SIZE_PREFIX = "touch_control_size_"
+		private const val TOUCH_CONTROL_OPACITY_PREFIX = "touch_control_opacity_"
 
 		private const val CLOUD_CATALOG_NATIVE_MODE_KEY = "cloud_catalog_native_mode"
 	}
@@ -94,6 +98,35 @@ class Preferences(context: Context)
 	var onScreenControlsEnabled
 		get() = sharedPreferences.getBoolean(onScreenControlsEnabledKey, true)
 		set(value) { sharedPreferences.edit().putBoolean(onScreenControlsEnabledKey, value).apply() }
+
+	fun touchControlStyle(control: TouchControl) = TouchControlStyle(
+		sharedPreferences.getInt(
+			TOUCH_CONTROL_SIZE_PREFIX + control.name,
+			TouchControlStyle.DEFAULT_PERCENT
+		).coerceIn(TouchControlStyle.MIN_SIZE_PERCENT, TouchControlStyle.MAX_SIZE_PERCENT),
+		sharedPreferences.getInt(
+			TOUCH_CONTROL_OPACITY_PREFIX + control.name,
+			TouchControlStyle.DEFAULT_PERCENT
+		).coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT)
+	)
+
+	fun setTouchControlStyle(control: TouchControl, style: TouchControlStyle)
+	{
+		sharedPreferences.edit()
+			.putInt(TOUCH_CONTROL_SIZE_PREFIX + control.name, style.sizePercent.coerceIn(TouchControlStyle.MIN_SIZE_PERCENT, TouchControlStyle.MAX_SIZE_PERCENT))
+			.putInt(TOUCH_CONTROL_OPACITY_PREFIX + control.name, style.opacityPercent.coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT))
+			.apply()
+	}
+
+	fun restoreTouchControlStyles()
+	{
+		sharedPreferences.edit().apply {
+			TouchControl.values().forEach { control ->
+				remove(TOUCH_CONTROL_SIZE_PREFIX + control.name)
+				remove(TOUCH_CONTROL_OPACITY_PREFIX + control.name)
+			}
+		}.apply()
+	}
 
 	val touchpadOnlyEnabledKey get() = resources.getString(R.string.preferences_touchpad_only_enabled_key)
 	var touchpadOnlyEnabled

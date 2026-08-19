@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
+import com.metallic.chiaki.common.Preferences
 import com.pylux.stream.databinding.FragmentControlsBinding
 import com.metallic.chiaki.lib.ControllerState
 import io.reactivex.Observable
@@ -56,6 +57,7 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?)
 	{
 		super.onViewCreated(view, savedInstanceState)
+		applyCustomization()
 		binding.dpadView.stateChangeCallback = this::dpadStateChanged
 		binding.crossButtonView.buttonPressedCallback = buttonStateChanged(ControllerState.BUTTON_CROSS)
 		binding.moonButtonView.buttonPressedCallback = buttonStateChanged(ControllerState.BUTTON_MOON)
@@ -89,6 +91,38 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 		onScreenControlsEnabled?.observe(viewLifecycleOwner, Observer {
 			view.visibility = if(it) View.VISIBLE else View.GONE
 		})
+	}
+
+	fun applyCustomization()
+	{
+		if(_binding == null) return
+		val preferences = Preferences(requireContext())
+		val views = mapOf(
+			TouchControl.DPAD to binding.dpadView,
+			TouchControl.LEFT_STICK to binding.leftAnalogStickView,
+			TouchControl.RIGHT_STICK to binding.rightAnalogStickView,
+			TouchControl.TOUCHPAD to binding.touchpadView,
+			TouchControl.CROSS to binding.crossButtonView,
+			TouchControl.CIRCLE to binding.moonButtonView,
+			TouchControl.TRIANGLE to binding.pyramidButtonView,
+			TouchControl.SQUARE to binding.boxButtonView,
+			TouchControl.L1 to binding.l1ButtonView,
+			TouchControl.L2 to binding.l2ButtonView,
+			TouchControl.L3 to binding.l3ButtonView,
+			TouchControl.R1 to binding.r1ButtonView,
+			TouchControl.R2 to binding.r2ButtonView,
+			TouchControl.R3 to binding.r3ButtonView,
+			TouchControl.SHARE to binding.shareButtonView,
+			TouchControl.OPTIONS to binding.optionsButtonView,
+			TouchControl.PS to binding.psButtonView
+		)
+		views.forEach { (control, controlView) ->
+			val style = preferences.touchControlStyle(control)
+			val scale = style.sizePercent / 100f
+			controlView.scaleX = scale
+			controlView.scaleY = scale
+			controlView.alpha = style.opacityPercent / 100f
+		}
 	}
 
 	private fun dpadStateChanged(direction: DPadView.Direction?)

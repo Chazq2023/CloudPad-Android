@@ -71,7 +71,10 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
 import com.pylux.stream.databinding.ItemQuickSettingsSeekbarBinding
+import com.pylux.stream.databinding.DialogTouchControlsCustomiseBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
+import com.metallic.chiaki.touchcontrols.TouchControl
+import com.metallic.chiaki.touchcontrols.TouchControlStyle
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 
@@ -125,7 +128,8 @@ class QuickSettingsPanel(
 	private val getDisplayMode: () -> TransformMode,
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
 	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit,
-	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit
+	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit,
+	private val onTouchControlsCustomizationChanged: () -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater).apply {
 		// root.focusable=true (see stream_quick_settings_panel.xml) exists only so a touch tap
@@ -468,7 +472,9 @@ class QuickSettingsPanel(
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setOnScreenControlsEnabled(checked)
+			panel.quickSettingsOscCustomiseButton.visibility = if(checked) View.VISIBLE else View.GONE
 		}
+		panel.quickSettingsOscCustomiseButton.setOnClickListener { showTouchControlsCustomiseDialog() }
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setTouchpadOnlyEnabled(checked)
@@ -1340,6 +1346,8 @@ class QuickSettingsPanel(
 		// and Touchpad Only off), so the panel must not show stale state from last time.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked = viewModel.showPerformanceOverlay.value ?: false
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = viewModel.onScreenControlsEnabled.value ?: false
+		panel.quickSettingsOscCustomiseButton.visibility =
+			if(panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked) View.VISIBLE else View.GONE
 		panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = viewModel.touchpadOnlyEnabled.value ?: false
 		panel.quickSettingsDisplayModeToggle.check(buttonIdFor(getDisplayMode()))
 
@@ -1401,6 +1409,79 @@ class QuickSettingsPanel(
 	fun toggle()
 	{
 		if(isOpen) close() else open()
+	}
+
+	private fun showTouchControlsCustomiseDialog()
+	{
+		dismissImmediately()
+		val binding = DialogTouchControlsCustomiseBinding.inflate(activity.layoutInflater)
+		val controls = TouchControl.values()
+		val labels = controls.map { activity.getString(it.labelRes) }
+		binding.touchControlSpinner.adapter = ArrayAdapter(
+			activity,
+			R.layout.item_touch_control_spinner,
+			labels
+		).apply { setDropDownViewResource(R.layout.item_touch_control_spinner) }
+
+		binding.touchControlSizeSeekBar.max = TouchControlStyle.MAX_SIZE_PERCENT - TouchControlStyle.MIN_SIZE_PERCENT
+		binding.touchControlSizeSeekBar.keyProgressIncrement = 5
+		binding.touchControlOpacitySeekBar.max = TouchControlStyle.MAX_OPACITY_PERCENT - TouchControlStyle.MIN_OPACITY_PERCENT
+		binding.touchControlOpacitySeekBar.keyProgressIncrement = 10
+
+		fun selectedStyle() = TouchControlStyle(
+			binding.touchControlSizeSeekBar.progress + TouchControlStyle.MIN_SIZE_PERCENT,
+			binding.touchControlOpacitySeekBar.progress + TouchControlStyle.MIN_OPACITY_PERCENT
+		)
+		fun updateLabels()
+		{
+			val style = selectedStyle()
+			binding.touchControlSizeLabel.text = activity.getString(R.string.touch_controls_size, style.sizePercent)
+			binding.touchControlOpacityLabel.text = activity.getString(R.string.touch_controls_opacity, style.opacityPercent)
+		}
+		fun loadControl(position: Int)
+		{
+			val style = preferences.touchControlStyle(controls[position])
+			binding.touchControlSizeSeekBar.progress = style.sizePercent - TouchControlStyle.MIN_SIZE_PERCENT
+			binding.touchControlOpacitySeekBar.progress = style.opacityPercent - TouchControlStyle.MIN_OPACITY_PERCENT
+			updateLabels()
+		}
+
+		binding.touchControlSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener
+		{
+			override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = loadControl(position)
+			override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+		}
+		val sliderListener = object: SeekBar.OnSeekBarChangeListener
+		{
+			override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) = updateLabels()
+			override fun onStartTrackingTouch(seekBar: SeekBar?) = Unit
+			override fun onStopTrackingTouch(seekBar: SeekBar?) = Unit
+		}
+		binding.touchControlSizeSeekBar.setOnSeekBarChangeListener(sliderListener)
+		binding.touchControlOpacitySeekBar.setOnSeekBarChangeListener(sliderListener)
+
+		val customiseDialog = Dialog(activity).apply {
+			requestWindowFeature(Window.FEATURE_NO_TITLE)
+			setContentView(binding.root)
+			window?.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+		}
+		binding.touchControlSaveButton.setOnClickListener {
+			preferences.setTouchControlStyle(controls[binding.touchControlSpinner.selectedItemPosition], selectedStyle())
+			onTouchControlsCustomizationChanged()
+			customiseDialog.dismiss()
+		}
+		binding.touchControlRestoreButton.setOnClickListener {
+			preferences.restoreTouchControlStyles()
+			onTouchControlsCustomizationChanged()
+			customiseDialog.dismiss()
+		}
+		customiseDialog.setOnShowListener {
+			customiseDialog.window?.setLayout(
+				(360f * activity.resources.displayMetrics.density).toInt().coerceAtMost(activity.resources.displayMetrics.widthPixels - 32),
+				WindowManager.LayoutParams.WRAP_CONTENT
+			)
+		}
+		customiseDialog.show()
 	}
 
 	/** Remote Play only — Cloud Play's power icon keeps its original single-tap disconnect

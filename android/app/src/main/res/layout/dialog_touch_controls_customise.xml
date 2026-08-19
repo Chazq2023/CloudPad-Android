@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:layout_width="match_parent"
+	android:layout_height="wrap_content"
+	android:background="@drawable/bg_touch_controls_customise_dialog"
+	android:orientation="vertical"
+	android:padding="20dp">
+
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="@string/touch_controls_customise"
+		android:textColor="@android:color/white"
+		android:textSize="20sp"
+		android:textStyle="bold" />
+
+	<TextView
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="16dp"
+		android:text="@string/touch_controls_customise_button"
+		android:textColor="@android:color/white" />
+
+	<Spinner
+		android:id="@+id/touchControlSpinner"
+		android:layout_width="match_parent"
+		android:layout_height="48dp"
+		android:popupBackground="#FF4A4A4A" />
+
+	<TextView
+		android:id="@+id/touchControlSizeLabel"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="12dp"
+		android:textColor="@android:color/white" />
+
+	<SeekBar
+		android:id="@+id/touchControlSizeSeekBar"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:progressTint="?attr/pyluxAccent"
+		android:thumbTint="?attr/pyluxAccent" />
+
+	<TextView
+		android:id="@+id/touchControlOpacityLabel"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="12dp"
+		android:textColor="@android:color/white" />
+
+	<SeekBar
+		android:id="@+id/touchControlOpacitySeekBar"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:progressTint="?attr/pyluxAccent"
+		android:thumbTint="?attr/pyluxAccent" />
+
+	<com.google.android.material.button.MaterialButton
+		android:id="@+id/touchControlSaveButton"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:layout_marginTop="16dp"
+		android:text="@string/touch_controls_save"
+		android:textColor="@android:color/white"
+		app:backgroundTint="?attr/pyluxAccent" />
+
+	<com.google.android.material.button.MaterialButton
+		android:id="@+id/touchControlRestoreButton"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content"
+		android:text="@string/touch_controls_restore_default"
+		android:textColor="@android:color/white"
+		app:backgroundTint="?attr/pyluxAccent" />
+
+</LinearLayout>
