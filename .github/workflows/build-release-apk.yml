@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added live AMD FSR 1 EASU upscaling and RCAS sharpening controls.
+        Consolidated image-quality controls with presets, live status guidance, and clearer controller navigation.
 
     steps:
       - name: Checkout repo

@@ -69,6 +69,8 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.cloudDatacenterPsnowKey -> preferences.getCloudDatacenterPsnow()
 		preferences.cloudDatacenterPscloudKey -> preferences.getCloudDatacenterPscloud()
 		preferences.themeColourKey -> preferences.getThemeColour()
+		preferences.imageProcessingKey -> preferences.imageProcessing
+		preferences.qualityPresetKey -> preferences.qualityPreset
 		"locale_display" -> preferences.getCloudStoreLocale()
 		else -> defValue
 	}
@@ -98,6 +100,8 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudDatacenterPsnowKey -> preferences.setCloudDatacenterPsnow(value ?: "Auto")
 			preferences.cloudDatacenterPscloudKey -> preferences.setCloudDatacenterPscloud(value ?: "Auto")
 			preferences.themeColourKey -> preferences.setThemeColour(value ?: "pink")
+			preferences.imageProcessingKey -> preferences.imageProcessing = value ?: "off"
+			preferences.qualityPresetKey -> preferences.applyQualityPreset(value ?: "custom")
 			"locale_display" -> value?.let(preferences::setUserSelectedCloudStoreLocale)
 		}
 	}
@@ -215,42 +219,49 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			bitratePreference?.summaryProvider = bitrateSummaryProvider
 		})
 
-		// CAS sharpening: the level slider only ever makes sense while the effect is on, and
-		// disabling the toggle must visibly remove any suggestion that the leftover slider
-		// value is still doing anything — hidden outright rather than just disabled/greyed.
 		val casLevelPreference = preferenceScreen.findPreference<SeekBarPreference>(getString(R.string.preferences_cas_sharpening_level_key))
-		casLevelPreference?.isVisible = preferences.casSharpeningEnabled
-		preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_cas_sharpening_enabled_key))
+		val fsrUpscalePreference = preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_upscaling_enabled_key))
+		val fsrSharpenPreference = preferenceScreen.findPreference<SeekBarPreference>(getString(R.string.preferences_fsr_sharpening_key))
+		fun showProcessingOptions(mode: String)
+		{
+			casLevelPreference?.isVisible = mode == "cas"
+			fsrUpscalePreference?.isVisible = mode == "fsr"
+			fsrSharpenPreference?.isVisible = mode == "fsr"
+		}
+		showProcessingOptions(preferences.imageProcessing)
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_image_processing_key))
 			?.setOnPreferenceChangeListener { _, newValue ->
-				casLevelPreference?.isVisible = newValue as? Boolean ?: false
-				if(newValue == true)
-				{
-					preferences.fsrEnabled = false
-					preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_enabled_key))?.isChecked = false
-				}
+				showProcessingOptions(newValue as? String ?: "off")
 				true
 			}
 
-		val fsrUpscalePreference = preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_upscaling_enabled_key))
-		val fsrSharpenPreference = preferenceScreen.findPreference<SeekBarPreference>(getString(R.string.preferences_fsr_sharpening_key))
-		fun showFsrOptions(show: Boolean)
+		val displayShortEdge = resources.displayMetrics.run { minOf(widthPixels, heightPixels) }
+		fun updateUpscaleSummary(resolution: Preferences.Resolution = preferences.resolution)
 		{
-			fsrUpscalePreference?.isVisible = show
-			fsrSharpenPreference?.isVisible = show
+			fsrUpscalePreference?.summary = when(resolution)
+			{
+				Preferences.Resolution.RES_720P -> getString(R.string.preferences_fsr_output_720)
+				Preferences.Resolution.RES_1080P -> if(displayShortEdge < 1440)
+					getString(R.string.preferences_fsr_output_downsample, displayShortEdge) else getString(R.string.preferences_fsr_output_1080)
+				else -> getString(R.string.preferences_fsr_upscaling_summary)
+			}
 		}
-		showFsrOptions(preferences.fsrEnabled)
-		preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_fsr_enabled_key))
+		updateUpscaleSummary()
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_resolution_key))
 			?.setOnPreferenceChangeListener { _, newValue ->
-				val enabled = newValue as? Boolean ?: false
-				showFsrOptions(enabled)
-				if(enabled)
-				{
-					preferences.casSharpeningEnabled = false
-					preferenceScreen.findPreference<SwitchPreference>(getString(R.string.preferences_cas_sharpening_enabled_key))?.isChecked = false
-					casLevelPreference?.isVisible = false
-				}
+				Preferences.resolutionAll.firstOrNull { it.value == newValue }?.let(::updateUpscaleSummary)
+				preferences.qualityPreset = "custom"
 				true
 			}
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_quality_preset_key))
+			?.setOnPreferenceChangeListener { _, newValue ->
+				preferences.applyQualityPreset(newValue as? String ?: "custom")
+				requireActivity().recreate()
+				false
+			}
+		preferenceScreen.findPreference<Preference>("reset_image_quality")?.setOnPreferenceClickListener {
+			preferences.resetImageQuality(); requireActivity().recreate(); true
+		}
 
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_codec_key))?.let {
 			it.entryValues = Preferences.codecAll.map { codec -> codec.value }.toTypedArray()

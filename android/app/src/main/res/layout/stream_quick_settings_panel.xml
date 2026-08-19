@@ -297,18 +297,26 @@
 
             <TextView
                 style="@style/QuickSettingsSectionLabel"
-                android:text="@string/preferences_category_title_cas_sharpening" />
+                android:text="@string/quick_settings_image_quality" />
 
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsCasRow" />
+            <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsQualityPresetRow" />
+            <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsProcessingRow" />
             <include layout="@layout/item_quick_settings_seekbar" android:id="@+id/quickSettingsCasSeekBarRow" />
-
-            <TextView
-                style="@style/QuickSettingsSectionLabel"
-                android:text="@string/preferences_category_title_fsr" />
-
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsFsrRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsFsrUpscalingRow" />
+            <TextView
+                android:id="@+id/quickSettingsFsrOutputStatus"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:paddingStart="16dp" android:paddingEnd="16dp" android:paddingBottom="6dp"
+                android:textColor="?attr/pyluxAccent" android:textSize="12sp" />
             <include layout="@layout/item_quick_settings_seekbar" android:id="@+id/quickSettingsFsrSharpeningRow" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/quickSettingsResetImageQuality"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginStart="16dp" android:layout_marginEnd="16dp"
+                android:text="@string/preferences_quality_reset_title"
+                android:textColor="@android:color/white" app:strokeColor="?attr/pyluxAccent" />
 
         </LinearLayout>
 

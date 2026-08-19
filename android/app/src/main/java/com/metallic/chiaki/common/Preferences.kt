@@ -203,6 +203,39 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getInt(fsrSharpeningKey, FSR_SHARPENING_DEFAULT).coerceIn(FSR_SHARPENING_MIN, FSR_SHARPENING_MAX)
 		set(value) { sharedPreferences.edit().putInt(fsrSharpeningKey, value.coerceIn(FSR_SHARPENING_MIN, FSR_SHARPENING_MAX)).apply() }
 
+	val imageProcessingKey get() = resources.getString(R.string.preferences_image_processing_key)
+	var imageProcessing: String
+		get() = when { fsrEnabled -> "fsr"; casSharpeningEnabled -> "cas"; else -> "off" }
+		set(value) {
+			sharedPreferences.edit()
+				.putBoolean(fsrEnabledKey, value == "fsr")
+				.putBoolean(casSharpeningEnabledKey, value == "cas")
+				.apply()
+		}
+
+	val qualityPresetKey get() = resources.getString(R.string.preferences_quality_preset_key)
+	var qualityPreset: String
+		get() = sharedPreferences.getString(qualityPresetKey, "custom") ?: "custom"
+		set(value) { sharedPreferences.edit().putString(qualityPresetKey, value).apply() }
+
+	fun applyQualityPreset(value: String)
+	{
+		qualityPreset = value
+		when(value)
+		{
+			"performance" -> { resolution = Resolution.RES_720P; fps = FPS.FPS_60; codec = Codec.CODEC_H264; bitrate = null; imageProcessing = "off" }
+			"balanced" -> { resolution = Resolution.RES_720P; fps = FPS.FPS_60; codec = Codec.CODEC_H265; bitrate = null; imageProcessing = "fsr"; fsrUpscalingEnabled = true; fsrSharpening = 40 }
+			"quality" -> { resolution = Resolution.RES_1080P; fps = FPS.FPS_60; codec = Codec.CODEC_H265; bitrate = null; imageProcessing = "fsr"; fsrUpscalingEnabled = true; fsrSharpening = 50 }
+		}
+	}
+
+	fun resetImageQuality()
+	{
+		resolution = resolutionDefault; fps = fpsDefault; codec = codecDefault; bitrate = null
+		imageProcessing = "off"; fsrUpscalingEnabled = false; fsrSharpening = FSR_SHARPENING_DEFAULT
+		casSharpeningLevel = CAS_SHARPENING_LEVEL_DEFAULT; qualityPreset = "custom"
+	}
+
 	val swapCrossMoonKey get() = resources.getString(R.string.preferences_swap_cross_moon_key)
 	var swapCrossMoon
 		get() = sharedPreferences.getBoolean(swapCrossMoonKey, false)
