@@ -18,6 +18,7 @@ jobs:
         Added real-time previews, draggable control positioning and optional always-visible sticks.
         Added controller navigation and fine-grained slider adjustment to the customisation popup.
         Added the Triangle refresh action to the Controller Shortcuts reference.
+        Clarified the Select shortcut navigation description in Settings.
 
     steps:
       - name: Checkout repo

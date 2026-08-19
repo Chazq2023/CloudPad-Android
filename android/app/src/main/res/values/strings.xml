@@ -151,7 +151,7 @@
     <string name="preferences_controller_shortcut_add_to_home_title">Start (press) — while a game is highlighted</string>
     <string name="preferences_controller_shortcut_add_to_home_summary">Opens the add to home screen confirmation</string>
     <string name="preferences_controller_shortcut_icon_nav_title">Select (press) — while a game is highlighted</string>
-    <string name="preferences_controller_shortcut_icon_nav_summary">Focuses the Favorite icon; navigate down to Trophies, Playtime and Shortcut. Press Select again to return to the game tile.</string>
+    <string name="preferences_controller_shortcut_icon_nav_summary">Focuses the Favourite icon, you can then navigate to trophies, playtime, home screen shortcut and game profile settings. Press select again to return to the game tile</string>
     <string name="preferences_controller_shortcut_quick_menu_title">Back — while streaming</string>
     <string name="preferences_controller_shortcut_quick_menu_summary">Opens and closes the Quick Menu</string>
     <string name="preferences_registered_hosts_summary">Currently registered: %d</string>
