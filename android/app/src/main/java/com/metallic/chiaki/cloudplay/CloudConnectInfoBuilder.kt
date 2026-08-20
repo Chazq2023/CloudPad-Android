@@ -4,7 +4,6 @@ package com.metallic.chiaki.cloudplay
 
 import com.metallic.chiaki.cloudplay.model.CloudStreamSession
 import com.metallic.chiaki.common.Preferences
-import com.metallic.chiaki.common.GameSettingsProfile
 import com.metallic.chiaki.lib.Codec
 import com.metallic.chiaki.lib.ConnectInfo
 import com.metallic.chiaki.lib.ConnectVideoProfile
@@ -15,23 +14,17 @@ import com.metallic.chiaki.lib.ConnectVideoProfile
  */
 object CloudConnectInfoBuilder
 {
-	fun build(
-		session: CloudStreamSession,
-		preferences: Preferences,
-		gameIdentifier: String,
-		gameProductId: String? = null,
-		gameProfile: GameSettingsProfile? = null
-	): ConnectInfo
+	fun build(session: CloudStreamSession, preferences: Preferences, gameIdentifier: String, gameProductId: String? = null): ConnectInfo
 	{
 		// Set codec based on service type (Qt lines 344-353): PSCLOUD: H.265/HEVC, PSNOW: H.264
 		val codec = if(session.serviceType == "pscloud") Codec.CODEC_H265 else Codec.CODEC_H264
 
-		val resolutionValue = gameProfile?.resolution ?: if(session.serviceType == "pscloud")
+		val resolutionValue = if(session.serviceType == "pscloud")
 			preferences.getCloudResolutionPscloud()
 		else
 			preferences.getCloudResolutionPsnow()
 
-		val cloudBitrate = gameProfile?.bitrateKbps ?: if(session.serviceType == "pscloud")
+		val cloudBitrate = if(session.serviceType == "pscloud")
 			preferences.getCloudBitratePscloud()
 		else
 			preferences.getCloudBitratePsnow()

@@ -52,7 +52,7 @@
                 android:layout_width="32dp"
                 android:layout_height="32dp"
                 android:layout_marginTop="4dp"
-                android:padding="6dp"
+                android:padding="4dp"
                 android:src="@drawable/ic_trophy_outline"
                 android:tint="?attr/pyluxAccentLight"
                 android:background="@drawable/bg_tile_icon_circle"
@@ -113,22 +113,6 @@
                 android:src="@drawable/ic_check_white" />
 
         </FrameLayout>
-
-        <ImageButton
-            android:id="@+id/profileButton"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="bottom|end"
-            android:layout_marginEnd="6dp"
-            android:layout_marginBottom="46dp"
-            android:padding="4dp"
-            android:src="@drawable/ic_settings_outline"
-            android:tint="?attr/pyluxAccentLight"
-            android:background="@drawable/bg_tile_icon_circle"
-            android:contentDescription="@string/game_profile_settings_content_description"
-            android:clickable="false"
-            android:focusable="false"
-            android:scaleType="fitCenter" />
 
         <LinearLayout
             android:layout_width="match_parent"

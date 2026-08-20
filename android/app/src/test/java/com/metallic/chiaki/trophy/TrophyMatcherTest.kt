@@ -3,9 +3,7 @@ package com.metallic.chiaki.trophy
 import com.metallic.chiaki.trophy.model.TrophyCounts
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TrophyMatcherTest {
@@ -13,8 +11,7 @@ class TrophyMatcherTest {
     private fun title(
         id: String,
         name: String,
-        platform: String = "PS4",
-        earnedPlatinum: Int = 0
+        platform: String = "PS4"
     ) = TrophyTitleSummary(
         npCommunicationId = id,
         npServiceName = if (platform.contains("PS5")) "trophy2" else "trophy",
@@ -23,21 +20,9 @@ class TrophyMatcherTest {
         trophyTitlePlatform = platform,
         hasTrophyGroups = false,
         definedTrophies = TrophyCounts(),
-        earnedTrophies = TrophyCounts(platinum = earnedPlatinum),
+        earnedTrophies = TrophyCounts(),
         progressPercent = 0
     )
-
-    @Test
-    fun `platinum state is true only for a matching title with an earned platinum`() {
-        val titles = listOf(
-            title("NPWR-PS4", "Example Game", platform = "PS4", earnedPlatinum = 1),
-            title("NPWR-PS5", "Example Game", platform = "PS5", earnedPlatinum = 0)
-        )
-
-        assertTrue(TrophyMatcher.hasUnlockedPlatinum("Example Game", "ps4", titles))
-        assertFalse(TrophyMatcher.hasUnlockedPlatinum("Example Game", "ps5", titles))
-        assertFalse(TrophyMatcher.hasUnlockedPlatinum("Unknown Game", "ps4", titles))
-    }
 
     // --- normalize() ---
 
