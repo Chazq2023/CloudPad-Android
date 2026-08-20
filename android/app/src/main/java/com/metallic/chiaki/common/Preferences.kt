@@ -108,11 +108,11 @@ class Preferences(context: Context)
 	fun touchControlStyle(control: TouchControl) = TouchControlStyle(
 		sharedPreferences.getInt(
 			TOUCH_CONTROL_SIZE_PREFIX + control.name,
-			TouchControlStyle.DEFAULT_PERCENT
+			TouchControlStyle.DEFAULT_SIZE_PERCENT
 		).coerceIn(TouchControlStyle.MIN_SIZE_PERCENT, TouchControlStyle.MAX_SIZE_PERCENT),
 		sharedPreferences.getInt(
 			TOUCH_CONTROL_OPACITY_PREFIX + control.name,
-			TouchControlStyle.DEFAULT_PERCENT
+			TouchControlStyle.DEFAULT_OPACITY_PERCENT
 		).coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT),
 		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_X_PREFIX + control.name, 0),
 		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_Y_PREFIX + control.name, 0),
