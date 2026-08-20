@@ -370,7 +370,11 @@ class QuickSettingsPanel(
 			}
 		)
 
-		remapAdapter = RemapAdapter(buildRemapItems()) { action -> capture.startListeningFor(action) }
+		remapAdapter = RemapAdapter(
+			items = buildRemapItems(),
+			onActionClick = { action -> capture.startListeningFor(action) },
+			onRestoreDefaults = { confirmControllerMappingReset() }
+		)
 		panel.quickSettingsRemapRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsRemapRecyclerView.adapter = remapAdapter
 		// Without this, the RecyclerView container itself can end up taking focus ahead of its
@@ -384,9 +388,6 @@ class QuickSettingsPanel(
 		// rows around instead of tearing them down, so LinearLayoutManager's own scroll-to-follow-
 		// focus handling has a real view to hand focus off to.
 		panel.quickSettingsRemapRecyclerView.setItemViewCacheSize(20)
-		panel.quickSettingsRestoreControllerDefaultsButton.setOnClickListener {
-			confirmControllerMappingReset()
-		}
 
 		panel.quickSettingsTrophiesRecyclerView.layoutManager = InstantScrollLinearLayoutManager(activity)
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
@@ -1888,9 +1889,23 @@ class QuickSettingsPanel(
 				preferences.clearControllerMapping()
 				remapAdapter.updateItems(buildRemapItems())
 				streamInput.reloadMapping()
+				restoreControllerResetFocus()
 			}
 			.setNegativeButton(R.string.action_cancel, null)
 			.show()
+	}
+
+	/** After the reset dialog closes, return controller focus to Left Stick Up instead of letting
+	 * RecyclerView focus its whole container, which cannot be navigated row-by-row. */
+	private fun restoreControllerResetFocus()
+	{
+		val firstActionPosition = 1
+		val layoutManager = panel.quickSettingsRemapRecyclerView.layoutManager as? LinearLayoutManager
+			?: return
+		layoutManager.scrollToPosition(firstActionPosition)
+		panel.quickSettingsRemapRecyclerView.postDelayed({
+			layoutManager.findViewByPosition(firstActionPosition)?.requestFocus()
+		}, 100)
 	}
 
 	private fun buildRemapItems(): List<RemapItem>
@@ -1906,6 +1921,7 @@ class QuickSettingsPanel(
 			}
 			items.add(RemapItem.ActionItem(action, currentMapping[action]))
 		}
+		items.add(RemapItem.RestoreDefaults)
 		return items
 	}
 }
