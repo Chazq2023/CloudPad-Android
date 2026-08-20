@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Consolidated image-quality controls with live per-stream FSR guidance and clearer controller navigation. Restored a separate Remote Play settings section, simplified the header actions, improved reset behavior, and made on-screen controls default to 50% opacity with a fully opaque 100% setting.
+        Removed game profiles and the platinum trophy state from game tiles to improve library scrolling performance, while retaining a larger theme-coloured trophy outline. Added a Restore to defaults button to controller remapping in Settings and Quick Settings, with controller navigation and themed focus styling for the main remap page toolbar.
 
     steps:
       - name: Checkout repo

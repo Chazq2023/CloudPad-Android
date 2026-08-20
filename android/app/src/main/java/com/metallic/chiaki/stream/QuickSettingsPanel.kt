@@ -246,9 +246,7 @@ class QuickSettingsPanel(
 	}
 
 	private val currentMapping: MutableMap<ControllerAction, PhysicalInput> =
-		PhysicalInput.resolveMapping(
-			viewModel.gameProfile?.controllerMapping() ?: preferences.loadControllerMapping()
-		).toMutableMap()
+		PhysicalInput.resolveMapping(preferences.loadControllerMapping()).toMutableMap()
 
 	private val remapAdapter: RemapAdapter
 	private val capture: ControllerRemapCapture
@@ -372,7 +370,11 @@ class QuickSettingsPanel(
 			}
 		)
 
-		remapAdapter = RemapAdapter(buildRemapItems()) { action -> capture.startListeningFor(action) }
+		remapAdapter = RemapAdapter(
+			items = buildRemapItems(),
+			onActionClick = { action -> capture.startListeningFor(action) },
+			onRestoreDefaults = { confirmControllerMappingReset() }
+		)
 		panel.quickSettingsRemapRecyclerView.layoutManager = LinearLayoutManager(activity)
 		panel.quickSettingsRemapRecyclerView.adapter = remapAdapter
 		// Without this, the RecyclerView container itself can end up taking focus ahead of its
@@ -1151,8 +1153,7 @@ class QuickSettingsPanel(
 		val resValues = activity.resources.getStringArray(
 			if(isLibrary) R.array.cloud_resolution_pscloud_values else R.array.cloud_resolution_psnow_values
 		).toList()
-		val currentRes = viewModel.gameProfile?.resolution
-			?: if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow()
+		val currentRes = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow()
 		sessionRowControls += addDropdownRow(
 			container,
 			if(isLibrary) R.string.preferences_cloud_resolution_pscloud_title else R.string.preferences_cloud_resolution_psnow_title,
@@ -1177,8 +1178,7 @@ class QuickSettingsPanel(
 		}
 
 		val bitrateSummaryRes = if(isLibrary) R.string.preferences_cloud_bitrate_pscloud_summary else R.string.preferences_cloud_bitrate_psnow_summary
-		val currentBitrateMbps = (viewModel.gameProfile?.bitrateKbps
-			?: if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
+		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
 		sessionRowControls += addSeekBarRow(
 			container, bitrateSummaryRes,
 			min = 2, max = 200, currentValue = currentBitrateMbps
@@ -1203,20 +1203,7 @@ class QuickSettingsPanel(
 				preferences.codec = pending.codec
 			}
 			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
-				val profile = viewModel.gameProfile
-				if(profile != null)
-				{
-					viewModel.saveGameProfile(profile.copy(
-						resolution = pending.resolution,
-						bitrateKbps = pending.bitrateKbps
-					))
-					// Datacenter is deliberately not one of the game-profile fields requested;
-					// retain its existing service-wide behavior while scoping resolution/bitrate.
-					if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
-						preferences.setCloudDatacenterPscloud(pending.datacenter)
-					else preferences.setCloudDatacenterPsnow(pending.datacenter)
-				}
-				else if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
+				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
 				{
 					preferences.setCloudResolutionPscloud(pending.resolution)
 					preferences.setCloudDatacenterPscloud(pending.datacenter)
@@ -1246,11 +1233,9 @@ class QuickSettingsPanel(
 	{
 		val isLibrary = sessionType == StreamSessionType.LIBRARY_PSCLOUD
 		return CloudSettingsSnapshot(
-			resolution = viewModel.gameProfile?.resolution
-				?: if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
+			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
 			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
-			bitrateKbps = viewModel.gameProfile?.bitrateKbps
-				?: if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
+			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
 		)
 	}
 
@@ -1886,18 +1871,41 @@ class QuickSettingsPanel(
 
 	private fun saveMappingAndRefresh()
 	{
-		val profile = viewModel.gameProfile
-		if(profile != null)
-		{
-			viewModel.saveGameProfile(profile.copy(
-				controllerMappingJson = PhysicalInput.mappingToJson(currentMapping)
-			))
-		}
-		else preferences.saveControllerMapping(currentMapping)
+		preferences.saveControllerMapping(currentMapping)
 		remapAdapter.updateItems(buildRemapItems())
 		// Rebuild StreamInput's mapping lookup tables immediately so the live session picks
 		// up the edit right away — there's no Save button to defer this to any more.
-		streamInput.reloadMapping(if(profile != null) currentMapping else null)
+		streamInput.reloadMapping()
+	}
+
+	private fun confirmControllerMappingReset()
+	{
+		activity.alertDialogBuilder()
+			.setTitle(R.string.controller_remap_reset_title)
+			.setMessage(R.string.controller_remap_reset_message)
+			.setPositiveButton(R.string.controller_remap_reset_confirm) { _, _ ->
+				currentMapping.clear()
+				currentMapping.putAll(PhysicalInput.DEFAULT_MAPPING)
+				preferences.clearControllerMapping()
+				remapAdapter.updateItems(buildRemapItems())
+				streamInput.reloadMapping()
+				restoreControllerResetFocus()
+			}
+			.setNegativeButton(R.string.action_cancel, null)
+			.show()
+	}
+
+	/** After the reset dialog closes, return controller focus to Left Stick Up instead of letting
+	 * RecyclerView focus its whole container, which cannot be navigated row-by-row. */
+	private fun restoreControllerResetFocus()
+	{
+		val firstActionPosition = 1
+		val layoutManager = panel.quickSettingsRemapRecyclerView.layoutManager as? LinearLayoutManager
+			?: return
+		layoutManager.scrollToPosition(firstActionPosition)
+		panel.quickSettingsRemapRecyclerView.postDelayed({
+			layoutManager.findViewByPosition(firstActionPosition)?.requestFocus()
+		}, 100)
 	}
 
 	private fun buildRemapItems(): List<RemapItem>
@@ -1913,6 +1921,7 @@ class QuickSettingsPanel(
 			}
 			items.add(RemapItem.ActionItem(action, currentMapping[action]))
 		}
+		items.add(RemapItem.RestoreDefaults)
 		return items
 	}
 }

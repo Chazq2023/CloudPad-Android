@@ -4,5 +4,5 @@
     <item
         android:id="@+id/action_reset_mapping"
         android:title="@string/controller_remap_reset_title"
-        app:showAsAction="never"/>
+        app:showAsAction="never" />
 </menu>
