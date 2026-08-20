@@ -108,11 +108,11 @@ class Preferences(context: Context)
 	fun touchControlStyle(control: TouchControl) = TouchControlStyle(
 		sharedPreferences.getInt(
 			TOUCH_CONTROL_SIZE_PREFIX + control.name,
-			TouchControlStyle.DEFAULT_PERCENT
+			TouchControlStyle.DEFAULT_SIZE_PERCENT
 		).coerceIn(TouchControlStyle.MIN_SIZE_PERCENT, TouchControlStyle.MAX_SIZE_PERCENT),
 		sharedPreferences.getInt(
 			TOUCH_CONTROL_OPACITY_PREFIX + control.name,
-			TouchControlStyle.DEFAULT_PERCENT
+			TouchControlStyle.DEFAULT_OPACITY_PERCENT
 		).coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT),
 		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_X_PREFIX + control.name, 0),
 		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_Y_PREFIX + control.name, 0),
@@ -202,6 +202,23 @@ class Preferences(context: Context)
 	var fsrSharpening
 		get() = sharedPreferences.getInt(fsrSharpeningKey, FSR_SHARPENING_DEFAULT).coerceIn(FSR_SHARPENING_MIN, FSR_SHARPENING_MAX)
 		set(value) { sharedPreferences.edit().putInt(fsrSharpeningKey, value.coerceIn(FSR_SHARPENING_MIN, FSR_SHARPENING_MAX)).apply() }
+
+	val imageProcessingKey get() = resources.getString(R.string.preferences_image_processing_key)
+	var imageProcessing: String
+		get() = when { fsrEnabled -> "fsr"; casSharpeningEnabled -> "cas"; else -> "off" }
+		set(value) {
+			sharedPreferences.edit()
+				.putBoolean(fsrEnabledKey, value == "fsr")
+				.putBoolean(casSharpeningEnabledKey, value == "cas")
+				.apply()
+		}
+
+	fun resetImageQuality()
+	{
+		resolution = resolutionDefault; fps = fpsDefault; codec = codecDefault; bitrate = null
+		imageProcessing = "off"; fsrUpscalingEnabled = false; fsrSharpening = FSR_SHARPENING_DEFAULT
+		casSharpeningLevel = CAS_SHARPENING_LEVEL_DEFAULT
+	}
 
 	val swapCrossMoonKey get() = resources.getString(R.string.preferences_swap_cross_moon_key)
 	var swapCrossMoon

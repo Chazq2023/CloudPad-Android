@@ -193,6 +193,26 @@
     <string name="preferences_fsr_upscaling_summary">If the stream is set to 720p and Upscaling is enabled, it will upscale to 1080p. If the stream is set to 1080p and Upscaling is enabled, it will upscale to 1440p. Please note: if your device’s maximum resolution is 1080p, Android will downsample the 1440p output to 1080p, which can cause a blurry image. In this situation, leave Upscaling disabled.</string>
     <string name="preferences_fsr_sharpening_title">Sharpening</string>
     <string name="quick_settings_fsr_sharpening">Sharpening: %d%%</string>
+    <string name="preferences_category_title_image_quality">Image Quality</string>
+    <string name="preferences_image_processing_title">Image Processing</string>
+    <string name="preferences_image_processing_off">Off</string>
+    <string name="preferences_image_processing_cas">CAS</string>
+    <string name="preferences_image_processing_fsr">FSR 1</string>
+    <string name="preferences_quality_reset_title">Reset Image Quality</string>
+    <string name="preferences_quality_reset_summary">Restore the default stream and image-processing values</string>
+    <string name="preferences_cas_recommended">Recommended starting level: 1</string>
+    <string name="preferences_fsr_recommended">Recommended range: 30–60%%</string>
+    <string name="preferences_applies_immediately">Applies immediately</string>
+    <string name="preferences_restarts_stream">Applied after restarting the stream</string>
+    <string name="preferences_fsr_output_720">720p stream → 1080p output</string>
+    <string name="preferences_fsr_output_1080">1080p stream → 1440p output</string>
+    <string name="preferences_fsr_output_downsample">1080p stream → 1440p output; this %1$dp display will downsample it and may look softer. If this is the case, please leave Upscaling disabled.</string>
+    <string name="preferences_fsr_output_unchanged">%1$dp stream; no FSR upscale applied</string>
+    <string name="preferences_fsr_output_all">Remote Play: %1$s\nGame Library: %2$s\nGame Catalog: %3$s</string>
+    <string name="quick_settings_image_quality">Image Quality · Applies immediately</string>
+    <string name="quick_settings_restart_note">Stream settings below restart the stream when applied</string>
+    <string name="preferences_quality_apply_title">When changes apply</string>
+    <string name="preferences_quality_apply_summary">Image processing and sharpening apply immediately during a stream. Resolution, frame rate, bitrate and codec apply after restarting the stream.</string>
     <string name="quick_settings_title">Quick Settings</string>
     <string name="quick_settings_close">Close</string>
     <string name="quick_settings_current_game">Current game: %s</string>
@@ -394,6 +414,7 @@
     <string name="preferences_fsr_enabled_key">fsr_enabled</string>
     <string name="preferences_fsr_upscaling_enabled_key">fsr_upscaling_enabled</string>
     <string name="preferences_fsr_sharpening_key">fsr_sharpening</string>
+    <string name="preferences_image_processing_key">image_processing</string>
     <string name="donation_dialog_title">Support CloudPad</string>
     <string name="donation_dialog_body">CloudPad is built by the community. If you enjoy using it, please consider supporting its development. Your contribution helps fund continued updates and keeps the project alive.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
@@ -439,4 +460,8 @@
     <string name="preferences_cloud_bitrate_psnow_key">cloud_bitrate_psnow</string>
     <string name="preferences_cloud_bitrate_psnow_title">Bitrate</string>
     <string name="preferences_cloud_bitrate_psnow_summary">%d Mbps for Game Catalog streaming</string>
+    <string-array name="image_processing_entries">
+        <item>@string/preferences_image_processing_off</item><item>@string/preferences_image_processing_cas</item><item>@string/preferences_image_processing_fsr</item>
+    </string-array>
+    <string-array name="image_processing_values"><item>off</item><item>cas</item><item>fsr</item></string-array>
 </resources>

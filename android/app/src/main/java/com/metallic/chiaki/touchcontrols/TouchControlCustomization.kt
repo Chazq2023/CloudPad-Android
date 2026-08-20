@@ -36,7 +36,8 @@ data class TouchControlStyle(
 {
 	companion object
 	{
-		const val DEFAULT_PERCENT = 100
+		const val DEFAULT_SIZE_PERCENT = 100
+		const val DEFAULT_OPACITY_PERCENT = 50
 		const val MIN_SIZE_PERCENT = 50
 		const val MAX_SIZE_PERCENT = 150
 		const val MIN_OPACITY_PERCENT = 10

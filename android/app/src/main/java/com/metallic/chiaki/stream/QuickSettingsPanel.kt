@@ -26,6 +26,7 @@ import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.SeekBar
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.widget.doAfterTextChanged
@@ -253,6 +254,23 @@ class QuickSettingsPanel(
 	private val capture: ControllerRemapCapture
 
 	private val sessionType: StreamSessionType = viewModel.connectInfo.sessionType
+
+	private fun updateFsrStatus()
+	{
+		// DisplayMetrics reports only the app's usable window (1025 px on some 1080p
+		// devices after system-bar insets). Display.Mode describes the physical panel.
+		val displayMode = activity.windowManager.defaultDisplay.mode
+		val displayShortEdge = minOf(displayMode.physicalWidth, displayMode.physicalHeight)
+		val sourceHeight = viewModel.session.connectInfo.videoProfile.height
+		panel.quickSettingsFsrOutputStatus.text = when(sourceHeight)
+		{
+			720 -> activity.getString(R.string.preferences_fsr_output_720)
+			1080 -> if(displayShortEdge < 1440)
+				activity.getString(R.string.preferences_fsr_output_downsample, displayShortEdge)
+				else activity.getString(R.string.preferences_fsr_output_1080)
+			else -> activity.getString(R.string.preferences_fsr_output_unchanged, sourceHeight)
+		}
+	}
 
 	// ---- Session tab: Apply-gated restart (see class doc comment) ----
 
@@ -537,22 +555,22 @@ class QuickSettingsPanel(
 			preferences.pipEnabled = isChecked
 		}
 
-		// CAS Image Sharpening: applies to the live GL renderer immediately, in the same
-		// listener that flips the toggle/moves the slider — no Save button, same as every
-		// other row here. Slider only exists visually while the toggle is on.
-		panel.quickSettingsCasRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_cas_sharpening_enabled_title)
+		panel.quickSettingsProcessingRow.quickSettingsDropdownLabel.text = activity.getString(R.string.preferences_image_processing_title)
+		fun bindSpinner(spinner: Spinner, entries: List<String>, values: List<String>, current: String, selected: (String) -> Unit)
+		{
+			spinner.adapter = ArrayAdapter(activity, R.layout.item_quick_settings_spinner_item, entries).apply {
+				setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+			}
+			spinner.setSelection(values.indexOf(current).coerceAtLeast(0), false)
+			spinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+				override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) = selected(values[position])
+				override fun onNothingSelected(parent: AdapterView<*>?) {}
+			}
+		}
+		val processingValues = listOf("off", "cas", "fsr")
+		val processingEntries = listOf(R.string.preferences_image_processing_off, R.string.preferences_image_processing_cas, R.string.preferences_image_processing_fsr).map(activity::getString)
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.max = Preferences.CAS_SHARPENING_LEVEL_MAX - Preferences.CAS_SHARPENING_LEVEL_MIN
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.keyProgressIncrement = 1
-		panel.quickSettingsCasRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
-			preferences.casSharpeningEnabled = isChecked
-			panel.quickSettingsCasSeekBarRow.root.visibility = if(isChecked) View.VISIBLE else View.GONE
-			if(isChecked)
-			{
-				preferences.fsrEnabled = false
-				panel.quickSettingsFsrRow.quickSettingsRowSwitch.isChecked = false
-			}
-			onCasSharpeningChanged(isChecked, preferences.casSharpeningLevel)
-		}
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
 		{
 			override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean)
@@ -569,29 +587,24 @@ class QuickSettingsPanel(
 			override fun onStopTrackingTouch(seekBar: SeekBar) {}
 		})
 
-		panel.quickSettingsFsrRow.quickSettingsRowLabel.apply {
-			text = activity.getString(R.string.preferences_fsr_enabled_title)
-		}
 		panel.quickSettingsFsrUpscalingRow.quickSettingsRowLabel.apply {
 			text = activity.getString(R.string.preferences_fsr_upscaling_title)
 		}
 		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.max = 100
 		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.keyProgressIncrement = 1
-		fun updateFsrVisibility(enabled: Boolean)
+		fun updateProcessingVisibility(mode: String)
 		{
-			panel.quickSettingsFsrUpscalingRow.root.visibility = if(enabled) View.VISIBLE else View.GONE
-			panel.quickSettingsFsrSharpeningRow.root.visibility = if(enabled) View.VISIBLE else View.GONE
+			panel.quickSettingsCasSeekBarRow.root.visibility = if(mode == "cas") View.VISIBLE else View.GONE
+			panel.quickSettingsFsrUpscalingRow.root.visibility = if(mode == "fsr") View.VISIBLE else View.GONE
+			panel.quickSettingsFsrSharpeningRow.root.visibility = if(mode == "fsr") View.VISIBLE else View.GONE
+			panel.quickSettingsFsrOutputStatus.visibility = if(mode == "fsr") View.VISIBLE else View.GONE
 		}
 		fun applyFsr() = onFsrChanged(preferences.fsrEnabled, preferences.fsrUpscalingEnabled, preferences.fsrSharpening)
-		panel.quickSettingsFsrRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
-			preferences.fsrEnabled = enabled
-			updateFsrVisibility(enabled)
-			if(enabled)
-			{
-				preferences.casSharpeningEnabled = false
-				panel.quickSettingsCasRow.quickSettingsRowSwitch.isChecked = false
-			}
-			applyFsr()
+		bindSpinner(panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, processingEntries, processingValues, preferences.imageProcessing) { mode ->
+			if(mode == preferences.imageProcessing) return@bindSpinner
+			preferences.imageProcessing = mode
+			updateProcessingVisibility(mode)
+			onCasSharpeningChanged(mode == "cas", preferences.casSharpeningLevel); applyFsr()
 		}
 		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
 			preferences.fsrUpscalingEnabled = enabled
@@ -607,6 +620,18 @@ class QuickSettingsPanel(
 			override fun onStartTrackingTouch(seekBar: SeekBar) {}
 			override fun onStopTrackingTouch(seekBar: SeekBar) {}
 		})
+		panel.quickSettingsResetImageQuality.setOnClickListener {
+			preferences.resetImageQuality()
+			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner.setSelection(processingValues.indexOf("off"))
+			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress =
+				preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
+			updateCasSeekBarLabel(preferences.casSharpeningLevel)
+			panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.isChecked = preferences.fsrUpscalingEnabled
+			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.progress = preferences.fsrSharpening
+			updateProcessingVisibility("off")
+			onCasSharpeningChanged(false, preferences.casSharpeningLevel); applyFsr()
+		}
+		updateFsrStatus()
 
 		// Window Size applies immediately too, as soon as a new option is checked.
 		panel.quickSettingsDisplayModeToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
@@ -695,14 +720,13 @@ class QuickSettingsPanel(
 			panel.quickSettingsDisplayModeNormal, panel.quickSettingsDisplayModeZoom,
 			panel.quickSettingsDisplayModeStretch
 		).forEach { addFocusHighlight(it, pyluxAccentColor, useForeground = true) }
-
 		listOf(
 			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOscRow.quickSettingsRowSwitch,
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
-			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsCasRow.quickSettingsRowSwitch,
-		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
-			panel.quickSettingsFsrRow.quickSettingsRowSwitch, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
+			panel.quickSettingsPipRow.quickSettingsRowSwitch,
+			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
+			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
 			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
 			panel.quickSettingsFriendChatBackButton, panel.quickSettingsFriendChatRefreshButton,
@@ -1063,6 +1087,7 @@ class QuickSettingsPanel(
 		pendingRemotePlaySettings = remotePlayBaseline
 
 		addSectionLabel(container, R.string.preferences_category_title_stream)
+		addSectionLabel(container, R.string.quick_settings_restart_note)
 
 		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_resolution_title,
@@ -1425,15 +1450,16 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 
-		panel.quickSettingsCasRow.quickSettingsRowSwitch.isChecked = preferences.casSharpeningEnabled
-		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.casSharpeningEnabled) View.VISIBLE else View.GONE
+		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.imageProcessing == "cas") View.VISIBLE else View.GONE
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
 		updateCasSeekBarLabel(preferences.casSharpeningLevel)
-		panel.quickSettingsFsrRow.quickSettingsRowSwitch.isChecked = preferences.fsrEnabled
-		panel.quickSettingsFsrUpscalingRow.root.visibility = if(preferences.fsrEnabled) View.VISIBLE else View.GONE
-		panel.quickSettingsFsrSharpeningRow.root.visibility = if(preferences.fsrEnabled) View.VISIBLE else View.GONE
+		panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner.setSelection(when(preferences.imageProcessing) { "cas" -> 1; "fsr" -> 2; else -> 0 })
+		panel.quickSettingsFsrUpscalingRow.root.visibility = if(preferences.imageProcessing == "fsr") View.VISIBLE else View.GONE
+		panel.quickSettingsFsrSharpeningRow.root.visibility = if(preferences.imageProcessing == "fsr") View.VISIBLE else View.GONE
+		panel.quickSettingsFsrOutputStatus.visibility = if(preferences.imageProcessing == "fsr") View.VISIBLE else View.GONE
 		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.isChecked = preferences.fsrUpscalingEnabled
 		panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar.progress = preferences.fsrSharpening
+		updateFsrStatus()
 
 		panel.root.translationX = panelWidthPx
 		if(!dialog.isShowing) dialog.show()

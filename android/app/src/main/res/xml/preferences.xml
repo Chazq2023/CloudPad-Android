@@ -109,34 +109,31 @@
     </PreferenceCategory>
 
     <PreferenceCategory
-        app:key="category_cas_sharpening"
-        app:title="@string/preferences_category_title_cas_sharpening">
-        <SwitchPreference
-            app:key="@string/preferences_cas_sharpening_enabled_key"
-            app:title="@string/preferences_cas_sharpening_enabled_title"
-            app:summary="@string/preferences_cas_sharpening_enabled_summary"
-            app:defaultValue="false"
+        app:key="category_image_quality"
+        app:title="@string/preferences_category_title_image_quality">
+        <Preference
+            app:title="@string/preferences_quality_apply_title"
+            app:summary="@string/preferences_quality_apply_summary"
+            app:selectable="false"
+            app:icon="@drawable/ic_resolution"/>
+        <ListPreference
+            app:key="@string/preferences_image_processing_key"
+            app:title="@string/preferences_image_processing_title"
+            app:summary="%s"
+            app:entries="@array/image_processing_entries"
+            app:entryValues="@array/image_processing_values"
+            app:defaultValue="off"
             app:icon="@drawable/ic_resolution"/>
 
         <SeekBarPreference
             app:key="@string/preferences_cas_sharpening_level_key"
             app:title="@string/preferences_cas_sharpening_level_title"
+            app:summary="@string/preferences_cas_recommended"
             app:min="1"
             android:max="10"
             app:seekBarIncrement="1"
             app:defaultValue="1"
             app:showSeekBarValue="true"
-            app:icon="@drawable/ic_resolution"/>
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        app:key="category_fsr"
-        app:title="@string/preferences_category_title_fsr">
-        <SwitchPreference
-            app:key="@string/preferences_fsr_enabled_key"
-            app:title="@string/preferences_fsr_enabled_title"
-            app:summary="@string/preferences_fsr_enabled_summary"
-            app:defaultValue="false"
             app:icon="@drawable/ic_resolution"/>
         <SwitchPreference
             app:key="@string/preferences_fsr_upscaling_enabled_key"
@@ -147,11 +144,18 @@
         <SeekBarPreference
             app:key="@string/preferences_fsr_sharpening_key"
             app:title="@string/preferences_fsr_sharpening_title"
+            app:summary="@string/preferences_fsr_recommended"
             app:min="0"
             android:max="100"
             app:seekBarIncrement="1"
             app:defaultValue="50"
             app:showSeekBarValue="true"
+            app:icon="@drawable/ic_resolution"/>
+
+        <Preference
+            app:key="reset_image_quality"
+            app:title="@string/preferences_quality_reset_title"
+            app:summary="@string/preferences_quality_reset_summary"
             app:icon="@drawable/ic_resolution"/>
     </PreferenceCategory>
 
@@ -173,6 +177,7 @@
         <EditTextPreference
             app:key="@string/preferences_bitrate_key"
             app:title="@string/preferences_bitrate_title"
+            app:summary="@string/preferences_restarts_stream"
             app:icon="@drawable/ic_bitrate"/>
 
         <ListPreference

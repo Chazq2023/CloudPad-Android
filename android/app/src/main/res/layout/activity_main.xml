@@ -111,19 +111,6 @@
                     android:paddingStart="3dp"
                     android:paddingEnd="3dp">
 
-                    <!-- WiFi Discovery Icon (Remote Play) -->
-                    <ImageView
-                        android:id="@+id/wifiIcon"
-                        android:layout_width="44dp"
-                        android:layout_height="40dp"
-                        android:padding="8dp"
-                        android:src="@drawable/ic_discover_off"
-                        android:contentDescription="@string/action_discover"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:focusable="true"
-                        android:clickable="true"
-                        android:tint="#CCFFFFFF" />
-
                     <!-- Friends Icon -->
                     <ImageView
                         android:id="@+id/friendsIcon"
