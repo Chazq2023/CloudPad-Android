@@ -58,16 +58,7 @@ class ControllerRemapActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
         binding.recyclerView.adapter = adapter
         binding.recyclerView.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_controller_remap, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.action_reset_mapping -> { confirmReset(); true }
-        else -> super.onOptionsItemSelected(item)
+        binding.restoreDefaultsButton.setOnClickListener { confirmReset() }
     }
 
     // ---- Activity-level dispatch (handles events when no dialog is showing) ----

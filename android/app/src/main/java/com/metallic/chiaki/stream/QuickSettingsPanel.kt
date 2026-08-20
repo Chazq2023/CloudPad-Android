@@ -384,6 +384,9 @@ class QuickSettingsPanel(
 		// rows around instead of tearing them down, so LinearLayoutManager's own scroll-to-follow-
 		// focus handling has a real view to hand focus off to.
 		panel.quickSettingsRemapRecyclerView.setItemViewCacheSize(20)
+		panel.quickSettingsRestoreControllerDefaultsButton.setOnClickListener {
+			confirmControllerMappingReset()
+		}
 
 		panel.quickSettingsTrophiesRecyclerView.layoutManager = InstantScrollLinearLayoutManager(activity)
 		panel.quickSettingsTrophiesRecyclerView.adapter = trophyAdapter
@@ -1872,6 +1875,22 @@ class QuickSettingsPanel(
 		// Rebuild StreamInput's mapping lookup tables immediately so the live session picks
 		// up the edit right away — there's no Save button to defer this to any more.
 		streamInput.reloadMapping()
+	}
+
+	private fun confirmControllerMappingReset()
+	{
+		activity.alertDialogBuilder()
+			.setTitle(R.string.controller_remap_reset_title)
+			.setMessage(R.string.controller_remap_reset_message)
+			.setPositiveButton(R.string.controller_remap_reset_confirm) { _, _ ->
+				currentMapping.clear()
+				currentMapping.putAll(PhysicalInput.DEFAULT_MAPPING)
+				preferences.clearControllerMapping()
+				remapAdapter.updateItems(buildRemapItems())
+				streamInput.reloadMapping()
+			}
+			.setNegativeButton(R.string.action_cancel, null)
+			.show()
 	}
 
 	private fun buildRemapItems(): List<RemapItem>

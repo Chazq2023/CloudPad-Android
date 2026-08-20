@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Removed game profiles and the platinum trophy state from game tiles to improve library scrolling performance, while retaining a larger theme-coloured trophy outline.
+        Removed game profiles and the platinum trophy state from game tiles to improve library scrolling performance, while retaining a larger theme-coloured trophy outline. Added a Restore to defaults button to controller remapping in Settings and Quick Settings.
 
     steps:
       - name: Checkout repo
