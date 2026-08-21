@@ -17,6 +17,12 @@ class TouchTracker
 
 	private var pointerId: Int? = null
 
+	fun cancel()
+	{
+		pointerId = null
+		currentPosition = null
+	}
+
 	fun touchEvent(event: MotionEvent)
 	{
 		when(event.actionMasked)
@@ -30,13 +36,10 @@ class TouchTracker
 				}
 			}
 
-			MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP ->
+			MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL ->
 			{
-				if(event.getPointerId(event.actionIndex) == pointerId)
-				{
-					pointerId = null
-					currentPosition = null
-				}
+				if(event.actionMasked == MotionEvent.ACTION_CANCEL || event.getPointerId(event.actionIndex) == pointerId)
+					cancel()
 			}
 
 			MotionEvent.ACTION_MOVE ->

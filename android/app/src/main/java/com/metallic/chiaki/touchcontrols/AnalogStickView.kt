@@ -132,7 +132,18 @@ class AnalogStickView @JvmOverloads constructor(
 
 	override fun onTouchEvent(event: MotionEvent): Boolean
 	{
+		if(event.actionMasked == MotionEvent.ACTION_DOWN && alwaysShow && !isInsideVisibleStick(event.x, event.y))
+			return false
 		touchTracker.touchEvent(event)
 		return true
+	}
+
+	private fun isInsideVisibleStick(x: Float, y: Float): Boolean
+	{
+		val center = center ?: return false
+		val dx = x - center.x
+		val dy = y - center.y
+		val visibleRadius = radius + handleRadius
+		return dx * dx + dy * dy <= visibleRadius * visibleRadius
 	}
 }

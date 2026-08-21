@@ -116,7 +116,10 @@ class Preferences(context: Context)
 		).coerceIn(TouchControlStyle.MIN_OPACITY_PERCENT, TouchControlStyle.MAX_OPACITY_PERCENT),
 		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_X_PREFIX + control.name, 0),
 		sharedPreferences.getInt(TOUCH_CONTROL_OFFSET_Y_PREFIX + control.name, 0),
-		sharedPreferences.getBoolean(TOUCH_CONTROL_ALWAYS_SHOW_PREFIX + control.name, false)
+		sharedPreferences.getBoolean(
+			TOUCH_CONTROL_ALWAYS_SHOW_PREFIX + control.name,
+			control.defaultAlwaysShow
+		)
 	)
 
 	fun setTouchControlStyle(control: TouchControl, style: TouchControlStyle)
