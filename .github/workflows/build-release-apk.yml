@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Made both on-screen analog sticks always visible by default and limited fixed-stick activation to touches beginning within the visible stick area.
+        Limited the remaining on-screen controls to touches beginning within their visible areas and improved audio output startup reliability.
 
     steps:
       - name: Checkout repo
