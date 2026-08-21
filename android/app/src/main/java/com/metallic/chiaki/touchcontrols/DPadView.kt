@@ -125,6 +125,9 @@ class DPadView @JvmOverloads constructor(
 
 	override fun onTouchEvent(event: MotionEvent): Boolean
 	{
+		if(event.actionMasked == MotionEvent.ACTION_DOWN && !isInsideDrawableBounds(
+				event.x, event.y, paddingLeft, paddingTop, width - paddingRight, height - paddingBottom))
+			return false
 		touchTracker.touchEvent(event)
 		return true
 	}

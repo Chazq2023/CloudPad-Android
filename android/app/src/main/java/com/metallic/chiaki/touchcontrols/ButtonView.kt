@@ -68,7 +68,11 @@ class ButtonView @JvmOverloads constructor(
 			it is ButtonView
 		}?.filter {
 			val pos = it.locationOnScreen
-			loc.x >= pos.x && loc.x < pos.x + it.width && loc.y >= pos.y && loc.y < pos.y + it.height
+			isInsideDrawableBounds(
+				loc.x, loc.y,
+				pos.x.toInt() + it.paddingLeft, pos.y.toInt() + it.paddingTop,
+				pos.x.toInt() + it.width - it.paddingRight, pos.y.toInt() + it.height - it.paddingBottom
+			)
 		}?.sortedBy {
 			(loc - (it.locationOnScreen + Vector(it.width.toFloat(), it.height.toFloat()) * 0.5f)).lengthSq
 		}?.firstOrNull() ?: this
@@ -79,11 +83,15 @@ class ButtonView @JvmOverloads constructor(
 		when(event.actionMasked)
 		{
 			MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
-				if(bestFittingTouchView(event.getX(event.actionIndex), event.getY(event.actionIndex)) != this)
+				val x = event.getX(event.actionIndex)
+				val y = event.getY(event.actionIndex)
+				if(!isInsideDrawableBounds(x, y, paddingLeft, paddingTop, width - paddingRight, height - paddingBottom))
+					return false
+				if(bestFittingTouchView(x, y) != this)
 					return false
 				buttonPressed = true
 			}
-			MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+			MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
 				buttonPressed = false
 			}
 		}

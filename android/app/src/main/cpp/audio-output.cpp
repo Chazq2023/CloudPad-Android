@@ -38,6 +38,42 @@ struct AudioOutput
 	AudioOutput() : stream_callback(this) {}
 };
 
+static bool android_chiaki_audio_output_open(AudioOutput *ao, uint32_t channels, uint32_t rate,
+		oboe::PerformanceMode performance_mode)
+{
+	oboe::AudioStreamBuilder builder;
+	builder.setPerformanceMode(performance_mode)
+		->setSharingMode(oboe::SharingMode::Shared)
+		->setUsage(oboe::Usage::Game)
+		->setContentType(oboe::ContentType::Music)
+		->setFormat(oboe::AudioFormat::I16)
+		->setChannelCount(channels)
+		->setSampleRate(rate)
+		->setCallback(&ao->stream_callback);
+
+	auto result = builder.openManagedStream(ao->stream);
+	if(result != oboe::Result::OK || !ao->stream)
+	{
+		CHIAKI_LOGE(ao->log, "Audio Output failed to open Oboe stream (%s): %s",
+				oboe::convertToText(performance_mode), oboe::convertToText(result));
+		ao->stream = nullptr;
+		return false;
+	}
+
+	result = ao->stream->start();
+	if(result != oboe::Result::OK)
+	{
+		CHIAKI_LOGE(ao->log, "Audio Output failed to start Oboe stream (%s): %s",
+				oboe::convertToText(performance_mode), oboe::convertToText(result));
+		ao->stream = nullptr;
+		return false;
+	}
+
+	CHIAKI_LOGI(ao->log, "Audio Output opened and started shared Oboe stream (%s)",
+			oboe::convertToText(performance_mode));
+	return true;
+}
+
 extern "C" void *android_chiaki_audio_output_new(ChiakiLog *log)
 {
 	auto r = new AudioOutput();
@@ -57,26 +93,12 @@ extern "C" void android_chiaki_audio_output_free(void *audio_output)
 extern "C" void android_chiaki_audio_output_settings(uint32_t channels, uint32_t rate, void *audio_output)
 {
 	auto ao = reinterpret_cast<AudioOutput *>(audio_output);
-
-	oboe::AudioStreamBuilder builder;
-	builder.setPerformanceMode(oboe::PerformanceMode::LowLatency)
-		->setSharingMode(oboe::SharingMode::Exclusive)
-		->setFormat(oboe::AudioFormat::I16)
-		->setChannelCount(channels)
-		->setSampleRate(rate)
-		->setCallback(&ao->stream_callback);
-
-	auto result = builder.openManagedStream(ao->stream);
-	if(result == oboe::Result::OK)
-		CHIAKI_LOGI(ao->log, "Audio Output opened Oboe stream");
-	else
-		CHIAKI_LOGE(ao->log, "Audio Output failed to open Oboe stream: %s", oboe::convertToText(result));
-
-	result = ao->stream->start();
-	if(result == oboe::Result::OK)
-		CHIAKI_LOGI(ao->log, "Audio Output started Oboe stream");
-	else
-		CHIAKI_LOGE(ao->log, "Audio Output failed to start Oboe stream: %s", oboe::convertToText(result));
+	ao->stream = nullptr;
+	if(!android_chiaki_audio_output_open(ao, channels, rate, oboe::PerformanceMode::LowLatency))
+	{
+		CHIAKI_LOGW(ao->log, "Audio Output retrying without low-latency mode");
+		android_chiaki_audio_output_open(ao, channels, rate, oboe::PerformanceMode::None);
+	}
 }
 
 extern "C" void android_chiaki_audio_output_frame(int16_t *buf, size_t samples_count, void *audio_output)
