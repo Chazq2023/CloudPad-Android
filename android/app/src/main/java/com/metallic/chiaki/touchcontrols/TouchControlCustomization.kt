@@ -5,11 +5,11 @@ package com.metallic.chiaki.touchcontrols
 import androidx.annotation.StringRes
 import com.pylux.stream.R
 
-enum class TouchControl(@StringRes val labelRes: Int)
+enum class TouchControl(@StringRes val labelRes: Int, val defaultAlwaysShow: Boolean = false)
 {
 	DPAD(R.string.touch_control_dpad),
-	LEFT_STICK(R.string.touch_control_left_stick),
-	RIGHT_STICK(R.string.touch_control_right_stick),
+	LEFT_STICK(R.string.touch_control_left_stick, defaultAlwaysShow = true),
+	RIGHT_STICK(R.string.touch_control_right_stick, defaultAlwaysShow = true),
 	TOUCHPAD(R.string.touch_control_touchpad),
 	CROSS(R.string.touch_control_cross),
 	CIRCLE(R.string.touch_control_circle),

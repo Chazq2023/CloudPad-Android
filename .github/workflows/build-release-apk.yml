@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Removed game profiles and the platinum trophy state from game tiles to improve library scrolling performance, while retaining a larger theme-coloured trophy outline. Added a Restore to defaults button to controller remapping in Settings and Quick Settings, with controller navigation and themed focus styling for the main remap page toolbar.
+        Made both on-screen analog sticks always visible by default and limited fixed-stick activation to touches beginning within the visible stick area.
 
     steps:
       - name: Checkout repo
