@@ -352,7 +352,7 @@ class ChiakiLog(val levelMask: Int, val callback: (level: Int, text: String) -> 
 	fun e(text: String) = log(Level.ERROR.value, text)
 }
 
-private fun maxAbs(a: Short, b: Short) = if(abs(a.toInt()) > abs(b.toInt())) a else b
+internal fun maxAbs(a: Short, b: Short) = if(abs(a.toInt()) > abs(b.toInt())) a else b
 
 private val CONTROLLER_TOUCHES_MAX = 2 // must be the same as CHIAKI_CONTROLLER_TOUCHES_MAX
 

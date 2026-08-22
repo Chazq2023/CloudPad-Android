@@ -12,19 +12,41 @@ import org.reactivestreams.Publisher
 import org.reactivestreams.Subscriber
 import org.reactivestreams.Subscription
 
+/** Subscribes only while this LiveData has an active observer, and cancels when it doesn't
+ *  (standard [LiveData.onActive]/[LiveData.onInactive] lifecycle hooks) — rather than
+ *  subscribing once, immediately, and never unsubscribing regardless of whether anything is
+ *  still observing it. That used to mean an infinite source (e.g. an `Observable.interval`
+ *  ticker) just kept running forever at the process level once created, since nothing held a
+ *  handle to cancel it — every `ViewModel.onCleared()` was a no-op against it. All call sites
+ *  already tolerate a not-yet-emitted value (either via lifecycle-scoped `.observe()` or an
+ *  explicit `?:` default on a direct `.value` read), so subscribing lazily on first observation
+ *  rather than eagerly is a safe behavior change, not just an internal implementation detail. */
 fun <T> Publisher<T>.toLiveData(): LiveData<T> {
-	val liveData = MutableLiveData<T>()
-	this.subscribe(object : Subscriber<T> {
-		override fun onSubscribe(s: Subscription) {
-			s.request(Long.MAX_VALUE)
+	val publisher = this
+	return object : MutableLiveData<T>() {
+		private var subscription: Subscription? = null
+
+		override fun onActive() {
+			super.onActive()
+			publisher.subscribe(object : Subscriber<T> {
+				override fun onSubscribe(s: Subscription) {
+					subscription = s
+					s.request(Long.MAX_VALUE)
+				}
+				override fun onNext(t: T) {
+					postValue(t)
+				}
+				override fun onError(t: Throwable) {}
+				override fun onComplete() {}
+			})
 		}
-		override fun onNext(t: T) {
-			liveData.postValue(t)
+
+		override fun onInactive() {
+			super.onInactive()
+			subscription?.cancel()
+			subscription = null
 		}
-		override fun onError(t: Throwable) {}
-		override fun onComplete() {}
-	})
-	return liveData
+	}
 }
 
 fun <T> Observable<T>.toLiveData() = this.toFlowable(BackpressureStrategy.LATEST).toLiveData()

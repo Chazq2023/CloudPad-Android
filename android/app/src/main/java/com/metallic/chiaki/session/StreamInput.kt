@@ -2,6 +2,7 @@ package com.metallic.chiaki.session
 
 import android.content.Context
 import android.hardware.*
+import android.hardware.display.DisplayManager
 import android.os.Handler
 import android.os.Looper
 import android.view.*
@@ -11,6 +12,8 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.OnLifecycleEvent
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.lib.ControllerState
+import com.metallic.chiaki.lib.ControllerTouch
+import com.metallic.chiaki.lib.maxAbs
 import kotlin.math.pow
 
 class StreamInput(
@@ -20,32 +23,8 @@ class StreamInput(
 ) {
 	var controllerStateChangedCallback: ((ControllerState) -> Unit)? = null
 
-	val controllerState: ControllerState get()
-	{
-		val controllerState = sensorControllerState or keyControllerState or motionControllerState
-
-		val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-		@Suppress("DEPRECATION")
-		when(windowManager.defaultDisplay.rotation)
-		{
-			Surface.ROTATION_90 -> {
-				controllerState.accelX *= -1.0f
-				controllerState.accelZ *= -1.0f
-				controllerState.gyroX *= -1.0f
-				controllerState.gyroZ *= -1.0f
-				controllerState.orientX *= -1.0f
-				controllerState.orientZ *= -1.0f
-			}
-			else -> {}
-		}
-
-		if(motionControllerState.l2State > 0U)
-			controllerState.l2State = motionControllerState.l2State
-		if(motionControllerState.r2State > 0U)
-			controllerState.r2State = motionControllerState.r2State
-
-		return controllerState or touchControllerState
-	}
+	val controllerState: ControllerState get() =
+		mergeControllerStates(sensorControllerState, keyControllerState, motionControllerState, touchControllerState, cachedRotation)
 
 	private val sensorControllerState = ControllerState()
 	private val keyControllerState = ControllerState()
@@ -129,6 +108,48 @@ class StreamInput(
 
 	// ---- Sensor / lifecycle ----
 
+	/** Backs the rotation the [controllerState] getter flips motion axes for. Only read/written
+	 *  while motion sensors are actually registered (see [registerDisplayListener]/
+	 *  [unregisterDisplayListener], hooked into the exact same on/off points as the sensor
+	 *  listener below) — accel/gyro/orient all stay at their inert defaults whenever motion isn't
+	 *  active, so a stale rotation value has nothing to flip and can't cause any observable
+	 *  difference; it only needs to be correct exactly when motion data is live. Replaces a
+	 *  `context.getSystemService(WINDOW_SERVICE)` + `.defaultDisplay.rotation` query the getter
+	 *  used to make on every single read (up to ~250Hz per active sensor) with a plain field read,
+	 *  refreshed instead only on an actual rotation change via [DisplayManager.DisplayListener]. */
+	@Volatile private var cachedRotation: Int = Surface.ROTATION_0
+	private var displayListenerRegistered = false
+
+	private val displayListener = object: DisplayManager.DisplayListener {
+		override fun onDisplayAdded(displayId: Int) {}
+		override fun onDisplayRemoved(displayId: Int) {}
+		override fun onDisplayChanged(displayId: Int) { refreshCachedRotation() }
+	}
+
+	private fun refreshCachedRotation()
+	{
+		val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+		@Suppress("DEPRECATION")
+		cachedRotation = windowManager.defaultDisplay.rotation
+	}
+
+	private fun registerDisplayListener()
+	{
+		if(displayListenerRegistered) return
+		displayListenerRegistered = true
+		refreshCachedRotation()
+		val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+		displayManager.registerDisplayListener(displayListener, handler)
+	}
+
+	private fun unregisterDisplayListener()
+	{
+		if(!displayListenerRegistered) return
+		displayListenerRegistered = false
+		val displayManager = context.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+		displayManager.unregisterDisplayListener(displayListener)
+	}
+
 	private val sensorEventListener = object: SensorEventListener {
 		override fun onSensorChanged(event: SensorEvent)
 		{
@@ -173,11 +194,13 @@ class StreamInput(
 			).forEach {
 				sensorManager.registerListener(sensorEventListener, it, samplingPeriodUs)
 			}
+			registerDisplayListener()
 		}
 
 		@OnLifecycleEvent(Lifecycle.Event.ON_PAUSE)
 		fun onPause()
 		{
+			unregisterDisplayListener()
 			val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 			sensorManager.unregisterListener(sensorEventListener)
 		}
@@ -218,6 +241,7 @@ class StreamInput(
 		// Lifecycle.removeObserver() doesn't synthesize an ON_PAUSE call, so the sensor
 		// listener must be unregistered explicitly here, otherwise motion data keeps
 		// streaming (or sticks at its last reading) after being "disabled".
+		unregisterDisplayListener()
 		val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 		sensorManager.unregisterListener(sensorEventListener)
 		motionControllerState.accelX = 0f; motionControllerState.accelY = 0f; motionControllerState.accelZ = 0f
@@ -692,4 +716,83 @@ class StreamInput(
 		controllerStateUpdated()
 		return true
 	}
+}
+
+/** Merges sensor/key/motion/touch [ControllerState]s into a single fresh one, reproducing
+ *  exactly what chaining three [ControllerState.or] calls used to compute (see git history for
+ *  the previous `sensorControllerState or keyControllerState or motionControllerState`, then
+ *  `... or touchControllerState`), but as one allocation instead of three. [StreamInput]'s
+ *  `controllerState` getter reads this up to ~250Hz per active motion sensor (see the sensor
+ *  registration in `StreamInput.motionLifecycleObserver`) plus every touch/button event, so the
+ *  old chain's per-call `ControllerState` + touch-array churn was real, avoidable GC pressure on
+ *  the input-latency path. A standalone top-level function (rather than inline in the getter) so
+ *  it's directly unit-testable without needing an Android [android.content.Context].
+ *
+ *  Derived field-by-field from [ControllerState.or]'s own semantics:
+ *  - buttons/l2State/r2State/leftX/Y/rightX/Y: [ControllerState.or] merges these the same way
+ *    (bitwise-or, max, max-by-magnitude) regardless of operand order, so a 4-way merge here is
+ *    equivalent to the old 3-step chain — EXCEPT l2State/r2State also get the same explicit
+ *    "motion wins outright if it has any analog value at all, even over a harder-pressed
+ *    digital/key mapping" override the old code applied after its own chain, preserved below.
+ *  - gyro/accel/orient: [ControllerState.or] always keeps its LEFT operand's values for these
+ *    (see its source), and the old chain always put [sensor] first — the only one of the four
+ *    that ever sets them — so they always end up being [sensor]'s raw values untouched by the
+ *    other three, same as read directly here.
+ *  - touches: only [touch] ever calls startTouch/stopTouch — sensor/key/motion keep the default
+ *    all-inert (id -1) pair for their entire lifetime — so the old chain's touches merge always
+ *    bottomed out at [touch]'s touches regardless of the other three, same as read directly here.
+ *
+ *  [rotation] flips accel/gyro/orient X/Z the same way the old code did for [Surface.ROTATION_90]
+ *  — see [StreamInput.cachedRotation]'s doc for why a caller-supplied value rather than querying
+ *  the display directly here. */
+internal fun mergeControllerStates(
+	sensor: ControllerState,
+	key: ControllerState,
+	motion: ControllerState,
+	touch: ControllerState,
+	rotation: Int
+): ControllerState
+{
+	var gyroX = sensor.gyroX
+	var gyroY = sensor.gyroY
+	var gyroZ = sensor.gyroZ
+	var accelX = sensor.accelX
+	var accelY = sensor.accelY
+	var accelZ = sensor.accelZ
+	var orientX = sensor.orientX
+	val orientY = sensor.orientY
+	var orientZ = sensor.orientZ
+	val orientW = sensor.orientW
+
+	if(rotation == Surface.ROTATION_90)
+	{
+		accelX *= -1.0f; accelZ *= -1.0f
+		gyroX *= -1.0f; gyroZ *= -1.0f
+		orientX *= -1.0f; orientZ *= -1.0f
+	}
+
+	var l2State = maxOf(maxOf(sensor.l2State, key.l2State), motion.l2State)
+	var r2State = maxOf(maxOf(sensor.r2State, key.r2State), motion.r2State)
+	if(motion.l2State > 0U) l2State = motion.l2State
+	if(motion.r2State > 0U) r2State = motion.r2State
+
+	val srcTouches = touch.touches
+	val touches = arrayOf(
+		if(srcTouches[0].id >= 0) srcTouches[0] else ControllerTouch(),
+		if(srcTouches[1].id >= 0) srcTouches[1] else ControllerTouch()
+	)
+
+	return ControllerState(
+		buttons = sensor.buttons or key.buttons or motion.buttons,
+		l2State = l2State,
+		r2State = r2State,
+		leftX = maxAbs(maxAbs(sensor.leftX, key.leftX), motion.leftX),
+		leftY = maxAbs(maxAbs(sensor.leftY, key.leftY), motion.leftY),
+		rightX = maxAbs(maxAbs(sensor.rightX, key.rightX), motion.rightX),
+		rightY = maxAbs(maxAbs(sensor.rightY, key.rightY), motion.rightY),
+		touches = touches,
+		gyroX = gyroX, gyroY = gyroY, gyroZ = gyroZ,
+		accelX = accelX, accelY = accelY, accelZ = accelZ,
+		orientX = orientX, orientY = orientY, orientZ = orientZ, orientW = orientW
+	)
 }

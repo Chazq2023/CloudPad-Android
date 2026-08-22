@@ -46,6 +46,13 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
     companion object {
         private const val ICON_UNSELECTED = 0xFFFFFFFF.toInt()
+
+        // Process-wide (not instance-wide) so the per-pixel HSV recolor in buildThemedLogo()
+        // only ever runs once per theme, not on every recreate() — a theme change in Settings
+        // triggers recreate() on resume, which would otherwise redo this same expensive bitmap
+        // work at cold-start-adjacent latency every single time.
+        private var cachedThemedLogoHue: Float? = null
+        private var cachedThemedLogo: Bitmap? = null
     }
 
     private var iconSelectedColor: Int = 0xFFFF149D.toInt()
@@ -663,6 +670,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun buildThemedLogo(targetHue: Float): Bitmap {
+        cachedThemedLogo?.let { if (cachedThemedLogoHue == targetHue) return it }
+
         val src = BitmapFactory.decodeResource(resources, R.drawable.cloudpad_logo)
         val out = src.copy(Bitmap.Config.ARGB_8888, true)
         val pixels = IntArray(out.width * out.height)
@@ -678,6 +687,8 @@ class MainActivity : AppCompatActivity() {
             pixels[i] = (alpha shl 24) or (Color.HSVToColor(hsv) and 0x00FFFFFF)
         }
         out.setPixels(pixels, 0, out.width, 0, 0, out.width, out.height)
+        cachedThemedLogoHue = targetHue
+        cachedThemedLogo = out
         return out
     }
 
