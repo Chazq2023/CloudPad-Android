@@ -730,17 +730,22 @@ class StreamInput(
  *
  *  Derived field-by-field from [ControllerState.or]'s own semantics:
  *  - buttons/l2State/r2State/leftX/Y/rightX/Y: [ControllerState.or] merges these the same way
- *    (bitwise-or, max, max-by-magnitude) regardless of operand order, so a 4-way merge here is
- *    equivalent to the old 3-step chain — EXCEPT l2State/r2State also get the same explicit
- *    "motion wins outright if it has any analog value at all, even over a harder-pressed
- *    digital/key mapping" override the old code applied after its own chain, preserved below.
+ *    (bitwise-or, max, max-by-magnitude) across ALL FOUR sources, including [touch] — which is
+ *    not just touchpad taps: StreamActivity's on-screen controls fragment assigns its entire
+ *    ControllerState (face buttons, D-pad, L1/R1, sticks, L2/R2) wholesale into
+ *    `StreamInput.touchControllerState`, so it's a full input source in its own right, not merely
+ *    a touch-position carrier. l2State/r2State also get the same explicit "motion wins outright
+ *    if it has any analog value at all, even over a harder-pressed digital/key mapping" override
+ *    the old code applied mid-chain (before folding in touch), preserved in the same position
+ *    below.
  *  - gyro/accel/orient: [ControllerState.or] always keeps its LEFT operand's values for these
  *    (see its source), and the old chain always put [sensor] first — the only one of the four
  *    that ever sets them — so they always end up being [sensor]'s raw values untouched by the
  *    other three, same as read directly here.
- *  - touches: only [touch] ever calls startTouch/stopTouch — sensor/key/motion keep the default
- *    all-inert (id -1) pair for their entire lifetime — so the old chain's touches merge always
- *    bottomed out at [touch]'s touches regardless of the other three, same as read directly here.
+ *  - touches: only [touch] ever has an active (id >= 0) touch — sensor/key/motion keep the
+ *    default all-inert (id -1) pair for their entire lifetime — so the old chain's touches merge
+ *    always bottomed out at [touch]'s touches regardless of the other three, same as read
+ *    directly here.
  *
  *  [rotation] flips accel/gyro/orient X/Z the same way the old code did for [Surface.ROTATION_90]
  *  — see [StreamInput.cachedRotation]'s doc for why a caller-supplied value rather than querying
@@ -775,6 +780,8 @@ internal fun mergeControllerStates(
 	var r2State = maxOf(maxOf(sensor.r2State, key.r2State), motion.r2State)
 	if(motion.l2State > 0U) l2State = motion.l2State
 	if(motion.r2State > 0U) r2State = motion.r2State
+	l2State = maxOf(l2State, touch.l2State)
+	r2State = maxOf(r2State, touch.r2State)
 
 	val srcTouches = touch.touches
 	val touches = arrayOf(
@@ -783,13 +790,13 @@ internal fun mergeControllerStates(
 	)
 
 	return ControllerState(
-		buttons = sensor.buttons or key.buttons or motion.buttons,
+		buttons = sensor.buttons or key.buttons or motion.buttons or touch.buttons,
 		l2State = l2State,
 		r2State = r2State,
-		leftX = maxAbs(maxAbs(sensor.leftX, key.leftX), motion.leftX),
-		leftY = maxAbs(maxAbs(sensor.leftY, key.leftY), motion.leftY),
-		rightX = maxAbs(maxAbs(sensor.rightX, key.rightX), motion.rightX),
-		rightY = maxAbs(maxAbs(sensor.rightY, key.rightY), motion.rightY),
+		leftX = maxAbs(maxAbs(maxAbs(sensor.leftX, key.leftX), motion.leftX), touch.leftX),
+		leftY = maxAbs(maxAbs(maxAbs(sensor.leftY, key.leftY), motion.leftY), touch.leftY),
+		rightX = maxAbs(maxAbs(maxAbs(sensor.rightX, key.rightX), motion.rightX), touch.rightX),
+		rightY = maxAbs(maxAbs(maxAbs(sensor.rightY, key.rightY), motion.rightY), touch.rightY),
 		touches = touches,
 		gyroX = gyroX, gyroY = gyroY, gyroZ = gyroZ,
 		accelX = accelX, accelY = accelY, accelZ = accelZ,

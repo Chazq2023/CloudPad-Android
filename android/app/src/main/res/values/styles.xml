@@ -310,6 +310,16 @@
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog</item>
+        <!-- Covers dialogs built as a raw AlertDialog rather than through MaterialAlertDialogBuilder
+             (e.g. ControllerRemapCapture's "press a button" prompt, which subclasses AlertDialog
+             directly to override dispatchKeyEvent/dispatchGenericMotionEvent for capture) — those
+             resolve their theme via this attribute, not materialAlertDialogTheme above. Without it,
+             they fell back to this theme's Theme.MaterialComponents.Light parent's own light-themed
+             default, rendering black text on the dark dialog background. Matches AppTheme's own
+             identical override — StreamActivity only stays on this manifest theme for the default
+             pink colour (see the pyluxAccent* comment below); every other theme colour switches to
+             an AppTheme.<colour> subtheme via setTheme(), which already inherits this from AppTheme. -->
+        <item name="alertDialogTheme">@style/AppTheme.AlertDialog.NonMaterial</item>
         <item name="android:windowBackground">@color/stream_background</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>

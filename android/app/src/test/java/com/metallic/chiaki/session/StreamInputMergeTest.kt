@@ -126,6 +126,51 @@ class StreamInputMergeTest {
     }
 
     @Test
+    fun `on-screen controls face button reaches the merged buttons`() {
+        // StreamActivity assigns the entire on-screen-controls fragment's ControllerState
+        // wholesale into touchControllerState — it's a full input source (buttons/sticks/L2/R2),
+        // not just a touchpad-position carrier. Regression test: an earlier version of
+        // mergeControllerStates dropped touch.buttons/l2State/r2State/leftX-rightY entirely,
+        // silently breaking every on-screen control except raw touchpad taps.
+        assertMatchesOldAlgorithm(
+            sensor = state(),
+            key = state(),
+            motion = state(),
+            touch = state(buttons = ControllerState.BUTTON_CROSS or ControllerState.BUTTON_DPAD_UP)
+        )
+    }
+
+    @Test
+    fun `on-screen controls L2 R2 buttons reach the merged l2State r2State`() {
+        assertMatchesOldAlgorithm(
+            sensor = state(),
+            key = state(),
+            motion = state(),
+            touch = state(l2State = 255U, r2State = 255U)
+        )
+    }
+
+    @Test
+    fun `on-screen controls analog sticks reach the merged stick axes`() {
+        assertMatchesOldAlgorithm(
+            sensor = state(),
+            key = state(),
+            motion = state(),
+            touch = state(leftX = 9000, leftY = -5000, rightX = -20000, rightY = 15000)
+        )
+    }
+
+    @Test
+    fun `on-screen controls button combined with a held physical key button`() {
+        assertMatchesOldAlgorithm(
+            sensor = state(),
+            key = state(buttons = ControllerState.BUTTON_L1),
+            motion = state(),
+            touch = state(buttons = ControllerState.BUTTON_R1)
+        )
+    }
+
+    @Test
     fun `active touch from touchControllerState is preserved`() {
         assertMatchesOldAlgorithm(
             sensor = state(),
@@ -178,7 +223,12 @@ class StreamInputMergeTest {
             sensor = state(gyroX = -0.5f, gyroY = 0.25f, gyroZ = 0.1f, accelX = 0.02f, accelY = 0.98f, accelZ = -0.01f),
             key = state(buttons = ControllerState.BUTTON_R1 or ControllerState.BUTTON_OPTIONS, l2State = 255U),
             motion = state(leftX = -8000, leftY = 4000, l2State = 90U, buttons = ControllerState.BUTTON_DPAD_LEFT),
-            touch = state(touches = arrayOf(ControllerTouch(x = 960U, y = 471U, id = 2), ControllerTouch())),
+            touch = state(
+                buttons = ControllerState.BUTTON_CROSS,
+                r2State = 200U,
+                rightX = 6000, rightY = -3000,
+                touches = arrayOf(ControllerTouch(x = 960U, y = 471U, id = 2), ControllerTouch())
+            ),
             rotation = Surface.ROTATION_90
         )
     }
