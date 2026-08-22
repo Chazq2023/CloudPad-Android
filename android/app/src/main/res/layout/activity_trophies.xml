@@ -22,7 +22,7 @@
                 android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:paddingStart="56dp"
-                android:paddingEnd="56dp"
+                android:paddingEnd="104dp"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif-condensed"
@@ -42,6 +42,38 @@
                 android:contentDescription="@string/action_back"
                 android:src="@drawable/ic_arrow_back"
                 android:tint="?attr/colorOnPrimary"/>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end|center_vertical"
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/trophySortButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:foreground="@drawable/bg_focus_highlight"
+                    android:focusable="true"
+                    android:contentDescription="@string/trophy_sort_content_description"
+                    android:src="@drawable/ic_sort"
+                    android:tint="?attr/colorOnPrimary"/>
+
+                <ImageButton
+                    android:id="@+id/trophyFilterButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:foreground="@drawable/bg_focus_highlight"
+                    android:focusable="true"
+                    android:contentDescription="@string/trophy_filter_content_description"
+                    android:src="@drawable/ic_filter"
+                    android:tint="?attr/colorOnPrimary"/>
+
+            </LinearLayout>
         </FrameLayout>
     </com.google.android.material.appbar.MaterialToolbar>
 
@@ -95,7 +127,7 @@
                 android:textSize="13sp" />
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:orientation="horizontal">
@@ -119,6 +151,18 @@
                     android:id="@+id/trophyHeaderBronzeCount"
                     style="@style/TrophyHeaderCount"
                     android:background="@drawable/bg_trophy_bronze" />
+
+                <TextView
+                    android:id="@+id/trophyHeaderAchievedCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginStart="4dp"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
 
             </LinearLayout>
 

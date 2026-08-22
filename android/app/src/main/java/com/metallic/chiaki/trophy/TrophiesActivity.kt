@@ -8,6 +8,7 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.widget.PopupMenu
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -42,6 +43,9 @@ class TrophiesActivity : AppCompatActivity()
 
 	private lateinit var binding: ActivityTrophiesBinding
 	private lateinit var repository: TrophyRepository
+	private var currentDetail: TrophyTitleDetail? = null
+	private var sortMode = TrophySortMode.DEFAULT
+	private var filterMode = TrophyFilterMode.DEFAULT
 	private val adapter = TrophyAdapter(
 		onTrophyClick = { trophy -> showTrophyDetailDialog(this, trophy) },
 		onTopBoundary = {
@@ -69,6 +73,8 @@ class TrophiesActivity : AppCompatActivity()
 
 		setSupportActionBar(binding.toolbar)
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+		binding.trophySortButton.setOnClickListener { showSortMenu(it) }
+		binding.trophyFilterButton.setOnClickListener { showFilterMenu(it) }
 		binding.backButton.redirectDpadDownTo {
 			val firstTrophyPosition = adapter.items.indexOfFirst { it is TrophyListItem.TrophyRow }
 			if (firstTrophyPosition < 0) return@redirectDpadDownTo null
@@ -118,6 +124,7 @@ class TrophiesActivity : AppCompatActivity()
 	private fun showTrophies(detail: TrophyTitleDetail, gameName: String)
 	{
 		binding.trophyProgressBar.visibility = View.GONE
+		currentDetail = detail
 
 		val summary = detail.summary
 		binding.trophyHeaderProgress.text = "${summary.progressPercent}% Complete"
@@ -125,18 +132,75 @@ class TrophiesActivity : AppCompatActivity()
 		binding.trophyHeaderGoldCount.text = summary.earnedTrophies.gold.toString()
 		binding.trophyHeaderSilverCount.text = summary.earnedTrophies.silver.toString()
 		binding.trophyHeaderBronzeCount.text = summary.earnedTrophies.bronze.toString()
+		binding.trophyHeaderAchievedCount.text = getString(
+			R.string.trophy_achieved_count_format,
+			summary.earnedTrophies.total,
+			summary.definedTrophies.total
+		)
 
-		val items = buildTrophyListItems(detail)
+		if (!renderTrophyList(gameName)) return
+
+		binding.trophyRecyclerView.visibility = View.VISIBLE
+		focusFirstTrophy()
+	}
+
+	/** Rebuilds the adapter's list from [currentDetail] under the currently selected sort/filter —
+	 *  used both by the initial load and whenever the user changes sort/filter, without refetching.
+	 *  Returns false (and shows the empty state) if the resulting list is empty. */
+	private fun renderTrophyList(gameName: String): Boolean
+	{
+		val detail = currentDetail ?: return false
+		val items = buildTrophyListItems(detail, sortMode, filterMode)
 
 		if (items.isEmpty())
 		{
-			showEmptyState(getString(R.string.quick_settings_trophies_empty, gameName))
-			return
+			val message = if (filterMode != TrophyFilterMode.DEFAULT)
+				getString(R.string.trophy_filter_no_matches)
+			else
+				getString(R.string.quick_settings_trophies_empty, gameName)
+			showEmptyState(message)
+			return false
 		}
 
 		adapter.items = items
 		binding.trophyRecyclerView.visibility = View.VISIBLE
-		focusFirstTrophy()
+		binding.trophyEmptyStateText.visibility = View.GONE
+		return true
+	}
+
+	private fun showSortMenu(anchor: View)
+	{
+		val popup = PopupMenu(this, anchor)
+		popup.menu.add(0, 0, 0, R.string.trophy_sort_default)
+		popup.menu.add(0, 1, 1, R.string.trophy_sort_earned_date)
+		popup.menu.setGroupCheckable(0, true, true)
+		popup.menu.findItem(if (sortMode == TrophySortMode.EARNED_DATE) 1 else 0)?.isChecked = true
+
+		popup.setOnMenuItemClickListener { item ->
+			sortMode = if (item.itemId == 1) TrophySortMode.EARNED_DATE else TrophySortMode.DEFAULT
+			renderTrophyList(binding.trophyHeaderGameName.text.toString())
+			true
+		}
+		popup.show()
+	}
+
+	private fun showFilterMenu(anchor: View)
+	{
+		val popup = PopupMenu(this, anchor)
+		popup.menu.add(0, 0, 0, R.string.trophy_filter_default)
+		popup.menu.add(0, 1, 1, R.string.trophy_filter_bronze)
+		popup.menu.add(0, 2, 2, R.string.trophy_filter_silver)
+		popup.menu.add(0, 3, 3, R.string.trophy_filter_gold)
+		popup.menu.add(0, 4, 4, R.string.trophy_filter_platinum)
+		popup.menu.setGroupCheckable(0, true, true)
+		popup.menu.findItem(filterModeToItemId(filterMode))?.isChecked = true
+
+		popup.setOnMenuItemClickListener { item ->
+			filterMode = itemIdToFilterMode(item.itemId)
+			renderTrophyList(binding.trophyHeaderGameName.text.toString())
+			true
+		}
+		popup.show()
 	}
 
 	/** Lands D-pad/keyboard focus on the first trophy row (skipping group headers, which aren't

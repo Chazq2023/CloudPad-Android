@@ -19,16 +19,22 @@ class TrophyAdapterTest {
         earnedTrophies = TrophyCounts()
     )
 
-    private fun trophy(id: Int, groupId: String) = Trophy(
+    private fun trophy(
+        id: Int,
+        groupId: String,
+        type: TrophyType = TrophyType.BRONZE,
+        earned: Boolean = false,
+        earnedDateTimeMs: Long? = null
+    ) = Trophy(
         trophyId = id,
         groupId = groupId,
-        type = TrophyType.BRONZE,
+        type = type,
         name = "Trophy $id",
         detail = "",
         iconUrl = "",
         hidden = false,
-        earned = false,
-        earnedDateTimeMs = null
+        earned = earned,
+        earnedDateTimeMs = earnedDateTimeMs
     )
 
     private fun detail(groups: List<TrophyGroup>, trophies: List<Trophy>) = TrophyTitleDetail(
@@ -89,5 +95,78 @@ class TrophyAdapterTest {
 
         assertEquals(0, items.filterIsInstance<TrophyListItem.GroupHeader>().size)
         assertEquals(1, items.filterIsInstance<TrophyListItem.TrophyRow>().size)
+    }
+
+    @Test
+    fun `earned date sort flattens headers, puts unlocked trophies first by most recent`() {
+        val groups = listOf(group("default", "My Game"))
+        val trophies = listOf(
+            trophy(1, "default", earned = true, earnedDateTimeMs = 1000L),
+            trophy(2, "default", earned = false),
+            trophy(3, "default", earned = true, earnedDateTimeMs = 3000L),
+            trophy(4, "default", earned = false)
+        )
+
+        val items = buildTrophyListItems(detail(groups, trophies), sortMode = TrophySortMode.EARNED_DATE)
+
+        assertEquals(0, items.filterIsInstance<TrophyListItem.GroupHeader>().size)
+        val order = items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId }
+        assertEquals(listOf(3, 1, 2, 4), order)
+    }
+
+    @Test
+    fun `default sort with earned date mode selected but no groups still flattens`() {
+        val trophies = listOf(
+            trophy(1, "default", earned = true, earnedDateTimeMs = 500L),
+            trophy(2, "default", earned = true, earnedDateTimeMs = 1500L)
+        )
+
+        val items = buildTrophyListItems(detail(emptyList(), trophies), sortMode = TrophySortMode.EARNED_DATE)
+
+        val order = items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId }
+        assertEquals(listOf(2, 1), order)
+    }
+
+    @Test
+    fun `filtering by rarity keeps only that rarity's trophies`() {
+        val groups = listOf(group("default", "My Game"))
+        val trophies = listOf(
+            trophy(1, "default", type = TrophyType.BRONZE),
+            trophy(2, "default", type = TrophyType.GOLD),
+            trophy(3, "default", type = TrophyType.GOLD),
+            trophy(4, "default", type = TrophyType.PLATINUM)
+        )
+
+        val items = buildTrophyListItems(detail(groups, trophies), filterMode = TrophyFilterMode.GOLD)
+
+        val order = items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId }
+        assertEquals(listOf(2, 3), order)
+    }
+
+    @Test
+    fun `filtering to a rarity with no matches in a group skips that group's header`() {
+        val groups = listOf(group("default", ""), group("001", "Expansion Pack"))
+        val trophies = listOf(
+            trophy(1, "default", type = TrophyType.BRONZE),
+            trophy(2, "001", type = TrophyType.SILVER)
+        )
+
+        val items = buildTrophyListItems(detail(groups, trophies), filterMode = TrophyFilterMode.SILVER)
+
+        val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
+        assertEquals(listOf("Expansion Pack"), headers.map { it.name })
+        assertEquals(listOf(2), items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId })
+    }
+
+    @Test
+    fun `default filter mode is unaffected by empty-group skipping`() {
+        val groups = listOf(group("default", ""), group("001", ""), group("002", ""))
+        val trophies = listOf(trophy(1, "default"), trophy(2, "001"), trophy(3, "002"))
+
+        val items = buildTrophyListItems(detail(groups, trophies), filterMode = TrophyFilterMode.DEFAULT)
+
+        val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
+        assertEquals(listOf("Trophies"), headers.map { it.name })
+        assertEquals(3, items.filterIsInstance<TrophyListItem.TrophyRow>().size)
     }
 }
