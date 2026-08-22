@@ -9,8 +9,10 @@ import android.graphics.drawable.ColorDrawable
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.metallic.chiaki.common.Preferences
 import com.pylux.stream.R
 
 private const val TV_TITLE_SP = 28f
@@ -96,3 +98,25 @@ class AppAlertDialogBuilder(context: Context) : MaterialAlertDialogBuilder(conte
  * `context.alertDialogBuilder()` so TV enhancements are applied automatically.
  */
 fun Context.alertDialogBuilder(): AppAlertDialogBuilder = AppAlertDialogBuilder(this)
+
+/** Single shared "are you sure you want to log out" flow — originally only reachable from
+ *  Settings, now also triggered from the main screen's account icon dropdown. Both callers get
+ *  identical copy and identical state clearing this way, rather than two copies drifting apart. */
+fun Context.showPsnLogoutConfirmation(preferences: Preferences, onLoggedOut: () -> Unit = {})
+{
+	alertDialogBuilder()
+		.setTitle(R.string.preferences_psn_logout_title)
+		.setMessage(R.string.preferences_psn_logout_message)
+		.setPositiveButton(R.string.preferences_psn_logout_confirm) { _, _ ->
+			preferences.clearNpssoToken()
+			preferences.psnAuthToken = ""
+			preferences.psnRefreshToken = ""
+			preferences.psnAuthTokenExpiry = 0L
+			preferences.psnAccountId = ""
+			preferences.psnAvatarUrl = ""
+			Toast.makeText(this, R.string.preferences_psn_logout_success, Toast.LENGTH_SHORT).show()
+			onLoggedOut()
+		}
+		.setNegativeButton(R.string.action_cancel, null)
+		.show()
+}

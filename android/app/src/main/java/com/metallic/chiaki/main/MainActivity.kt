@@ -5,6 +5,7 @@ package com.metallic.chiaki.main
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
 import com.metallic.chiaki.common.ext.isTv
+import com.metallic.chiaki.common.ext.showPsnLogoutConfirmation
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.graphics.Bitmap
@@ -16,22 +17,31 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewParent
+import android.widget.PopupMenu
 import androidx.core.view.isGone
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import coil.load
 import com.pylux.stream.R
 import com.metallic.chiaki.common.AppIntegrityManager
 import com.metallic.chiaki.common.InAppReviewHelper
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.viewModelFactory
 import com.metallic.chiaki.common.getDatabase
+import com.metallic.chiaki.friends.FriendsService
+import com.metallic.chiaki.trophy.PsnTrophyTokenManager
+import com.metallic.chiaki.trophy.TrophyService
 import com.pylux.stream.databinding.ActivityMainBinding
 import com.metallic.chiaki.settings.SettingsActivity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -150,6 +160,88 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         // If the theme was changed in Settings while this activity was paused, recreate to apply it
         if (preferences.getThemeColour() != appliedThemeColour) recreate()
+        // Catches login/logout that happened in Settings, the login screen, or this activity's
+        // own account menu while paused — the icon needs to reflect current state every time this
+        // screen comes back to the foreground, not just once at cold start.
+        refreshAccountIcon()
+    }
+
+    /** Shows/hides the signed-in account icon and keeps its avatar image + presence dot current.
+     *  The avatar URL is cached in Preferences after the first successful fetch (see
+     *  psnAvatarUrl) so returning to this screen doesn't re-fetch it over the network every time.
+     *  Presence (online/offline) is the opposite — it goes stale the moment it's fetched, so
+     *  [fetchAccountDetails] re-fetches it every call rather than caching it. */
+    private fun refreshAccountIcon() {
+        val loggedIn = preferences.hasNpssoToken()
+        binding.accountIconButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
+        if (!loggedIn) return
+
+        val cachedAvatarUrl = preferences.psnAvatarUrl
+        if (cachedAvatarUrl.isNotEmpty()) {
+            binding.accountIcon.load(cachedAvatarUrl) { crossfade(true) }
+        }
+        fetchAccountDetails(needsAvatar = cachedAvatarUrl.isEmpty())
+    }
+
+    private fun fetchAccountDetails(needsAvatar: Boolean) {
+        lifecycleScope.launch {
+            val (avatarUrl, presence) = withContext(Dispatchers.IO) {
+                val token = PsnTrophyTokenManager(preferences).getValidToken()
+                    ?: return@withContext null to null
+                val avatarUrl = if (needsAvatar) TrophyService.fetchAvatarUrl(token) else null
+
+                // Not preferences.psnAccountId — that's only populated by the separate Remote
+                // Play token exchange (PsnTokenManager), which can fail or simply never run even
+                // when this trophy/friends token works fine, silently leaving it empty and the
+                // dot permanently hidden. fetchMyAccountId resolves it the same reliable way
+                // FriendsRepository already does for its own "is this message mine" check.
+                val accountId = FriendsService.fetchMyAccountId(token)
+                val presence = if (!accountId.isNullOrEmpty())
+                    FriendsService.fetchPresences(token, listOf(accountId))[accountId]
+                else null
+
+                avatarUrl to presence
+            }
+
+            if (!avatarUrl.isNullOrEmpty()) {
+                preferences.psnAvatarUrl = avatarUrl
+                binding.accountIcon.load(avatarUrl) { crossfade(true) }
+            }
+
+            // Left hidden (rather than defaulting to the offline drawable) on a failed fetch —
+            // an explicit "unknown" over a guessed-wrong "offline" that might just be a dropped
+            // request. "Appear Offline" (a PSN privacy setting) needs no separate handling here —
+            // Sony's own API already reports it identically to actually being offline, matching
+            // what every other app/user sees, so it falls straight into the offline branch below.
+            if (presence != null) {
+                binding.accountStatusDot.visibility = View.VISIBLE
+                binding.accountStatusDot.setBackgroundResource(
+                    when
+                    {
+                        presence.isBusy -> R.drawable.bg_friend_busy_dot
+                        presence.isOnline -> R.drawable.bg_friend_online_dot
+                        else -> R.drawable.bg_friend_offline_dot
+                    }
+                )
+            } else {
+                binding.accountStatusDot.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun showAccountMenu() {
+        val popup = PopupMenu(this, binding.accountIconButton)
+        popup.menu.add(0, 0, 0, R.string.account_menu_log_out)
+        popup.setOnMenuItemClickListener {
+            // recreate() rather than just refreshAccountIcon() — logging out here needs to put
+            // the whole screen back in its logged-out state (Library/Catalog's own "Log In"
+            // button included, via CloudPlayFragment's normal login-required check on create),
+            // not just this icon; refreshAccountIcon() alone left the rest of the page showing
+            // stale logged-in content underneath a hidden account icon.
+            showPsnLogoutConfirmation(preferences) { recreate() }
+            true
+        }
+        popup.show()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -222,6 +314,11 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
+        // Account (only visible once signed in — see refreshAccountIcon)
+        binding.accountIconButton.setOnClickListener {
+            showAccountMenu()
+        }
+
         // Friends
         binding.friendsIcon.setOnClickListener {
             com.metallic.chiaki.friends.FriendsActivity.start(this)
@@ -250,6 +347,7 @@ class MainActivity : AppCompatActivity() {
             }
             binding.remotePlayButton.onFocusChangeListener = primaryFocusHighlight
             binding.cloudPlayButton.onFocusChangeListener = primaryFocusHighlight
+            binding.accountIconButton.onFocusChangeListener = primaryFocusHighlight
             binding.friendsIcon.onFocusChangeListener = primaryFocusHighlight
             binding.settingsIcon.onFocusChangeListener = primaryFocusHighlight
         }
@@ -333,7 +431,7 @@ class MainActivity : AppCompatActivity() {
         )
         val primaryIds = setOf(
             R.id.remotePlayButton, R.id.cloudPlayButton,
-            R.id.settingsIcon, R.id.friendsIcon
+            R.id.accountIconButton, R.id.settingsIcon, R.id.friendsIcon
         )
 
         val focusedInCloud = cloudRv?.findContainingItemView(focused)
@@ -536,7 +634,7 @@ class MainActivity : AppCompatActivity() {
         )
         val primaryIds = setOf(
             R.id.remotePlayButton, R.id.cloudPlayButton,
-            R.id.settingsIcon, R.id.friendsIcon
+            R.id.accountIconButton, R.id.settingsIcon, R.id.friendsIcon
         )
 
         val focusedInCloud = focused?.let { cloudRv?.findContainingItemView(it) }

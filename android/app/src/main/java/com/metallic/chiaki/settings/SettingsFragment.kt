@@ -16,7 +16,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.*
 import com.metallic.chiaki.cloudplay.PsnLoginActivity
-import com.metallic.chiaki.common.ext.alertDialogBuilder
+import com.metallic.chiaki.common.ext.showPsnLogoutConfirmation
 import com.pylux.stream.BuildConfig
 import com.pylux.stream.R
 import com.metallic.chiaki.common.LicenseAgreementActivity
@@ -390,7 +390,13 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			preference.title = getString(R.string.preferences_psn_logout_title)
 			preference.summary = getString(R.string.preferences_psn_login_summary_logged_in)
 			preference.setIcon(R.drawable.ic_close_white)
-			preference.setOnPreferenceClickListener { showLogoutConfirmation(preferences); true }
+			preference.setOnPreferenceClickListener {
+				requireContext().showPsnLogoutConfirmation(preferences) {
+					updatePsnAccountPreference()
+					updateLocalePreference()
+				}
+				true
+			}
 		}
 		else
 		{
@@ -428,30 +434,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			localePreference.isEnabled = false
 			localePreference.summary = getString(R.string.preferences_locale_summary_not_set)
 		}
-	}
-
-	private fun showLogoutConfirmation(preferences: Preferences)
-	{
-		requireContext().alertDialogBuilder()
-			.setTitle(R.string.preferences_psn_logout_title)
-			.setMessage(R.string.preferences_psn_logout_message)
-			.setPositiveButton(R.string.preferences_psn_logout_confirm) { _, _ ->
-				performLogout(preferences)
-			}
-			.setNegativeButton(R.string.action_cancel, null)
-			.show()
-	}
-
-	private fun performLogout(preferences: Preferences)
-	{
-		preferences.clearNpssoToken()
-		preferences.psnAuthToken = ""
-		preferences.psnRefreshToken = ""
-		preferences.psnAuthTokenExpiry = 0L
-		preferences.psnAccountId = ""
-		updatePsnAccountPreference()
-		updateLocalePreference()
-		Toast.makeText(requireContext(), R.string.preferences_psn_logout_success, Toast.LENGTH_SHORT).show()
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)

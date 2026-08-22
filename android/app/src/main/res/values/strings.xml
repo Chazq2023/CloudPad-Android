@@ -262,6 +262,8 @@
     <string name="trophy_filter_platinum">Platinum</string>
     <string name="trophy_filter_no_matches">No trophies match this filter.</string>
     <string name="action_friends">Friends</string>
+    <string name="action_account">Account</string>
+    <string name="account_menu_log_out">Log Out</string>
     <string name="friends_empty_state">No friends found on this PSN account.</string>
     <string name="friend_chat_empty_state">No messages yet — say hi!</string>
     <string name="friend_chat_input_hint">Message</string>

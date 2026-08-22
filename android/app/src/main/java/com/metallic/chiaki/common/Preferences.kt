@@ -309,6 +309,7 @@ class Preferences(context: Context)
 	private val PSN_AUTH_TOKEN_EXPIRY_KEY = "psn_rp_auth_token_expiry"
 	private val PSN_ACCOUNT_ID_KEY = "psn_rp_account_id"
 	private val PSN_DUID_KEY = "psn_rp_duid"
+	private val PSN_AVATAR_URL_KEY = "psn_avatar_url"
 
 	var psnAuthToken: String
 		get() = sharedPreferences.getString(PSN_AUTH_TOKEN_KEY, "") ?: ""
@@ -331,6 +332,13 @@ class Preferences(context: Context)
 	var psnDuid: String
 		get() = sharedPreferences.getString(PSN_DUID_KEY, "") ?: ""
 		set(value) { sharedPreferences.edit().putString(PSN_DUID_KEY, value).apply() }
+
+	/** Cached signed-in profile picture URL, shown as the main screen's account icon — fetched
+	 *  lazily (see MainActivity) rather than at login time, so login itself doesn't grow another
+	 *  network dependency; empty until that first fetch succeeds. */
+	var psnAvatarUrl: String
+		get() = sharedPreferences.getString(PSN_AVATAR_URL_KEY, "") ?: ""
+		set(value) { sharedPreferences.edit().putString(PSN_AVATAR_URL_KEY, value).apply() }
 
 	val hasPsnRemotePlayTokens: Boolean
 		get() = psnAuthToken.isNotEmpty() && psnRefreshToken.isNotEmpty()

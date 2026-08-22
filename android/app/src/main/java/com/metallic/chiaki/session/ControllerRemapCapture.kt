@@ -62,6 +62,11 @@ class ControllerRemapCapture(
 		captureModifier = null
 
 		val dialog = InputCaptureDialog()
+		// Subclassing AlertDialog directly (needed to override dispatchKeyEvent/
+		// dispatchGenericMotionEvent for capture) bypasses AppAlertDialogBuilder's themed
+		// background — applying the same drawable it uses so this still matches every other
+		// dialog in the app instead of falling back to the platform default.
+		dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
 		dialog.setTitle(action.displayName)
 		dialog.setMessage(context.getString(R.string.controller_remap_press_button))
 		dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.action_cancel)) { _, _ ->

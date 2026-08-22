@@ -17,6 +17,7 @@ class FriendsServiceParsingTest {
             onlineId = "Minionbanana27",
             avatarUrl = "https://static-resource.np.community.playstation.net/avatar_m/SCEI/I0005_m.png",
             isOnline = true,
+            isBusy = true,
             currentGame = "Marvel Rivals",
             lastOnlineDateMs = null
         ),
@@ -25,6 +26,7 @@ class FriendsServiceParsingTest {
             onlineId = "CKGray",
             avatarUrl = "",
             isOnline = false,
+            isBusy = false,
             currentGame = "",
             lastOnlineDateMs = 1731000000000L
         )

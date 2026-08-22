@@ -74,6 +74,8 @@
             android:scaleType="centerCrop"
             android:contentDescription="@null" />
 
+        <!-- Wraps to 2 lines instead of ellipsizing — the full title should stay readable rather
+             than truncating with "…" for the (fairly common) long PS titles. -->
         <TextView
             android:id="@+id/quickSettingsGameNameText"
             android:layout_width="0dp"
@@ -82,8 +84,7 @@
             android:layout_marginStart="8dp"
             android:textColor="@android:color/white"
             android:textSize="12sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:maxLines="2" />
 
     </LinearLayout>
 
