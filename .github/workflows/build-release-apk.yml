@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added a customizable Performance Overlay: Full and Minimal view modes (Minimal shown by default), a Configure Overlay dialog with an opacity slider and drag-to-reposition, including a fix for the overlay disappearing while being moved and stretching after saving a new position; removed the online/busy/offline status dot from the main menu profile icon; fixed the main menu search icon not matching the other header icons' grey colour; and a small rendering performance improvement for the FSR upscaling shader.
+        Performance pass following an app-wide audit: fixed a background timer that never stopped ticking (and piled up further with every theme change), sped up "Recently Played" game sorting on large libraries, cached the main menu logo instead of recomputing it on every theme change, removed unnecessary per-packet network overhead during streaming, fixed the Friends screen briefly double-fetching on open, and reduced allocation overhead in the in-stream controller input path (buttons, sticks, touch, motion) for lower input latency.
 
     steps:
       - name: Checkout repo

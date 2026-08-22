@@ -20,6 +20,7 @@ import com.metallic.chiaki.common.ext.addMarginEnd
 import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityFriendsBinding
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /** Account-level PSN friends list — unlike [com.metallic.chiaki.trophy.TrophiesActivity], not
@@ -80,13 +81,23 @@ class FriendsActivity : AppCompatActivity()
 		loadFriends()
 	}
 
+	private var loadFriendsJob: Job? = null
+
+	/** onCreate and onResume both call this (onResume always fires right after onCreate on a
+	 *  cold launch, and deliberately calls this again on every later resume too — see its own
+	 *  comment), so a cold open with no cache yet would otherwise kick off two full concurrent
+	 *  fetches. [FriendsRepository]'s cache check only sees whichever request already wrote a
+	 *  result back, not one still in flight — so skip starting a second fetch while one is
+	 *  already running, rather than relying on that cache to dedupe it. */
 	private fun loadFriends(forceRefresh: Boolean = false)
 	{
+		if (loadFriendsJob?.isActive == true) return
+
 		binding.friendsProgressBar.visibility = View.VISIBLE
 		binding.friendsEmptyStateText.visibility = View.GONE
 		binding.friendsRecyclerView.visibility = View.GONE
 
-		lifecycleScope.launch {
+		loadFriendsJob = lifecycleScope.launch {
 			when (val result = repository.fetchFriends(forceRefresh))
 			{
 				is FriendsResult.Success -> showFriends(result.friends)

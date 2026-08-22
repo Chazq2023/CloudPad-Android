@@ -1200,33 +1200,7 @@ static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *b
 			CHIAKI_LOGE(takion->log, "Takion recv returned 0");
 		return CHIAKI_ERR_NETWORK;
 	}
-	
-	// Get peer address for logging
-	struct sockaddr_storage peer_addr;
-	socklen_t peer_len = sizeof(peer_addr);
-	char peer_ip[INET6_ADDRSTRLEN] = "unknown";
-	uint16_t peer_port = 0;
-	
-	if(getpeername(takion->sock, (struct sockaddr*)&peer_addr, &peer_len) == 0)
-	{
-		if(peer_addr.ss_family == AF_INET)
-		{
-			struct sockaddr_in *s = (struct sockaddr_in*)&peer_addr;
-			inet_ntop(AF_INET, &s->sin_addr, peer_ip, sizeof(peer_ip));
-			peer_port = ntohs(s->sin_port);
-		}
-		else if(peer_addr.ss_family == AF_INET6)
-		{
-			struct sockaddr_in6 *s = (struct sockaddr_in6*)&peer_addr;
-			inet_ntop(AF_INET6, &s->sin6_addr, peer_ip, sizeof(peer_ip));
-			peer_port = ntohs(s->sin6_port);
-		}
-	}
-	
-	// RAW socket receive logging - log EVERYTHING that comes in before any processing
-	// CHIAKI_LOGI(takion->log, "RAW SOCKET RECV: %zu bytes from %s:%u", (size_t)received_sz, peer_ip, peer_port);
-	// chiaki_log_hexdump(takion->log, CHIAKI_LOG_INFO, buf, received_sz);
-	
+
 	*buf_size = (size_t)received_sz;
 	return CHIAKI_ERR_SUCCESS;
 }

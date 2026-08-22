@@ -819,8 +819,11 @@ class CloudPlayFragment : Fragment() {
             }
 
             2 -> {
-                // Recently Played
-                val sortedGames = currentGames.sortedByDescending { preferences.getLastPlayedMs(it.productId) }
+                // Recently Played — snapshot the playtime map once rather than letting
+                // getLastPlayedMs() re-parse the whole JSON blob per comparison (sortedByDescending
+                // calls its selector on both sides of every comparison, i.e. O(n log n) times).
+                val playtimeStats = preferences.getGamePlaytimeStats()
+                val sortedGames = currentGames.sortedByDescending { playtimeStats[it.productId]?.lastPlayedMs ?: 0L }
                 viewModel.setSortedGames(sortedGames)
             }
         }
@@ -935,7 +938,10 @@ class CloudPlayFragment : Fragment() {
         // Apply current sort state
         val sortedGames = when (sortState) {
             1 -> favoriteGames.sortedByDescending { it.name.lowercase() }
-            2 -> favoriteGames.sortedByDescending { preferences.getLastPlayedMs(it.productId) }
+            2 -> {
+                val playtimeStats = preferences.getGamePlaytimeStats()
+                favoriteGames.sortedByDescending { playtimeStats[it.productId]?.lastPlayedMs ?: 0L }
+            }
             else -> favoriteGames.sortedBy { it.name.lowercase() }
         }
 
@@ -1149,7 +1155,10 @@ class CloudPlayFragment : Fragment() {
             // Apply saved sort state when games are loaded
             val sortedGames = when (sortState) {
                 1 -> filteredGames.sortedByDescending { it.name.lowercase() } // Z->A
-                2 -> filteredGames.sortedByDescending { preferences.getLastPlayedMs(it.productId) } // Recently Played
+                2 -> { // Recently Played
+                    val playtimeStats = preferences.getGamePlaytimeStats()
+                    filteredGames.sortedByDescending { playtimeStats[it.productId]?.lastPlayedMs ?: 0L }
+                }
                 else -> filteredGames.sortedBy { it.name.lowercase() } // A->Z (default)
             }
 
