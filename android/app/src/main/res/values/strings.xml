@@ -212,6 +212,7 @@
     <string name="quick_settings_close">Close</string>
     <string name="quick_settings_current_game">Current game: %s</string>
     <string name="quick_settings_performance_overlay_title">Performance Overlay</string>
+    <string name="quick_settings_overlay_type_title">Overlay Type</string>
     <string name="quick_settings_osc_title">On-Screen Controls</string>
     <string name="touch_controls_customise">Customise</string>
     <string name="touch_controls_customise_button">Customise Button</string>
@@ -398,6 +399,18 @@
 
     <!-- Don't localize these -->
     <string name="preferences_show_performance_overlay_key">show_performance_overlay</string>
+    <string name="preferences_performance_overlay_mode_key">performance_overlay_mode</string>
+    <string name="preferences_performance_overlay_opacity_key">performance_overlay_opacity</string>
+    <string name="preferences_performance_overlay_offset_x_key">performance_overlay_offset_x</string>
+    <string name="preferences_performance_overlay_offset_y_key">performance_overlay_offset_y</string>
+    <string name="quick_settings_overlay_mode_full">Full</string>
+    <string name="quick_settings_overlay_mode_minimal">Minimal</string>
+    <string name="quick_settings_configure_overlay">Configure Overlay</string>
+    <string name="overlay_configure_title">Configure Overlay</string>
+    <string name="overlay_configure_opacity_label">Opacity — %1$d%%</string>
+    <string name="overlay_configure_move">Move Overlay</string>
+    <string name="overlay_move_done">Done</string>
+    <string name="action_save">Save</string>
     <string name="preferences_discovery_enabled_key">discovery_enabled</string>
     <string name="preferences_on_screen_controls_enabled_key">on_screen_controls_enabled</string>
     <string name="preferences_touchpad_only_enabled_key">touchpad_only_enabled</string>

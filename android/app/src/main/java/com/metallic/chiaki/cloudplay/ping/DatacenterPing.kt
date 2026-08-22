@@ -39,7 +39,7 @@ object DatacenterPing
 {
 	private const val TAG = "DatacenterPing"
 	private const val PING_TIMEOUT_MS = 15000L  // 15 seconds (Qt line 242)
-	
+
 	/**
 	 * Ping multiple datacenters using senkusha echo/ping functionality
 	 *

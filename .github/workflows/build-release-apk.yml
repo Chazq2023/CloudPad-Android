@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added a profile icon with a live online/busy/offline status dot next to Friends on the main screen; fixed every unstyled pop-up/dropdown in the app (Settings preferences, Quick Menu dropdowns, the controller remap overflow menu, the game-launch splash screen) to match the app's themed grey-and-accent-border look; fixed a Settings crash and a lost logout dialog when rotating the device; and fixed the header logo overlapping the top-bar icons in portrait.
+        Added a customizable Performance Overlay: Full and Minimal view modes (Minimal shown by default), a Configure Overlay dialog with an opacity slider and drag-to-reposition, including a fix for the overlay disappearing while being moved and stretching after saving a new position; removed the online/busy/offline status dot from the main menu profile icon; fixed the main menu search icon not matching the other header icons' grey colour; and a small rendering performance improvement for the FSR upscaling shader.
 
     steps:
       - name: Checkout repo

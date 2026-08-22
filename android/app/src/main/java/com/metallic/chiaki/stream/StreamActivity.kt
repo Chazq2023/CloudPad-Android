@@ -7,14 +7,19 @@ import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.common.ext.isTv
 import android.Manifest
 import android.app.PictureInPictureParams
+import android.content.res.ColorStateList
 import android.content.res.Configuration
 import android.graphics.Matrix
 import android.os.*
 import android.util.Log
 import android.util.Rational
+import android.util.TypedValue
 import android.view.*
 import android.widget.EditText
+import android.widget.FrameLayout
+import android.widget.PopupWindow
 import androidx.activity.result.contract.ActivityResultContracts
+import com.google.android.material.button.MaterialButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
@@ -91,6 +96,13 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  then onPictureInPictureModeChanged(false) fires — at that point we check this
 	 *  flag to know we need to shut down the session. */
 	private var activityStopped = false
+
+	/** True for the duration of [startOverlayMoveMode] — pauses the performance overlay's live
+	 *  stat updates (see the overlayData observer) while it's being dragged, so its content isn't
+	 *  also changing while it's being repositioned. Secondary to [startOverlayMoveMode]'s own fix
+	 *  (hosting the overlay in a separate window for the drag) for the disappearing-mid-drag bug,
+	 *  but still worth keeping — you're repositioning it, not reading it, for that brief window. */
+	private var overlayMoveModeActive = false
 
 	/** Saved control state before entering PiP, so we can restore when exiting PiP */
 	private var savedOnScreenControlsEnabled = false
@@ -208,7 +220,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			},
 			onMoveTouchControl = { control, onSaved ->
 				defaultTouchControlsFragment?.startMoveMode(control, onSaved)
-			}
+			},
+			onMoveOverlay = { onDone -> startOverlayMoveMode(onDone) }
 		)
 
 		// Handle back button — on TV show a disconnect confirmation dialog; on touch,
@@ -283,14 +296,152 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		})
 
 		viewModel.overlayData.observe(this, Observer { data ->
-			if (binding.performanceOverlay.isVisible) {
+			if (binding.performanceOverlay.isVisible && !overlayMoveModeActive) {
 				binding.performanceOverlay.updateOverlay(data)
 			}
 		})
 
+		applyPerformanceOverlayCustomization()
+
 		// On TV, the Quick Settings panel is simply never shown — the back-press handler's
 		// isTv() branch below never calls quickSettingsPanel.toggle()/open().
 
+	}
+
+	/** Applies the persisted mode/opacity/position to the performance overlay — called once at
+	 *  connect time, and again by QuickSettingsPanel's Configure Overlay dialog on Cancel to
+	 *  discard whatever was previewed live during that session. Mode and opacity themselves are
+	 *  applied live and immediately by QuickSettingsPanel as the user adjusts them; this is only
+	 *  the "load from Preferences" half. */
+	fun applyPerformanceOverlayCustomization()
+	{
+		val overlay = binding.performanceOverlay
+		val mode = if(viewModel.preferences.performanceOverlayMode == "minimal")
+			PerformanceOverlayView.OverlayMode.MINIMAL
+		else
+			PerformanceOverlayView.OverlayMode.FULL
+		overlay.setMode(mode)
+		overlay.setOpacityPercent(viewModel.preferences.performanceOverlayOpacityPercent)
+		overlay.post {
+			val streamRoot = binding.mainStreamLayout
+			overlay.translationX = streamRoot.width * viewModel.preferences.performanceOverlayOffsetXPermille / 1000f
+			overlay.translationY = streamRoot.height * viewModel.preferences.performanceOverlayOffsetYPermille / 1000f
+		}
+	}
+
+	/** Same drag-to-reposition technique as TouchControlsFragment.startMoveMode, with two
+	 *  differences. First: this doesn't persist on its own "Done" tap — the overlay isn't
+	 *  touch-control chrome the user is done customising the moment they let go of it, it's one
+	 *  setting inside QuickSettingsPanel's Configure Overlay dialog, which still has its own
+	 *  Cancel/Save to get back to. [onDone] just hands control back to that dialog; committing the
+	 *  new position to Preferences (or not) is entirely that dialog's Save/Cancel's call.
+	 *
+	 *  Second: the overlay is temporarily detached from [ActivityStreamBinding.mainStreamLayout]
+	 *  and rehosted as the content of a borderless [PopupWindow] for the duration of the drag,
+	 *  repositioned via [PopupWindow.update] rather than translationX/Y. QuickSettingsPanel's own
+	 *  doc comment explains why: animating a plain View that shares a window with the video
+	 *  GLSurfaceView doesn't composite reliably (confirmed there even with a forced hardware
+	 *  layer) since the SurfaceView's content is composited as a separate hole-punched layer, not
+	 *  in normal Z-order with sibling Views — exactly matching what was seen here (overlay content
+	 *  partially disappearing while being dragged, snapping back once motion stopped). A popup is
+	 *  its own window, composited above the activity's deterministically by the OS, same as why
+	 *  QuickSettingsPanel itself moved into a Dialog. The overlay is reattached to mainStreamLayout
+	 *  at its final position once Done is tapped — it's a static (non-animating) view the rest of
+	 *  the time, which composites over the video fine. */
+	fun startOverlayMoveMode(onDone: () -> Unit)
+	{
+		val overlay = binding.performanceOverlay
+		val streamRoot = binding.mainStreamLayout
+
+		val streamRootLoc = IntArray(2)
+		streamRoot.getLocationOnScreen(streamRootLoc)
+		val overlayLoc = IntArray(2)
+		overlay.getLocationOnScreen(overlayLoc)
+		// overlay.left/top is its natural (untranslated) layout position within streamRoot — the
+		// baseline that translationX/Y (both here and everywhere else this overlay's position is
+		// read/written — see applyPerformanceOverlayCustomization and Configure Overlay's Save) is
+		// relative to. Captured now, before detaching, since left/top are meaningless once removed.
+		val overlayLocalLeft = overlay.left
+		val overlayLocalTop = overlay.top
+
+		streamRoot.removeView(overlay)
+		overlay.translationX = 0f
+		overlay.translationY = 0f
+		overlayMoveModeActive = true
+
+		val popup = PopupWindow(overlay, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, false).apply {
+			isClippingEnabled = false
+			isTouchable = true
+			isFocusable = false
+			isOutsideTouchable = false
+			elevation = 0f
+		}
+		var popupX = overlayLoc[0]
+		var popupY = overlayLoc[1]
+		popup.showAtLocation(streamRoot, Gravity.NO_GRAVITY, popupX, popupY)
+
+		var downRawX = 0f
+		var downRawY = 0f
+		var startPopupX = popupX
+		var startPopupY = popupY
+
+		overlay.setOnTouchListener { _, event ->
+			when(event.actionMasked)
+			{
+				MotionEvent.ACTION_DOWN ->
+				{
+					downRawX = event.rawX
+					downRawY = event.rawY
+					startPopupX = popupX
+					startPopupY = popupY
+					true
+				}
+				MotionEvent.ACTION_MOVE ->
+				{
+					popupX = startPopupX + (event.rawX - downRawX).toInt()
+					popupY = startPopupY + (event.rawY - downRawY).toInt()
+					popup.update(popupX, popupY, -1, -1)
+					true
+				}
+				else -> true
+			}
+		}
+
+		val accent = TypedValue().let {
+			theme.resolveAttribute(R.attr.pyluxAccent, it, true)
+			it.data
+		}
+		val doneButton = MaterialButton(this).apply {
+			text = getString(R.string.overlay_move_done)
+			setTextColor(android.graphics.Color.WHITE)
+			backgroundTintList = ColorStateList.valueOf(accent)
+		}
+		streamRoot.addView(doneButton, FrameLayout.LayoutParams(
+			ViewGroup.LayoutParams.WRAP_CONTENT,
+			ViewGroup.LayoutParams.WRAP_CONTENT,
+			Gravity.CENTER
+		))
+		doneButton.setOnClickListener {
+			overlay.setOnTouchListener(null)
+			popup.dismiss()
+			// NOT reusing overlay.layoutParams here — PopupWindow's internal decor view mutates
+			// it in place while hosting the content view (observed on-device: it comes back
+			// stretched to match_parent width instead of the original wrap_content), so it's
+			// rebuilt fresh matching activity_stream.xml's declared params for this view exactly.
+			streamRoot.addView(overlay, FrameLayout.LayoutParams(
+				ViewGroup.LayoutParams.WRAP_CONTENT,
+				ViewGroup.LayoutParams.WRAP_CONTENT
+			).apply {
+				gravity = Gravity.TOP or Gravity.START
+				val margin = (8 * resources.displayMetrics.density).toInt()
+				setMargins(margin, margin, margin, margin)
+			})
+			overlay.translationX = (popupX - streamRootLoc[0] - overlayLocalLeft).toFloat()
+			overlay.translationY = (popupY - streamRootLoc[1] - overlayLocalTop).toFloat()
+			overlayMoveModeActive = false
+			streamRoot.removeView(doneButton)
+			onDone()
+		}
 	}
 
 	private val controlsDisposable = CompositeDisposable()

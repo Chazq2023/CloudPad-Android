@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- No background here — the theme-coloured border is applied to the dialog window itself
+     (see QuickSettingsPanel.showConfigureOverlayDialog), matching dialog_playtime's convention. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:id="@+id/configureOverlayOpacityLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="?attr/pyluxAccent"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <SeekBar
+        android:id="@+id/configureOverlayOpacitySeekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="16dp"
+        android:max="100"
+        android:progressTint="?attr/pyluxAccent"
+        android:progressBackgroundTint="@android:color/white"
+        android:thumbTint="?attr/pyluxAccent" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/configureOverlayMoveButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/overlay_configure_move"
+        android:textColor="@android:color/white"
+        app:backgroundTint="?attr/pyluxAccent" />
+
+</LinearLayout>

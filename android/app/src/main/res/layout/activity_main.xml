@@ -155,18 +155,6 @@
 
                             </com.google.android.material.card.MaterialCardView>
 
-                            <!-- Own online/offline presence — same bg_friend_online_dot/
-                                 offline_dot drawables and logic as the Friends list (see
-                                 MainActivity.refreshAccountIcon). Hidden until the first
-                                 successful presence fetch so it never shows a guessed state. -->
-                            <View
-                                android:id="@+id/accountStatusDot"
-                                android:layout_width="10dp"
-                                android:layout_height="10dp"
-                                android:layout_gravity="bottom|end"
-                                android:background="@drawable/bg_friend_offline_dot"
-                                android:visibility="gone" />
-
                         </FrameLayout>
 
                     </FrameLayout>
