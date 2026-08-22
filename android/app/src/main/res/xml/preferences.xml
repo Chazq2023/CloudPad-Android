@@ -44,10 +44,10 @@
             app:icon="@drawable/ic_console_simple"/>
 
         <Preference
-            app:key="psn_logout"
-            app:title="@string/preferences_psn_logout_title"
-            app:summary="@string/preferences_psn_login_summary_logged_in"
-            app:icon="@drawable/ic_close_white"/>
+            app:key="psn_account"
+            app:title="@string/preferences_psn_login_row_title"
+            app:summary="@string/preferences_psn_login_row_summary"
+            app:icon="@drawable/ic_psn_id_white"/>
 
         <ListPreference
             app:key="locale_display"

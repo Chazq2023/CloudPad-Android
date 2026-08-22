@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.*
+import com.metallic.chiaki.cloudplay.PsnLoginActivity
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.pylux.stream.BuildConfig
 import com.pylux.stream.R
@@ -147,6 +148,19 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 
 	// Must be registered before the Fragment reaches STARTED, so this is a property initializer
 	// rather than something set up inside onCreatePreferences.
+	// Must be registered before the Fragment reaches STARTED, same reasoning as
+	// micPermissionLauncher below — refreshes the Account row's title/summary either way, since a
+	// cancelled/failed login still needs to keep the row saying "Log In" rather than freeze on
+	// leftover progress state.
+	private val psnLoginLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+		if(result.resultCode == Activity.RESULT_OK)
+		{
+			Toast.makeText(requireContext(), R.string.psn_login_success, Toast.LENGTH_SHORT).show()
+		}
+		updatePsnAccountPreference()
+		updateLocalePreference()
+	}
+
 	private val micPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
 		val micPreference = preferenceScreen?.findPreference<SwitchPreference>(getString(R.string.preferences_microphone_enabled_key))
 		if(granted)
@@ -294,23 +308,8 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_export_settings_key))?.setOnPreferenceClickListener { exportSettings(); true }
 		preferenceScreen.findPreference<Preference>(getString(R.string.preferences_import_settings_key))?.setOnPreferenceClickListener { importSettings(); true }
 
-		val logoutPreference = preferenceScreen.findPreference<Preference>("psn_logout")
-		logoutPreference?.isVisible = preferences.hasNpssoToken()
-		logoutPreference?.setOnPreferenceClickListener { showLogoutConfirmation(preferences); true }
-
-		val localePreference = preferenceScreen.findPreference<ListPreference>("locale_display")
-		if (preferences.hasNpssoToken())
-		{
-			localePreference?.entries = CLOUD_LOCALES.map { "${it.second} (${it.first})" }.toTypedArray()
-			localePreference?.entryValues = CLOUD_LOCALES.map { it.first }.toTypedArray()
-			localePreference?.value = preferences.getCloudStoreLocale()
-			localePreference?.summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
-		}
-		else
-		{
-			localePreference?.isEnabled = false
-			localePreference?.summary = getString(R.string.preferences_locale_summary_not_set)
-		}
+		updatePsnAccountPreference()
+		updateLocalePreference()
 
 		val cachedLocalePreference = preferenceScreen.findPreference<Preference>("cached_locale_display")
 		val rawStored = preferences.getRawStoredLocale()
@@ -377,6 +376,60 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		startActivity(intent)
 	}
 
+	/** Single "Account" row that flips between "Log Out" (tap to confirm sign-out) and "Log In"
+	 *  (tap to launch [PsnLoginActivity]) depending on [Preferences.hasNpssoToken] — re-called
+	 *  after logout and after the login activity returns so the row always reflects current
+	 *  state rather than needing the settings screen reopened. */
+	private fun updatePsnAccountPreference()
+	{
+		val preference = preferenceScreen?.findPreference<Preference>("psn_account") ?: return
+		val preferences = Preferences(requireContext())
+
+		if(preferences.hasNpssoToken())
+		{
+			preference.title = getString(R.string.preferences_psn_logout_title)
+			preference.summary = getString(R.string.preferences_psn_login_summary_logged_in)
+			preference.setIcon(R.drawable.ic_close_white)
+			preference.setOnPreferenceClickListener { showLogoutConfirmation(preferences); true }
+		}
+		else
+		{
+			preference.title = getString(R.string.preferences_psn_login_row_title)
+			preference.summary = getString(R.string.preferences_psn_login_row_summary)
+			preference.setIcon(R.drawable.ic_psn_id_white)
+			preference.setOnPreferenceClickListener {
+				psnLoginLauncher.launch(Intent(requireContext(), PsnLoginActivity::class.java))
+				true
+			}
+		}
+	}
+
+	/** Cloud store locale only makes sense once logged in — re-called alongside
+	 *  [updatePsnAccountPreference] so it flips enabled/disabled in step with the account row
+	 *  rather than only being correct the next time Settings is freshly opened. */
+	private fun updateLocalePreference()
+	{
+		val preferences = Preferences(requireContext())
+		val localePreference = preferenceScreen?.findPreference<ListPreference>("locale_display") ?: return
+		if (preferences.hasNpssoToken())
+		{
+			localePreference.entries = CLOUD_LOCALES.map { "${it.second} (${it.first})" }.toTypedArray()
+			localePreference.entryValues = CLOUD_LOCALES.map { it.first }.toTypedArray()
+			localePreference.value = preferences.getCloudStoreLocale()
+			localePreference.summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
+			localePreference.isEnabled = true
+		}
+		else
+		{
+			// The logged-in branch above sets a SummaryProvider, which Preference.setSummary()
+			// refuses to run alongside once set — has to be cleared first or this throws
+			// IllegalStateException the moment a user logs out with the locale already loaded.
+			localePreference.summaryProvider = null
+			localePreference.isEnabled = false
+			localePreference.summary = getString(R.string.preferences_locale_summary_not_set)
+		}
+	}
+
 	private fun showLogoutConfirmation(preferences: Preferences)
 	{
 		requireContext().alertDialogBuilder()
@@ -396,7 +449,8 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preferences.psnRefreshToken = ""
 		preferences.psnAuthTokenExpiry = 0L
 		preferences.psnAccountId = ""
-		preferenceScreen?.findPreference<Preference>("psn_logout")?.isVisible = false
+		updatePsnAccountPreference()
+		updateLocalePreference()
 		Toast.makeText(requireContext(), R.string.preferences_psn_logout_success, Toast.LENGTH_SHORT).show()
 	}
 
