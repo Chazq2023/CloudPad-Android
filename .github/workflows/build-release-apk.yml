@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Limited the remaining on-screen controls to touches beginning within their visible areas and improved audio output startup reliability.
+        Added a trophies-achieved counter, sort by earned date, and rarity filtering to the Trophies screen and the in-stream Trophies quick menu.
 
     steps:
       - name: Checkout repo

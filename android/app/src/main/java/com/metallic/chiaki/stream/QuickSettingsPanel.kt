@@ -25,6 +25,7 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.FrameLayout
 import android.widget.LinearLayout
+import android.widget.PopupMenu
 import android.widget.SeekBar
 import android.widget.Spinner
 import android.widget.TextView
@@ -64,10 +65,15 @@ import com.metallic.chiaki.session.StreamStateQuit
 import com.metallic.chiaki.settings.RemapAdapter
 import com.metallic.chiaki.settings.RemapItem
 import com.metallic.chiaki.trophy.TrophyAdapter
+import com.metallic.chiaki.trophy.TrophyFilterMode
 import com.metallic.chiaki.trophy.TrophyRepository
 import com.metallic.chiaki.trophy.TrophyResult
+import com.metallic.chiaki.trophy.TrophySortMode
 import com.metallic.chiaki.trophy.buildTrophyListItems
+import com.metallic.chiaki.trophy.filterModeToItemId
+import com.metallic.chiaki.trophy.itemIdToFilterMode
 import com.metallic.chiaki.trophy.showTrophyDetailDialog
+import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
@@ -320,6 +326,9 @@ class QuickSettingsPanel(
 	private val trophyRepository = TrophyRepository(preferences)
 	private val trophyAdapter = TrophyAdapter(onTrophyClick = { trophy -> showTrophyDetailDialog(activity, trophy) })
 	private var trophiesLoadedOnce = false
+	private var currentTrophyDetail: TrophyTitleDetail? = null
+	private var trophySortMode = TrophySortMode.DEFAULT
+	private var trophyFilterMode = TrophyFilterMode.DEFAULT
 
 	private val friendsRepository = FriendsRepository(preferences)
 	private val friendAdapter = FriendAdapter(
@@ -407,6 +416,8 @@ class QuickSettingsPanel(
 			trophiesScrollSettleHandler.postDelayed(reenableTrophiesRefreshFocusable, 300L)
 		}
 		panel.quickSettingsTrophiesRefreshButton.setOnClickListener { loadTrophies(forceRefresh = true) }
+		panel.quickSettingsTrophiesSortButton.setOnClickListener { showTrophiesSortMenu(it) }
+		panel.quickSettingsTrophiesFilterButton.setOnClickListener { showTrophiesFilterMenu(it) }
 
 		panel.quickSettingsFriendsRecyclerView.layoutManager = InstantScrollLinearLayoutManager(activity)
 		panel.quickSettingsFriendsRecyclerView.adapter = friendAdapter
@@ -728,6 +739,7 @@ class QuickSettingsPanel(
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
 			panel.quickSettingsPipRow.quickSettingsRowSwitch,
 			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
+			panel.quickSettingsTrophiesSortButton, panel.quickSettingsTrophiesFilterButton,
 			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
 			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
@@ -798,6 +810,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsTrophiesRecyclerView.visibility = View.GONE
 		panel.quickSettingsTrophiesProgressText.visibility = View.GONE
 		panel.quickSettingsTrophiesCountsRow.visibility = View.GONE
+		panel.quickSettingsTrophiesAchievedCount.visibility = View.GONE
 
 		val gameName = viewModel.connectInfo.cloudGameName ?: ""
 		val platform = viewModel.connectInfo.cloudGamePlatform ?: ""
@@ -808,22 +821,77 @@ class QuickSettingsPanel(
 			when(result)
 			{
 				is TrophyResult.Success -> {
-					val items = buildTrophyListItems(result.detail)
-					if(items.isEmpty())
-					{
-						showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty, gameName))
-					}
-					else
-					{
-						trophyAdapter.items = items
-						panel.quickSettingsTrophiesRecyclerView.visibility = View.VISIBLE
-						showTrophiesSummary(result.detail.summary)
-					}
+					currentTrophyDetail = result.detail
+					// Shown unconditionally once a detail is successfully fetched — matches
+					// TrophiesActivity's own header, which stays up even if the filtered/sorted
+					// list below it ends up empty (that's a "no matches", not "no data").
+					showTrophiesSummary(result.detail.summary)
+					renderTrophyList(gameName)
 				}
 				is TrophyResult.NoMatchFound -> showTrophiesEmptyState(activity.getString(R.string.quick_settings_trophies_empty, gameName))
 				is TrophyResult.Error -> showTrophiesEmptyState(result.message)
 			}
 		}
+	}
+
+	/** Rebuilds the trophy adapter's list from [currentTrophyDetail] under the currently selected
+	 *  sort/filter — used both by the initial load and whenever the user changes sort/filter,
+	 *  without refetching. Returns false (and shows the empty state) if the resulting list is
+	 *  empty, matching TrophiesActivity's own renderTrophyList. */
+	private fun renderTrophyList(gameName: String): Boolean
+	{
+		val detail = currentTrophyDetail ?: return false
+		val items = buildTrophyListItems(detail, trophySortMode, trophyFilterMode)
+
+		if(items.isEmpty())
+		{
+			val message = if(trophyFilterMode != TrophyFilterMode.DEFAULT)
+				activity.getString(R.string.trophy_filter_no_matches)
+			else
+				activity.getString(R.string.quick_settings_trophies_empty, gameName)
+			showTrophiesEmptyState(message)
+			return false
+		}
+
+		trophyAdapter.items = items
+		panel.quickSettingsTrophiesRecyclerView.visibility = View.VISIBLE
+		panel.quickSettingsTrophiesEmptyText.visibility = View.GONE
+		return true
+	}
+
+	private fun showTrophiesSortMenu(anchor: View)
+	{
+		val popup = PopupMenu(activity, anchor)
+		popup.menu.add(0, 0, 0, R.string.trophy_sort_default)
+		popup.menu.add(0, 1, 1, R.string.trophy_sort_earned_date)
+		popup.menu.setGroupCheckable(0, true, true)
+		popup.menu.findItem(if(trophySortMode == TrophySortMode.EARNED_DATE) 1 else 0)?.isChecked = true
+
+		popup.setOnMenuItemClickListener { item ->
+			trophySortMode = if(item.itemId == 1) TrophySortMode.EARNED_DATE else TrophySortMode.DEFAULT
+			renderTrophyList(viewModel.connectInfo.cloudGameName ?: "")
+			true
+		}
+		popup.show()
+	}
+
+	private fun showTrophiesFilterMenu(anchor: View)
+	{
+		val popup = PopupMenu(activity, anchor)
+		popup.menu.add(0, 0, 0, R.string.trophy_filter_default)
+		popup.menu.add(0, 1, 1, R.string.trophy_filter_bronze)
+		popup.menu.add(0, 2, 2, R.string.trophy_filter_silver)
+		popup.menu.add(0, 3, 3, R.string.trophy_filter_gold)
+		popup.menu.add(0, 4, 4, R.string.trophy_filter_platinum)
+		popup.menu.setGroupCheckable(0, true, true)
+		popup.menu.findItem(filterModeToItemId(trophyFilterMode))?.isChecked = true
+
+		popup.setOnMenuItemClickListener { item ->
+			trophyFilterMode = itemIdToFilterMode(item.itemId)
+			renderTrophyList(viewModel.connectInfo.cloudGameName ?: "")
+			true
+		}
+		popup.show()
 	}
 
 	private fun showTrophiesSummary(summary: TrophyTitleSummary)
@@ -834,11 +902,18 @@ class QuickSettingsPanel(
 		panel.quickSettingsTrophiesGoldCount.text = summary.earnedTrophies.gold.toString()
 		panel.quickSettingsTrophiesSilverCount.text = summary.earnedTrophies.silver.toString()
 		panel.quickSettingsTrophiesBronzeCount.text = summary.earnedTrophies.bronze.toString()
+		panel.quickSettingsTrophiesAchievedCount.text = activity.getString(
+			R.string.trophy_achieved_count_format,
+			summary.earnedTrophies.total,
+			summary.definedTrophies.total
+		)
+		panel.quickSettingsTrophiesAchievedCount.visibility = View.VISIBLE
 		panel.quickSettingsTrophiesCountsRow.visibility = View.VISIBLE
 	}
 
 	private fun showTrophiesEmptyState(message: String)
 	{
+		panel.quickSettingsTrophiesRecyclerView.visibility = View.GONE
 		panel.quickSettingsTrophiesEmptyText.text = message
 		panel.quickSettingsTrophiesEmptyText.visibility = View.VISIBLE
 	}

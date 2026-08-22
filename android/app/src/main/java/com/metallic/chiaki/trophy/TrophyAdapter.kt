@@ -30,14 +30,63 @@ sealed class TrophyListItem
 	data class TrophyRow(val trophy: Trophy) : TrophyListItem()
 }
 
-/** Shared by [TrophiesActivity] and [QuickSettingsPanel]'s in-stream Trophies tab so both
- *  present identical group-header + trophy-row structure from the same fetched detail. */
-fun buildTrophyListItems(detail: TrophyTitleDetail): List<TrophyListItem>
+/** "Default" restores the game's own group ordering; "Earned Date" flattens everything (group
+ *  headers stop making sense once trophies are reordered across groups) and pulls every unlocked
+ *  trophy to the top, most recent first, with locked trophies left after in their original order. */
+enum class TrophySortMode { DEFAULT, EARNED_DATE }
+
+/** "Default" shows every trophy; the rest restrict the list to just that rarity. */
+enum class TrophyFilterMode { DEFAULT, BRONZE, SILVER, GOLD, PLATINUM }
+
+/** Shared PopupMenu item-id <-> [TrophyFilterMode] mapping so [TrophiesActivity] and
+ *  [com.metallic.chiaki.stream.QuickSettingsPanel]'s filter menus stay in sync. */
+fun filterModeToItemId(mode: TrophyFilterMode): Int = when (mode)
 {
+	TrophyFilterMode.DEFAULT -> 0
+	TrophyFilterMode.BRONZE -> 1
+	TrophyFilterMode.SILVER -> 2
+	TrophyFilterMode.GOLD -> 3
+	TrophyFilterMode.PLATINUM -> 4
+}
+
+fun itemIdToFilterMode(itemId: Int): TrophyFilterMode = when (itemId)
+{
+	1 -> TrophyFilterMode.BRONZE
+	2 -> TrophyFilterMode.SILVER
+	3 -> TrophyFilterMode.GOLD
+	4 -> TrophyFilterMode.PLATINUM
+	else -> TrophyFilterMode.DEFAULT
+}
+
+/** Shared by [TrophiesActivity] and [QuickSettingsPanel]'s in-stream Trophies tab so both
+ *  present identical group-header + trophy-row structure from the same fetched detail, under
+ *  whichever sort/filter the user currently has selected. */
+fun buildTrophyListItems(
+	detail: TrophyTitleDetail,
+	sortMode: TrophySortMode = TrophySortMode.DEFAULT,
+	filterMode: TrophyFilterMode = TrophyFilterMode.DEFAULT
+): List<TrophyListItem>
+{
+	val trophies = when (filterMode)
+	{
+		TrophyFilterMode.DEFAULT -> detail.trophies
+		TrophyFilterMode.BRONZE -> detail.trophies.filter { it.type == TrophyType.BRONZE }
+		TrophyFilterMode.SILVER -> detail.trophies.filter { it.type == TrophyType.SILVER }
+		TrophyFilterMode.GOLD -> detail.trophies.filter { it.type == TrophyType.GOLD }
+		TrophyFilterMode.PLATINUM -> detail.trophies.filter { it.type == TrophyType.PLATINUM }
+	}
+
+	if (sortMode == TrophySortMode.EARNED_DATE)
+	{
+		val (earned, locked) = trophies.partition { it.earned }
+		val orderedEarned = earned.sortedByDescending { it.earnedDateTimeMs ?: Long.MIN_VALUE }
+		return (orderedEarned + locked).map { TrophyListItem.TrophyRow(it) }
+	}
+
 	val items = mutableListOf<TrophyListItem>()
 	if (detail.groups.isEmpty())
 	{
-		detail.trophies.forEach { items.add(TrophyListItem.TrophyRow(it)) }
+		trophies.forEach { items.add(TrophyListItem.TrophyRow(it)) }
 	}
 	else
 	{
@@ -45,8 +94,14 @@ fun buildTrophyListItems(detail: TrophyTitleDetail): List<TrophyListItem>
 		// just the base game group), all of which fall back to the generic "Trophies" label
 		// below — only the first such fallback gets its own header so it doesn't repeat further
 		// down the list; later empty-named groups' trophies fold under that same header.
+		// A group filtered down to zero trophies is skipped entirely rather than left as a
+		// header with nothing under it — but only once a filter is active, so the unfiltered
+		// "Default" view's group structure is untouched from before filtering existed.
 		var fallbackHeaderShown = false
 		detail.groups.forEach { group ->
+			val groupTrophies = trophies.filter { it.groupId == group.groupId }
+			if (filterMode != TrophyFilterMode.DEFAULT && groupTrophies.isEmpty()) return@forEach
+
 			if (group.groupName.isNotEmpty())
 			{
 				items.add(TrophyListItem.GroupHeader(group.groupName))
@@ -56,8 +111,7 @@ fun buildTrophyListItems(detail: TrophyTitleDetail): List<TrophyListItem>
 				items.add(TrophyListItem.GroupHeader("Trophies"))
 				fallbackHeaderShown = true
 			}
-			detail.trophies.filter { it.groupId == group.groupId }
-				.forEach { items.add(TrophyListItem.TrophyRow(it)) }
+			groupTrophies.forEach { items.add(TrophyListItem.TrophyRow(it)) }
 		}
 	}
 	return items

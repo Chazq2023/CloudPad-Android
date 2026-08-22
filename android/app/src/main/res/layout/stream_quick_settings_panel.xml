@@ -428,7 +428,7 @@
             android:text="@string/quick_settings_trophies_header_label"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/quickSettingsTrophiesRefreshButton" />
+            app:layout_constraintEnd_toStartOf="@id/quickSettingsTrophiesFilterButton" />
 
         <ImageButton
             android:id="@+id/quickSettingsTrophiesRefreshButton"
@@ -442,6 +442,32 @@
             app:layout_constraintTop_toTopOf="@id/quickSettingsTrophiesLabel"
             app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophiesLabel"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <ImageButton
+            android:id="@+id/quickSettingsTrophiesFilterButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/trophy_filter_content_description"
+            android:src="@drawable/ic_filter"
+            android:tint="?attr/pyluxAccent"
+            app:layout_constraintTop_toTopOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintEnd_toStartOf="@id/quickSettingsTrophiesSortButton" />
+
+        <ImageButton
+            android:id="@+id/quickSettingsTrophiesSortButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/trophy_sort_content_description"
+            android:src="@drawable/ic_sort"
+            android:tint="?attr/pyluxAccent"
+            app:layout_constraintTop_toTopOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintBottom_toBottomOf="@id/quickSettingsTrophiesLabel"
+            app:layout_constraintEnd_toStartOf="@id/quickSettingsTrophiesRefreshButton" />
 
         <!-- Completion summary — mirrors TrophiesActivity's own header styling (same
              TrophyHeaderCount badges). Only shown alongside a successfully loaded list, so it
@@ -464,14 +490,16 @@
 
         <LinearLayout
             android:id="@+id/quickSettingsTrophiesCountsRow"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:orientation="horizontal"
             android:visibility="gone"
             app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesProgressText"
-            app:layout_constraintStart_toStartOf="parent">
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
 
             <TextView
                 android:id="@+id/quickSettingsTrophiesPlatinumCount"
@@ -494,6 +522,25 @@
                 android:background="@drawable/bg_trophy_bronze" />
 
         </LinearLayout>
+
+        <!-- On its own line rather than crammed to the right of the bronze badge — the panel is
+             only 320dp wide with four badges already eating most of that, so sharing a row left
+             "X/Y Trophies Achieved" ellipsized down to almost nothing. -->
+        <TextView
+            android:id="@+id/quickSettingsTrophiesAchievedCount"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesCountsRow"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <ProgressBar
             android:id="@+id/quickSettingsTrophiesProgressBar"
@@ -527,7 +574,7 @@
             android:visibility="gone"
             android:clipToPadding="false"
             android:paddingBottom="16dp"
-            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesCountsRow"
+            app:layout_constraintTop_toBottomOf="@id/quickSettingsTrophiesAchievedCount"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
