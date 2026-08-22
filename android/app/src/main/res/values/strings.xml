@@ -307,6 +307,8 @@
     <string name="preferences_psn_logout_message">Are you sure you want to logout?</string>
     <string name="preferences_psn_logout_confirm">Logout</string>
     <string name="preferences_psn_logout_success">Logged out successfully</string>
+    <string name="preferences_psn_login_row_title">Log In</string>
+    <string name="preferences_psn_login_row_summary">Tap to sign in</string>
     <string name="preferences_locale_title">Locale</string>
     <string name="preferences_locale_summary_not_set">Not set - Please sign in to obtain locale</string>
     <string name="preferences_cached_locale_title">Cached Locale</string>

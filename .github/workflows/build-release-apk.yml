@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Added a trophies-achieved counter, sort by earned date, and rarity filtering to the Trophies screen and the in-stream Trophies quick menu.
+        Settings now shows a Log In row (instead of hiding it) once signed out, and fixed a crash on logout that was kicking users back to the main screen.
 
     steps:
       - name: Checkout repo
