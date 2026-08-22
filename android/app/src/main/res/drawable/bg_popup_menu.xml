@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same grey-box-with-accent-border language as bg_disclaimer_box.xml, reused here so every
+     PopupMenu in the app (sort/filter menus, the account menu, etc.) reads as the same family of
+     surface as the app's dialogs, rather than the platform's unstyled default popup background. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/pyluxAccent" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/disclaimer_box_background" />
+            <corners android:radius="10dp" />
+        </shape>
+    </item>
+</layer-list>

@@ -572,7 +572,7 @@ class QuickSettingsPanel(
 		fun bindSpinner(spinner: Spinner, entries: List<String>, values: List<String>, current: String, selected: (String) -> Unit)
 		{
 			spinner.adapter = ArrayAdapter(activity, R.layout.item_quick_settings_spinner_item, entries).apply {
-				setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+				setDropDownViewResource(R.layout.dropdown_menu_popup_item)
 			}
 			spinner.setSelection(values.indexOf(current).coerceAtLeast(0), false)
 			spinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
@@ -1414,14 +1414,15 @@ class QuickSettingsPanel(
 	{
 		val row = ItemQuickSettingsDropdownBinding.inflate(activity.layoutInflater, container, true)
 		row.quickSettingsDropdownLabel.text = activity.getString(labelRes)
-		// The closed spinner's text needs its own white-text layout — StreamTheme is a Light
-		// MaterialComponents theme, so the system default item layout renders near-black text
-		// that's unreadable against this dark panel. The dropdown list popup keeps the system
-		// default layout, since that popup already renders on a light background where dark
-		// text is legible.
+		// Both the closed spinner and its open dropdown list need their own white-text layouts —
+		// StreamTheme is a Light MaterialComponents theme, so the system default item layouts
+		// render near-black text on a plain white popup, unreadable/inconsistent against this
+		// dark panel. dropdown_menu_popup_item pairs with the Spinner's own popupBackground (see
+		// item_quick_settings_dropdown.xml) for the dark, theme-accent-bordered look used
+		// everywhere else in the app.
 		row.quickSettingsDropdownSpinner.adapter =
 			ArrayAdapter(activity, R.layout.item_quick_settings_spinner_item, entries).apply {
-				setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+				setDropDownViewResource(R.layout.dropdown_menu_popup_item)
 			}
 		row.quickSettingsDropdownSpinner.setSelection(values.indexOf(currentValue).coerceAtLeast(0), false)
 		row.quickSettingsDropdownSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener

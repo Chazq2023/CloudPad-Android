@@ -7,6 +7,9 @@ data class Friend(
 	val onlineId: String,
 	val avatarUrl: String,
 	val isOnline: Boolean,
+	/** Separate from [isOnline] — Sony's own "Busy" PS App status, distinct from being connected
+	 *  at all (see FriendsService.PresenceInfo). */
+	val isBusy: Boolean,
 	val currentGame: String,
 	/** Epoch millis, or null if never reported — formatted relative-to-now at display time
 	 *  (see FriendAdapter), same as how TrophyAdapter formats a trophy's earnedDateTimeMs. */

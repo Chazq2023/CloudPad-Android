@@ -88,13 +88,21 @@
 
                 </LinearLayout>
 
-                <!-- Center: Pylux logo - absolutely centered -->
+                <!-- Center: Pylux logo — sized to the space left between the two islands rather
+                     than a fixed 258dp centered in the parent. In landscape there's always more
+                     than 258dp free either side, so fitCenter's height-bound scaling (29dp,
+                     unchanged) renders it identically to before; in portrait the islands (now
+                     three icons wide on the right, since the account icon was added) can leave
+                     less than 258dp between them, and without this the fixed-width logo overlapped
+                     the icons instead of shrinking to fit. -->
                 <ImageView
                     android:id="@+id/appTitle"
-                    android:layout_width="258dp"
+                    android:layout_width="0dp"
                     android:layout_height="29dp"
-                    android:layout_centerInParent="true"
-                    android:adjustViewBounds="true"
+                    android:layout_toEndOf="@id/modeIsland"
+                    android:layout_toStartOf="@id/actionIsland"
+                    android:layout_centerVertical="true"
+                    android:scaleType="fitCenter"
                     android:contentDescription="@string/app_name"
                     android:src="@drawable/cloudpad_logo" />
 
@@ -110,6 +118,58 @@
                     android:background="@drawable/icon_island_background"
                     android:paddingStart="3dp"
                     android:paddingEnd="3dp">
+
+                    <!-- Signed-in account icon — only visible once logged in (see
+                         MainActivity.refreshAccountIcon), tap opens a "Log Out" dropdown. -->
+                    <FrameLayout
+                        android:id="@+id/accountIconButton"
+                        android:layout_width="44dp"
+                        android:layout_height="40dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:focusable="true"
+                        android:clickable="true"
+                        android:visibility="gone">
+
+                        <!-- Sized to exactly the avatar circle (not the wider touch target above)
+                             so the status dot below can hug its bottom-right edge, same as the
+                             Friends list's own avatar+dot FrameLayout. -->
+                        <FrameLayout
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center">
+
+                            <com.google.android.material.card.MaterialCardView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                app:cardCornerRadius="14dp"
+                                app:cardElevation="0dp"
+                                app:strokeWidth="1.5dp"
+                                app:strokeColor="?attr/pyluxAccent">
+
+                                <ImageView
+                                    android:id="@+id/accountIcon"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:scaleType="centerCrop"
+                                    android:contentDescription="@string/action_account" />
+
+                            </com.google.android.material.card.MaterialCardView>
+
+                            <!-- Own online/offline presence — same bg_friend_online_dot/
+                                 offline_dot drawables and logic as the Friends list (see
+                                 MainActivity.refreshAccountIcon). Hidden until the first
+                                 successful presence fetch so it never shows a guessed state. -->
+                            <View
+                                android:id="@+id/accountStatusDot"
+                                android:layout_width="10dp"
+                                android:layout_height="10dp"
+                                android:layout_gravity="bottom|end"
+                                android:background="@drawable/bg_friend_offline_dot"
+                                android:visibility="gone" />
+
+                        </FrameLayout>
+
+                    </FrameLayout>
 
                     <!-- Friends Icon -->
                     <ImageView

@@ -33,13 +33,30 @@ class SettingsActivity: AppCompatActivity(), PreferenceFragmentCompat.OnPreferen
 		setSupportActionBar(binding.toolbar)
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 
-		val rootFragment = SettingsFragment()
-		replaceFragment(rootFragment, false)
 		supportFragmentManager.addOnBackStackChangedListener {
 			val titleFragment = supportFragmentManager.findFragmentById(R.id.settingsFragment) as? TitleFragment ?: return@addOnBackStackChangedListener
 			binding.titleTextView.text = titleFragment.getTitle(resources)
 		}
-		binding.titleTextView.text = rootFragment.getTitle(resources)
+
+		if (savedInstanceState == null)
+		{
+			// Only on a genuinely fresh launch — on a config-change recreate (e.g. rotating while
+			// a ListPreference's dialog is open), the FragmentManager has already restored the
+			// previous SettingsFragment instance (and reconnected the open PreferenceDialogFragment
+			// to it as its target fragment) as part of super.onCreate() above. Replacing it again
+			// here swapped in a second, different SettingsFragment instance that dialog was never
+			// attached to, leaving it pointing at a now-discarded fragment — which crashed with
+			// "Target fragment must implement TargetFragment interface" as soon as the dialog tried
+			// to restore itself against it.
+			val rootFragment = SettingsFragment()
+			replaceFragment(rootFragment, false)
+			binding.titleTextView.text = rootFragment.getTitle(resources)
+		}
+		else
+		{
+			val restoredFragment = supportFragmentManager.findFragmentById(R.id.settingsFragment) as? TitleFragment
+			binding.titleTextView.text = restoredFragment?.getTitle(resources) ?: ""
+		}
 	}
 
 	/** Circle/B as a controller shortcut for the back button — same equivalence QuickSettingsPanel

@@ -36,7 +36,8 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintVertical_bias="0.7">
 
-            <!-- Progress message -->
+            <!-- Progress message — solid grey + theme-accent border (bg_disclaimer_box), matching
+                 every other box in the app, rather than a translucent black plate. -->
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/progressTextView"
                 android:layout_width="wrap_content"
@@ -47,17 +48,22 @@
                 android:textAlignment="center"
                 android:gravity="center"
                 android:padding="16dp"
-                android:background="#40000000"
+                android:background="@drawable/bg_disclaimer_box"
                 android:layout_marginBottom="24dp" />
 
-            <!-- Cancel button -->
+            <!-- Cancel button — same solid grey + theme-accent border, via MaterialButton's own
+                 stroke/cornerRadius attrs (a raw android:background would fight its internal
+                 shape drawable) rather than a translucent tint. -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/cancelButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Cancel"
                 android:textColor="#FFFFFF"
-                app:backgroundTint="#40000000"
+                app:backgroundTint="@color/disclaimer_box_background"
+                app:strokeColor="?attr/pyluxAccent"
+                app:strokeWidth="2dp"
+                app:cornerRadius="10dp"
                 android:paddingStart="32dp"
                 android:paddingEnd="32dp"
                 android:paddingTop="12dp"

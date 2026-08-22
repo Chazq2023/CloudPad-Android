@@ -11,6 +11,16 @@
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog</item>
         <item name="alertDialogTheme">@style/AppTheme.AlertDialog.NonMaterial</item>
         <item name="android:windowActivityTransitions">true</item>
+        <!-- Every PopupMenu in the app (sort/filter menus, the account menu, etc.) is built with
+             a plain `PopupMenu(context, anchor)` call, which resolves its appearance from this
+             one theme attribute — styling it here covers every call site at once rather than
+             needing each one touched individually. See AppPopupMenuStyle below. -->
+        <item name="android:popupMenuStyle">@style/AppPopupMenuStyle</item>
+        <!-- A Toolbar's own "⋮" overflow menu (e.g. Controller Remap's "Restore to defaults")
+             resolves through this attribute instead of popupMenuStyle above — confirmed by it
+             still showing the platform default even with popupMenuStyle already set. Same shared
+             style either way. -->
+        <item name="actionOverflowMenuStyle">@style/AppPopupMenuStyle</item>
         <!-- Pylux brand colour attrs — Neon Pink default -->
         <item name="pyluxAccent">@color/accent</item>
         <item name="pyluxAccentLight">@color/accent_light</item>
@@ -161,12 +171,22 @@
         <item name="colorPrimary">@color/accent</item>
         <item name="colorControlActivated">?attr/pyluxAccent</item>
         <item name="materialButtonStyle">@style/AppTheme.AlertDialog.Button</item>
+        <item name="android:windowBackground">@drawable/bg_disclaimer_box</item>
     </style>
 
+    <!-- androidx.preference's ListPreferenceDialogFragmentCompat/EditTextPreferenceDialogFragmentCompat
+         (Locale, Image Processing, Resolution, FPS, Bitrate, Codec, Datacenter, Theme Colour —
+         every "pop up box" preference in Settings) build via plain AlertDialog.Builder(context),
+         which resolves through this attr rather than materialAlertDialogTheme above — confirmed
+         against the androidx.preference 1.2.0 sources. Without windowBackground here they fell
+         back to Theme.AppCompat.Dialog.Alert's own default (a plain light dialog), the one gap
+         AppAlertDialogBuilder's programmatic override never reached since these dialogs are never
+         built through it. -->
     <style name="AppTheme.AlertDialog.NonMaterial" parent="Theme.AppCompat.Dialog.Alert">
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="materialButtonStyle">@style/AppTheme.AlertDialog.Button</item>
         <item name="colorControlActivated">?attr/pyluxAccent</item>
+        <item name="android:windowBackground">@drawable/bg_disclaimer_box</item>
     </style>
 
     <style name="AppTheme.AlertDialog.Button" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
@@ -195,6 +215,19 @@
         <item name="android:textColorPrimary">@android:color/primary_text_dark</item>
         <item name="colorPrimary">@color/accent_orange</item>
         <item name="colorControlActivated">?attr/pyluxAccent</item>
+    </style>
+
+    <!-- Shared look for every PopupMenu in the app — see android:popupMenuStyle on AppTheme. -->
+    <style name="AppPopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:popupBackground">@drawable/bg_popup_menu</item>
+        <!-- Scopes the white item-text override to just this popup's own inflated views,
+             rather than touching android:textColorPrimary on AppTheme itself, which is read by
+             far too many other unrelated widgets app-wide to safely override globally. -->
+        <item name="android:theme">@style/ThemeOverlay.App.PopupMenu</item>
+    </style>
+
+    <style name="ThemeOverlay.App.PopupMenu" parent="ThemeOverlay.AppCompat">
+        <item name="android:textColorPrimary">@android:color/white</item>
     </style>
 
     <style name="MageTheme" parent="Theme.MaterialComponents.NoActionBar">

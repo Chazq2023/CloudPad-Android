@@ -19,12 +19,15 @@
     <!-- backgroundTint covers the dropdown arrow too, not just a fill — the Spinner's default
          background drawable (arrow included) is meant for StreamTheme's Light base and renders
          near-black, unreadable against this dark panel, same underlying issue as the closed
-         spinner's item text (see item_quick_settings_spinner_item.xml). -->
+         spinner's item text (see item_quick_settings_spinner_item.xml). popupBackground is the
+         open dropdown list itself — same reasoning, StreamTheme's Light base otherwise renders
+         it as a plain white box; bg_popup_menu matches every other popup/dropdown in the app. -->
     <Spinner
         android:id="@+id/quickSettingsDropdownSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:backgroundTint="@android:color/white" />
+        android:backgroundTint="@android:color/white"
+        android:popupBackground="@drawable/bg_popup_menu" />
 
 </LinearLayout>

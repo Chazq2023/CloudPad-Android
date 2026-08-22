@@ -58,7 +58,8 @@
 
         <activity
             android:name="com.metallic.chiaki.settings.SettingsActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="keyboard|keyboardHidden|orientation|screenSize" />
 
         <activity
             android:name="com.metallic.chiaki.trophy.TrophiesActivity"

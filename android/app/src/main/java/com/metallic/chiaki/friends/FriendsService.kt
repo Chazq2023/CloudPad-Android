@@ -72,7 +72,10 @@ object FriendsService
 		return onlineId to avatarUrl
 	}
 
-	data class PresenceInfo(val isOnline: Boolean, val currentGame: String, val lastOnlineDateMs: Long?)
+	/** [isBusy] is a separate top-level `availability` field Sony sends alongside
+	 *  `primaryPlatformInfo.onlineStatus` — live-tested: onlineStatus stays "online" when the
+	 *  account sets itself to Busy in the PS App, so isOnline alone can't distinguish them. */
+	data class PresenceInfo(val isOnline: Boolean, val isBusy: Boolean, val currentGame: String, val lastOnlineDateMs: Long?)
 
 	/** Presence for every id in [accountIds], batched into a single call. */
 	suspend fun fetchPresences(accessToken: String, accountIds: List<String>): Map<String, PresenceInfo>
@@ -108,13 +111,16 @@ object FriendsService
 
 			val primary = obj.optJSONObject("primaryPlatformInfo")
 			val isOnline = primary?.optString("onlineStatus", "offline") == "online"
+			// Top-level, not under primaryPlatformInfo — confirmed against a live "Busy" account:
+			// {"accountId":"...","availability":"busy","primaryPlatformInfo":{"onlineStatus":"online",...}}
+			val isBusy = obj.optString("availability", "") == "busy"
 			val titles = obj.optJSONArray("gameTitleInfoList")
 			val titleName = if (titles != null && titles.length() > 0) titles.getJSONObject(0).optString("titleName", "") else ""
 			// primaryPlatformInfo.lastOnlineDate is the per-platform figure; lastAvailableDate is
 			// the top-level fallback Sony sends when there's no primaryPlatformInfo at all.
 			val lastOnlineDate = primary?.optString("lastOnlineDate", "")?.ifEmpty { null }
 				?: obj.optString("lastAvailableDate", "").ifEmpty { null }
-			result[accountId] = PresenceInfo(isOnline, titleName, lastOnlineDate?.let { parseIsoTimestamp(it) })
+			result[accountId] = PresenceInfo(isOnline, isBusy, titleName, lastOnlineDate?.let { parseIsoTimestamp(it) })
 		}
 		return result
 	}
@@ -260,6 +266,7 @@ object FriendsService
 				put("onlineId", f.onlineId)
 				put("avatarUrl", f.avatarUrl)
 				put("isOnline", f.isOnline)
+				put("isBusy", f.isBusy)
 				put("currentGame", f.currentGame)
 				put("lastOnlineDateMs", f.lastOnlineDateMs ?: -1L)
 			})
@@ -281,6 +288,7 @@ object FriendsService
 					onlineId = obj.optString("onlineId", ""),
 					avatarUrl = obj.optString("avatarUrl", ""),
 					isOnline = obj.optBoolean("isOnline", false),
+					isBusy = obj.optBoolean("isBusy", false),
 					currentGame = obj.optString("currentGame", ""),
 					lastOnlineDateMs = if (lastOnline >= 0) lastOnline else null
 				)

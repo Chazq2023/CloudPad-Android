@@ -35,6 +35,7 @@ class FriendAdapter(
 	companion object
 	{
 		private const val ONLINE_COLOR = 0xFF4CAF50.toInt()
+		private const val BUSY_COLOR = 0xFFFFC107.toInt()
 		private const val OFFLINE_COLOR = 0xFFB3B3B3.toInt()
 	}
 
@@ -173,15 +174,28 @@ class FriendAdapter(
 			binding.friendItemStatus.text = when
 			{
 				friend.currentGame.isNotEmpty() -> "Playing ${friend.currentGame}"
+				friend.isBusy -> "Busy"
 				friend.isOnline -> "Online"
 				friend.lastOnlineDateMs != null -> "Last online " + DateUtils.getRelativeTimeSpanString(
 					friend.lastOnlineDateMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS
 				)
 				else -> "Offline"
 			}
-			binding.friendItemStatus.setTextColor(if (friend.isOnline) ONLINE_COLOR else OFFLINE_COLOR)
+			binding.friendItemStatus.setTextColor(
+				when
+				{
+					friend.isBusy -> BUSY_COLOR
+					friend.isOnline -> ONLINE_COLOR
+					else -> OFFLINE_COLOR
+				}
+			)
 			binding.friendItemStatusDot.setBackgroundResource(
-				if (friend.isOnline) R.drawable.bg_friend_online_dot else R.drawable.bg_friend_offline_dot
+				when
+				{
+					friend.isBusy -> R.drawable.bg_friend_busy_dot
+					friend.isOnline -> R.drawable.bg_friend_online_dot
+					else -> R.drawable.bg_friend_offline_dot
+				}
 			)
 
 			if (friend.avatarUrl.isNotEmpty())

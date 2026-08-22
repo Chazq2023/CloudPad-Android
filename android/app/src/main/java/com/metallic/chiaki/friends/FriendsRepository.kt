@@ -65,6 +65,7 @@ class FriendsRepository(private val preferences: Preferences)
 					onlineId = onlineId,
 					avatarUrl = avatarUrl,
 					isOnline = presence?.isOnline ?: false,
+					isBusy = presence?.isBusy ?: false,
 					currentGame = presence?.currentGame ?: "",
 					lastOnlineDateMs = presence?.lastOnlineDateMs
 				)
