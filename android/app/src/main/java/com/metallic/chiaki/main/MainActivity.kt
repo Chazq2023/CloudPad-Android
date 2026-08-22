@@ -166,11 +166,9 @@ class MainActivity : AppCompatActivity() {
         refreshAccountIcon()
     }
 
-    /** Shows/hides the signed-in account icon and keeps its avatar image + presence dot current.
-     *  The avatar URL is cached in Preferences after the first successful fetch (see
-     *  psnAvatarUrl) so returning to this screen doesn't re-fetch it over the network every time.
-     *  Presence (online/offline) is the opposite — it goes stale the moment it's fetched, so
-     *  [fetchAccountDetails] re-fetches it every call rather than caching it. */
+    /** Shows/hides the signed-in account icon and keeps its avatar image current. The avatar URL
+     *  is cached in Preferences after the first successful fetch (see psnAvatarUrl) so returning
+     *  to this screen doesn't re-fetch it over the network every time. */
     private fun refreshAccountIcon() {
         val loggedIn = preferences.hasNpssoToken()
         binding.accountIconButton.visibility = if (loggedIn) View.VISIBLE else View.GONE
@@ -179,52 +177,22 @@ class MainActivity : AppCompatActivity() {
         val cachedAvatarUrl = preferences.psnAvatarUrl
         if (cachedAvatarUrl.isNotEmpty()) {
             binding.accountIcon.load(cachedAvatarUrl) { crossfade(true) }
+        } else {
+            fetchAvatar()
         }
-        fetchAccountDetails(needsAvatar = cachedAvatarUrl.isEmpty())
     }
 
-    private fun fetchAccountDetails(needsAvatar: Boolean) {
+    private fun fetchAvatar() {
         lifecycleScope.launch {
-            val (avatarUrl, presence) = withContext(Dispatchers.IO) {
+            val avatarUrl = withContext(Dispatchers.IO) {
                 val token = PsnTrophyTokenManager(preferences).getValidToken()
-                    ?: return@withContext null to null
-                val avatarUrl = if (needsAvatar) TrophyService.fetchAvatarUrl(token) else null
-
-                // Not preferences.psnAccountId — that's only populated by the separate Remote
-                // Play token exchange (PsnTokenManager), which can fail or simply never run even
-                // when this trophy/friends token works fine, silently leaving it empty and the
-                // dot permanently hidden. fetchMyAccountId resolves it the same reliable way
-                // FriendsRepository already does for its own "is this message mine" check.
-                val accountId = FriendsService.fetchMyAccountId(token)
-                val presence = if (!accountId.isNullOrEmpty())
-                    FriendsService.fetchPresences(token, listOf(accountId))[accountId]
-                else null
-
-                avatarUrl to presence
+                    ?: return@withContext null
+                TrophyService.fetchAvatarUrl(token)
             }
 
             if (!avatarUrl.isNullOrEmpty()) {
                 preferences.psnAvatarUrl = avatarUrl
                 binding.accountIcon.load(avatarUrl) { crossfade(true) }
-            }
-
-            // Left hidden (rather than defaulting to the offline drawable) on a failed fetch —
-            // an explicit "unknown" over a guessed-wrong "offline" that might just be a dropped
-            // request. "Appear Offline" (a PSN privacy setting) needs no separate handling here —
-            // Sony's own API already reports it identically to actually being offline, matching
-            // what every other app/user sees, so it falls straight into the offline branch below.
-            if (presence != null) {
-                binding.accountStatusDot.visibility = View.VISIBLE
-                binding.accountStatusDot.setBackgroundResource(
-                    when
-                    {
-                        presence.isBusy -> R.drawable.bg_friend_busy_dot
-                        presence.isOnline -> R.drawable.bg_friend_online_dot
-                        else -> R.drawable.bg_friend_offline_dot
-                    }
-                )
-            } else {
-                binding.accountStatusDot.visibility = View.GONE
             }
         }
     }

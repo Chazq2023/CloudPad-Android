@@ -217,7 +217,7 @@
                         android:id="@+id/headerSearchButton"
                         android:layout_width="32dp"
                         android:layout_height="32dp"
-                        android:src="@android:drawable/ic_menu_search"
+                        android:src="@drawable/ic_search"
                         android:background="@drawable/secondary_header_button_bg"
                         android:contentDescription="Search"
                         android:scaleType="centerInside"

@@ -5,12 +5,14 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.pylux.stream.R
 import java.util.Locale
 
 class PerformanceOverlayView @JvmOverloads constructor(
@@ -19,8 +21,13 @@ class PerformanceOverlayView @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
+    /** FULL is every metric (the original view); MINIMAL is just the numbers most people
+     *  actually glance at mid-session — FPS, Bitrate, Resolution, Video Loss, Drops and Ping. */
+    enum class OverlayMode { FULL, MINIMAL }
+
     private val headerView: TextView
     private val sparklineView: SparklineView
+    private val latencyCol: LinearLayout
 
     private val labelTotal = metricRow("Total")
     private val labelNet = metricRow("Net")
@@ -37,8 +44,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
 
     init {
         orientation = VERTICAL
-        setBackgroundColor(Color.argb(170, 0, 0, 0))
-        setPadding(5, 3, 5, 3)
+        setPadding(7, 5, 7, 5)
 
         headerView = TextView(context).apply {
             setTextColor(Color.argb(230, 255, 255, 255))
@@ -57,7 +63,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
             orientation = HORIZONTAL
         }
 
-        val latencyCol = buildColumn()
+        latencyCol = buildColumn()
         latencyCol.addView(labelTotal)
         latencyCol.addView(labelNet)
         latencyCol.addView(labelVisual)
@@ -87,19 +93,23 @@ class PerformanceOverlayView @JvmOverloads constructor(
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         )
+        // marginStart on both (not just qualityCol) so the gap is consistent whether latencyCol
+        // is showing or not — in Minimal mode latencyCol collapses to width 0, and without their
+        // own margins streamCol/qualityCol would butt directly against each other with no gap at
+        // all, cramping "Res"/"Ping" right up against "FPS"/"VL".
         columns.addView(
             streamCol,
             LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            )
+            ).apply { marginStart = dpToPx(6) }
         )
         columns.addView(
             qualityCol,
             LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
-            )
+            ).apply { marginStart = dpToPx(6) }
         )
 
         addView(
@@ -110,7 +120,47 @@ class PerformanceOverlayView @JvmOverloads constructor(
             )
         )
 
+        setOpacityPercent(50)
         visibility = View.GONE
+    }
+
+    private fun resolveAccentColor(): Int
+    {
+        val tv = TypedValue()
+        context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
+        return tv.data
+    }
+
+    /** 0 (fully transparent) – 100 (fully opaque), applied to the grey fill and the theme-accent
+     *  border only — the metric text keeps its own fixed alpha regardless, so it stays legible
+     *  even at low overlay opacity. */
+    fun setOpacityPercent(percent: Int)
+    {
+        val alpha = (percent.coerceIn(0, 100) / 100f * 255).toInt()
+        val accent = resolveAccentColor()
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = dpToPx(4).toFloat()
+            setColor((alpha shl 24) or 0x2B2B2B)
+            setStroke(dpToPx(1).coerceAtLeast(2), (alpha shl 24) or (accent and 0x00FFFFFF))
+        }
+    }
+
+    fun setMode(mode: OverlayMode)
+    {
+        val minimal = mode == OverlayMode.MINIMAL
+        latencyCol.visibility = if (minimal) View.GONE else View.VISIBLE
+        labelDFPS.visibility = if (minimal) View.GONE else View.VISIBLE
+        sparklineView.visibility = if (minimal) View.GONE else View.VISIBLE
+        labelJit.visibility = if (minimal) View.GONE else View.VISIBLE
+        labelDT.visibility = if (minimal) View.GONE else View.VISIBLE
+        // On-device: after a mode switch (and especially after the freeze/hardware-layer window
+        // move mode puts this view through — see StreamActivity.overlayMoveModeActive), this
+        // view's own rendered width could get stuck narrower than its actual content, clipping
+        // part of it away — a fresh explicit measure/layout/draw pass covers whichever of those
+        // isn't otherwise triggering reliably by itself.
+        requestLayout()
+        invalidate()
     }
 
     private fun buildColumn() = LinearLayout(context).apply {
@@ -165,7 +215,15 @@ class PerformanceOverlayView @JvmOverloads constructor(
             m.fps >= 30f -> Color.rgb(255, 200, 40)
             else -> Color.rgb(255, 80, 80)
         }
-        labelFPS.text = String.format(Locale.US, "FPS %5.1f", m.fps)
+        // Labels within streamCol/qualityCol are padded to a fixed width (%-3s / %-5s below) so
+        // the values that follow start at the same column regardless of label length — "FPS"/
+        // "BT"/"Res" differ from 2-3 chars, "Ping"/"VL"/"Drops" from 2-5, so without padding the
+        // numbers landed at different offsets row to row instead of forming a clean column, most
+        // noticeable in Minimal mode where these six rows are the entire visible content. The
+        // values themselves are left-justified too (%-5.1f, not %5.1f) — right-justifying them
+        // kept the label-to-value gap consistent but left the first digit itself landing at a
+        // different column per row depending on the number's own width (e.g. "60.0" vs " 5.0").
+        labelFPS.text = String.format(Locale.US, "%-3s %-5.1f", "FPS", m.fps)
         labelFPS.setTextColor(fpsColor)
 
         val dfpsColor = when {
@@ -176,7 +234,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         labelDFPS.text = String.format(Locale.US, "DFPS %5.1f", m.decodedFps)
         labelDFPS.setTextColor(dfpsColor)
 
-        labelBT.text = String.format(Locale.US, "BT %5.1f Mbps", m.bitrate)
+        labelBT.text = String.format(Locale.US, "%-3s %-5.1f Mbps", "BT", m.bitrate)
 
         val resString = when {
             m.height >= 2160 -> "4K"
@@ -186,14 +244,14 @@ class PerformanceOverlayView @JvmOverloads constructor(
             m.height >= 540 -> "540p"
             else -> "${m.width}×${m.height}"
         }
-        labelRes.text = String.format(Locale.US, "Res %6s", resString)
+        labelRes.text = String.format(Locale.US, "%-3s %-6s", "Res", resString)
 
         val rttColor = when {
             data.smoothedPing < 30.0 -> Color.rgb(0, 220, 100)
             data.smoothedPing < 80.0 -> Color.rgb(255, 200, 40)
             else -> Color.rgb(255, 80, 80)
         }
-        labelRTT.text = String.format(Locale.US, "Ping %5.1f ms", data.smoothedPing)
+        labelRTT.text = String.format(Locale.US, "%-5s %-5.1f ms", "Ping", data.smoothedPing)
         labelRTT.setTextColor(rttColor)
 
         val jitColor = when {
@@ -212,10 +270,10 @@ class PerformanceOverlayView @JvmOverloads constructor(
             lossPercent <= 1.0 -> Color.rgb(255, 200, 40)
             else -> Color.rgb(255, 80, 80)
         }
-        labelVL.text = String.format(Locale.US, "VL %5.1f%%", lossPercent)
+        labelVL.text = String.format(Locale.US, "%-5s %-5.1f%%", "VL", lossPercent)
         labelVL.setTextColor(lossColor)
 
-        labelDrops.text = String.format(Locale.US, "Drops %5d", m.drops)
+        labelDrops.text = String.format(Locale.US, "%-5s %-5d", "Drops", m.drops)
 
         sparklineView.setData(data.fpsHistory)
     }

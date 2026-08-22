@@ -224,6 +224,23 @@
             android:paddingBottom="16dp">
 
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsStatsRow" />
+
+            <!-- Both only shown once Performance Overlay (above) is enabled — see
+                 QuickSettingsPanel's updatePerformanceOverlayRowsVisibility. -->
+            <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsOverlayModeRow" />
+
+			<com.google.android.material.button.MaterialButton
+				android:id="@+id/quickSettingsConfigureOverlayButton"
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:layout_marginStart="16dp"
+				android:layout_marginEnd="16dp"
+				android:layout_marginBottom="8dp"
+				android:text="@string/quick_settings_configure_overlay"
+				android:textColor="@android:color/white"
+				android:visibility="gone"
+				app:backgroundTint="?attr/pyluxAccent" />
+
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsOscRow" />
 
 			<com.google.android.material.button.MaterialButton

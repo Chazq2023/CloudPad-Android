@@ -102,7 +102,17 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		private var uLevelLoc = 0
 		private var uEnabledLoc = 0
 		private var easuProgram = 0
+		private var aEasuPositionLoc = 0
+		private var aEasuTexCoordLoc = 0
+		private var uEasuSTMatrixLoc = 0
+		private var uEasuInputSizeLoc = 0
+		private var uEasuOutputSizeLoc = 0
+		private var uEasuUpscaleLoc = 0
 		private var rcasProgram = 0
+		private var aRcasPositionLoc = 0
+		private var aRcasTexCoordLoc = 0
+		private var uRcasTexelSizeLoc = 0
+		private var uRcasSharpnessLoc = 0
 		private var fsrFramebuffer = 0
 		private var fsrTexture = 0
 		private var surfaceWidth = 1
@@ -161,14 +171,29 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			surfaceTexture = st
 
 			program = buildProgram(VERTEX_SHADER, CAS_FRAGMENT_SHADER)
-			easuProgram = buildProgram(VERTEX_SHADER, EASU_FRAGMENT_SHADER)
-			rcasProgram = buildProgram(RCAS_VERTEX_SHADER, RCAS_FRAGMENT_SHADER)
 			aPositionLoc = GLES20.glGetAttribLocation(program, "aPosition")
 			aTexCoordLoc = GLES20.glGetAttribLocation(program, "aTexCoord")
 			uSTMatrixLoc = GLES20.glGetUniformLocation(program, "uSTMatrix")
 			uTexelSizeLoc = GLES20.glGetUniformLocation(program, "uTexelSize")
 			uLevelLoc = GLES20.glGetUniformLocation(program, "uLevel")
 			uEnabledLoc = GLES20.glGetUniformLocation(program, "uEnabled")
+
+			// Locations are fixed for a program's lifetime once linked, and (per this override's
+			// own early-return above) these programs are only ever built once — cached here rather
+			// than re-resolved by name every onDrawFrame call.
+			easuProgram = buildProgram(VERTEX_SHADER, EASU_FRAGMENT_SHADER)
+			aEasuPositionLoc = GLES20.glGetAttribLocation(easuProgram, "aPosition")
+			aEasuTexCoordLoc = GLES20.glGetAttribLocation(easuProgram, "aTexCoord")
+			uEasuSTMatrixLoc = GLES20.glGetUniformLocation(easuProgram, "uSTMatrix")
+			uEasuInputSizeLoc = GLES20.glGetUniformLocation(easuProgram, "uInputSize")
+			uEasuOutputSizeLoc = GLES20.glGetUniformLocation(easuProgram, "uOutputSize")
+			uEasuUpscaleLoc = GLES20.glGetUniformLocation(easuProgram, "uUpscale")
+
+			rcasProgram = buildProgram(RCAS_VERTEX_SHADER, RCAS_FRAGMENT_SHADER)
+			aRcasPositionLoc = GLES20.glGetAttribLocation(rcasProgram, "aPosition")
+			aRcasTexCoordLoc = GLES20.glGetAttribLocation(rcasProgram, "aTexCoord")
+			uRcasTexelSizeLoc = GLES20.glGetUniformLocation(rcasProgram, "uTexelSize")
+			uRcasSharpnessLoc = GLES20.glGetUniformLocation(rcasProgram, "uSharpness")
 
 			val surface = Surface(st)
 			mainHandler.post { onSurfaceReady?.invoke(surface) }
@@ -212,28 +237,28 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			{
 				GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, fsrFramebuffer)
 				GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight)
-				drawExternal(easuProgram) {
-					GLES20.glUniform2f(GLES20.glGetUniformLocation(easuProgram, "uInputSize"), videoWidth.toFloat(), videoHeight.toFloat())
-					GLES20.glUniform2f(GLES20.glGetUniformLocation(easuProgram, "uOutputSize"), surfaceWidth.toFloat(), surfaceHeight.toFloat())
-					GLES20.glUniform1f(GLES20.glGetUniformLocation(easuProgram, "uUpscale"), if(fsrUpscale) 1f else 0f)
+				drawExternal(easuProgram, aEasuPositionLoc, aEasuTexCoordLoc, uEasuSTMatrixLoc) {
+					GLES20.glUniform2f(uEasuInputSizeLoc, videoWidth.toFloat(), videoHeight.toFloat())
+					GLES20.glUniform2f(uEasuOutputSizeLoc, surfaceWidth.toFloat(), surfaceHeight.toFloat())
+					GLES20.glUniform1f(uEasuUpscaleLoc, if(fsrUpscale) 1f else 0f)
 				}
 				GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
 				GLES20.glViewport(0, 0, surfaceWidth, surfaceHeight)
 				drawRcas()
 			}
-			else drawExternal(program) {
+			else drawExternal(program, aPositionLoc, aTexCoordLoc, uSTMatrixLoc) {
 				GLES20.glUniform2f(uTexelSizeLoc, 1f / videoWidth, 1f / videoHeight)
 				GLES20.glUniform1f(uLevelLoc, sharpeningLevel.toFloat())
 				GLES20.glUniform1f(uEnabledLoc, if(sharpeningEnabled) 1f else 0f)
 			}
 		}
 
-		private inline fun drawExternal(shaderProgram: Int, uniforms: () -> Unit)
+		private inline fun drawExternal(shaderProgram: Int, positionLoc: Int, texCoordLoc: Int, stMatrixLoc: Int, uniforms: () -> Unit)
 		{
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); GLES20.glUseProgram(shaderProgram)
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0); GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, textureId)
-			drawQuad(shaderProgram)
-			GLES20.glUniformMatrix4fv(GLES20.glGetUniformLocation(shaderProgram, "uSTMatrix"), 1, false, stMatrix, 0)
+			drawQuad(positionLoc, texCoordLoc)
+			GLES20.glUniformMatrix4fv(stMatrixLoc, 1, false, stMatrix, 0)
 			uniforms(); GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 		}
 
@@ -241,18 +266,16 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 		{
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); GLES20.glUseProgram(rcasProgram)
 			GLES20.glActiveTexture(GLES20.GL_TEXTURE0); GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, fsrTexture)
-			drawQuad(rcasProgram)
-			GLES20.glUniform2f(GLES20.glGetUniformLocation(rcasProgram, "uTexelSize"), 1f / surfaceWidth, 1f / surfaceHeight)
-			GLES20.glUniform1f(GLES20.glGetUniformLocation(rcasProgram, "uSharpness"), fsrSharpening / 100f)
+			drawQuad(aRcasPositionLoc, aRcasTexCoordLoc)
+			GLES20.glUniform2f(uRcasTexelSizeLoc, 1f / surfaceWidth, 1f / surfaceHeight)
+			GLES20.glUniform1f(uRcasSharpnessLoc, fsrSharpening / 100f)
 			GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
 		}
 
-		private fun drawQuad(shaderProgram: Int)
+		private fun drawQuad(positionLoc: Int, texCoordLoc: Int)
 		{
-			val position = GLES20.glGetAttribLocation(shaderProgram, "aPosition")
-			val texCoord = GLES20.glGetAttribLocation(shaderProgram, "aTexCoord")
-			quadVertices.position(0); GLES20.glVertexAttribPointer(position, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadVertices); GLES20.glEnableVertexAttribArray(position)
-			quadTexCoords.position(0); GLES20.glVertexAttribPointer(texCoord, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadTexCoords); GLES20.glEnableVertexAttribArray(texCoord)
+			quadVertices.position(0); GLES20.glVertexAttribPointer(positionLoc, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadVertices); GLES20.glEnableVertexAttribArray(positionLoc)
+			quadTexCoords.position(0); GLES20.glVertexAttribPointer(texCoordLoc, 2, GLES20.GL_FLOAT, false, VERTEX_STRIDE, quadTexCoords); GLES20.glEnableVertexAttribArray(texCoordLoc)
 		}
 	}
 

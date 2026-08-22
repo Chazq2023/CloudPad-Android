@@ -79,6 +79,7 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
 import com.pylux.stream.databinding.ItemQuickSettingsSeekbarBinding
+import com.pylux.stream.databinding.DialogConfigureOverlayBinding
 import com.pylux.stream.databinding.DialogTouchControlsCustomiseBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
 import com.metallic.chiaki.touchcontrols.TouchControl
@@ -140,7 +141,8 @@ class QuickSettingsPanel(
 	private val onFsrChanged: (enabled: Boolean, upscale: Boolean, sharpening: Int) -> Unit,
 	private val onTouchControlsCustomizationChanged: () -> Unit,
 	private val onTouchControlsCustomizationVisibilityChanged: (Boolean) -> Unit,
-	private val onMoveTouchControl: (TouchControl, () -> Unit) -> Unit
+	private val onMoveTouchControl: (TouchControl, () -> Unit) -> Unit,
+	private val onMoveOverlay: (onDone: () -> Unit) -> Unit
 ) {
 	private val panel = StreamQuickSettingsPanelBinding.inflate(activity.layoutInflater).apply {
 		// root.focusable=true (see stream_quick_settings_panel.xml) exists only so a touch tap
@@ -522,7 +524,38 @@ class QuickSettingsPanel(
 		// Touchpad Only additionally stay mutually exclusive with each other.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			viewModel.setShowPerformanceOverlay(isChecked)
+			updatePerformanceOverlayRowsVisibility(isChecked)
 		}
+
+		panel.quickSettingsOverlayModeRow.quickSettingsDropdownLabel.text =
+			activity.getString(R.string.quick_settings_overlay_type_title)
+		val overlayModeValues = listOf("full", "minimal")
+		val overlayModeEntries = listOf(R.string.quick_settings_overlay_mode_full, R.string.quick_settings_overlay_mode_minimal).map(activity::getString)
+		panel.quickSettingsOverlayModeRow.quickSettingsDropdownSpinner.adapter =
+			ArrayAdapter(activity, R.layout.item_quick_settings_spinner_item, overlayModeEntries).apply {
+				setDropDownViewResource(R.layout.dropdown_menu_popup_item)
+			}
+		panel.quickSettingsOverlayModeRow.quickSettingsDropdownSpinner.setSelection(
+			overlayModeValues.indexOf(preferences.performanceOverlayMode).coerceAtLeast(0), false
+		)
+		panel.quickSettingsOverlayModeRow.quickSettingsDropdownSpinner.onItemSelectedListener = object: AdapterView.OnItemSelectedListener
+		{
+			override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long)
+			{
+				val mode = overlayModeValues[position]
+				if(mode == preferences.performanceOverlayMode) return
+				preferences.performanceOverlayMode = mode
+				activity.findViewById<PerformanceOverlayView>(R.id.performanceOverlay).setMode(
+					if(mode == "minimal") PerformanceOverlayView.OverlayMode.MINIMAL else PerformanceOverlayView.OverlayMode.FULL
+				)
+			}
+			override fun onNothingSelected(parent: AdapterView<*>?) {}
+		}
+		panel.quickSettingsConfigureOverlayButton.setOnClickListener {
+			dismissImmediately()
+			showConfigureOverlayDialog()
+		}
+
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, checked ->
 			if(checked) panel.quickSettingsTouchpadRow.quickSettingsRowSwitch.isChecked = false
 			viewModel.setOnScreenControlsEnabled(checked)
@@ -734,7 +767,8 @@ class QuickSettingsPanel(
 			panel.quickSettingsDisplayModeStretch
 		).forEach { addFocusHighlight(it, pyluxAccentColor, useForeground = true) }
 		listOf(
-			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOscRow.quickSettingsRowSwitch,
+			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOverlayModeRow.quickSettingsDropdownSpinner,
+			panel.quickSettingsConfigureOverlayButton, panel.quickSettingsOscRow.quickSettingsRowSwitch,
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
 			panel.quickSettingsPipRow.quickSettingsRowSwitch,
@@ -1500,6 +1534,7 @@ class QuickSettingsPanel(
 		// state can change elsewhere while it's closed (e.g. PiP forces On-Screen Controls
 		// and Touchpad Only off), so the panel must not show stale state from last time.
 		panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked = viewModel.showPerformanceOverlay.value ?: false
+		updatePerformanceOverlayRowsVisibility(panel.quickSettingsStatsRow.quickSettingsRowSwitch.isChecked)
 		panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked = viewModel.onScreenControlsEnabled.value ?: false
 		panel.quickSettingsOscCustomiseButton.visibility =
 			if(panel.quickSettingsOscRow.quickSettingsRowSwitch.isChecked) View.VISIBLE else View.GONE
@@ -1749,6 +1784,81 @@ class QuickSettingsPanel(
 		isOpen = false
 		panel.root.animate().cancel()
 		if(dialog.isShowing) dialog.dismiss()
+	}
+
+	private fun updatePerformanceOverlayRowsVisibility(visible: Boolean)
+	{
+		panel.quickSettingsOverlayModeRow.root.visibility = if(visible) View.VISIBLE else View.GONE
+		panel.quickSettingsConfigureOverlayButton.visibility = if(visible) View.VISIBLE else View.GONE
+	}
+
+	/** Everything here previews live against the actual on-screen overlay as the user drags the
+	 *  slider or repositions it — nothing is written to Preferences until Save. Cancel (the
+	 *  button, the back button, or tapping outside — all routed through setOnCancelListener so
+	 *  none of them skip this) discards that live preview by re-applying whatever's still
+	 *  persisted, exactly like the panel never having been opened.
+	 *
+	 *  [pendingOpacityPercent] carries the slider's in-progress (not-yet-saved) value across a
+	 *  Move Overlay round-trip — defaulting to the persisted value covers every other entry
+	 *  point (the Configure Overlay button, and Move Overlay's own onDone callback re-reads the
+	 *  live slider position from the dialog being replaced rather than falling back to this
+	 *  default), so the reopened dialog's slider always matches what the overlay is actually
+	 *  rendering rather than snapping back to whatever was last saved. */
+	private fun showConfigureOverlayDialog(pendingOpacityPercent: Int = preferences.performanceOverlayOpacityPercent)
+	{
+		val overlay = activity.findViewById<PerformanceOverlayView>(R.id.performanceOverlay)
+		val binding = DialogConfigureOverlayBinding.inflate(activity.layoutInflater)
+
+		fun updateOpacityLabel(percent: Int)
+		{
+			binding.configureOverlayOpacityLabel.text = activity.getString(R.string.overlay_configure_opacity_label, percent)
+		}
+
+		binding.configureOverlayOpacitySeekBar.progress = pendingOpacityPercent
+		updateOpacityLabel(pendingOpacityPercent)
+		binding.configureOverlayOpacitySeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
+		{
+			override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean)
+			{
+				updateOpacityLabel(progress)
+				if(fromUser) overlay.setOpacityPercent(progress)
+			}
+			override fun onStartTrackingTouch(seekBar: SeekBar) {}
+			override fun onStopTrackingTouch(seekBar: SeekBar) {}
+		})
+
+		// A plain dialog.dismiss() (what a button click does internally) does NOT fire
+		// setOnCancelListener — only an actual cancel (back press / tap outside) does — so Cancel
+		// needs this called explicitly rather than relying on that listener to cover it too.
+		fun revertAndReopen()
+		{
+			activity.applyPerformanceOverlayCustomization()
+			open()
+		}
+
+		val dialog = activity.alertDialogBuilder()
+			.setTitle(R.string.overlay_configure_title)
+			.setView(binding.root)
+			.setPositiveButton(R.string.action_save) { _, _ ->
+				val streamRoot = activity.findViewById<FrameLayout>(R.id.mainStreamLayout)
+				preferences.performanceOverlayOpacityPercent = binding.configureOverlayOpacitySeekBar.progress
+				preferences.performanceOverlayOffsetXPermille =
+					if(streamRoot.width == 0) 0 else (overlay.translationX * 1000 / streamRoot.width).toInt()
+				preferences.performanceOverlayOffsetYPermille =
+					if(streamRoot.height == 0) 0 else (overlay.translationY * 1000 / streamRoot.height).toInt()
+				open()
+			}
+			.setNegativeButton(R.string.action_cancel) { _, _ -> revertAndReopen() }
+			.setOnCancelListener { revertAndReopen() }
+			.create()
+
+		binding.configureOverlayMoveButton.setOnClickListener {
+			val livePendingOpacity = binding.configureOverlayOpacitySeekBar.progress
+			dialog.dismiss()
+			onMoveOverlay { showConfigureOverlayDialog(livePendingOpacity) }
+		}
+
+		dialog.show()
 	}
 
 	fun handleCaptureKeyEvent(event: KeyEvent): Boolean = capture.handleCaptureKeyEvent(event)

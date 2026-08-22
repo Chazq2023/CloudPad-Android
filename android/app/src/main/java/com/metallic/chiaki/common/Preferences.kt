@@ -64,6 +64,8 @@ class Preferences(context: Context)
 		const val FSR_SHARPENING_MAX = 100
 		const val FSR_SHARPENING_DEFAULT = 50
 
+		const val PERFORMANCE_OVERLAY_OPACITY_DEFAULT = 50
+
 		private const val CLOUD_STORE_LOCALE_KEY = "cloud_store_locale"
 		private const val CLOUD_ACCOUNT_LOCALE_KEY = "cloud_account_locale"
 		private const val CLOUD_STORE_LOCALE_USER_SELECTED_KEY = "cloud_store_locale_user_selected"
@@ -175,6 +177,41 @@ class Preferences(context: Context)
 	var showPerformanceOverlay
 		get() = sharedPreferences.getBoolean(showPerformanceOverlayKey, false)
 		set(value) { sharedPreferences.edit().putBoolean(showPerformanceOverlayKey, value).apply() }
+
+	val performanceOverlayModeKey get() = resources.getString(R.string.preferences_performance_overlay_mode_key)
+	/** "full" (every metric) or "minimal" (FPS/Bitrate/Resolution/Video Loss/Drops/Ping only) —
+	 *  see PerformanceOverlayView.OverlayMode. Defaults to "minimal" — the lighter view is what a
+	 *  user turning the overlay on for the first time should land on; "full" only sticks once
+	 *  they've explicitly picked it from the dropdown. */
+	var performanceOverlayMode: String
+		get() = sharedPreferences.getString(performanceOverlayModeKey, "minimal") ?: "minimal"
+		set(value) { sharedPreferences.edit().putString(performanceOverlayModeKey, value).apply() }
+
+	val performanceOverlayOpacityKey get() = resources.getString(R.string.preferences_performance_overlay_opacity_key)
+	/** 0 (fully transparent) – 100 (fully opaque), applied to both the overlay's background fill
+	 *  and its theme-accent border — not to the metric text, which stays fully legible. */
+	var performanceOverlayOpacityPercent: Int
+		get() = sharedPreferences.getInt(performanceOverlayOpacityKey, PERFORMANCE_OVERLAY_OPACITY_DEFAULT).coerceIn(0, 100)
+		set(value) { sharedPreferences.edit().putInt(performanceOverlayOpacityKey, value.coerceIn(0, 100)).apply() }
+
+	val performanceOverlayOffsetXKey get() = resources.getString(R.string.preferences_performance_overlay_offset_x_key)
+	val performanceOverlayOffsetYKey get() = resources.getString(R.string.preferences_performance_overlay_offset_y_key)
+	/** Per-mille of the stream view's width/height, same convention as TouchControlCustomization's
+	 *  offsetXPermille/offsetYPermille — survives orientation/resolution changes since it's
+	 *  relative, not absolute pixels. (0, 0) is the overlay's default top-start position. */
+	var performanceOverlayOffsetXPermille: Int
+		get() = sharedPreferences.getInt(performanceOverlayOffsetXKey, 0)
+		set(value) { sharedPreferences.edit().putInt(performanceOverlayOffsetXKey, value).apply() }
+	var performanceOverlayOffsetYPermille: Int
+		get() = sharedPreferences.getInt(performanceOverlayOffsetYKey, 0)
+		set(value) { sharedPreferences.edit().putInt(performanceOverlayOffsetYKey, value).apply() }
+
+	fun resetPerformanceOverlayCustomization()
+	{
+		performanceOverlayOpacityPercent = PERFORMANCE_OVERLAY_OPACITY_DEFAULT
+		performanceOverlayOffsetXPermille = 0
+		performanceOverlayOffsetYPermille = 0
+	}
 
 	val pipEnabledKey get() = resources.getString(R.string.preferences_pip_enabled_key)
 	var pipEnabled
