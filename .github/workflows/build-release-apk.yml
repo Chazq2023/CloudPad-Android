@@ -12,8 +12,12 @@ jobs:
   build-release:
     runs-on: ubuntu-latest
     env:
-      RELEASE_NOTES: >-
-        Streaming now survives backgrounding: pressing home or switching apps no longer disconnects your session. Video and audio keep running (an ongoing notification lets you jump back in or disconnect), and returning to the app — including via the home-screen icon — resumes exactly where you left off instead of reconnecting from scratch. Also added a Minimize button next to Close in the in-stream Quick Settings panel, which sends the app to the background the same way the Android home button does. Made the highlighted/focused item consistent across the entire in-stream Quick Settings panel and Settings: every selectable control (dropdowns, buttons, tabs, switches, seek bars, list rows in Session/Trophies/Friends/Controller Remap) now shows the same translucent theme-accent highlight, only on the item you're actually navigating to or pressing, not left stuck on whatever's currently selected. Fixed two more spots this missed: the Quick Settings dropdown lists (Overlay Type, Resolution, etc.) were still showing Android's own grey highlight — the actual cause was the app's theme never overriding the platform attribute Spinners read that highlight color from, now fixed at the theme level so it matches every other dropdown; and the Configure Overlay button now highlights the same way as Reset Image Quality instead of fighting its own button styling. Fixed the Session tab's Resolution/Datacenter dropdowns rendering their highlight as washed-out white/grey instead of the theme colour — a leftover white tint on those fields (needed so their arrow icon stays visible when unhighlighted) was bleeding into the highlight itself. Fixed controller navigation into moved-control/overlay confirm buttons: the Save button after repositioning an on-screen control, and the Done button after moving the Performance Overlay, are now both reachable and highlighted via D-pad/controller (and directional input can no longer wander off onto the on-screen controls underneath while doing so), not just touch. Added a "Restore to defaults" button under Move Overlay in Configure Overlay, which resets the Performance Overlay back to its default position.
+      RELEASE_NOTES: |-
+        - Streaming now survives backgrounding: pressing home, switching apps, or returning via the home-screen icon no longer disconnects your session — video and audio keep running, an ongoing notification lets you jump back in or disconnect, and returning to the app resumes exactly where you left off instead of reconnecting from scratch.
+        - Added a Minimize button next to Close in the in-stream Quick Settings panel, which backgrounds the app the same way the Android home button does.
+        - Made the highlighted/focused item consistent across every selectable control in Quick Settings and Settings (dropdowns, buttons, tabs, switches, seek bars, and list rows in Session/Trophies/Friends/Controller Remap) — always a translucent theme-accent highlight on the item you're actually navigating to or pressing, never stuck on the current selection or washed out to grey/white.
+        - Fixed controller navigation into the Save/Done buttons shown after moving an on-screen control or the Performance Overlay — both are now reachable and highlighted via D-pad/controller, and directional input can no longer wander onto the on-screen controls underneath while doing so.
+        - Added a "Restore to defaults" button under Move Overlay in Configure Overlay, which resets the Performance Overlay back to its default position.
 
     steps:
       - name: Checkout repo
@@ -133,7 +137,7 @@ jobs:
             ## CloudPad Beta Release ${{ env.VERSION }}
 
             ### Updates
-            - ${{ env.RELEASE_NOTES }}
+            ${{ env.RELEASE_NOTES }}
 
             ### APK
             Attached release asset:
