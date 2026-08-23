@@ -8,6 +8,7 @@
 #include <chiaki/base64.h>
 #include <chiaki/audio.h>
 #include <chiaki/video.h>
+#include <chiaki/time.h>
 
 #include <string.h>
 #include <inttypes.h>
@@ -70,6 +71,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stream_connection_init(ChiakiStreamConnecti
 	stream_connection->measured_bitrate = 0.0;
 	stream_connection->measured_rtt = 0.0;
 	stream_connection->measured_loss = 0.0;
+	stream_connection->measured_ping_rtt = 0.0;
+	stream_connection->ping_probe_pending = false;
+	stream_connection->ping_probe_seq_num = 0;
+	stream_connection->ping_probe_send_time_us = 0;
 
 	stream_connection->ecdh_secret = NULL;
 	stream_connection->gkcrypt_remote = NULL;
@@ -437,6 +442,14 @@ static void stream_connection_takion_cb(ChiakiTakionEvent *event, void *user)
 			break;
 		case CHIAKI_TAKION_EVENT_TYPE_DATA:
 			stream_connection_takion_data(stream_connection, event->data.data_type, event->data.buf, event->data.buf_size);
+			break;
+		case CHIAKI_TAKION_EVENT_TYPE_DATA_ACK:
+			if(stream_connection->ping_probe_pending && event->data_ack.seq_num == stream_connection->ping_probe_seq_num)
+			{
+				uint64_t rtt_us = chiaki_time_now_monotonic_us() - stream_connection->ping_probe_send_time_us;
+				stream_connection->measured_ping_rtt = (double)rtt_us / 1000.0;
+				stream_connection->ping_probe_pending = false;
+			}
 			break;
 		case CHIAKI_TAKION_EVENT_TYPE_AV:
 			stream_connection_takion_av(stream_connection, event->av);
@@ -1351,7 +1364,15 @@ static ChiakiErrorCode stream_connection_send_heartbeat(ChiakiStreamConnection *
 		return CHIAKI_ERR_UNKNOWN;
 	}
 
-	return chiaki_takion_send_message_data(&stream_connection->takion, 1, 1, buf, stream.bytes_written, NULL);
+	ChiakiSeqNum32 seq_num;
+	ChiakiErrorCode err = chiaki_takion_send_message_data(&stream_connection->takion, 1, 1, buf, stream.bytes_written, &seq_num);
+	if(err == CHIAKI_ERR_SUCCESS)
+	{
+		stream_connection->ping_probe_seq_num = seq_num;
+		stream_connection->ping_probe_send_time_us = chiaki_time_now_monotonic_us();
+		stream_connection->ping_probe_pending = true;
+	}
+	return err;
 }
 
 CHIAKI_EXPORT ChiakiErrorCode stream_connection_send_corrupt_frame(ChiakiStreamConnection *stream_connection, ChiakiSeqNum16 start, ChiakiSeqNum16 end)

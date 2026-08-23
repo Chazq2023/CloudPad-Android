@@ -953,9 +953,18 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 		? session->session.stream_connection.measured_bitrate
 		: session->metrics_live_bitrate_mbps;
 
-	double ping = session->session.stream_connection.measured_rtt > 0.0
-			? session->session.stream_connection.measured_rtt
-			: session->metrics_ping_ms;
+	// Prefer measured_ping_rtt: a real, live RTT derived from the transport-layer DATA_ACK
+	// of the periodic HEARTBEAT message on the live connection (updates ~once/sec). Fall
+	// back to the stable pre-connect datacenter/Senkusha ping (metrics_ping_ms) before the
+	// first heartbeat ack lands, and finally to the noisy CONNECTIONQUALITY.rtt value
+	// (measured_rtt), which reflects console-side bitrate/encode feedback rather than wire
+	// RTT and previously caused the overlay to swing wildly (e.g. 11ms -> 200ms) even on a
+	// smooth stream.
+	double ping = session->session.stream_connection.measured_ping_rtt > 0.0
+			? session->session.stream_connection.measured_ping_rtt
+			: (session->metrics_ping_ms > 0.0
+					? session->metrics_ping_ms
+					: session->session.stream_connection.measured_rtt);
 
 	double latency = 0.0;
 
