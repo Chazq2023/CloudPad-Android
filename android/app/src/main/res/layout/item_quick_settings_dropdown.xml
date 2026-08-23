@@ -21,13 +21,19 @@
          near-black, unreadable against this dark panel, same underlying issue as the closed
          spinner's item text (see item_quick_settings_spinner_item.xml). popupBackground is the
          open dropdown list itself — same reasoning, StreamTheme's Light base otherwise renders
-         it as a plain white box; bg_popup_menu matches every other popup/dropdown in the app. -->
+         it as a plain white box; bg_popup_menu matches every other popup/dropdown in the app.
+         dropDownSelector is a SEPARATE decoration layer the platform draws over/under each row on
+         top of whatever dropdown_menu_popup_item.xml's own background already does — confirmed
+         on-device that leaving this unset means the item under touch/D-pad still shows Android's
+         own default grey selector regardless of the row layout's background, since that's a
+         different drawable entirely. -->
     <Spinner
         android:id="@+id/quickSettingsDropdownSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:backgroundTint="@android:color/white"
-        android:popupBackground="@drawable/bg_popup_menu" />
+        android:popupBackground="@drawable/bg_popup_menu"
+        android:dropDownSelector="@drawable/bg_dropdown_item_highlight" />
 
 </LinearLayout>

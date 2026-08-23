@@ -39,6 +39,8 @@ import com.metallic.chiaki.trophy.PsnTrophyTokenManager
 import com.metallic.chiaki.trophy.TrophyService
 import com.pylux.stream.databinding.ActivityMainBinding
 import com.metallic.chiaki.settings.SettingsActivity
+import com.metallic.chiaki.stream.StreamActivity
+import com.metallic.chiaki.stream.StreamBackgroundService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -67,6 +69,17 @@ class MainActivity : AppCompatActivity() {
         val prefsEarly = Preferences(this)
         if (prefsEarly.getThemeColour() != "pink") setTheme(prefsEarly.getThemeStyleRes())
         super.onCreate(savedInstanceState)
+
+        // Tapping the home-screen launcher icon while a stream is running in the background
+        // always fires a fresh MainActivity intent (the launcher icon targets MainActivity
+        // specifically, regardless of what's actually on top of the task's back stack), which
+        // gets pushed on top of the already-running StreamActivity instead of simply bringing it
+        // forward. Redirect straight back into the live stream instead of showing the library.
+        if (StreamBackgroundService.isRunning) {
+            startActivity(Intent(this, StreamActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))
+            finish()
+            return
+        }
 
         // Resolve the accent colour from the applied theme
         val tv = TypedValue()

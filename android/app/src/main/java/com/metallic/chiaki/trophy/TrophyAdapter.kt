@@ -3,7 +3,6 @@
 package com.metallic.chiaki.trophy
 
 import android.content.Context
-import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +12,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.metallic.chiaki.common.ext.alertDialogBuilder
-import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary
 import com.metallic.chiaki.trophy.model.Trophy
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
@@ -213,23 +212,12 @@ class TrophyAdapter(
 			// through the trophy list works on phone/tablet too, not just Android TV.
 			itemView.isFocusable = true
 			itemView.isFocusableInTouchMode = true
-			itemView.disableDefaultFocusHighlight()
 			itemView.setOnClickListener { items()?.let { onTrophyClick(it) } }
 			onTopBoundary?.let { boundary -> itemView.redirectDpadUpAtListBoundary(boundary) }
 
 			val tv = TypedValue()
 			itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
-			val accent = tv.data
-			itemView.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
-				v.background = if (hasFocus)
-					GradientDrawable().apply {
-						shape = GradientDrawable.RECTANGLE
-						setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
-						setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
-					}
-				else
-					null
-			}
+			itemView.applyFocusHighlight(tv.data)
 		}
 	}
 

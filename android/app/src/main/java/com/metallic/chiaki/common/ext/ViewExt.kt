@@ -3,6 +3,7 @@
 package com.metallic.chiaki.common.ext
 
 import android.content.Context
+import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.KeyEvent
 import android.view.View
@@ -38,6 +39,69 @@ fun View.disableDefaultFocusHighlight()
 	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
 		defaultFocusHighlightEnabled = false
 	}
+}
+
+/**
+ * The app-wide "this is the selectable thing you're currently on" highlight: a low-alpha
+ * theme-accent fill plus a stronger-alpha accent stroke, restoring whatever the view had before
+ * (its [View.getBackground] or [View.getForeground], per [useForeground]) once focus is lost —
+ * rather than leaving it blank (e.g. an EditText's underline, a row's own ripple/selector).
+ *
+ * [useForeground] draws the highlight as an overlay instead of replacing the background — needed
+ * for MaterialButtons and similar widgets whose background/stroke is already internally managed,
+ * where overwriting it directly would fight the widget's own corner radius and outline. Plain
+ * widgets (switches, spinners, seek bars, edit texts, plain rows) use the background instead.
+ * [shape] defaults to a rectangle; pass [GradientDrawable.OVAL] for circular icon buttons (e.g.
+ * the Friends list's compare-trophies button).
+ *
+ * The single shared implementation behind what used to be five near-identical copies
+ * (QuickSettingsPanel, TrophyAdapter, ControllerRemapActivity's RemapAdapter, FriendAdapter,
+ * TrophyCompareAdapter) that had quietly drifted apart: every one but QuickSettingsPanel's own
+ * hardcoded a raw, non-dp-scaled 2px stroke instead of scaling it by density like this one does,
+ * rendering visibly thinner than every other highlighted control on anything denser than mdpi.
+ *
+ * Applies the correct drawable for the view's CURRENT focus state immediately, not just on future
+ * changes — confirmed on-device that a dynamically-added row can already be focused by the time
+ * this runs (e.g. the first row of a newly-built tab, auto-focused synchronously during attach,
+ * before this call ever gets a chance to attach [onFocusChangeListener]). Without this, that row
+ * shows its plain unfocused [original] look indefinitely: nothing ever fires the listener for a
+ * focus change that already happened before the listener existed.
+ *
+ * Also clears any XML-declared background/foreground tint list while focused, restoring it
+ * afterward — confirmed on-device that a view with e.g. `android:backgroundTint="@android:color/
+ * white"` (item_quick_settings_dropdown.xml's Spinner needs this to keep its own default arrow
+ * chrome visible against this dark panel when unfocused) tints THIS drawable too, since
+ * `setBackground()`/`setForeground()` don't clear a previously-set tint list — without clearing
+ * it here, the pink highlight rendered as a washed-out grey/white instead.
+ */
+fun View.applyFocusHighlight(color: Int, useForeground: Boolean = false, shape: Int = GradientDrawable.RECTANGLE)
+{
+	disableDefaultFocusHighlight()
+	val fillColor = (0x30 shl 24) or (color and 0x00FFFFFF)
+	val strokeColor = (0x99 shl 24) or (color and 0x00FFFFFF)
+	val strokeWidthPx = (2f * resources.displayMetrics.density).toInt()
+	val original = if(useForeground) foreground else background
+	val originalTintList = if(useForeground) foregroundTintList else backgroundTintList
+	fun apply(hasFocus: Boolean)
+	{
+		if(hasFocus)
+		{
+			val drawable = GradientDrawable().apply {
+				this.shape = shape
+				setColor(fillColor)
+				setStroke(strokeWidthPx, strokeColor)
+			}
+			if(useForeground) { foreground = drawable; foregroundTintList = null }
+			else { background = drawable; backgroundTintList = null }
+		}
+		else
+		{
+			if(useForeground) { foreground = original; foregroundTintList = originalTintList }
+			else { background = original; backgroundTintList = originalTintList }
+		}
+	}
+	onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus -> apply(hasFocus) }
+	apply(isFocused)
 }
 
 /**

@@ -7,7 +7,6 @@ import android.app.Dialog
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.text.Spannable
@@ -38,7 +37,7 @@ import coil.load
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.InstantScrollLinearLayoutManager
 import com.metallic.chiaki.common.ext.alertDialogBuilder
-import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.metallic.chiaki.common.ext.fixFocusOnFastScroll
 import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.metallic.chiaki.friends.ChatMessage
@@ -686,6 +685,7 @@ class QuickSettingsPanel(
 		}
 
 		panel.quickSettingsCloseButton.setOnClickListener { close() }
+		panel.quickSettingsMinimizeButton.setOnClickListener { activity.moveTaskToBack(true) }
 		panel.quickSettingsDisconnectButton.setOnClickListener { showDisconnectOptions() }
 
 		buildSessionSettingsTab()
@@ -755,20 +755,22 @@ class QuickSettingsPanel(
 
 		// These buttons' colour selectors only vary by checked state (see
 		// quick_settings_display_mode_tint.xml) — a focused-but-unchecked tab would otherwise
-		// look pixel-identical to an unfocused one, leaving a controller user with no visual
-		// sign that D-pad navigation moved anywhere. The rail (tabs, close, disconnect) gets a
-		// translucent white highlight; everything inside a tab's content gets the theme-coloured
-		// one below, matching the Controller tab's remap list.
-		(quickSettingsTabButtons + listOf(panel.quickSettingsCloseButton, panel.quickSettingsDisconnectButton))
-			.forEach { addFocusHighlight(it, Color.WHITE, useForeground = true) }
+		// look pixel-identical to an unfocused one, leaving a controller user with no visual sign
+		// that D-pad navigation moved anywhere. The translucent highlight box's presence (not its
+		// colour) is what signals focus here, so it uses the same theme-accent highlight as every
+		// other selectable control in the panel rather than a one-off white.
+		(quickSettingsTabButtons + listOf(panel.quickSettingsMinimizeButton, panel.quickSettingsCloseButton, panel.quickSettingsDisconnectButton))
+			.forEach { addFocusHighlight(it, pyluxAccentColor, useForeground = true) }
 
 		listOf(
 			panel.quickSettingsDisplayModeNormal, panel.quickSettingsDisplayModeZoom,
-			panel.quickSettingsDisplayModeStretch
+			panel.quickSettingsDisplayModeStretch, panel.quickSettingsOscCustomiseButton,
+			panel.quickSettingsResetImageQuality, panel.quickSettingsSessionApplyButton,
+			panel.quickSettingsConfigureOverlayButton
 		).forEach { addFocusHighlight(it, pyluxAccentColor, useForeground = true) }
 		listOf(
 			panel.quickSettingsStatsRow.quickSettingsRowSwitch, panel.quickSettingsOverlayModeRow.quickSettingsDropdownSpinner,
-			panel.quickSettingsConfigureOverlayButton, panel.quickSettingsOscRow.quickSettingsRowSwitch,
+			panel.quickSettingsOscRow.quickSettingsRowSwitch,
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
 			panel.quickSettingsPipRow.quickSettingsRowSwitch,
@@ -1814,6 +1816,10 @@ class QuickSettingsPanel(
 			binding.configureOverlayOpacityLabel.text = activity.getString(R.string.overlay_configure_opacity_label, percent)
 		}
 
+		addFocusHighlight(binding.configureOverlayOpacitySeekBar, pyluxAccentColor)
+		addFocusHighlight(binding.configureOverlayMoveButton, pyluxAccentColor, useForeground = true)
+		addFocusHighlight(binding.configureOverlayRestoreDefaultsButton, pyluxAccentColor, useForeground = true)
+
 		binding.configureOverlayOpacitySeekBar.progress = pendingOpacityPercent
 		updateOpacityLabel(pendingOpacityPercent)
 		binding.configureOverlayOpacitySeekBar.setOnSeekBarChangeListener(object: SeekBar.OnSeekBarChangeListener
@@ -1856,6 +1862,16 @@ class QuickSettingsPanel(
 			val livePendingOpacity = binding.configureOverlayOpacitySeekBar.progress
 			dialog.dismiss()
 			onMoveOverlay { showConfigureOverlayDialog(livePendingOpacity) }
+		}
+
+		// Only resets position live, same as dragging via Move Overlay — Save's own logic above
+		// already reads overlay.translationX/Y fresh at Save time, so this needs no separate
+		// persistence path. Deliberately leaves the opacity slider alone: this is reached from a
+		// dialog that already has its own separate opacity control, so resetting it here too
+		// would silently discard a choice the user didn't ask to undo.
+		binding.configureOverlayRestoreDefaultsButton.setOnClickListener {
+			overlay.translationX = 0f
+			overlay.translationY = 0f
 		}
 
 		dialog.show()
@@ -1948,32 +1964,11 @@ class QuickSettingsPanel(
 		return x != 0 || y != 0
 	}
 
-	/** Translucent focus highlight — a low-alpha fill plus a stronger-alpha stroke, matching
-	 *  the treatment TrophyAdapter/RemapAdapter's list rows already use. [useForeground] draws
-	 *  it as an overlay instead of a background, for MaterialButtons (tab rail, window size,
-	 *  close/disconnect) whose background/stroke is already internally managed — overwriting
-	 *  that directly would fight the button's own corner radius and outline. Plain widgets
-	 *  (switches, spinners, seek bars, edit texts, the trophies refresh button) use background,
-	 *  capturing whatever was there before (e.g. an EditText's underline) so it's restored
-	 *  rather than lost the moment focus first leaves. */
-	private fun addFocusHighlight(view: View, color: Int, useForeground: Boolean = false)
-	{
-		view.disableDefaultFocusHighlight()
-		val fillColor = (0x30 shl 24) or (color and 0x00FFFFFF)
-		val strokeColor = (0x99 shl 24) or (color and 0x00FFFFFF)
-		val strokeWidthPx = (2f * activity.resources.displayMetrics.density).toInt()
-		val original = if(useForeground) view.foreground else view.background
-		view.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
-			val drawable = if(hasFocus)
-				GradientDrawable().apply {
-					shape = GradientDrawable.RECTANGLE
-					setColor(fillColor)
-					setStroke(strokeWidthPx, strokeColor)
-				}
-			else original
-			if(useForeground) v.foreground = drawable else v.background = drawable
-		}
-	}
+	/** Thin wrapper over the shared [com.metallic.chiaki.common.ext.applyFocusHighlight] — kept
+	 *  so every existing call site here (including `.forEach { addFocusHighlight(it, ...) }`
+	 *  method-reference-style calls) didn't need touching when this was centralized. */
+	private fun addFocusHighlight(view: View, color: Int, useForeground: Boolean = false) =
+		view.applyFocusHighlight(color, useForeground)
 
 	/** Drills D-pad focus from the tab rail into the currently selected tab's content — the
 	 *  rail, close and disconnect buttons are all temporarily excluded from focus search so
@@ -2002,6 +1997,7 @@ class QuickSettingsPanel(
 		// genuinely has no focusable rows at all, so D-pad scrolling still works in that case.
 		val target = focusables.firstOrNull { it !== container } ?: focusables.firstOrNull() ?: return
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+		panel.quickSettingsMinimizeButton.isFocusable = false
 		panel.quickSettingsCloseButton.isFocusable = false
 		panel.quickSettingsDisconnectButton.isFocusable = false
 		inTabContent = true
@@ -2031,6 +2027,7 @@ class QuickSettingsPanel(
 		// (confirmed on-device). enterContentScope() turns this back on.
 		container?.isFocusable = false
 		panel.quickSettingsTabToggle.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
+		panel.quickSettingsMinimizeButton.isFocusable = true
 		panel.quickSettingsCloseButton.isFocusable = true
 		panel.quickSettingsDisconnectButton.isFocusable = true
 		inTabContent = false
