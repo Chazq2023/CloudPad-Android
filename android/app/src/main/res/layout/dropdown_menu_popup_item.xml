@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- defaultFocusHighlightEnabled=false: without it, navigating here with a controller/D-pad
+     shows the platform's own translucent white focus halo on top of bg_dropdown_item_highlight's
+     theme-accent one below (confirmed on-device) — the same fix QuickSettingsPanel's own
+     applyFocusHighlight already applies to every other focusable control, just needed here too
+     since these rows are recycled ArrayAdapter views rather than something that call goes near. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_dropdown_item_highlight"
+    android:defaultFocusHighlightEnabled="false"
     android:padding="16dp"
     android:ellipsize="end"
     android:maxLines="1"

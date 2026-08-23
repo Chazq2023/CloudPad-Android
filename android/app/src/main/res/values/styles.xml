@@ -36,6 +36,15 @@
         <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg</item>
         <item name="pyluxSupportTextSecondary">@color/support_text_secondary</item>
         <item name="pyluxSupportBadgeBg">@color/support_badge_bg</item>
+        <!-- Governs BOTH AlertDialog single-choice rows (also set on AppTheme.AlertDialog.NonMaterial,
+             needed there separately since that's a nested theme AlertDialog resolves independently
+             of this one) AND, critically, every plain Spinner's dropdown list — confirmed on-device
+             that Spinner's popup reads this straight from whichever theme is active on the hosting
+             Activity, not from the AlertDialog-specific style, so it needs setting here too or any
+             Spinner (Quick Settings' Overlay Type/Resolution/etc.) falls back to the platform's
+             default grey row highlight regardless of what dropdown_menu_popup_item.xml's own row
+             background is set to. -->
+        <item name="android:listChoiceBackgroundIndicator">@drawable/bg_dropdown_item_highlight</item>
     </style>
 
     <!-- Neon Blue variant — all activity/fragment themes that extend AppTheme pick this up -->
@@ -187,6 +196,12 @@
         <item name="materialButtonStyle">@style/AppTheme.AlertDialog.Button</item>
         <item name="colorControlActivated">?attr/pyluxAccent</item>
         <item name="android:windowBackground">@drawable/bg_disclaimer_box</item>
+        <!-- select_dialog_singlechoice_material (every ListPreference row — Locale, Resolution,
+             FPS, Codec, Datacenter, Theme Colour, etc.) reads its row background from this attr.
+             Overridden so the currently-highlighted row (touch, D-pad focus, or the entry already
+             selected when the dialog opens) uses the same translucent theme-accent highlight as
+             every other dropdown in the app, instead of the platform's stock grey ripple. -->
+        <item name="android:listChoiceBackgroundIndicator">@drawable/bg_dropdown_item_highlight</item>
     </style>
 
     <style name="AppTheme.AlertDialog.Button" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
@@ -337,6 +352,12 @@
         <item name="pyluxAccentA50">@color/accent_pink_a50</item>
         <item name="pyluxAccentA70">@color/accent_pink_a70</item>
         <item name="pyluxAccentA80">@color/accent_pink_a80</item>
+        <!-- See the matching item on AppTheme (used for every non-pink colour, which
+             setTheme()s to AppTheme.<colour> instead — see the class-level comment above) — this
+             manifest-declared theme stays active only for the default pink colour, so it needs
+             its own copy for that case's Quick Settings Spinner dropdowns to get the same
+             highlight instead of the platform default grey. -->
+        <item name="android:listChoiceBackgroundIndicator">@drawable/bg_dropdown_item_highlight</item>
     </style>
 
     <!-- Non-pink StreamActivity theme colours. StreamActivity used to setTheme() straight to

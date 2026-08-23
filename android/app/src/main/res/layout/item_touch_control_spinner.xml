@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- defaultFocusHighlightEnabled=false — see dropdown_menu_popup_item.xml's identical comment;
+     without it, D-pad/controller navigation shows the platform's own white focus halo on top of
+     bg_dropdown_item_highlight's theme-accent one. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="match_parent"
 	android:layout_height="wrap_content"
+	android:background="@drawable/bg_dropdown_item_highlight"
+	android:defaultFocusHighlightEnabled="false"
 	android:gravity="center_vertical"
 	android:minHeight="48dp"
 	android:paddingStart="12dp"

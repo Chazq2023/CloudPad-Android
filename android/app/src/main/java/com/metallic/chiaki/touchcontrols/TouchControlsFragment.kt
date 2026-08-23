@@ -14,6 +14,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.google.android.material.button.MaterialButton
 import com.pylux.stream.R
 import com.pylux.stream.databinding.FragmentControlsBinding
@@ -148,9 +149,26 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 		controlViews().values.forEach { it.isEnabled = !visible }
 	}
 
+	/** True for the duration of [startMoveMode] — StreamActivity's dispatchKeyEvent/
+	 *  onGenericMotionEvent check this to stop controller input from reaching StreamInput (which
+	 *  would otherwise consume the D-pad as gameplay input before it ever reaches the Save
+	 *  button), the same reasoning as
+	 *  [com.metallic.chiaki.stream.StreamActivity.overlayMoveModeActive]. */
+	var isMoveModeActive = false
+		private set
+
+	/** The Save button while [isMoveModeActive] — StreamActivity routes D-pad/controller input
+	 *  here instead of letting Android's ordinary focus search run, which would otherwise land on
+	 *  the on-screen control buttons/joysticks underneath (real focusable Views the rest of the
+	 *  time, confirmed on-device) instead of staying on the only thing move mode should ever let
+	 *  you reach. Null outside of move mode. */
+	var moveModeConfirmButton: View? = null
+		private set
+
 	fun startMoveMode(control: TouchControl, onSaved: () -> Unit)
 	{
 		if(_binding == null) return
+		isMoveModeActive = true
 		val activity = requireActivity()
 		val streamRoot = activity.findViewById<ViewGroup>(R.id.mainStreamLayout)
 		val controlView = controlViews().getValue(control)
@@ -187,12 +205,24 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 			text = activity.getString(R.string.touch_controls_save)
 			setTextColor(android.graphics.Color.WHITE)
 			backgroundTintList = ColorStateList.valueOf(accent)
+			// Move mode starts from a touch tap, so Android is still in touch mode and a HAT-axis
+			// D-pad never leaves it — isFocusableInTouchMode is required or requestFocus() below
+			// silently fails (same requirement noted for the touch-controls customization popup's
+			// own destinations).
+			isFocusable = true
+			isFocusableInTouchMode = true
+			applyFocusHighlight(accent, useForeground = true)
 		}
 		streamRoot.addView(saveButton, android.widget.FrameLayout.LayoutParams(
 			ViewGroup.LayoutParams.WRAP_CONTENT,
 			ViewGroup.LayoutParams.WRAP_CONTENT,
 			Gravity.CENTER
 		))
+		moveModeConfirmButton = saveButton
+		// dispatchKeyEvent/onGenericMotionEvent route controller input straight to StreamInput
+		// while isMoveModeActive is false, so without an explicit focus grant here a D-pad press
+		// would never reach Save at all — see isMoveModeActive's use in StreamActivity.
+		saveButton.post { saveButton.requestFocus() }
 		saveButton.setOnClickListener {
 			val preferences = Preferences(activity)
 			val style = preferences.touchControlStyle(control)
@@ -205,6 +235,8 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 			)
 			controlView.setOnTouchListener(null)
 			streamRoot.removeView(saveButton)
+			isMoveModeActive = false
+			moveModeConfirmButton = null
 			onSaved()
 		}
 	}

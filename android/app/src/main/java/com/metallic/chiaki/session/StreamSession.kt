@@ -52,6 +52,52 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 	 *  recreated, and setSurface(null) blocks on the native decoder. */
 	var skipNativeSurfaceCleanup = false
 
+	/** Lazily created, tiny off-screen Surface the decoder is pointed at while backgrounded (see
+	 *  [enterBackground]) — kept around so repeated background/foreground cycles within the same
+	 *  session don't reallocate a GL context each time. Released in [close]. */
+	private var backgroundDrainSurface: com.metallic.chiaki.stream.BackgroundDrainSurface? = null
+
+	/** True while the decoder is pointed at [backgroundDrainSurface] instead of the real
+	 *  on-screen [surface] — see [enterBackground] / [exitBackground]. */
+	var isBackgrounded = false
+		private set
+
+	/** Called when the hosting Activity is backgrounded (home button, app switch — not actually
+	 *  finishing) so the stream keeps running instead of being torn down: swaps the decoder to a
+	 *  throwaway drain Surface via the existing AMediaCodec_setOutputSurface path (video-decoder.c)
+	 *  so it keeps decoding audio/video without stalling on a full output-buffer queue that nobody
+	 *  is consuming, even though there's nothing to actually show on screen. No-op if there's no
+	 *  live native session yet or it's already backgrounded. */
+	fun enterBackground()
+	{
+		if(session == null || isBackgrounded)
+			return
+		val drain = backgroundDrainSurface ?: com.metallic.chiaki.stream.BackgroundDrainSurface().also { backgroundDrainSurface = it }
+		session?.setSurface(drain.surface)
+		isBackgrounded = true
+		Log.i("StreamSession", "enterBackground: swapped decoder to drain surface")
+	}
+
+	/** Called when the hosting Activity returns to the foreground after [enterBackground] —
+	 *  swaps the decoder back to the real on-screen surface. No-op if never backgrounded. */
+	fun exitBackground()
+	{
+		if(!isBackgrounded)
+			return
+		isBackgrounded = false
+		session?.setSurface(surface)
+		Log.i("StreamSession", "exitBackground: swapped decoder back to real surface")
+	}
+
+	/** Releases the (optional) background drain surface's GL thread/context. Call once the
+	 *  session is truly done, alongside [shutdown] — not part of shutdown() itself since a drain
+	 *  surface created here is meant to survive [restartWithNewConnectInfo]'s shutdown+resume. */
+	fun close()
+	{
+		backgroundDrainSurface?.release()
+		backgroundDrainSurface = null
+	}
+
 	// ---- Microphone (Remote Play only) ----
 	// The console only accepts mic audio in a fixed 2ch/16-bit/48000Hz/480-samples-per-frame
 	// format (see the matching header set up natively in chiaki-jni.c's sessionCreate), so
@@ -309,6 +355,7 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 			// race here either.
 			onFullyStopped?.invoke()
 		}
+		isBackgrounded = false
 		_state.value = StreamStateIdle
 		//surfaceTexture?.release()
 	}

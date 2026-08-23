@@ -1,6 +1,5 @@
 package com.metallic.chiaki.settings
 
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.*
@@ -11,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.alertDialogBuilder
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.metallic.chiaki.session.ControllerAction
 import com.metallic.chiaki.session.ControllerRemapCapture
 import com.metallic.chiaki.session.PhysicalInput
@@ -252,20 +252,9 @@ class RemapAdapter(
                 itemView.isFocusable = true
                 itemView.isFocusableInTouchMode = true
 
-                val originalBackground = itemView.background
                 val tv = TypedValue()
                 itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
-                val accent = tv.data
-                itemView.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
-                    v.background = if (hasFocus)
-                        GradientDrawable().apply {
-                            shape = GradientDrawable.RECTANGLE
-                            setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
-                            setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
-                        }
-                    else
-                        originalBackground
-                }
+                itemView.applyFocusHighlight(tv.data)
                 itemView.setOnKeyListener { v, keyCode, event ->
                     if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
                     val direction = when (keyCode) {
@@ -304,7 +293,15 @@ class RestoreDefaultsViewHolder(
     itemView: View,
     onRestoreDefaults: () -> Unit
 ) : RecyclerView.ViewHolder(itemView) {
-    init { itemView.setOnClickListener { onRestoreDefaults() } }
+    init {
+        itemView.setOnClickListener { onRestoreDefaults() }
+        val tv = TypedValue()
+        itemView.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
+        // MaterialButton (item_controller_restore_defaults.xml) — foreground, matching every
+        // other MaterialButton's highlight treatment, so it doesn't fight the button's own
+        // background/corner radius.
+        itemView.applyFocusHighlight(tv.data, useForeground = true)
+    }
 }
 
 class HeaderViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

@@ -210,6 +210,7 @@
     <string name="preferences_quality_apply_summary">Image processing and sharpening apply immediately during a stream. Resolution, frame rate, bitrate and codec apply after restarting the stream.</string>
     <string name="quick_settings_title">Quick Settings</string>
     <string name="quick_settings_close">Close</string>
+    <string name="quick_settings_minimize">Minimize</string>
     <string name="quick_settings_current_game">Current game: %s</string>
     <string name="quick_settings_performance_overlay_title">Performance Overlay</string>
     <string name="quick_settings_overlay_type_title">Overlay Type</string>
@@ -409,6 +410,7 @@
     <string name="overlay_configure_title">Configure Overlay</string>
     <string name="overlay_configure_opacity_label">Opacity — %1$d%%</string>
     <string name="overlay_configure_move">Move Overlay</string>
+    <string name="overlay_configure_restore_defaults">Restore to defaults</string>
     <string name="overlay_move_done">Done</string>
     <string name="action_save">Save</string>
     <string name="preferences_discovery_enabled_key">discovery_enabled</string>
@@ -487,4 +489,9 @@
         <item>@string/preferences_image_processing_off</item><item>@string/preferences_image_processing_cas</item><item>@string/preferences_image_processing_fsr</item>
     </string-array>
     <string-array name="image_processing_values"><item>off</item><item>cas</item><item>fsr</item></string-array>
+
+    <string name="stream_background_channel_name">Background Streaming</string>
+    <string name="stream_background_notification_title">Stream still running</string>
+    <string name="stream_background_notification_text">Tap to return to your game</string>
+    <string name="stream_background_notification_disconnect">Disconnect</string>
 </resources>

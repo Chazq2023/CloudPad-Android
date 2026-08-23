@@ -29,6 +29,7 @@ import androidx.lifecycle.lifecycleScope
 
 import com.pylux.stream.R
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.metallic.chiaki.common.ext.viewModelFactory
 import com.pylux.stream.databinding.ActivityStreamBinding
 import com.metallic.chiaki.lib.ConnectInfo
@@ -103,6 +104,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	 *  (hosting the overlay in a separate window for the drag) for the disappearing-mid-drag bug,
 	 *  but still worth keeping — you're repositioning it, not reading it, for that brief window. */
 	private var overlayMoveModeActive = false
+
+	/** The Done button while [overlayMoveModeActive] — see [moveModeConfirmButton]'s doc comment
+	 *  for why controller input needs routing here instead of Android's ordinary focus search.
+	 *  Null outside of overlay move mode. */
+	private var overlayMoveDoneButton: View? = null
 
 	/** Saved control state before entering PiP, so we can restore when exiting PiP */
 	private var savedOnScreenControlsEnabled = false
@@ -415,12 +421,24 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			text = getString(R.string.overlay_move_done)
 			setTextColor(android.graphics.Color.WHITE)
 			backgroundTintList = ColorStateList.valueOf(accent)
+			// Move mode starts from a touch tap ("Move Overlay"), so Android is still in touch
+			// mode and a HAT-axis D-pad never leaves it — isFocusableInTouchMode is required or
+			// requestFocus() below silently fails (same requirement noted for the touch-controls
+			// customization popup's own destinations).
+			isFocusable = true
+			isFocusableInTouchMode = true
+			applyFocusHighlight(accent, useForeground = true)
 		}
 		streamRoot.addView(doneButton, FrameLayout.LayoutParams(
 			ViewGroup.LayoutParams.WRAP_CONTENT,
 			ViewGroup.LayoutParams.WRAP_CONTENT,
 			Gravity.CENTER
 		))
+		overlayMoveDoneButton = doneButton
+		// dispatchKeyEvent/onGenericMotionEvent route controller input straight to StreamInput
+		// while overlayMoveModeActive is false, so without an explicit focus grant here a D-pad
+		// press would never reach Done at all — see the overlayMoveModeActive check added to both.
+		doneButton.post { doneButton.requestFocus() }
 		doneButton.setOnClickListener {
 			overlay.setOnTouchListener(null)
 			popup.dismiss()
@@ -439,6 +457,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			overlay.translationX = (popupX - streamRootLoc[0] - overlayLocalLeft).toFloat()
 			overlay.translationY = (popupY - streamRootLoc[1] - overlayLocalTop).toFloat()
 			overlayMoveModeActive = false
+			overlayMoveDoneButton = null
 			streamRoot.removeView(doneButton)
 			onDone()
 		}
@@ -476,6 +495,7 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		// exactly when the decoder is (see CasVideoSurfaceView's own doc comment).
 		binding.surfaceView.onResume()
 		viewModel.session.resume()
+		exitBackgroundStreamingIfNeeded()
 	}
 
 	override fun onPause()
@@ -486,7 +506,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		{
 			viewModel.session.skipNativeSurfaceCleanup = false
 			binding.surfaceView.onPause()
-			viewModel.session.pause()
+			if (isFinishing)
+				viewModel.session.pause()
+			else
+				enterBackgroundStreaming()
 		}
 	}
 
@@ -499,8 +522,46 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		{
 			viewModel.session.skipNativeSurfaceCleanup = false
 			binding.surfaceView.onPause()
-			viewModel.session.pause()
+			if (isFinishing)
+				viewModel.session.pause()
+			else
+				enterBackgroundStreaming()
 		}
+	}
+
+	/** Called from onPause/onStop when the activity is merely being backgrounded (home button,
+	 *  app switch) rather than actually finishing — keeps the stream alive instead of tearing it
+	 *  down (see [com.metallic.chiaki.session.StreamSession.enterBackground]) and starts a
+	 *  foreground service so Android doesn't reclaim the process while nothing is visible. Safe
+	 *  to call repeatedly (from both onPause and onStop) — both StreamSession.enterBackground and
+	 *  the service start are no-ops once already active. */
+	private fun enterBackgroundStreaming()
+	{
+		if (viewModel.session.session == null)
+			return
+
+		// Deliberately never prompts for POST_NOTIFICATIONS here — a runtime permission dialog
+		// can't actually show while the activity is pausing/stopping anyway, so Android just
+		// defers it and pops it up right as the user returns, interrupting the "resume my game"
+		// moment this feature exists for. The stream keeps running in the background either way;
+		// without that permission the ongoing notification just silently doesn't appear (unless
+		// the user separately grants it via system settings).
+		viewModel.session.enterBackground()
+		StreamBackgroundService.start(this) {
+			// Disconnect tapped from the notification.
+			viewModel.session.shutdown()
+			if (!isFinishing && !isDestroyed)
+				finish()
+		}
+	}
+
+	/** Called from onResume — undoes [enterBackgroundStreaming] if it was active. No-op
+	 *  otherwise (e.g. first launch, or returning from PiP rather than a real background). */
+	private fun exitBackgroundStreamingIfNeeded()
+	{
+		if (viewModel.session.isBackgrounded)
+			viewModel.session.exitBackground()
+		StreamBackgroundService.stop(this)
 	}
 
 	override fun onDestroy()
@@ -872,6 +933,10 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			if(quickSettingsPanel.handleTouchControlsCustomizationKeyEvent(event)) return true
 			return super.dispatchKeyEvent(event)
 		}
+		moveModeConfirmButton()?.let { button ->
+			if(handleMoveModeKeyEvent(event, button)) return true
+			return super.dispatchKeyEvent(event)
+		}
 		return viewModel.input.dispatchKeyEvent(event) || super.dispatchKeyEvent(event)
 	}
 
@@ -882,7 +947,48 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		if(quickSettingsPanel.isCustomisingTouchControls)
 			return quickSettingsPanel.handleTouchControlsCustomizationMotionEvent(event) ||
 				super.onGenericMotionEvent(event)
+		// Repositioning in both move modes is done entirely via touch drag, never a HAT-axis
+		// joystick — so a HAT motion reaching here has nothing valid to do. Swallowed outright
+		// (not forwarded to super) for the same reason handleMoveModeKeyEvent swallows D-pad
+		// UP/DOWN/LEFT/RIGHT: letting it through would run Android's ordinary focus search, which
+		// finds the on-screen control buttons/joysticks underneath as real focusable Views
+		// (confirmed on-device) instead of leaving focus on the sole Save/Done button.
+		if(moveModeConfirmButton() != null)
+			return true
 		return viewModel.input.onGenericMotionEvent(event) || super.onGenericMotionEvent(event)
+	}
+
+	/** The sole focusable target while either the on-screen-controls "move a control" mode or the
+	 *  Performance Overlay's "Move Overlay" mode is active — see [startOverlayMoveMode] and
+	 *  [DefaultTouchControlsFragment.startMoveMode]. Null outside of both. */
+	private fun moveModeConfirmButton(): View? =
+		overlayMoveDoneButton ?: defaultTouchControlsFragment?.moveModeConfirmButton
+
+	/** D-pad handling for whichever move mode is active (see [moveModeConfirmButton]) — swallows
+	 *  directional navigation outright rather than letting Android's focus search run, since the
+	 *  on-screen control buttons/joysticks underneath are still real focusable Views the rest of
+	 *  the time and would otherwise steal focus away from [button] (confirmed on-device: without
+	 *  this, pressing a direction after Save/Done first gets focus moves it onto those instead —
+	 *  move mode should only ever let you reach the one confirm button). BUTTON_A is this app's
+	 *  controller confirm key (not DPAD_CENTER — matches
+	 *  [QuickSettingsPanel.handleTouchControlsCustomizationKeyEvent]'s same translation), performing
+	 *  [button]'s click directly rather than relying on default View key handling. Also
+	 *  re-establishes focus on [button] if something else already stole it before this runs. */
+	private fun handleMoveModeKeyEvent(event: KeyEvent, button: View): Boolean
+	{
+		if(currentFocus !== button)
+			button.requestFocus()
+		return when(event.keyCode)
+		{
+			KeyEvent.KEYCODE_DPAD_UP, KeyEvent.KEYCODE_DPAD_DOWN,
+			KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> true
+			KeyEvent.KEYCODE_BUTTON_A ->
+			{
+				if(event.action == KeyEvent.ACTION_UP) button.performClick()
+				true
+			}
+			else -> false
+		}
 	}
 }
 

@@ -26,7 +26,8 @@
 		android:id="@+id/touchControlSpinner"
 		android:layout_width="match_parent"
 		android:layout_height="48dp"
-		android:popupBackground="@drawable/bg_popup_menu" />
+		android:popupBackground="@drawable/bg_popup_menu"
+		android:dropDownSelector="@drawable/bg_dropdown_item_highlight" />
 
 	<TextView
 		android:id="@+id/touchControlSizeLabel"

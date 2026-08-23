@@ -4,11 +4,10 @@ package com.metallic.chiaki.trophy
 
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemTrophyCompareGameBinding
@@ -35,20 +34,9 @@ class TrophyCompareAdapter(
 		// — this was missing entirely, which is why the list could only be scrolled by touch.
 		binding.root.isFocusable = true
 		binding.root.isFocusableInTouchMode = true
-		binding.root.disableDefaultFocusHighlight()
 		onTopBoundary?.let { boundary -> binding.root.redirectDpadUpAtListBoundary(boundary) }
 
-		val accent = resolvePyluxAccent(binding.root.context)
-		binding.root.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
-			v.background = if (hasFocus)
-				GradientDrawable().apply {
-					shape = GradientDrawable.RECTANGLE
-					setColor((0x30 shl 24) or (accent and 0x00FFFFFF))
-					setStroke(2, (0x99 shl 24) or (accent and 0x00FFFFFF))
-				}
-			else
-				null
-		}
+		binding.root.applyFocusHighlight(resolvePyluxAccent(binding.root.context))
 
 		return GameViewHolder(binding)
 	}

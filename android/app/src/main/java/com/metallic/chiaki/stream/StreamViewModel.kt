@@ -174,6 +174,7 @@ class StreamViewModel(
 		super.onCleared()
 		stopMetricsPolling()
 		session.shutdown()
+		session.close()
 	}
 
 	fun setOnScreenControlsEnabled(enabled: Boolean) {

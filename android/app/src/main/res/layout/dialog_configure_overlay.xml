@@ -35,4 +35,13 @@
         android:textColor="@android:color/white"
         app:backgroundTint="?attr/pyluxAccent" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/configureOverlayRestoreDefaultsButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/overlay_configure_restore_defaults"
+        android:textColor="@android:color/white"
+        app:backgroundTint="?attr/pyluxAccent" />
+
 </LinearLayout>

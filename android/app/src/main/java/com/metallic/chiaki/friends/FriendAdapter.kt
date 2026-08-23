@@ -12,7 +12,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import com.metallic.chiaki.common.ext.disableDefaultFocusHighlight
+import com.metallic.chiaki.common.ext.applyFocusHighlight
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemFriendBinding
 
@@ -56,36 +56,14 @@ class FriendAdapter(
 		// since it wasn't beside the row's focus rectangle but entirely inside it).
 		binding.friendItemContent.isFocusable = true
 		binding.friendItemContent.isFocusableInTouchMode = true
-		binding.friendItemContent.disableDefaultFocusHighlight()
 		binding.friendItemCompareTrophiesButton.isFocusable = true
 		binding.friendItemCompareTrophiesButton.isFocusableInTouchMode = true
-		binding.friendItemCompareTrophiesButton.disableDefaultFocusHighlight()
 
 		val tv = TypedValue()
 		binding.root.context.theme.resolveAttribute(R.attr.pyluxAccent, tv, true)
 		val accent = tv.data
-		val fillColor = (0x30 shl 24) or (accent and 0x00FFFFFF)
-		val strokeColor = (0x99 shl 24) or (accent and 0x00FFFFFF)
-		binding.friendItemContent.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
-			v.background = if (hasFocus)
-				GradientDrawable().apply {
-					shape = GradientDrawable.RECTANGLE
-					setColor(fillColor)
-					setStroke(2, strokeColor)
-				}
-			else
-				null
-		}
-		binding.friendItemCompareTrophiesButton.onFocusChangeListener = View.OnFocusChangeListener { v, hasFocus ->
-			v.foreground = if (hasFocus)
-				GradientDrawable().apply {
-					shape = GradientDrawable.OVAL
-					setColor(fillColor)
-					setStroke(2, strokeColor)
-				}
-			else
-				null
-		}
+		binding.friendItemContent.applyFocusHighlight(accent)
+		binding.friendItemCompareTrophiesButton.applyFocusHighlight(accent, useForeground = true, shape = GradientDrawable.OVAL)
 		binding.friendItemContent.setOnClickListener {
 			holder.items()?.let { onFriendClick(it) }
 		}

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Consistent "which item is highlighted" background for every dropdown's open list — a
+     semi-transparent theme-accent fill, matching the pyluxAccent-based focus-highlight
+     convention used elsewhere in the app (see QuickSettingsPanel.kt's addFocusHighlight and
+     bg_focus_highlight.xml) rather than the platform's stock grey ripple. Covers touch (pressed)
+     and D-pad/keyboard navigation (focused) only — deliberately NOT state_activated, which
+     Android applies persistently to whichever row matches the dropdown's *current* selection
+     regardless of where the user is actually navigating. Including it made the already-selected
+     item look permanently highlighted instead of whatever item the user is actively moving
+     through (confirmed on-device). Used both as Spinner dropdown item rows and as the row
+     background for Settings' ListPreference choice dialogs (see
+     AppTheme.AlertDialog.NonMaterial's listChoiceBackgroundIndicator). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/pyluxAccentA30"/>
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="?attr/pyluxAccentA20"/>
+            <stroke android:width="1dp" android:color="?attr/pyluxAccent"/>
+        </shape>
+    </item>
+    <item android:drawable="@android:color/transparent"/>
+</selector>

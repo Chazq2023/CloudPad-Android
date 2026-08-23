@@ -33,6 +33,21 @@
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/quickSettingsMinimizeButton"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Sends the whole app to the background exactly like the Android home button — the stream
+         keeps running (see StreamActivity.onPause/onStop's background-streaming handling) and the
+         user can jump back into it from the launcher icon, recents, or the ongoing notification. -->
+    <ImageButton
+        android:id="@+id/quickSettingsMinimizeButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/quick_settings_minimize"
+        android:src="@drawable/ic_minimize"
+        android:tint="?attr/pyluxAccent"
         app:layout_constraintEnd_toStartOf="@id/quickSettingsCloseButton"
         app:layout_constraintTop_toTopOf="parent" />
 
