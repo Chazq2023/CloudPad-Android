@@ -1,5 +1,6 @@
 ![CloudPad Logo](cloudpad-logo.png)
 
+Join our discord for all of the latest CloudPad news and updates!  
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/VJfRa9qjf)
 
 # CloudPad
@@ -26,8 +27,11 @@ CloudPad streams your PlayStation games to Android — either straight from Sony
 * **Internet Play (Cloud Play)** — stream from Sony's game catalog or your own owned PS3/PS4/PS5 library, no console required
 * **Remote Play** — stream directly from your own PlayStation console, locally or over the internet
 * **Live in-stream settings** — change resolution, FPS, bitrate, and codec mid-stream from the Quick Settings panel, no need to disconnect
-* **AMD FidelityFX CAS image sharpening** — real-time contrast-adaptive sharpening for a crisper stream image
+* **AMD FidelityFX CAS image sharpening and FSR 1 upscaling** — real-time contrast-adaptive sharpening or upscaling for a crisper stream image
+* **Background streaming** — minimize the app (home button, app switch, or the Quick Settings Minimize button) and the stream keeps running in the background, resuming exactly where you left off when you return
+* **Customizable Performance Overlay** — Full or Minimal live stats view showing real network ping/RTT, FPS, and bitrate, with drag-to-reposition and adjustable opacity
 * Configurable video profiles per streaming mode (Remote Play, Game Library, Game Catalog)
+* Selectable Cloud Play datacenter/locale in Settings
 
 ### Console management
 * Automatic local console discovery, PSN-based discovery, and registration
@@ -38,17 +42,19 @@ CloudPad streams your PlayStation games to Android — either straight from Sony
 ### In-stream Quick Menu
 * Trophy list, trophy details, and trophy comparison against friends — without leaving your stream
 * Friends list and direct messaging mid-session
-* On-the-fly controller remapping
+* On-the-fly controller remapping, with one-tap reset to defaults
+* Resize, reposition, and adjust the opacity of on-screen touch controls
 * Toggle motion controls, touch haptics, Picture-in-Picture, and image sharpening mid-session
 
 ### Social & Trophies
 * Browse your PSN friends list and message friends
-* Full trophy list per game with progress and rarity
+* Full trophy list per game with progress and rarity, including an achieved (X/Y) counter, sort by earned date, and filter by rarity — both in the Trophies screen and the in-stream Quick Menu
 * Trophy comparison against friends
 * Per-game playtime tracking — total time, last played, longest session
 
 ### Customisation
 * Custom controller button remapping
+* Custom on-screen touch control layout, sizing, and opacity
 * Theme colours
 * Touch-friendly, Android-focused UI for handhelds, tablets, and TV-style devices
 
@@ -168,30 +174,30 @@ Browse the PS3, PS4, and PS5 catalogs, including your own owned library, from on
 
 <table>
 <tr>
-<td align="center"><b>PS3 Catalog</b><br><img src="readme%20assets/PS3%20Catalog/PS3%20Catalog.jpg" width="400"></td>
-<td align="center"><b>PS4 Catalog</b><br><img src="readme%20assets/PS4%20Catalog/PS4%20Catalog.jpg" width="400"></td>
+<td align="center"><b>PS3 Catalog</b><br><img src="readme%20assets/PS3%20Catalog/PS3%20Catalog.png" width="400"></td>
+<td align="center"><b>PS4 Catalog</b><br><img src="readme%20assets/PS4%20Catalog/PS4%20Catalog.png" width="400"></td>
 </tr>
 <tr>
-<td align="center" colspan="2"><b>PS5 Library</b><br><img src="readme%20assets/PS5%20Library/PS5%20Library.jpg" width="400"></td>
+<td align="center" colspan="2"><b>PS5 Library</b><br><img src="readme%20assets/PS5%20Library/PS5%20Library.png" width="400"></td>
 </tr>
 </table>
 
 ### Remote Play
 Console tiles reflect an accurate, live state — Ready, Asleep, Waking, or Offline — instead of a stale guess.
 
-<img src="readme%20assets/Remote%20Play/Remote%20Play.jpeg" width="600">
+<img src="readme%20assets/Remote%20Play/Remote%20Play.png" width="600">
 
 ### Quick Settings Panel (In-Stream)
 Live stream settings, performance stats, controller remapping, trophies, friends, and messaging — all without ever leaving your stream.
 
 <table>
 <tr>
-<td align="center"><b>Bitrate & Resolution</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Stream%20bitrate%20resolution.png" width="380"></td>
+<td align="center"><b>Bitrate & Resolution</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20On%20Screen%20Settings%20resolution.png" width="380"></td>
 <td align="center"><b>Performance Overlay</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Performance%20Overlay.png" width="380"></td>
 </tr>
 <tr>
-<td align="center"><b>Controller Remap</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Remap%20Controller.jpg" width="380"></td>
-<td align="center"><b>Trophy List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20List.jpg" width="380"></td>
+<td align="center"><b>Controller Remap</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20remap%20controller.png" width="380"></td>
+<td align="center"><b>Trophy List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20On%20Screen%20Settings%20Trophies.png" width="380"></td>
 </tr>
 <tr>
 <td align="center"><b>Trophy Detail</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Trophy%20Detail.jpg" width="380"></td>
@@ -201,12 +207,16 @@ Live stream settings, performance stats, controller remapping, trophies, friends
 <td align="center"><b>Friends List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20List.jpeg" width="380"></td>
 <td align="center"><b>Friend Messaging</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20Messaging.jpeg" width="380"></td>
 </tr>
+<tr>
+<td align="center"><b>On-Screen Controls</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20On%20Screen%20Controller.png" width="380"></td>
+<td align="center"><b>On-Screen Controls Config</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20On%20Screen%20Controller%20Config.png" width="380"></td>
+</tr>
 </table>
 
 ### Trophies
 Full trophy list per game, with progress, rarity, and unlock status.
 
-<img src="readme%20assets/Trophies/Trophies.jpg" width="600">
+<img src="readme%20assets/Trophies/Trophies.png" width="600">
 
 ### Trophy Comparison
 Compare your trophy progress against a friend, game by game, from the main menu.
@@ -233,13 +243,14 @@ Customise button and stick mappings for your controller.
 
 <img src="readme%20assets/Controller%20Remap/Controller%20Remap.png" width="600">
 
-### Image Sharpening (CAS)
-AMD FidelityFX Contrast Adaptive Sharpening applied in real time to the stream image.
+### Image Sharpening & Upscaling (CAS / FSR 1)
+AMD FidelityFX CAS sharpening or FSR 1 upscaling, applied in real time to the stream image.
 
 <table>
 <tr>
-<td align="center"><b>Before</b><br><img src="readme%20assets/Image%20Sharpening/Image%20Sharpening%20Before.jpg" width="420"></td>
-<td align="center"><b>After</b><br><img src="readme%20assets/Image%20Sharpening/Image%20Sharpening%20After.jpg" width="420"></td>
+<td align="center"><b>No Sharpening</b><br><img src="readme%20assets/Image%20Sharpening/No%20Image%20Sharpening.png" width="300"></td>
+<td align="center"><b>CAS</b><br><img src="readme%20assets/Image%20Sharpening/CAS%20Image%20Sharpening.png" width="300"></td>
+<td align="center"><b>FSR 1 + Upscale</b><br><img src="readme%20assets/Image%20Sharpening/FSR%201%20Image%20Sharpening%20%2B%20Upscale.png" width="300"></td>
 </tr>
 </table>
 
@@ -253,13 +264,13 @@ Pick an accent colour and the whole UI updates to match.
 
 <table>
 <tr>
-<td align="center"><b>Neon Blue</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Blue%20Theme.jpg" width="300"></td>
-<td align="center"><b>Neon Green</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Green%20Theme.jpg" width="300"></td>
-<td align="center"><b>Neon Orange</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Orange%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Blue</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Blue%20Theme.png" width="300"></td>
+<td align="center"><b>Neon Green</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Green%20Theme.png" width="300"></td>
+<td align="center"><b>Neon Orange</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Orange%20Theme.png" width="300"></td>
 </tr>
 <tr>
-<td align="center"><b>Neon Pink</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Pink%20Theme.jpg" width="300"></td>
-<td align="center"><b>Neon Yellow</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Yellow%20Theme.jpg" width="300"></td>
+<td align="center"><b>Neon Pink</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Pink%20Theme.png" width="300"></td>
+<td align="center"><b>Neon Yellow</b><br><img src="readme%20assets/Theme%20Showcase/Neon%20Yellow%20Theme.png" width="300"></td>
 </tr>
 </table>
 
@@ -280,5 +291,10 @@ Appearance, controls, Remote Play and Cloud Play video profiles, CAS sharpening,
 <tr>
 <td><img src="readme%20assets/Settings/Settings%207.png" width="300"></td>
 <td><img src="readme%20assets/Settings/Settings%208.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%209.png" width="300"></td>
+</tr>
+<tr>
+<td><img src="readme%20assets/Settings/Settings%2010.png" width="300"></td>
+<td><img src="readme%20assets/Settings/Settings%2011.png" width="300"></td>
 </tr>
 </table>
