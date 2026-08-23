@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: >-
-        Performance pass following an app-wide audit: fixed a background timer that never stopped ticking (and piled up further with every theme change), sped up "Recently Played" game sorting on large libraries, cached the main menu logo instead of recomputing it on every theme change, removed unnecessary per-packet network overhead during streaming, fixed the Friends screen briefly double-fetching on open, and reduced allocation overhead in the in-stream controller input path (buttons, sticks, touch, motion) for lower input latency. Fixed the Performance Overlay's Ping stat: it was showing a noisy, console-side bitrate/encode telemetry value (which could swing from ~10ms to 200ms on a smooth stream) instead of real network round-trip time; it now shows a genuine live ping measured once per second via the stream's own heartbeat acknowledgement, falling back to the accurate pre-connect datacenter ping when a live sample isn't yet available.
+        Fixed the Performance Overlay's Ping stat: it was showing a noisy, console-side bitrate/encode telemetry value (which could swing from ~10ms to 200ms on a smooth stream) instead of real network round-trip time; it now shows a genuine live ping measured once per second via the stream's own heartbeat acknowledgement, falling back to the accurate pre-connect datacenter ping when a live sample isn't yet available.
 
     steps:
       - name: Checkout repo
