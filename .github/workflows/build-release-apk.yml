@@ -16,11 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Streaming now survives backgrounding: pressing home, switching apps, or returning via the home-screen icon no longer disconnects your session — video and audio keep running, an ongoing notification lets you jump back in or disconnect, and returning to the app resumes exactly where you left off instead of reconnecting from scratch.
-        - Added a Minimize button next to Close in the in-stream Quick Settings panel, which backgrounds the app the same way the Android home button does.
-        - Made the highlighted/focused item consistent across every selectable control in Quick Settings and Settings (dropdowns, buttons, tabs, switches, seek bars, and list rows in Session/Trophies/Friends/Controller Remap) — always a translucent theme-accent highlight on the item you're actually navigating to or pressing, never stuck on the current selection or washed out to grey/white.
-        - Fixed controller navigation into the Save/Done buttons shown after moving an on-screen control or the Performance Overlay — both are now reachable and highlighted via D-pad/controller, and directional input can no longer wander onto the on-screen controls underneath while doing so.
-        - Added a "Restore to defaults" button under Move Overlay in Configure Overlay, which resets the Performance Overlay back to its default position.
+        - Documentation and release-workflow update only — no app functionality changes in this release.
 
     steps:
       - name: Checkout repo
