@@ -1,6 +1,7 @@
 ![CloudPad Logo](cloudpad-logo.png)
 
-[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/VJfRa9qjf)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/VJfRa9qjf)  
+Join our discord for all of the latest CloudPad news and updates!
 
 # CloudPad
 
