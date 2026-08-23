@@ -26,8 +26,11 @@ CloudPad streams your PlayStation games to Android — either straight from Sony
 * **Internet Play (Cloud Play)** — stream from Sony's game catalog or your own owned PS3/PS4/PS5 library, no console required
 * **Remote Play** — stream directly from your own PlayStation console, locally or over the internet
 * **Live in-stream settings** — change resolution, FPS, bitrate, and codec mid-stream from the Quick Settings panel, no need to disconnect
-* **AMD FidelityFX CAS image sharpening** — real-time contrast-adaptive sharpening for a crisper stream image
+* **AMD FidelityFX CAS image sharpening and FSR 1 upscaling** — real-time contrast-adaptive sharpening or upscaling for a crisper stream image
+* **Background streaming** — minimize the app (home button, app switch, or the Quick Settings Minimize button) and the stream keeps running in the background, resuming exactly where you left off when you return
+* **Customizable Performance Overlay** — Full or Minimal live stats view showing real network ping/RTT, FPS, and bitrate, with drag-to-reposition and adjustable opacity
 * Configurable video profiles per streaming mode (Remote Play, Game Library, Game Catalog)
+* Selectable Cloud Play datacenter/locale in Settings
 
 ### Console management
 * Automatic local console discovery, PSN-based discovery, and registration
@@ -38,17 +41,19 @@ CloudPad streams your PlayStation games to Android — either straight from Sony
 ### In-stream Quick Menu
 * Trophy list, trophy details, and trophy comparison against friends — without leaving your stream
 * Friends list and direct messaging mid-session
-* On-the-fly controller remapping
+* On-the-fly controller remapping, with one-tap reset to defaults
+* Resize, reposition, and adjust the opacity of on-screen touch controls
 * Toggle motion controls, touch haptics, Picture-in-Picture, and image sharpening mid-session
 
 ### Social & Trophies
 * Browse your PSN friends list and message friends
-* Full trophy list per game with progress and rarity
+* Full trophy list per game with progress and rarity, including an achieved (X/Y) counter, sort by earned date, and filter by rarity — both in the Trophies screen and the in-stream Quick Menu
 * Trophy comparison against friends
 * Per-game playtime tracking — total time, last played, longest session
 
 ### Customisation
 * Custom controller button remapping
+* Custom on-screen touch control layout, sizing, and opacity
 * Theme colours
 * Touch-friendly, Android-focused UI for handhelds, tablets, and TV-style devices
 
