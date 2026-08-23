@@ -80,6 +80,17 @@ typedef struct chiaki_stream_connection_t
 	double measured_bitrate;
 	double measured_rtt;
 	double measured_loss;
+
+	/**
+	 * RTT of the periodic HEARTBEAT message measured via its transport-layer DATA_ACK,
+	 * i.e. real wire round-trip time on the live connection (unlike measured_rtt, which
+	 * comes from the console's CONNECTIONQUALITY telemetry and reflects bitrate/encode
+	 * feedback rather than network RTT).
+	 */
+	double measured_ping_rtt;
+	bool ping_probe_pending;
+	ChiakiSeqNum32 ping_probe_seq_num;
+	uint64_t ping_probe_send_time_us;
 } ChiakiStreamConnection;
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_stream_connection_init(ChiakiStreamConnection *stream_connection, ChiakiSession *session, double packet_loss_max);
