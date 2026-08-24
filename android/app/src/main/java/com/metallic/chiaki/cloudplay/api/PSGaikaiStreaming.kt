@@ -5,6 +5,7 @@ package com.metallic.chiaki.cloudplay.api
 import android.util.Log
 import com.metallic.chiaki.cloudplay.PsnApiConstants
 import com.metallic.chiaki.cloudplay.ping.DatacenterPing
+import com.pylux.stream.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -121,90 +122,90 @@ class PSGaikaiStreaming(
 			
 			// Check cancellation before starting
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			
-			// Step 0: Get client IDs  
-			onProgress?.invoke("Getting Client IDs - Step 1 of 10")
+
+			// Step 0: Get client IDs
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_client_ids))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step0_GetClientIds() ?: return@withContext AllocationResult(false, "Failed to get client IDs")
+			step0_GetClientIds() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_client_ids))
 			Log.i(TAG, "✓ Step 0: Got client IDs")
-			
+
 			// Step 7: Get config
-			onProgress?.invoke("Getting Configuration - Step 2 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_config))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step7_GetConfig() ?: return@withContext AllocationResult(false, "Failed to get config")
+			step7_GetConfig() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_config))
 			Log.i(TAG, "✓ Step 7: Got config")
-			
+
 			// Step 8: Start session
-			onProgress?.invoke("Starting Session - Step 3 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_start_session))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step8_StartSession(entitlementId) ?: return@withContext AllocationResult(false, "Failed to start session — $step8ErrorDetails")
+			step8_StartSession(entitlementId) ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_start_session, step8ErrorDetails))
 			Log.i(TAG, "✓ Step 8: Started session")
-			
+
 			// Step 8a: Get gkClientId auth code
-			onProgress?.invoke("Getting Tokens - Step 4 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_tokens))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step8a_GetAuthCode() ?: return@withContext AllocationResult(false, "Failed to get gkClientId auth code")
+			step8a_GetAuthCode() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_auth_code))
 			Log.i(TAG, "✓ Step 8a: Got gkClientId auth code")
-			
+
 			// Step 8b: Get ps3GkClientId/streamServerClientId auth code
-			onProgress?.invoke("Getting Server Tokens - Step 5 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_server_tokens))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step8b_GetServerAuthCode() ?: return@withContext AllocationResult(false, "Failed to get server auth code")
+			step8b_GetServerAuthCode() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_server_auth_code))
 			Log.i(TAG, "✓ Step 8b: Got server auth code")
-			
+
 			// Step 9: Authorize session
-			onProgress?.invoke("Authorizing Session - Step 6 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_authorize_session))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step9_AuthorizeSession() ?: return@withContext AllocationResult(false, "Failed to authorize session")
+			step9_AuthorizeSession() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_authorize_session))
 			Log.i(TAG, "✓ Step 9: Authorized session")
-			
+
 			// Step 10: Lock session
-			onProgress?.invoke("Locking Session - Step 7 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_lock_session))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			step10_LockSession() ?: return@withContext AllocationResult(false, "Failed to lock session")
+			step10_LockSession() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_lock_session))
 			Log.i(TAG, "✓ Step 10: Locked session")
-			
+
 			// Step 11: Get datacenters
-			onProgress?.invoke("Getting Datacenters - Step 8 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_datacenters))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			val datacenters = step11_GetDatacenters() ?: return@withContext AllocationResult(false, "Failed to get datacenters")
+			val datacenters = step11_GetDatacenters() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_datacenters))
 			Log.i(TAG, "✓ Step 11: Got ${datacenters.length()} datacenters")
-			
+
 			// Step 12: Select datacenter (use first one for now)
-			onProgress?.invoke("Pinging Datacenters - Step 8 of 10")
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_pinging_datacenters))
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			val datacenter = step12_SelectDatacenter(datacenters) ?: return@withContext AllocationResult(false, "No datacenters available")
-			onProgress?.invoke("Selecting Datacenter ($datacenter) - Step 9 of 10")
+			val datacenter = step12_SelectDatacenter(datacenters) ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_no_datacenters))
+			onProgress?.invoke(preferences.getString(R.string.gaikai_progress_selecting_datacenter, datacenter))
 			Log.i(TAG, "✓ Step 12: Selected datacenter: $datacenter")
-			
+
 			// Step 13: Allocate slot (with polling)
 			if (allocationRetryCount == 0) {
-				onProgress?.invoke("Allocating Streaming Slot - Step 10 of 10")
+				onProgress?.invoke(preferences.getString(R.string.gaikai_progress_allocating_slot))
 			}
 			if (isCancelled()) {
-				return@withContext AllocationResult(false, "Allocation cancelled")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocation_cancelled))
 			}
-			val allocation = step13_AllocateSlot() ?: return@withContext AllocationResult(false, "Failed to allocate slot")
+			val allocation = step13_AllocateSlot() ?: return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_allocate_slot))
 			Log.i(TAG, "✓ Step 13: Slot allocated!")
 			
 			// Parse allocation response - Match Qt exactly (lines 1694-1707)
@@ -213,7 +214,7 @@ class PSGaikaiStreaming(
 			if (launchSlot == null || launchSlot.length() == 0)
 			{
 				Log.e(TAG, "Allocation response missing launchSlot")
-				return@withContext AllocationResult(false, "Allocation response invalid: missing launchSlot")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_missing_launch_slot))
 			}
 			
 			// Qt lines 1702-1707: Extract fields EXACTLY as Qt does
@@ -246,7 +247,7 @@ class PSGaikaiStreaming(
 				Log.e(TAG, "  serverIp: '$serverIp'")
 				Log.e(TAG, "  serverPort: $serverPort")
 				Log.e(TAG, "  launchSpec length: ${launchSpec.length}")
-				return@withContext AllocationResult(false, "Allocation response incomplete")
+				return@withContext AllocationResult(false, preferences.getString(R.string.gaikai_error_response_incomplete))
 			}
 			
 			// Extract PSN wrapper type from private IP's last octet (Qt lines 1709-1722)
@@ -919,7 +920,7 @@ catch (e: Exception)
 				}
 				
 				// Build retry message (Qt lines 1110-1116)
-				val message = "Closing old session - Attempt $lockSessionRetryCount"
+				val message = preferences.getString(R.string.gaikai_progress_closing_old_session, lockSessionRetryCount)
 				onProgress?.invoke(message)
 				Log.i(TAG, message)
 				Log.i(TAG, "Lock not acquired, retrying in $pollFrequency seconds... (attempt $lockSessionRetryCount of $MAX_LOCK_SESSION_RETRIES)")
@@ -1079,7 +1080,7 @@ catch (e: Exception)
 				selectedDatacenterPort = selectedDc.getInt("port")
 				
 				// Submit to /datacenters/select (skip validation, go straight to submission)
-				return submitDatacenterSelection(dummyPingResult, false)  // false = skip validation
+				return submitDatacenterSelection(JSONArray().put(dummyPingResult), dummyPingResult, false)  // false = skip validation
 			}
 			
 			// Auto-select: Ping all datacenters (Qt lines 1259-1308)
@@ -1096,12 +1097,12 @@ catch (e: Exception)
 			persistDatacenterPicker(datacenters, pingResults)
 			
 			// Select best datacenter based on ping results (Qt lines 1310-1365)
-			val bestPingResult = if (pingResults.length() > 0)
+			val (bestPingResult, submittedPingResults) = if (pingResults.length() > 0)
 			{
 				// Find datacenter with lowest RTT (Qt lines 1315-1324)
 				var bestResult = pingResults.getJSONObject(0)
 				var bestRtt = bestResult.getInt("rtt")
-				
+
 				for (i in 1 until pingResults.length())
 				{
 					val result = pingResults.getJSONObject(i)
@@ -1112,9 +1113,12 @@ catch (e: Exception)
 						bestRtt = rtt
 					}
 				}
-				
+
 				Log.i(TAG, "Step 12: Best datacenter: ${bestResult.getString("dataCenter")} with ${bestRtt}ms RTT")
-				bestResult
+				// Submit every tested datacenter's ping result, not just the winner — the
+				// server uses the full set (not just one row) to gauge the client's network
+				// picture when it builds the session's bandwidth ladder.
+				bestResult to pingResults
 			}
 			else
 			{
@@ -1130,11 +1134,11 @@ catch (e: Exception)
 				fallbackResult.put("port", firstDc.optInt("port"))
 				fallbackResult.put("publicIp", firstDc.optString("publicIp"))
 				fallbackResult.put("maxBandwidth", firstDc.optInt("maxBandwidth"))
-				fallbackResult
+				fallbackResult to JSONArray().put(fallbackResult)
 			}
-			
+
 			// Submit with validation (auto-selected datacenters must have <80ms ping)
-			return submitDatacenterSelection(bestPingResult, true)  // true = validate ping
+			return submitDatacenterSelection(submittedPingResults, bestPingResult, true)  // true = validate ping
 		}
 		catch (e: PingTimeoutException)
 		{
@@ -1320,7 +1324,7 @@ catch (e: Exception)
 			if (dataMigration)
 			{
 				val migrationPercent = allocation.optInt("dataMigrationPercentageComplete", 0)
-				retryMessage = "Migrating data ($migrationPercent%) - Attempt $allocationRetryCount"
+				retryMessage = preferences.getString(R.string.gaikai_progress_migrating_data, migrationPercent, allocationRetryCount)
 				Log.i(TAG, "Data migration progress: $migrationPercent%")
 			}
 			else
@@ -1338,11 +1342,11 @@ catch (e: Exception)
 				// Build retry message with queue position if available (Qt lines 1672-1676)
 				retryMessage = if (queuePosition >= 0)
 				{
-					"Allocating streaming slot - Queue position: $queuePosition - Attempt $allocationRetryCount"
+					preferences.getString(R.string.gaikai_progress_allocating_slot_queue, queuePosition, allocationRetryCount)
 				}
 				else
 				{
-					"Allocating streaming slot - Attempt $allocationRetryCount"
+					preferences.getString(R.string.gaikai_progress_allocating_slot_attempt, allocationRetryCount)
 				}
 			}
 			
@@ -1448,7 +1452,7 @@ catch (e: Exception)
 		spec.put("clientWidth", clientWidth)
 		spec.put("clientHeight", clientHeight)
 		spec.put("adaptiveStreamMode", "resize")
-		spec.put("useClientBwLadder", false)
+		spec.put("useClientBwLadder", true)
 
 		val requestedBitrateKbps = if (serviceType == "pscloud")
 		{
@@ -1618,15 +1622,15 @@ catch (e: Exception)
 	 * Helper: Submit datacenter selection to Gaikai API
 	 * (Qt lines 1435-1461)
 	 */
-	private fun submitDatacenterSelection(pingResult: JSONObject, validatePing: Boolean): String?
+	private fun submitDatacenterSelection(pingResults: JSONArray, selectedPingResult: JSONObject, validatePing: Boolean): String?
 	{
 		try
 		{
-			val datacenterName = pingResult.getString("dataCenter")
-			val rtt = pingResult.getInt("rtt")
-			val mtuIn = pingResult.getInt("mtu_in")
-			val mtuOut = pingResult.getInt("mtu_out")
-			
+			val datacenterName = selectedPingResult.getString("dataCenter")
+			val rtt = selectedPingResult.getInt("rtt")
+			val mtuIn = selectedPingResult.getInt("mtu_in")
+			val mtuOut = selectedPingResult.getInt("mtu_out")
+
 			// Validate ping for auto-selected datacenters (Qt lines 1393-1404)
 			// Manual selection bypasses this check
 			if (validatePing && rtt > 80)
@@ -1634,17 +1638,17 @@ catch (e: Exception)
 				Log.w(TAG, "Selected datacenter ping too high: $datacenterName RTT: ${rtt}ms (max: 80ms)")
 				throw PingTimeoutException("Ping must be < 80ms to start a cloud session. Selected datacenter $datacenterName has ${rtt}ms latency.")
 			}
-			
+
 			// Store for Step 13
-			selectedDatacenterPingResult = pingResult
+			selectedDatacenterPingResult = selectedPingResult
 			selectedDatacenter = datacenterName
-			selectedDatacenterPort = pingResult.getInt("port")
-			
+			selectedDatacenterPort = selectedPingResult.getInt("port")
+
 			Log.i(TAG, "Step 12: Submitting selection - $datacenterName (RTT: ${rtt}ms, MTU in: $mtuIn, out: $mtuOut)")
-			
+
 			// Submit to /datacenters/select (Qt lines 1435-1461)
 			val url = "${GaikaiConsts.GAIKAI_BASE}/sessions/$gaikaiSessionId/datacenters/select"
-			
+
 			val headers = mapOf(
 				"Content-Type" to "application/json",
 				"User-Agent" to userAgentString,
@@ -1652,11 +1656,13 @@ catch (e: Exception)
 				"X-Gaikai-Session" to configKey,
 				"X-Gaikai-SessionId" to gaikaiSessionId
 			)
-			
-			// Body needs BOTH requestGameSpecification AND pingResults (Qt line 1435-1436)
+
+			// requestGameSpecification is required here — omitting it 500s server-side
+			// ("rgs is null"). pingResults carries every tested datacenter (not just the one
+			// picked) so the server sees the full network picture behind the selection.
 			val body = JSONObject()
 			body.put("requestGameSpecification", requestGameSpec)
-			body.put("pingResults", JSONArray().put(pingResult))
+			body.put("pingResults", pingResults)
 			
 			val response = HttpClient.post(url, body.toString(), headers)
 			

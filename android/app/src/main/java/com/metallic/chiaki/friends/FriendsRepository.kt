@@ -4,6 +4,7 @@ package com.metallic.chiaki.friends
 
 import android.util.Log
 import com.metallic.chiaki.common.Preferences
+import com.pylux.stream.R
 import com.metallic.chiaki.trophy.PsnTrophyTokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -45,7 +46,7 @@ class FriendsRepository(private val preferences: Preferences)
 			}
 
 			val token = tokenManager.getValidToken()
-				?: return@withContext FriendsResult.Error("Could not authenticate with PSN for friends data")
+				?: return@withContext FriendsResult.Error(preferences.getString(R.string.friends_error_auth_failed))
 
 			val accountIds = FriendsService.fetchFriendAccountIds(token)
 			if (accountIds.isEmpty())
@@ -77,7 +78,7 @@ class FriendsRepository(private val preferences: Preferences)
 		catch (e: Exception)
 		{
 			Log.e(TAG, "fetchFriends failed", e)
-			FriendsResult.Error(e.message ?: "Failed to fetch friends")
+			FriendsResult.Error(e.message ?: preferences.getString(R.string.friends_error_fetch_failed))
 		}
 	}
 
@@ -87,10 +88,10 @@ class FriendsRepository(private val preferences: Preferences)
 		try
 		{
 			val token = tokenManager.getValidToken()
-				?: return@withContext ConversationResult.Error("Could not authenticate with PSN for messaging")
+				?: return@withContext ConversationResult.Error(preferences.getString(R.string.friends_error_auth_failed_messaging))
 
 			val groupId = FriendsService.createOrGetDmGroup(token, friendAccountId)
-				?: return@withContext ConversationResult.Error("Could not start a conversation with this friend")
+				?: return@withContext ConversationResult.Error(preferences.getString(R.string.friends_error_start_conversation_failed))
 
 			val myAccountId = resolveMyAccountId(token)
 			val messages = FriendsService.fetchConversation(token, groupId, myAccountId)
@@ -100,13 +101,13 @@ class FriendsRepository(private val preferences: Preferences)
 				// yet" apart from "couldn't check", and would wipe an unconfirmed sent message.
 				// groupId is passed through regardless — it was already successfully created above,
 				// so a history-fetch failure shouldn't also block the user from sending.
-				?: return@withContext ConversationResult.Error("Could not load the conversation history", groupId)
+				?: return@withContext ConversationResult.Error(preferences.getString(R.string.friends_error_load_history_failed), groupId)
 			ConversationResult.Success(groupId, messages)
 		}
 		catch (e: Exception)
 		{
 			Log.e(TAG, "openConversation failed for $friendAccountId", e)
-			ConversationResult.Error(e.message ?: "Failed to open conversation")
+			ConversationResult.Error(e.message ?: preferences.getString(R.string.friends_error_open_conversation_failed))
 		}
 	}
 
@@ -116,16 +117,16 @@ class FriendsRepository(private val preferences: Preferences)
 		try
 		{
 			val token = tokenManager.getValidToken()
-				?: return@withContext ConversationResult.Error("Could not authenticate with PSN for messaging")
+				?: return@withContext ConversationResult.Error(preferences.getString(R.string.friends_error_auth_failed_messaging))
 			val myAccountId = resolveMyAccountId(token)
 			val messages = FriendsService.fetchConversation(token, groupId, myAccountId)
-				?: return@withContext ConversationResult.Error("Could not refresh the conversation")
+				?: return@withContext ConversationResult.Error(preferences.getString(R.string.friends_error_refresh_conversation_failed))
 			ConversationResult.Success(groupId, messages)
 		}
 		catch (e: Exception)
 		{
 			Log.e(TAG, "refreshConversation failed for $groupId", e)
-			ConversationResult.Error(e.message ?: "Failed to refresh conversation")
+			ConversationResult.Error(e.message ?: preferences.getString(R.string.friends_error_refresh_conversation_failed_generic))
 		}
 	}
 

@@ -78,7 +78,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
-                android:text="Refresh Consoles List"
+                android:text="@string/remote_play_refresh_consoles_list_button"
                 android:textStyle="bold"
                 android:focusable="true"
 
@@ -109,7 +109,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
-                android:text="Manually Register Console"
+                android:text="@string/remote_play_manually_register_console_button"
                 android:textStyle="bold"
                 android:focusable="true"
 
@@ -140,7 +140,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="16dp"
-                android:text="Manually Add Console"
+                android:text="@string/remote_play_manually_add_console_button"
                 android:textStyle="bold"
                 android:focusable="true"
 

@@ -25,7 +25,7 @@
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif-condensed"
-                android:text="Friends"
+                android:text="@string/action_friends"
                 android:textColor="?attr/colorOnPrimary"
                 android:textSize="20dp"/>
 

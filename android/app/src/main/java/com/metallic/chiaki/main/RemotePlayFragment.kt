@@ -78,7 +78,7 @@ class RemotePlayFragment : Fragment()
 		if (requestCode == REQUEST_PSN_LOGIN && resultCode == android.app.Activity.RESULT_OK)
 		{
 			updateRefreshButtonText()
-			Toast.makeText(requireContext(), "PSN login successful", Toast.LENGTH_SHORT).show()
+			Toast.makeText(requireContext(), R.string.remote_play_psn_login_success_toast, Toast.LENGTH_SHORT).show()
 		}
 	}
 
@@ -94,9 +94,9 @@ class RemotePlayFragment : Fragment()
 		val isLoggedIn = prefs.hasPsnRemotePlayTokens || prefs.hasNpssoToken()
 		
 		binding.refreshPsnLabelButton.text = if (isLoggedIn) {
-			"Refresh Consoles"
+			getString(R.string.remote_play_refresh_consoles_button)
 		} else {
-			"Login to Add Consoles"
+			getString(R.string.remote_play_login_to_add_consoles_button)
 		}
 	}
 
@@ -278,7 +278,7 @@ class RemotePlayFragment : Fragment()
 		val prefs = Preferences(requireContext())
 		if(prefs.hasPsnRemotePlayTokens)
 		{
-			Toast.makeText(requireContext(), "Refreshing consoles list...", Toast.LENGTH_SHORT).show()
+			Toast.makeText(requireContext(), R.string.remote_play_refreshing_consoles_toast, Toast.LENGTH_SHORT).show()
 			viewModel.refreshPsnHosts()
 			expandFloatingActionButton(false)
 			return
@@ -286,7 +286,7 @@ class RemotePlayFragment : Fragment()
 		// Have NPSSO (e.g. signed in via Cloud Play) but no Remote Play tokens yet – exchange now
 		if(prefs.hasNpssoToken())
 		{
-			Toast.makeText(requireContext(), "Setting up PSN for Remote Play...", Toast.LENGTH_SHORT).show()
+			Toast.makeText(requireContext(), R.string.remote_play_setting_up_psn_toast, Toast.LENGTH_SHORT).show()
 			expandFloatingActionButton(false)
 			Thread {
 				val tokenManager = PsnTokenManager(prefs)
@@ -295,13 +295,13 @@ class RemotePlayFragment : Fragment()
 				activity?.runOnUiThread {
 					if(ok)
 					{
-						Toast.makeText(requireContext(), "Refreshing consoles list...", Toast.LENGTH_SHORT).show()
+						Toast.makeText(requireContext(), R.string.remote_play_refreshing_consoles_toast, Toast.LENGTH_SHORT).show()
 						viewModel.refreshPsnHosts()
 						updateRefreshButtonText()
 					}
 					else
 					{
-						Toast.makeText(requireContext(), "Token exchange failed. Try logging in again in Settings.", Toast.LENGTH_LONG).show()
+						Toast.makeText(requireContext(), R.string.remote_play_token_exchange_failed_toast, Toast.LENGTH_LONG).show()
 					}
 				}
 			}.start()
@@ -310,12 +310,12 @@ class RemotePlayFragment : Fragment()
 		// Not logged in - show login dialog
 		expandFloatingActionButton(false)
 		requireContext().alertDialogBuilder()
-			.setTitle("PSN Login Required")
-			.setMessage("Login to automatically discover and add your PS5 consoles.")
-			.setPositiveButton("Login") { _, _ ->
+			.setTitle(R.string.remote_play_login_required_title)
+			.setMessage(R.string.remote_play_login_required_message)
+			.setPositiveButton(R.string.psn_login_title) { _, _ ->
 				launchPsnLogin()
 			}
-			.setNegativeButton("Cancel", null)
+			.setNegativeButton(R.string.action_cancel, null)
 			.create()
 			.show()
 	}
@@ -381,12 +381,12 @@ class RemotePlayFragment : Fragment()
 		// Not logged in to PSN - ask if they want to login or do manual registration
 		// Matches Qt: onRegistDialogRequested when !isPsnLoggedIn
 		requireContext().alertDialogBuilder()
-			.setTitle("Console Setup")
-			.setMessage("Login for automatic console setup or enter console information manually.")
-			.setPositiveButton("Login") { _, _ ->
+			.setTitle(R.string.remote_play_console_setup_title)
+			.setMessage(R.string.remote_play_console_setup_message)
+			.setPositiveButton(R.string.psn_login_title) { _, _ ->
 				launchPsnLogin()
 			}
-			.setNegativeButton("Manual") { _, _ ->
+			.setNegativeButton(R.string.action_manual) { _, _ ->
 				launchManualRegistration(host)
 			}
 			.create()
@@ -398,18 +398,18 @@ class RemotePlayFragment : Fragment()
 				// Matches Qt: onRegistDialogRequested when isPsnLoggedIn && duid
 				Log.i(TAG, "Discovered host has PSN DUID=$duid, showing auto/manual dialog")
 				val message = if(host.isPS5)
-					"Would you like to use automatic registration?"
+					getString(R.string.remote_play_auto_registration_confirm_ps5)
 				else
-					"Would you like to use automatic registration (must be main PS4 console registered to your account)?"
+					getString(R.string.remote_play_auto_registration_confirm_ps4)
 
 				requireContext().alertDialogBuilder()
-					.setTitle("Registration Type")
+					.setTitle(R.string.remote_play_registration_type_title)
 					.setMessage(message)
-					.setPositiveButton("Automatic") { _, _ ->
+					.setPositiveButton(R.string.action_automatic) { _, _ ->
 						Log.i(TAG, "User chose automatic PSN registration for discovered host")
-						showAutoRegistrationDialog(duid, host.name ?: "Console", host.isPS5)
+						showAutoRegistrationDialog(duid, host.name ?: getString(R.string.console_generic_name), host.isPS5)
 					}
-					.setNegativeButton("Manual") { _, _ ->
+					.setNegativeButton(R.string.action_manual) { _, _ ->
 						launchManualRegistration(host)
 					}
 					.create()
@@ -440,7 +440,7 @@ class RemotePlayFragment : Fragment()
 		val statusText = TextView(ctx).apply {
 			textSize = 14f
 			setPadding(0, 24, 0, 0)
-			text = "Starting registration..."
+			text = getString(R.string.remote_play_starting_registration)
 		}
 		layout.addView(progressBar)
 		layout.addView(statusText)
@@ -457,21 +457,21 @@ class RemotePlayFragment : Fragment()
 			onSuccess = { nickname ->
 				dialog?.dismiss()
 				autoRegistration = null
-				Toast.makeText(ctx, "$nickname registered successfully", Toast.LENGTH_SHORT).show()
+				Toast.makeText(ctx, getString(R.string.remote_play_registered_successfully_toast, nickname), Toast.LENGTH_SHORT).show()
 			},
 			onError = { msg ->
 				progressBar.visibility = View.GONE
 				statusText.text = msg
 				// Replace the cancel button with a close button
-				dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.text = "Close"
+				dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.text = getString(R.string.quick_settings_close)
 			}
 		)
 		autoRegistration = registration
 
 		dialog = ctx.alertDialogBuilder()
-			.setTitle("Registering $hostName")
+			.setTitle(getString(R.string.remote_play_registering_title, hostName))
 			.setView(layout)
-			.setNegativeButton("Cancel") { _, _ ->
+			.setNegativeButton(R.string.action_cancel) { _, _ ->
 				registration.cancel()
 				autoRegistration = null
 			}
@@ -513,8 +513,8 @@ class RemotePlayFragment : Fragment()
 		{
 			Log.w(TAG, "No PSN tokens available, showing login prompt")
 			requireContext().alertDialogBuilder()
-				.setTitle("PSN Login Required")
-				.setMessage("You need to log in with your PSN account to connect to consoles over the internet. Please log in from Settings or the Cloud Play tab.")
+				.setTitle(R.string.remote_play_login_required_title)
+				.setMessage(R.string.remote_play_psn_login_required_for_holepunch_message)
 				.setPositiveButton(android.R.string.ok, null)
 				.show()
 			return
@@ -547,18 +547,18 @@ class RemotePlayFragment : Fragment()
 			// Matches Qt: onRegistDialogRequested when isPsnLoggedIn && duid
 			Log.i(TAG, "PSN host NOT registered, showing auto/manual dialog (duid=${host.duid})")
 			val message = if(host.isPS5)
-				"Would you like to use automatic registration?"
+				getString(R.string.remote_play_auto_registration_confirm_ps5)
 			else
-				"Would you like to use automatic registration (must be main PS4 console registered to your account)?"
+				getString(R.string.remote_play_auto_registration_confirm_ps4)
 
 			requireContext().alertDialogBuilder()
-				.setTitle("Registration Type")
+				.setTitle(R.string.remote_play_registration_type_title)
 				.setMessage(message)
-				.setPositiveButton("Automatic") { _, _ ->
+				.setPositiveButton(R.string.action_automatic) { _, _ ->
 					Log.i(TAG, "User chose automatic PSN registration")
-					showAutoRegistrationDialog(host.duid, host.name ?: "Console", host.isPS5)
+					showAutoRegistrationDialog(host.duid, host.name ?: getString(R.string.console_generic_name), host.isPS5)
 				}
-				.setNegativeButton("Manual") { _, _ ->
+				.setNegativeButton(R.string.action_manual) { _, _ ->
 					Log.i(TAG, "User chose manual registration")
 					// For PSN hosts, we don't have a local IP, so launch with broadcast
 					Intent(requireContext(), RegistActivity::class.java).let {

@@ -67,7 +67,7 @@ class ControllerRemapCapture(
 		// background — applying the same drawable it uses so this still matches every other
 		// dialog in the app instead of falling back to the platform default.
 		dialog.window?.setBackgroundDrawableResource(R.drawable.bg_disclaimer_box)
-		dialog.setTitle(action.displayName)
+		dialog.setTitle(context.getString(action.displayNameRes))
 		dialog.setMessage(context.getString(R.string.controller_remap_press_button))
 		dialog.setButton(AlertDialog.BUTTON_NEGATIVE, context.getString(R.string.action_cancel)) { _, _ ->
 			cancelListening()

@@ -237,9 +237,9 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				Log.i("StreamActivity", "handleOnBackPressed: isTv=${isTv()}")
 				if (isTv()) {
 					alertDialogBuilder()
-						.setMessage("Disconnect from stream?")
-						.setPositiveButton("Disconnect") { _, _ -> finish() }
-						.setNegativeButton("Cancel", null)
+						.setMessage(R.string.stream_disconnect_confirm_message)
+						.setPositiveButton(R.string.stream_disconnect_button) { _, _ -> finish() }
+						.setNegativeButton(R.string.action_cancel, null)
 						.show()
 				} else {
 					quickSettingsPanel.toggle()

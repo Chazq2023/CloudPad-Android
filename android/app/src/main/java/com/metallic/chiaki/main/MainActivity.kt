@@ -168,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         val view = layoutInflater.inflate(R.layout.dialog_disclaimer, null)
         val dialog = alertDialogBuilder()
             .setView(view)
-            .setPositiveButton("Acknowledge") { _, _ -> onAcknowledged() }
+            .setPositiveButton(R.string.main_disclaimer_acknowledge_button) { _, _ -> onAcknowledged() }
             .setCancelable(false)
             .create()
         dialog.show()
@@ -654,9 +654,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun showExitConfirmation() {
         alertDialogBuilder()
-            .setMessage("Exit app?")
-            .setPositiveButton("Exit") { _, _ -> finish() }
-            .setNegativeButton("Cancel", null)
+            .setMessage(R.string.main_exit_app_message)
+            .setPositiveButton(R.string.action_exit) { _, _ -> finish() }
+            .setNegativeButton(R.string.action_cancel, null)
             .show()
     }
 

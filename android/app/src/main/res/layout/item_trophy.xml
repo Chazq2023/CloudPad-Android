@@ -95,10 +95,10 @@
         android:paddingEnd="8dp"
         android:paddingTop="3dp"
         android:paddingBottom="3dp"
-        android:text="BRONZE"
         android:textColor="#000000"
         android:textSize="9sp"
         android:textStyle="bold"
+        android:textAllCaps="true"
         android:background="@drawable/bg_trophy_bronze" />
 
 </LinearLayout>

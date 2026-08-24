@@ -73,7 +73,7 @@ class FastScrollerHelper(
 	
 	fun updateVisibility() {
 		val gameCount = gamesProvider().size
-		gameCountText.text = "$gameCount ${if (gameCount == 1) "game" else "games"}"
+		gameCountText.text = recyclerView.context.resources.getQuantityString(com.pylux.stream.R.plurals.cloud_game_count, gameCount, gameCount)
 		gameCountText.visibility = if (gameCount > 0) View.VISIBLE else View.GONE
 		val show = !isTv && gameCount > 10
 		thumbView.visibility = if (show) View.VISIBLE else View.GONE

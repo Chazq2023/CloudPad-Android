@@ -57,10 +57,22 @@ fun itemIdToFilterMode(itemId: Int): TrophyFilterMode = when (itemId)
 	else -> TrophyFilterMode.DEFAULT
 }
 
+/** [TrophyType.name] is the raw Kotlin enum constant (always English, e.g. "BRONZE") — used for
+ *  the rarity badge's background lookup, but never for display text. This is the translated
+ *  equivalent for the badge label. */
+fun trophyTypeLabelRes(type: TrophyType): Int = when (type)
+{
+	TrophyType.BRONZE -> R.string.trophy_filter_bronze
+	TrophyType.SILVER -> R.string.trophy_filter_silver
+	TrophyType.GOLD -> R.string.trophy_filter_gold
+	TrophyType.PLATINUM -> R.string.trophy_filter_platinum
+}
+
 /** Shared by [TrophiesActivity] and [QuickSettingsPanel]'s in-stream Trophies tab so both
  *  present identical group-header + trophy-row structure from the same fetched detail, under
  *  whichever sort/filter the user currently has selected. */
 fun buildTrophyListItems(
+	context: Context,
 	detail: TrophyTitleDetail,
 	sortMode: TrophySortMode = TrophySortMode.DEFAULT,
 	filterMode: TrophyFilterMode = TrophyFilterMode.DEFAULT
@@ -107,7 +119,7 @@ fun buildTrophyListItems(
 			}
 			else if (!fallbackHeaderShown)
 			{
-				items.add(TrophyListItem.GroupHeader("Trophies"))
+				items.add(TrophyListItem.GroupHeader(context.getString(R.string.trophy_group_fallback_header)))
 				fallbackHeaderShown = true
 			}
 			groupTrophies.forEach { items.add(TrophyListItem.TrophyRow(it)) }
@@ -125,15 +137,15 @@ fun showTrophyDetailDialog(context: Context, trophy: Trophy)
 	val view = LayoutInflater.from(context).inflate(R.layout.dialog_trophy_detail, null)
 
 	view.findViewById<TextView>(R.id.trophyDetailName).text =
-		if (isHiddenLocked) "Hidden Trophy" else trophy.name
+		if (isHiddenLocked) context.getString(R.string.trophy_hidden_name) else trophy.name
 
 	view.findViewById<TextView>(R.id.trophyDetailDescription).text = if (isHiddenLocked)
-		"Complete this trophy to reveal its details"
+		context.getString(R.string.trophy_hidden_description)
 	else
 		trophy.detail
 
 	val typeBadge = view.findViewById<TextView>(R.id.trophyDetailTypeBadge)
-	typeBadge.text = trophy.type.name
+	typeBadge.text = context.getString(trophyTypeLabelRes(trophy.type))
 	typeBadge.setBackgroundResource(
 		when (trophy.type)
 		{
@@ -152,7 +164,7 @@ fun showTrophyDetailDialog(context: Context, trophy: Trophy)
 	{
 		earnedDateText.visibility = View.VISIBLE
 		val format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-		earnedDateText.text = "Earned ${format.format(Date(trophy.earnedDateTimeMs))}"
+		earnedDateText.text = context.getString(R.string.trophy_earned_date_format, format.format(Date(trophy.earnedDateTimeMs)))
 	}
 	else
 	{
@@ -172,7 +184,7 @@ fun showTrophyDetailDialog(context: Context, trophy: Trophy)
 
 	context.alertDialogBuilder()
 		.setView(view)
-		.setPositiveButton("Close", null)
+		.setPositiveButton(R.string.quick_settings_close, null)
 		.show()
 }
 
@@ -251,13 +263,13 @@ class TrophyAdapter(
 
 			val isHiddenLocked = trophy.hidden && !trophy.earned
 
-			binding.trophyItemName.text = if (isHiddenLocked) "Hidden Trophy" else trophy.name
+			binding.trophyItemName.text = if (isHiddenLocked) binding.root.context.getString(R.string.trophy_hidden_name) else trophy.name
 			binding.trophyItemDetail.text = if (isHiddenLocked)
-				"Complete this trophy to reveal its details"
+				binding.root.context.getString(R.string.trophy_hidden_description)
 			else
 				trophy.detail
 
-			binding.trophyItemTypeBadge.text = trophy.type.name
+			binding.trophyItemTypeBadge.text = binding.root.context.getString(trophyTypeLabelRes(trophy.type))
 			binding.trophyItemTypeBadge.setBackgroundResource(
 				when (trophy.type)
 				{
@@ -275,7 +287,7 @@ class TrophyAdapter(
 			{
 				binding.trophyItemEarnedDate.visibility = View.VISIBLE
 				val format = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-				binding.trophyItemEarnedDate.text = "Earned ${format.format(Date(trophy.earnedDateTimeMs))}"
+				binding.trophyItemEarnedDate.text = binding.root.context.getString(R.string.trophy_earned_date_format, format.format(Date(trophy.earnedDateTimeMs)))
 			}
 			else
 			{

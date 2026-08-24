@@ -97,6 +97,10 @@ class Preferences(context: Context)
 
 	private val resources = context.resources
 
+	// Lets non-UI classes that only hold a Preferences instance (no Context of their own, e.g.
+	// PSGaikaiStreaming) resolve user-facing string resources for progress/error messages.
+	fun getString(@StringRes resId: Int, vararg formatArgs: Any): String = resources.getString(resId, *formatArgs)
+
 	val discoveryEnabledKey get() = resources.getString(R.string.preferences_discovery_enabled_key)
 	var discoveryEnabled
 		get() = sharedPreferences.getBoolean(discoveryEnabledKey, true)
@@ -1038,6 +1042,11 @@ class Preferences(context: Context)
 	}
 
 	val themeColourKey get() = resources.getString(R.string.preferences_theme_colour_key)
+
+	// No get/set here — state lives in AppCompatDelegate.getApplicationLocales() /
+	// setApplicationLocales() (AndroidX per-app language), not SharedPreferences. See
+	// SettingsFragment's DataStore.getString/putString for the "preferences_app_language_key" branch.
+	val appLanguageKey get() = resources.getString(R.string.preferences_app_language_key)
 
 	fun getThemeColour(): String = sharedPreferences.getString(themeColourKey, "pink") ?: "pink"
 

@@ -877,7 +877,7 @@ class QuickSettingsPanel(
 	private fun renderTrophyList(gameName: String): Boolean
 	{
 		val detail = currentTrophyDetail ?: return false
-		val items = buildTrophyListItems(detail, trophySortMode, trophyFilterMode)
+		val items = buildTrophyListItems(activity, detail, trophySortMode, trophyFilterMode)
 
 		if(items.isEmpty())
 		{
@@ -932,7 +932,7 @@ class QuickSettingsPanel(
 
 	private fun showTrophiesSummary(summary: TrophyTitleSummary)
 	{
-		panel.quickSettingsTrophiesProgressText.text = "${summary.progressPercent}% Complete"
+		panel.quickSettingsTrophiesProgressText.text = activity.getString(R.string.trophy_progress_percent_complete, summary.progressPercent)
 		panel.quickSettingsTrophiesProgressText.visibility = View.VISIBLE
 		panel.quickSettingsTrophiesPlatinumCount.text = summary.earnedTrophies.platinum.toString()
 		panel.quickSettingsTrophiesGoldCount.text = summary.earnedTrophies.gold.toString()
@@ -1410,7 +1410,7 @@ class QuickSettingsPanel(
 	 *  option, followed by each pinged datacenter as "name (RTTms)". */
 	private fun datacenterEntries(json: String): Pair<List<String>, List<String>>
 	{
-		val entries = mutableListOf("Auto (Best Ping)")
+		val entries = mutableListOf(activity.getString(R.string.cloud_datacenter_auto_option))
 		val values = mutableListOf("Auto")
 		if(json.isNotEmpty())
 		{
@@ -2094,13 +2094,13 @@ class QuickSettingsPanel(
 	private fun buildRemapItems(): List<RemapItem>
 	{
 		val items = mutableListOf<RemapItem>()
-		var lastGroup = ""
+		var lastGroupRes = 0
 		for(action in ControllerAction.values())
 		{
-			if(action.group != lastGroup)
+			if(action.groupRes != lastGroupRes)
 			{
-				items.add(RemapItem.Header(action.group))
-				lastGroup = action.group
+				items.add(RemapItem.Header(activity.getString(action.groupRes)))
+				lastGroupRes = action.groupRes
 			}
 			items.add(RemapItem.ActionItem(action, currentMapping[action]))
 		}

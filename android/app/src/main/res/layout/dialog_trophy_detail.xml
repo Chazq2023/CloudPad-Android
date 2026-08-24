@@ -78,7 +78,8 @@
                 android:paddingBottom="3dp"
                 android:textColor="#000000"
                 android:textSize="10sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:textAllCaps="true" />
 
         </LinearLayout>
 

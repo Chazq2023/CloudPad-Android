@@ -6,6 +6,7 @@ import android.content.Context
 import android.util.Log
 import com.metallic.chiaki.common.*
 import com.metallic.chiaki.lib.*
+import com.pylux.stream.R
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
@@ -48,7 +49,7 @@ class PsnAutoRegistration(
 				val prefs = Preferences(context)
 				if(!prefs.hasPsnRemotePlayTokens)
 				{
-					postError("No PSN tokens. Please log in first.")
+					postError(context.getString(R.string.remote_play_auto_regist_no_tokens))
 					return@Thread
 				}
 
@@ -58,71 +59,71 @@ class PsnAutoRegistration(
 				val token = tokenManager.getValidToken()
 				if(token == null)
 				{
-					postError("Failed to get valid PSN token")
+					postError(context.getString(R.string.remote_play_auto_regist_invalid_token))
 					return@Thread
 				}
 				if(cancelled) return@Thread
 
 				// Step 1: Initialize holepunch session
-				postStatus("Initializing...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_initializing))
 				val hpSession = HolepunchSession(token)
 				holepunchSession = hpSession
 
 				// Step 2: UPnP (non-fatal)
-				postStatus("Discovering network...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_discovering_network))
 				val upnpErr = hpSession.upnpDiscover()
 				if(!upnpErr.isSuccess)
 					Log.w(TAG, "UPnP discover failed (non-fatal): $upnpErr")
 				if(cancelled) { cleanup(); return@Thread }
 
 				// Step 3: Create session
-				postStatus("Connecting to PSN...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_connecting_psn))
 				val createErr = hpSession.create()
 				if(!createErr.isSuccess)
 				{
 					cleanup()
-					postError("Failed to create PSN session")
+					postError(context.getString(R.string.remote_play_auto_regist_create_session_failed))
 					return@Thread
 				}
 				if(cancelled) { cleanup(); return@Thread }
 
 				// Step 4: Create offer
-				postStatus("Setting up connection...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_setting_up_connection))
 				val offerErr = hpSession.createOffer()
 				if(!offerErr.isSuccess)
 				{
 					cleanup()
-					postError("Failed to create control offer")
+					postError(context.getString(R.string.remote_play_auto_regist_create_offer_failed))
 					return@Thread
 				}
 				if(cancelled) { cleanup(); return@Thread }
 
 				// Step 5: Start for console
-				postStatus("Contacting $hostName...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_contacting_host, hostName))
 				val duidBytes = hexStringToBytes(duid)
 				val consoleType = if(isPS5) HolepunchConsoleType.PS5 else HolepunchConsoleType.PS4
 				val startErr = hpSession.start(duidBytes, consoleType)
 				if(!startErr.isSuccess)
 				{
 					cleanup()
-					postError("Console not responding")
+					postError(context.getString(R.string.remote_play_auto_regist_console_not_responding))
 					return@Thread
 				}
 				if(cancelled) { cleanup(); return@Thread }
 
 				// Step 6: Punch hole
-				postStatus("Establishing connection...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_establishing_connection))
 				val punchErr = hpSession.punchHole(HolepunchPortType.CTRL)
 				if(!punchErr.isSuccess)
 				{
 					cleanup()
-					postError("Failed to establish connection")
+					postError(context.getString(R.string.remote_play_auto_regist_establish_connection_failed))
 					return@Thread
 				}
 				if(cancelled) { cleanup(); return@Thread }
 
 				// Step 7: Create native session with auto_regist
-				postStatus("Registering $hostName...")
+				postStatus(context.getString(R.string.remote_play_auto_regist_registering_status, hostName))
 				val connectInfo = ConnectInfo(
 					ps5 = isPS5,
 					host = "",
@@ -157,14 +158,14 @@ class PsnAutoRegistration(
 									postSuccess(event.host.serverNickname)
 								}, { error ->
 									Log.e(TAG, "Failed to save registered host", error)
-									postError("Registration succeeded but failed to save")
+									postError(context.getString(R.string.remote_play_auto_regist_save_failed))
 								})
 								.addTo(disposable)
 						}
 						is QuitEvent ->
 						{
 							if(event.reason.isError)
-								postError("Registration failed: ${event.reasonString ?: "unknown error"}")
+								postError(context.getString(R.string.remote_play_auto_regist_failed_format, event.reasonString ?: context.getString(R.string.remote_play_auto_regist_unknown_error)))
 						}
 						else -> {}
 					}
@@ -175,13 +176,13 @@ class PsnAutoRegistration(
 			{
 				Log.e(TAG, "Failed to create session", e)
 				cleanup()
-				postError("Failed to create session")
+				postError(context.getString(R.string.remote_play_auto_regist_create_session_exception))
 			}
 			catch(e: Exception)
 			{
 				Log.e(TAG, "Registration failed", e)
 				cleanup()
-				postError("Registration failed: ${e.message}")
+				postError(context.getString(R.string.remote_play_auto_regist_failed_format, e.message ?: "null"))
 			}
 		}.start()
 	}

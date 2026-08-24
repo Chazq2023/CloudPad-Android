@@ -11,7 +11,9 @@ import android.os.Bundle
 import android.text.InputType
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.ContextCompat
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.*
@@ -28,6 +30,25 @@ import com.metallic.chiaki.common.importSettingsFromUri
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.addTo
 import kotlinx.coroutines.launch
+
+/** Value = "system" (follow the device's language) or a BCP-47 language tag (e.g. "de-DE"),
+ *  applied via AppCompatDelegate.setApplicationLocales() — see DataStore.getString/putString
+ *  for the "preferences_app_language_key" branch. English (en-US/en-GB) needs no translated
+ *  resources; every other entry needs a matching values-<qualifier>/strings.xml. */
+private val APP_LANGUAGES = listOf(
+	"system" to "System Default",
+	"en-US" to "United States — English",
+	"en-GB" to "United Kingdom — English",
+	"de-DE" to "Germany — Deutsch",
+	"fr-FR" to "France — Français",
+	"fi-FI" to "Finland — Suomi",
+	"it-IT" to "Italy — Italiano",
+	"es-ES" to "Spain — Español",
+	"nl-NL" to "Netherlands — Nederlands",
+	"pt-BR" to "Brazil — Português",
+	"ja-JP" to "Japan — 日本語",
+	"ko-KR" to "Korea — 한국어"
+)
 
 class DataStore(val preferences: Preferences): PreferenceDataStore()
 {
@@ -73,6 +94,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.cloudDatacenterPscloudKey -> preferences.getCloudDatacenterPscloud()
 		preferences.themeColourKey -> preferences.getThemeColour()
 		preferences.imageProcessingKey -> preferences.imageProcessing
+		preferences.appLanguageKey -> AppCompatDelegate.getApplicationLocales().get(0)?.toLanguageTag() ?: "system"
 		"locale_display" -> preferences.getCloudStoreLocale()
 		else -> defValue
 	}
@@ -102,6 +124,14 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.cloudDatacenterPsnowKey -> preferences.setCloudDatacenterPsnow(value ?: "Auto")
 			preferences.cloudDatacenterPscloudKey -> preferences.setCloudDatacenterPscloud(value ?: "Auto")
 			preferences.themeColourKey -> preferences.setThemeColour(value ?: "pink")
+			preferences.appLanguageKey ->
+			{
+				val locales = if(value == null || value == "system")
+					LocaleListCompat.getEmptyLocaleList()
+				else
+					LocaleListCompat.forLanguageTags(value)
+				AppCompatDelegate.setApplicationLocales(locales)
+			}
 			preferences.imageProcessingKey -> preferences.imageProcessing = value ?: "off"
 			"locale_display" -> value?.let(preferences::setUserSelectedCloudStoreLocale)
 		}
@@ -195,6 +225,11 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_fps_key))?.let {
 			it.entryValues = Preferences.fpsAll.map { fps -> fps.value }.toTypedArray()
 			it.entries = Preferences.fpsAll.map { fps -> getString(fps.title) }.toTypedArray()
+		}
+
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_app_language_key))?.let {
+			it.entryValues = APP_LANGUAGES.map { (tag, _) -> tag }.toTypedArray()
+			it.entries = APP_LANGUAGES.map { (_, label) -> label }.toTypedArray()
 		}
 
 		// Populate cloud datacenter dropdowns dynamically from saved ping results

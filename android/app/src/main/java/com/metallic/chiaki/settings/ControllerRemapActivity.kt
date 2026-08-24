@@ -192,11 +192,11 @@ class ControllerRemapActivity : AppCompatActivity() {
 
     private fun buildItems(): List<RemapItem> {
         val items = mutableListOf<RemapItem>()
-        var lastGroup = ""
+        var lastGroupRes = 0
         for (action in ControllerAction.values()) {
-            if (action.group != lastGroup) {
-                items.add(RemapItem.Header(action.group))
-                lastGroup = action.group
+            if (action.groupRes != lastGroupRes) {
+                items.add(RemapItem.Header(getString(action.groupRes)))
+                lastGroupRes = action.groupRes
             }
             items.add(RemapItem.ActionItem(action, currentMapping[action]))
         }
@@ -317,7 +317,7 @@ class ActionViewHolder(
     private val currentMappingView: TextView = itemView.findViewById(R.id.currentMapping)
 
     fun bind(action: ControllerAction, input: PhysicalInput?) {
-        actionNameView.text = action.displayName
+        actionNameView.text = itemView.context.getString(action.displayNameRes)
         currentMappingView.text = input?.displayName()
             ?: itemView.context.getString(R.string.controller_remap_not_mapped)
         itemView.setOnClickListener { onActionClick(action) }

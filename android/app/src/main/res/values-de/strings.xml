@@ -1,0 +1,685 @@
+<resources>
+    <string name="title_main">CloudPad</string>
+    <string name="title_settings">Einstellungen</string>
+    <string name="tab_remote_play">Remote Play</string>
+    <string name="tab_cloud_play">Cloud Play</string>
+    <string name="error">Fehler</string>
+    <string name="error_network_title">Netzwerkfehler</string>
+    <string name="action_retry">Wiederholen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Abbrechen</string>
+    <string name="action_back">Zurück</string>
+
+    <string name="controller_remap_title">Controller-Layout</string>
+    <string name="controller_remap_preference_title">Controller neu belegen</string>
+    <string name="controller_remap_preference_summary">Tastenbelegung für deinen Controller anpassen</string>
+    <string name="controller_remap_press_button">Halte eine Taste gedrückt und drücke dann eine weitere für eine Kombination, oder tippe einmal für eine einzelne Taste. Bewege einen Stick oder Trigger, um eine Achse zuzuordnen.</string>
+    <string name="controller_remap_modifier_held">Modifikator: %1$s\n\nDrücke jetzt die Auslösetaste oder bewege einen Stick/Trigger für eine Kombination – oder lasse %1$s los, um als einzelne Taste zu speichern.</string>
+    <string name="controller_remap_not_mapped">Nicht zugewiesen</string>
+    <string name="controller_remap_clear">Löschen</string>
+    <string name="controller_remap_reset_title">Auf Standard zurücksetzen</string>
+    <string name="controller_remap_reset_message">Alle Tastenbelegungen auf das Standardlayout zurücksetzen?</string>
+    <string name="controller_remap_reset_confirm">Zurücksetzen</string>
+    <string name="controller_remap_restore_defaults">Auf Standard zurücksetzen</string>
+    <string name="alert_message_standby_wakeup">Die Konsole befindet sich derzeit im Standby-Modus. Möchtest du ein Weckpaket senden, anstatt sofort eine Verbindung herzustellen?</string>
+    <string name="alert_message_session_quit">Sitzung wurde beendet: %s</string>
+    <string name="alert_message_session_create_error">Sitzung konnte nicht erstellt werden: %s</string>
+    <string name="alert_message_session_restart_failed">Neue Einstellungen konnten nicht angewendet werden: %s</string>
+    <string name="alert_message_console_power_options">Was möchtest du mit deiner Konsole tun?</string>
+    <string name="action_console_sleep">Konsole in den Ruhezustand versetzen</string>
+    <string name="action_disconnect_session">Sitzung trennen</string>
+    <string name="alert_message_login_pin_request">Login-PIN:</string>
+    <string name="alert_message_login_pin_request_incorrect">Eingegebene PIN war falsch!\nLogin-PIN:</string>
+    <string name="action_reconnect">Erneut verbinden</string>
+    <string name="action_wakeup">Aufwecken</string>
+    <string name="action_connect_immediately">Verbinden</string>
+    <string name="action_connect_cancel_connect">Abbrechen</string>
+    <string name="action_quit_session">Beenden</string>
+    <string name="action_login_pin_connect">Verbinden</string>
+    <string name="stream_disconnect_button">Trennen</string>
+    <string name="action_settings">Einstellungen</string>
+    <string name="action_discover">Konsolen automatisch suchen</string>
+    <string name="display_host_host">Adresse: %s</string>
+    <string name="display_host_id_unregistered">ID: %s</string>
+    <string name="display_host_id_registered">ID: %s (registriert)</string>
+    <string name="display_host_app_title_id">App: %1$s\nTitel-ID: %2$s</string>
+    <string name="action_register">Konsole registrieren</string>
+    <string name="action_add_manual">Konsole manuell hinzufügen</string>
+    <string name="regist_pin_instructions_ps4_before">Navigiere auf deiner Konsole zu</string>
+    <string name="regist_pin_instructions_ps4_navigation">Einstellungen →\nRemote-Play-Verbindungseinstellungen →\nGerät hinzufügen</string>
+    <string name="regist_pin_instructions_ps5_before">Navigiere auf deiner Konsole zu</string>
+    <string name="regist_pin_instructions_ps5_navigation">Einstellungen →\nSystem → Remote Play →\nGerät verknüpfen</string>
+    <string name="regist_pin_instructions_after">um die PIN zu erhalten</string>
+    <string name="title_regist">Konsole registrieren</string>
+    <string name="hint_regist_host">Host</string>
+    <string name="regist_broadcast">Broadcast</string>
+    <string name="regist_option_ps4_lt_7">Gen 4 &lt; 7.0</string>
+    <string name="regist_option_ps4_ge_7">Gen 4 ≥ 7.0, &lt; 8</string>
+    <string name="regist_option_ps4_ge_8">Gen 4 ≥ 8.0</string>
+    <string name="regist_option_ps5">Gen 5</string>
+    <string name="regist_psn_account_id_help">Informationen zum Erhalten deiner Account-ID findest du unter</string>
+    <string name="regist_psn_account_id_help_cloudpad">oder, wenn du dich bereits über CloudPad angemeldet hast, verwende bitte die Schaltfläche unten, um deine Account-ID zu erhalten</string>
+    <string name="action_obtain_account_id">Account-ID abrufen</string>
+    <string name="regist_obtain_account_id_not_logged_in">Bitte melde dich zuerst über CloudPad (Cloud Play) an, um deine Account-ID auf diesem Weg zu erhalten</string>
+    <string name="hint_regist_psn_online_id">Online-ID (Benutzername, Groß-/Kleinschreibung beachten)</string>
+    <string name="hint_regist_psn_account_id">Account-ID (8 Byte, Base64)</string>
+    <string name="hint_regist_pin">PIN</string>
+    <string name="action_regist">Registrieren</string>
+    <string name="entered_host_invalid">Bitte gib einen gültigen Hostnamen ein</string>
+    <string name="regist_psn_online_id_invalid">Bitte gib eine gültige Online-ID ein</string>
+    <string name="regist_psn_account_id_invalid">Bitte gib eine gültige 8-Byte-Account-ID in Base64 ein</string>
+    <string name="regist_pin_invalid">Bitte gib eine gültige %d-stellige PIN ein</string>
+    <string name="action_share_log">Protokoll teilen</string>
+    <string name="action_export_settings">Einstellungen exportieren</string>
+    <string name="regist_info_success">Registrierung erfolgreich.</string>
+    <string name="regist_info_failed">Registrierung fehlgeschlagen.</string>
+    <string name="alert_regist_duplicate">Die Konsole mit der MAC-Adresse %s wurde bereits registriert. Soll der vorherige Eintrag überschrieben werden?</string>
+    <string name="action_regist_overwrite">Überschreiben</string>
+    <string name="action_regist_discard">Abbrechen</string>
+    <string name="action_import_import">Importieren</string>
+    <string name="action_import_cancel">Abbrechen</string>
+    <string name="alert_title_import">Importieren</string>
+    <string name="alert_message_import">Registrierte Hosts: %1$s\n\nManuelle Hosts: %2$s</string>
+    <string name="alert_message_import_failed">Einstellungen konnten nicht aus der Datei importiert werden:\n%s</string>
+    <string name="action_import_failed_ack">Schließen</string>
+    <string name="title_edit_manual">Manueller Konsoleneintrag</string>
+    <string name="action_add_manual_save">Speichern</string>
+    <string name="hint_add_manual_regist_host">Registrierte Konsole</string>
+    <string name="add_manual_regist_on_connect">Bei erster Verbindung registrieren</string>
+    <string name="preferences_category_title_support">Unterstützung</string>
+    <string name="preferences_donate_title">CloudPad unterstützen</string>
+    <string name="preferences_donate_summary">Spende, um die Entwicklung zu unterstützen. Danke, dass du CloudPad nutzt.</string>
+    <string name="preferences_donate_no_products">Unterstützungsoptionen sind in dieser Version nicht verfügbar.</string>
+    <string name="preferences_donate_billing_unavailable">Google Play Abrechnung ist auf diesem Gerät nicht verfügbar. Installiere oder aktualisiere den Play Store, oder installiere CloudPad über Google Play (z. B. internen Test), damit Unterstützungskäufe funktionieren.</string>
+    <string name="donation_paywall_external_title">Unterstützen via PayPal</string>
+    <string name="donation_paywall_external_hint">Google Play Abrechnung ist hier nicht verfügbar. Scanne den QR-Code mit deinem Handy, um PayPal zu öffnen, oder nutze „Link öffnen" unten.</string>
+    <string name="donation_paywall_external_open_link">PayPal-Link öffnen</string>
+    <string name="donation_paywall_external_no_browser">Keine App auf diesem Gerät kann den Link öffnen.</string>
+    <string name="donation_paywall_qr_content_description">QR-Code mit Link zur PayPal-Unterstützungsseite</string>
+    <string name="donation_paywall_trust_paypal">Spende via PayPal in deinem Browser.</string>
+    <string name="preferences_donate_already_supporting">Du hast bereits einen Unterstützungskauf auf diesem Konto. Vielen Dank!</string>
+
+    <string name="preferences_category_title_appearance">Erscheinungsbild</string>
+    <string name="preferences_theme_colour_title">Themenfarbe</string>
+    <string name="preferences_theme_colour_summary">Wähle das Farbschema der App</string>
+    <string name="preferences_theme_colour_pink">Neon-Pink</string>
+    <string name="preferences_theme_colour_blue">Neon-Blau</string>
+    <string name="preferences_theme_colour_green">Neon-Grün</string>
+    <string name="preferences_theme_colour_yellow">Neon-Gelb</string>
+    <string name="preferences_theme_colour_orange">Neon-Orange</string>
+
+    <string name="preferences_app_language_title">App-Sprache</string>
+
+    <string name="preferences_category_title_general">Allgemein</string>
+    <string name="preferences_category_title_stream">Remote-Play-Einstellungen</string>
+    <string name="preferences_category_title_export">Export</string>
+    <string name="preferences_registered_hosts_title">Registrierte Konsolen</string>
+    <string name="preferences_logs_title">Sitzungsprotokolle</string>
+    <string name="preferences_logs_summary">Gesammelte Protokolldateien vorheriger Sitzungen zur Fehlerdiagnose</string>
+    <string name="preferences_export_settings_title">Einstellungen exportieren</string>
+    <string name="preferences_export_settings_summary">Warnung: Die resultierende Datei kann deine geheimen Remote-Play-Schlüssel enthalten! Teile sie nicht.</string>
+    <string name="preferences_import_settings_title">Einstellungen importieren</string>
+    <string name="preferences_import_settings_summary">Einstellungen aus JSON importieren</string>
+    <string name="preferences_category_title_about">Über</string>
+    <string name="preferences_app_version_title">CloudPad App-Version</string>
+    <string name="preferences_view_license_title">Lizenzvereinbarung</string>
+    <string name="preferences_view_license_summary">Lizenzbedingungen und Haftungsausschlüsse anzeigen</string>
+    <string name="preferences_category_title_icon_key">PS5-Bibliothek: Symbolerklärung</string>
+    <string name="preferences_icon_key_streamable_title">Spiel ist als streambar verifiziert</string>
+    <string name="preferences_icon_key_not_streamable_title">Spiel ist als nicht streambar verifiziert</string>
+    <string name="preferences_icon_key_unknown_title">Spiel ist weder als streambar noch als nicht streambar verifiziert. Bitte starte das Spiel, um den Status zu überprüfen.</string>
+    <string name="preferences_category_title_controller_shortcuts">Controller-Shortcuts</string>
+    <string name="preferences_controller_shortcut_refresh_title">Dreieck (drücken)</string>
+    <string name="preferences_controller_shortcut_refresh_summary">Aktualisiert den aktuell ausgewählten Spielekatalog/die Bibliothek</string>
+    <string name="preferences_controller_shortcut_playtime_title">Quadrat (drücken) — während ein Spiel markiert ist</string>
+    <string name="preferences_controller_shortcut_playtime_summary">Zeigt die Spielzeit des Spiels</string>
+    <string name="preferences_controller_shortcut_trophies_title">Quadrat (halten) — während ein Spiel markiert ist</string>
+    <string name="preferences_controller_shortcut_trophies_summary">Öffnet die Trophäen des Spiels</string>
+    <string name="preferences_controller_shortcut_add_to_home_title">Start (drücken) — während ein Spiel markiert ist</string>
+    <string name="preferences_controller_shortcut_add_to_home_summary">Öffnet die Bestätigung „Zum Startbildschirm hinzufügen"</string>
+    <string name="preferences_controller_shortcut_icon_nav_title">Select (drücken) — während ein Spiel markiert ist</string>
+    <string name="preferences_controller_shortcut_icon_nav_summary">Fokussiert das Favoriten-Symbol, von dort kannst du zu Trophäen, Spielzeit und dem Startbildschirm-Shortcut navigieren. Drücke Select erneut, um zur Spielekachel zurückzukehren</string>
+    <string name="preferences_controller_shortcut_quick_menu_title">Zurück — während des Streamens</string>
+    <string name="preferences_controller_shortcut_quick_menu_summary">Öffnet und schließt das Schnellmenü</string>
+    <string name="preferences_registered_hosts_summary">Derzeit registriert: %d</string>
+    <string name="preferences_resolution_title">Auflösung</string>
+    <string name="preferences_fps_title">FPS</string>
+    <string name="preferences_bitrate_title">Bitrate</string>
+    <string name="preferences_codec_title">Codec</string>
+    <string name="preferences_log_verbose_title">Ausführliche Protokollierung</string>
+    <string name="preferences_log_verbose_summary">Warnung: Dies protokolliert SEHR VIEL! Nicht für den regulären Gebrauch aktivieren.</string>
+    <string name="preferences_resolution_title_360p">360p</string>
+    <string name="preferences_resolution_title_540p">540p</string>
+    <string name="preferences_resolution_title_720p">720p</string>
+    <string name="preferences_resolution_title_1080p">1080p</string>
+    <string name="preferences_fps_title_30">30</string>
+    <string name="preferences_fps_title_60">60</string>
+    <string name="preferences_bitrate_auto">Auto (%d)</string>
+    <string name="preferences_codec_title_h264">H264</string>
+    <string name="preferences_codec_title_h265">H265 (nur Gen 5)</string>
+    <string name="preferences_pip_enabled_title">Bild-im-Bild</string>
+    <string name="preferences_pip_enabled_summary">PiP-Modus beim Minimieren während des Streamens aktivieren (Android 8.0+)</string>
+    <string name="preferences_adaptive_frame_pacing_title">Adaptives Frame-Pacing</string>
+    <string name="preferences_adaptive_frame_pacing_summary">Gleicht ungleichmäßige Bildzustellung aus, indem der Vorlaufpuffer für Frames angepasst und gebündelte Frames bei Netzwerk-Jitter gelegentlich verworfen werden. Fügt etwas Latenz hinzu, sorgt dafür aber für ruhigere Bewegung bei instabilen Verbindungen. Gilt für Remote Play, Spielebibliothek und Spielekatalog.</string>
+    <string name="preferences_swap_cross_moon_title">Kreuz/Mond- und Kasten/Pyramide-Tasten tauschen</string>
+    <string name="preferences_swap_cross_moon_summary">Tausche die Aktionstasten, wenn die Standardbelegung nicht stimmt (z. B. bei 8BitDo-Controllern)</string>
+    <string name="preferences_microphone_enabled_title">Mikrofon (nur Remote Play)</string>
+    <string name="preferences_microphone_enabled_summary">Sende das Mikrofonaudio deines Geräts während Remote Play an die Konsole</string>
+    <string name="preferences_microphone_permission_denied">Für diese Funktion ist die Mikrofonberechtigung erforderlich</string>
+    <string name="preferences_motion_enabled_title">Bewegung</string>
+    <string name="preferences_motion_enabled_summary">Bewegungssensoren des Geräts für Controller-Bewegung verwenden</string>
+    <string name="preferences_button_haptic_enabled_title">Touch-Haptik</string>
+    <string name="preferences_button_haptic_enabled_summary">Telefon bei Tastendruck auf dem Touchscreen vibrieren lassen</string>
+    <string name="preferences_category_title_cas_sharpening">CAS-Bildschärfung</string>
+    <string name="preferences_cas_sharpening_enabled_title">CAS-Bildschärfung aktivieren</string>
+    <string name="preferences_cas_sharpening_enabled_summary">Schärft das Stream-Bild in Echtzeit mit AMD FidelityFX Contrast Adaptive Sharpening</string>
+    <string name="preferences_cas_sharpening_level_title">Schärfegrad</string>
+    <string name="quick_settings_cas_sharpening_level">Schärfegrad: %d</string>
+    <string name="preferences_category_title_fsr">FSR 1</string>
+    <string name="preferences_fsr_enabled_title">FSR 1 aktivieren</string>
+    <string name="preferences_fsr_enabled_summary">AMD FidelityFX-Hochskalierung und -Schärfung aktivieren</string>
+    <string name="preferences_fsr_upscaling_title">Hochskalierung</string>
+    <string name="preferences_fsr_upscaling_summary">Wenn der Stream auf 720p eingestellt und Hochskalierung aktiviert ist, wird auf 1080p hochskaliert. Wenn der Stream auf 1080p eingestellt und Hochskalierung aktiviert ist, wird auf 1440p hochskaliert. Bitte beachte: Wenn die maximale Auflösung deines Geräts 1080p beträgt, wird Android die 1440p-Ausgabe auf 1080p herunterrechnen, was zu einem unscharfen Bild führen kann. Lasse in diesem Fall die Hochskalierung deaktiviert.</string>
+    <string name="preferences_fsr_sharpening_title">Schärfung</string>
+    <string name="quick_settings_fsr_sharpening">Schärfung: %d%%</string>
+    <string name="preferences_category_title_image_quality">Bildqualität</string>
+    <string name="preferences_image_processing_title">Bildverarbeitung</string>
+    <string name="preferences_image_processing_off">Aus</string>
+    <string name="preferences_image_processing_cas">CAS</string>
+    <string name="preferences_image_processing_fsr">FSR 1</string>
+    <string name="preferences_quality_reset_title">Bildqualität zurücksetzen</string>
+    <string name="preferences_quality_reset_summary">Standardwerte für Stream und Bildverarbeitung wiederherstellen</string>
+    <string name="preferences_cas_recommended">Empfohlener Startwert: 1</string>
+    <string name="preferences_fsr_recommended">Empfohlener Bereich: 30–60%%</string>
+    <string name="preferences_applies_immediately">Wird sofort angewendet</string>
+    <string name="preferences_restarts_stream">Wird nach einem Neustart des Streams angewendet</string>
+    <string name="preferences_fsr_output_720">720p-Stream → 1080p-Ausgabe</string>
+    <string name="preferences_fsr_output_1080">1080p-Stream → 1440p-Ausgabe</string>
+    <string name="preferences_fsr_output_downsample">1080p-Stream → 1440p-Ausgabe; dieses %1$dp-Display wird die Ausgabe herunterrechnen, was unschärfer wirken kann. Lasse in diesem Fall die Hochskalierung deaktiviert.</string>
+    <string name="preferences_fsr_output_unchanged">%1$dp-Stream; keine FSR-Hochskalierung angewendet</string>
+    <string name="preferences_fsr_output_all">Remote Play: %1$s\nSpielebibliothek: %2$s\nSpielekatalog: %3$s</string>
+    <string name="quick_settings_image_quality">Bildqualität · Wird sofort angewendet</string>
+    <string name="quick_settings_restart_note">Die folgenden Stream-Einstellungen starten den Stream bei Anwendung neu</string>
+    <string name="preferences_quality_apply_title">Wann Änderungen wirksam werden</string>
+    <string name="preferences_quality_apply_summary">Bildverarbeitung und Schärfung werden während eines Streams sofort angewendet. Auflösung, Bildrate, Bitrate und Codec werden nach einem Neustart des Streams angewendet.</string>
+    <string name="quick_settings_title">Schnelleinstellungen</string>
+    <string name="quick_settings_close">Schließen</string>
+    <string name="quick_settings_minimize">Minimieren</string>
+    <string name="quick_settings_current_game">Aktuelles Spiel: %s</string>
+    <string name="quick_settings_performance_overlay_title">Leistungsanzeige</string>
+    <string name="quick_settings_overlay_type_title">Anzeigetyp</string>
+    <string name="quick_settings_osc_title">Bildschirmsteuerung</string>
+    <string name="touch_controls_customise">Anpassen</string>
+    <string name="touch_controls_customise_button">Taste anpassen</string>
+    <string name="touch_controls_size">Größe: %1$d%%</string>
+    <string name="touch_controls_opacity">Transparenzgrad: %1$d%%</string>
+    <string name="touch_controls_save">Speichern</string>
+    <string name="touch_controls_move_button">Taste verschieben</string>
+    <string name="touch_controls_finish">Fertig</string>
+    <string name="touch_controls_always_show">Immer anzeigen</string>
+    <string name="touch_controls_restore_default">Auf Standard zurücksetzen</string>
+    <string name="touch_control_dpad">D-Pad</string>
+    <string name="touch_control_left_stick">Linker Stick</string>
+    <string name="touch_control_right_stick">Rechter Stick</string>
+    <string name="touch_control_touchpad">Touchpad</string>
+    <string name="touch_control_cross">Kreuz</string>
+    <string name="touch_control_circle">Kreis</string>
+    <string name="touch_control_triangle">Dreieck</string>
+    <string name="touch_control_square">Quadrat</string>
+    <string name="touch_control_l1">L1</string>
+    <string name="touch_control_l2">L2</string>
+    <string name="touch_control_l3">L3</string>
+    <string name="touch_control_r1">R1</string>
+    <string name="touch_control_r2">R2</string>
+    <string name="touch_control_r3">R3</string>
+    <string name="touch_control_share">Share</string>
+    <string name="touch_control_options">Options</string>
+    <string name="touch_control_ps">PS</string>
+    <string name="quick_settings_touchpad_title">Nur Touchpad</string>
+    <string name="quick_settings_window_size">Fenstergröße</string>
+    <string name="quick_settings_session_tab_description">Sitzungseinstellungen</string>
+    <string name="quick_settings_session_restart_notice">Das Ändern einer Einstellung hier startet den Stream kurz neu, sobald du auf Übernehmen tippst</string>
+    <string name="quick_settings_session_apply">Übernehmen</string>
+    <string name="quick_settings_session_restarting">Stream wird neu gestartet…</string>
+    <string name="quick_settings_trophies_tab_description">Trophäen</string>
+    <string name="quick_settings_trophies_header_label">Trophäenliste aktualisieren</string>
+    <string name="quick_settings_trophies_refresh">Trophäen aktualisieren</string>
+    <string name="quick_settings_trophies_empty">Für %1$s konnten keine Trophäendaten abgerufen werden. Bitte starte das Spiel und lasse die Trophäendaten synchronisieren.\n\nDies kann während einer Sitzung etwa 5–10 Minuten dauern. Danach kannst du die Trophäenliste aktualisieren, und die Trophäendaten sollten erscheinen.\n\nFalls die Trophäendaten weiterhin fehlen, melde bitte ein Issue im CloudPad-GitHub-Repository, damit es untersucht werden kann</string>
+    <string name="trophy_unlock_popup_header">Trophäe freigeschaltet!</string>
+    <string name="trophy_achieved_count_format">%1$d/%2$d Trophäen erhalten</string>
+    <string name="trophy_sort_content_description">Trophäen sortieren</string>
+    <string name="trophy_filter_content_description">Trophäen filtern</string>
+    <string name="trophy_sort_default">Standard</string>
+    <string name="trophy_sort_earned_date">Erhaltungsdatum</string>
+    <string name="trophy_filter_default">Standard</string>
+    <string name="trophy_filter_bronze">Bronze</string>
+    <string name="trophy_filter_silver">Silber</string>
+    <string name="trophy_filter_gold">Gold</string>
+    <string name="trophy_filter_platinum">Platin</string>
+    <string name="trophy_filter_no_matches">Keine Trophäen entsprechen diesem Filter.</string>
+    <string name="action_friends">Freunde</string>
+    <string name="action_account">Konto</string>
+    <string name="account_menu_log_out">Abmelden</string>
+    <string name="friends_empty_state">Keine Freunde für dieses PSN-Konto gefunden.</string>
+    <string name="friend_chat_empty_state">Noch keine Nachrichten — sag Hallo!</string>
+    <string name="friend_chat_input_hint">Nachricht</string>
+    <string name="friend_chat_send">Senden</string>
+    <string name="quick_settings_friends_tab_description">Freunde</string>
+    <string name="quick_settings_friends_header_label">Freunde</string>
+    <string name="quick_settings_friends_refresh">Freundesliste aktualisieren</string>
+    <string name="quick_settings_friends_empty">Keine Freunde für dieses PSN-Konto gefunden.</string>
+    <string name="quick_settings_friend_chat_back">Zurück zur Freundesliste</string>
+    <string name="quick_settings_friend_chat_refresh">Unterhaltung aktualisieren</string>
+    <string name="friend_chat_refresh">Unterhaltung aktualisieren</string>
+    <string name="friends_refresh">Freundesliste aktualisieren</string>
+    <string name="trophy_compare_content_description">Trophäen vergleichen</string>
+    <string name="trophy_compare_title">Trophäen vergleichen · %1$s</string>
+    <string name="trophy_compare_you">Du</string>
+    <string name="trophy_compare_vs">VS</string>
+    <string name="trophy_compare_level_unknown">–</string>
+    <string name="trophy_compare_level_format">Level: %1$s</string>
+    <string name="trophy_compare_total_trophies_format">Trophäen insgesamt: %1$d</string>
+    <string name="trophy_compare_you_ahead">Du liegst vorn</string>
+    <string name="trophy_compare_them_ahead">Sie liegen vorn</string>
+    <string name="trophy_compare_tied">Gleichstand</string>
+    <string name="trophy_compare_shared_games">Gemeinsame Spiele · %1$d</string>
+    <string name="trophy_compare_empty">Keine gemeinsamen Spiele mit Trophäendaten bisher — spielt zusammen und schaut später noch mal vorbei.</string>
+    <string name="trophy_compare_refresh">Vergleich aktualisieren</string>
+    <string name="quick_settings_trophy_compare_back">Zurück zur Freundesliste</string>
+    <string name="trophy_compare_my_progress">Du %1$d%%</string>
+    <string name="trophy_compare_their_progress">Sie %1$d%%</string>
+    <string name="alert_message_delete_registered_host">Möchtest du die registrierte Konsole %1$s mit der ID %2$s wirklich löschen?</string>
+    <string name="alert_message_delete_manual_host">Möchtest du den Konsoleneintrag für %s wirklich löschen?</string>
+    <string name="action_keep">Behalten</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_edit">Bearbeiten</string>
+    <string name="session_logs_empty_info">Keine Sitzungsprotokolle vorhanden.</string>
+    <string name="registered_hosts_empty_info">Keine Konsolen registriert.</string>
+    <string name="display_hosts_empty_discovery_off_info">Noch keine Konsolen hinzugefügt.\nAktiviere die Suche, um Konsolen automatisch in deinem lokalen Netzwerk zu finden.</string>
+    <string name="display_hosts_empty_discovery_on_info">Keine Konsolen hinzugefügt oder gefunden.</string>
+    <string name="preferences_category_title_cloud">Cloud-Streaming</string>
+    <string name="preferences_psn_login_title">Konto</string>
+    <string name="preferences_psn_login_summary">Nicht angemeldet - Zum Anmelden tippen</string>
+    <string name="preferences_psn_login_summary_logged_in">Zum Abmelden tippen</string>
+    <string name="preferences_psn_logout_title">Abmelden</string>
+    <string name="preferences_psn_logout_message">Möchtest du dich wirklich abmelden?</string>
+    <string name="preferences_psn_logout_confirm">Abmelden</string>
+    <string name="preferences_psn_logout_success">Erfolgreich abgemeldet</string>
+    <string name="preferences_psn_login_row_title">Anmelden</string>
+    <string name="preferences_psn_login_row_summary">Zum Anmelden tippen</string>
+    <string name="preferences_locale_title">Gebietsschema</string>
+    <string name="preferences_locale_summary_not_set">Nicht festgelegt - Bitte melde dich an, um das Gebietsschema zu erhalten</string>
+    <string name="preferences_cached_locale_title">Zwischengespeichertes Gebietsschema</string>
+    <string name="preferences_cached_locale_summary_not_set">Kein zwischengespeichertes Gebietsschema vorhanden</string>
+
+    <string name="preferences_category_title_game_library">Spielebibliothek</string>
+    <string name="preferences_cloud_resolution_pscloud_title">Auflösung</string>
+    <string name="preferences_cloud_resolution_pscloud_summary">Streaming-Auflösung für die Spielebibliothek (bis zu 4K)</string>
+    <string name="preferences_cloud_datacenter_pscloud_title">Rechenzentrum</string>
+    <string name="preferences_cloud_datacenter_pscloud_summary">Wähle ein bestimmtes Rechenzentrum oder verwende Auto für den besten Ping</string>
+
+    <string name="preferences_category_title_game_catalog">Spielekatalog</string>
+    <string name="preferences_cloud_resolution_psnow_title">Auflösung</string>
+    <string name="preferences_cloud_resolution_psnow_summary">Streaming-Auflösung für den Spielekatalog</string>
+    <string name="preferences_cloud_datacenter_psnow_title">Rechenzentrum</string>
+    <string name="preferences_cloud_datacenter_psnow_summary">Wähle ein bestimmtes Rechenzentrum oder verwende Auto für den besten Ping</string>
+
+    <string name="psn_login_title">Anmelden</string>
+    <string name="psn_login_button">ANMELDEN</string>
+    <string name="psn_login_success">Anmeldung erfolgreich</string>
+    <string name="psn_login_failed">Anmeldung fehlgeschlagen. Bitte versuche es erneut.</string>
+    <string name="psn_login_required_title">Anmeldung erforderlich</string>
+    <string name="psn_login_required_message">Bitte melde dich an, um auf Cloud-Streaming zuzugreifen</string>
+    <string name="psn_login_prompt_message">Für Cloud-Streaming ist ein Konto erforderlich. Möchtest du dich jetzt anmelden?</string>
+    <string name="psn_login_session_expired_message">Deine Sitzung ist abgelaufen. Bitte melde dich erneut an, um fortzufahren.</string>
+    <string name="psn_login_external_browser_error">Externer Browser konnte nicht geöffnet werden</string>
+    <string name="psn_login_instructions">Melde dich bei Sony an, hole dann dein SSO-Cookie und schließe die Anmeldung ab.</string>
+    <string name="psn_login_code_label">Sony-Anmeldung</string>
+    <string name="psn_login_open_browser">Beim Konto anmelden</string>
+    <string name="psn_login_check_status">SSO-Cookie-Wert abrufen</string>
+    <string name="psn_login_connecting">Verbindung zum Server wird hergestellt…</string>
+    <string name="psn_login_code_ready">Bereit zur Anmeldung</string>
+    <string name="psn_login_checking_status">Es wird geprüft, ob die Anmeldung abgeschlossen ist…</string>
+    <string name="psn_login_browser_opened">Schließe die Sony-Anmeldung ab und tippe dann auf „SSO-Cookie-Wert abrufen"</string>
+    <string name="psn_login_not_complete">Anmeldung noch nicht abgeschlossen. Schließe zuerst die Sony-Anmeldung ab.</string>
+    <string name="psn_login_not_complete_toast">Bitte schließe zuerst die Sony-Anmeldung ab</string>
+    <string name="psn_login_server_error">Anmeldung konnte nicht abgeschlossen werden</string>
+
+    <string-array name="theme_colour_entries">
+        <item>Neon-Pink</item>
+        <item>Neon-Blau</item>
+        <item>Neon-Grün</item>
+        <item>Neon-Gelb</item>
+        <item>Neon-Orange</item>
+    </string-array>
+
+    <string-array name="cloud_datacenter_entries">
+        <item>Auto (bester Ping)</item>
+    </string-array>
+
+    <string-array name="cloud_resolution_psnow_entries">
+        <item>720p (1280x720)</item>
+        <item>1080p (1920x1080)</item>
+    </string-array>
+
+    <string-array name="cloud_resolution_pscloud_entries">
+        <item>720p (1280x720)</item>
+        <item>1080p (1920x1080)</item>
+    </string-array>
+
+    <string name="quick_settings_overlay_mode_full">Vollständig</string>
+    <string name="quick_settings_overlay_mode_minimal">Minimal</string>
+    <string name="quick_settings_configure_overlay">Anzeige konfigurieren</string>
+    <string name="overlay_configure_title">Anzeige konfigurieren</string>
+    <string name="overlay_configure_opacity_label">Deckkraft — %1$d%%</string>
+    <string name="overlay_configure_move">Anzeige verschieben</string>
+    <string name="overlay_configure_restore_defaults">Auf Standard zurücksetzen</string>
+    <string name="overlay_move_done">Fertig</string>
+    <string name="action_save">Speichern</string>
+    <string name="donation_dialog_title">CloudPad unterstützen</string>
+    <string name="donation_dialog_body">CloudPad wird von der Community entwickelt. Wenn dir die App gefällt, ziehe bitte in Betracht, die Entwicklung zu unterstützen. Dein Beitrag hilft, weitere Updates zu finanzieren und das Projekt am Leben zu erhalten.</string>
+    <string name="donation_tier_button_label">%1$s · %2$s</string>
+    <string name="donation_action_not_now">Nicht jetzt</string>
+
+    <string name="bullet_dot">•</string>
+
+    <string name="donation_paywall_headline">CloudPad am Leben erhalten</string>
+    <string name="donation_paywall_tagline">Open Source und von der Community gepflegt.</string>
+    <string name="donation_paywall_story_title">Gefällt dir CloudPad?</string>
+    <string name="donation_paywall_story_lead">Die App ist Open Source und wird von der Community gepflegt. Bitte ziehe in Betracht, das Projekt zu unterstützen. Spenden gehen an die Entwickler, die es pflegen.</string>
+    <string name="donation_paywall_bullet_1">Deine Spende geht an die Menschen, die CloudPad entwickeln und pflegen.</string>
+    <string name="donation_paywall_bullet_2">Einmalzahlung über Google Play. Kein Abonnement.</string>
+    <string name="donation_paywall_bullet_3">Optional. Du erhältst die vollständige App so oder so.</string>
+    <string name="donation_paywall_pick_title">Wähle einen Betrag</string>
+    <string name="donation_paywall_pick_hint">Wähle unten eine Stufe. Du zahlst nur einmal.</string>
+    <string name="donation_paywall_maybe_later">Vielleicht später</string>
+    <string name="donation_paywall_trust">Einmalzahlung über Google Play. Kein Abonnement.</string>
+    <string name="donation_tier_content_description">%1$s, %2$s. Doppeltippen, um einmalig mit Google Play zu spenden.</string>
+    <string name="donation_tier_bronze">Bronze-Spende</string>
+    <string name="donation_tier_silver">Silber-Spende</string>
+    <string name="donation_tier_gold">Gold-Spende</string>
+    <string name="donation_tier_platinum">Platin-Spende</string>
+    <string name="donation_tier_blurb_bronze">Jede Spende zählt.</string>
+    <string name="donation_tier_blurb_silver">Etwas mehr Unterstützung.</string>
+    <string name="donation_tier_blurb_gold">Wenn du mehr geben möchtest.</string>
+    <string name="donation_tier_blurb_platinum">Wenn du das Meiste geben möchtest.</string>
+    <string name="donation_tier_blurb_default">Danke, dass du CloudPad unterstützt.</string>
+    <string name="donation_paywall_close">Schließen</string>
+    <string name="donation_paywall_logo_content_description">CloudPad</string>
+    <string name="donation_paywall_restore_purchases">Käufe wiederherstellen</string>
+    <string name="donation_paywall_restore_none">Für dieses Google-Konto wurden keine Unterstützungskäufe gefunden.</string>
+    <string name="donation_paywall_restore_already">Dein Unterstützungskauf ist bereits auf diesem Gerät vorhanden.</string>
+    <string name="donation_paywall_restore_success">Käufe wiederhergestellt. Danke für deine Unterstützung von CloudPad!</string>
+    <string name="donation_paywall_restore_unavailable">Google Play konnte nicht erreicht werden. Versuche es gleich noch einmal.</string>
+    <string name="preferences_cloud_bitrate_pscloud_title">Bitrate</string>
+    <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps für Spielebibliothek-Streaming</string>
+
+    <string name="preferences_cloud_bitrate_psnow_title">Bitrate</string>
+    <string name="preferences_cloud_bitrate_psnow_summary">%d Mbps für Spielekatalog-Streaming</string>
+
+    <string name="stream_background_channel_name">Hintergrund-Streaming</string>
+    <string name="stream_background_notification_title">Stream läuft noch</string>
+    <string name="stream_background_notification_text">Tippen, um zu deinem Spiel zurückzukehren</string>
+    <string name="stream_background_notification_disconnect">Trennen</string>
+
+    <string name="action_automatic">Automatisch</string>
+    <string name="action_done">Fertig</string>
+    <string name="action_exit">Beenden</string>
+    <string name="action_manual">Manuell</string>
+    <string name="action_no">Nein</string>
+    <string name="action_yes">Ja</string>
+
+    <string name="app_integrity_verification_required_title">Verifizierung erforderlich</string>
+    <string name="app_integrity_verification_required_message">Die App-Quelle konnte nicht verifiziert werden. Stelle sicher, dass eine aktive Internetverbindung besteht und die App aus einer offiziellen Quelle installiert wurde.</string>
+
+    <string name="cloud_account_settings_update_title">Kontoeinstellungen müssen aktualisiert werden</string>
+    <string name="cloud_account_settings_update_message">Deine Datenschutzeinstellungen müssen aktualisiert werden, um Cloud-Streaming zu nutzen.\n\nUpgrade-URL: %1$s</string>
+
+    <string name="cloud_add_to_home_confirm_message">Möchtest du %1$s zu deinem Startbildschirm hinzufügen?</string>
+
+    <string name="cloud_add_to_library_title">Zur Bibliothek hinzufügen</string>
+    <string name="cloud_add_to_library_add_now_button">Jetzt hinzufügen</string>
+    <string name="cloud_add_to_library_message">Dieses Spiel muss deiner Bibliothek hinzugefügt werden, bevor du es streamen kannst.\n\nTippe nach dem Hinzufügen auf „Spiele aktualisieren“, um deine Liste zu aktualisieren.</string>
+    <string name="cloud_add_to_library_no_url_message">Dieses Spiel kann nicht zu deiner Bibliothek hinzugefügt werden. Die Spiele-URL ist nicht verfügbar.</string>
+    <string name="cloud_add_to_library_qr_message">Scanne diesen QR-Code mit deinem Smartphone oder Tablet, um „%1$s“ zu deiner PlayStation-Bibliothek hinzuzufügen.\n\nTippe nach dem Hinzufügen auf „Spiele aktualisieren“.</string>
+
+    <string name="cloud_authorization_failed_title">Autorisierung fehlgeschlagen</string>
+    <string name="cloud_authorization_failed_message">Dein PlayStation Network-Konto konnte nicht autorisiert werden. Bitte überprüfe dein NPSSO-Token und versuche es erneut.</string>
+
+    <string name="cloud_datacenter_auto_option">Automatisch (beste Ping-Zeit)</string>
+
+    <string name="cloud_failed_to_open_browser_toast">Browser konnte nicht geöffnet werden</string>
+
+    <string name="cloud_filter_all_games">Anzeigen: Alle Spiele</string>
+    <string name="cloud_filter_button_all">Anzeigen: Alle</string>
+    <string name="cloud_filter_button_owned">Anzeigen: Im Besitz</string>
+    <string name="cloud_filter_favorites">Anzeigen: Favoriten</string>
+    <string name="cloud_filter_owned_only">Anzeigen: Nur im Besitz</string>
+
+    <plurals name="cloud_game_count">
+        <item quantity="one">%1$d Spiel</item>
+        <item quantity="other">%1$d Spiele</item>
+    </plurals>
+
+    <string name="cloud_owned_toggle_all">Alle</string>
+    <string name="cloud_owned_toggle_owned">Im Besitz</string>
+
+    <string name="cloud_ping_too_high_title">Ping zu hoch</string>
+    <string name="cloud_ping_too_high_message">Der Ping muss unter 80 ms liegen, um eine Cloud-Sitzung zu starten.\n\nUm trotzdem fortzufahren, gehe zu Einstellungen → Cloud und wähle manuell ein Rechenzentrum für deinen Dienst (%1$s).</string>
+
+    <string name="cloud_playtime_last_played">Zuletzt gespielt: %1$s</string>
+    <string name="cloud_playtime_longest_session">Längste Sitzung: %1$s</string>
+    <string name="cloud_playtime_never">Nie</string>
+    <string name="cloud_playtime_total">Gesamtspielzeit: %1$s</string>
+
+    <string name="cloud_shortcut_adding_toast">%1$s-Verknüpfung wird hinzugefügt</string>
+    <string name="cloud_shortcut_launcher_unsupported_toast">Dein Launcher unterstützt keine angehefteten Verknüpfungen</string>
+    <string name="cloud_shortcut_owned_only_toast">Nur PS Cloud-Spiele im Besitz können als Start-Verknüpfung hinzugefügt werden</string>
+
+    <string name="cloud_sort_button_az">Sortieren: A→Z</string>
+    <string name="cloud_sort_button_recently_played">Sortieren: Zuletzt gespielt</string>
+    <string name="cloud_sort_button_za">Sortieren: Z→A</string>
+    <string name="cloud_sort_name_az">Name: A → Z</string>
+    <string name="cloud_sort_name_az_default">Name: A → Z (Standard)</string>
+    <string name="cloud_sort_name_za">Name: Z → A</string>
+    <string name="cloud_sort_recently_played">Zuletzt gespielt</string>
+    <string name="cloud_sort_title">Sortieren</string>
+
+    <string name="cloud_starting_allocation">Zuweisung wird gestartet …</string>
+
+    <string name="cloud_streaming_unavailable_title">Streaming nicht verfügbar</string>
+    <string name="cloud_streaming_unavailable_psnow_message">Stelle sicher, dass du ein PS Plus Premium-Abonnement hast und PS Now-Streaming in deiner Region verfügbar ist</string>
+    <string name="cloud_streaming_unavailable_pscloud_message">Stelle sicher, dass du ein PS Plus Premium-Abonnement hast, dass das Spiel für PS Cloud-Streaming verfügbar ist, dass PS Cloud-Streaming in deiner Region verfügbar ist und dass die PS-Server derzeit nicht ausgefallen sind</string>
+
+    <string name="console_generic_name">Konsole</string>
+
+    <string name="display_host_asleep">Ruhezustand</string>
+    <string name="display_host_console_offline">Konsole offline</string>
+    <string name="display_host_console_ready_wait">Konsole ist an, bitte warte, bis sie bereit ist</string>
+    <string name="display_host_console_sleeping">Konsole schläft, bitte warten</string>
+    <string name="display_host_getting_status">Konsolenstatus wird abgerufen</string>
+    <string name="display_host_mac_format">MAC: %1$s</string>
+    <string name="display_host_offline">Offline</string>
+    <string name="display_host_ready">Bereit</string>
+    <string name="display_host_remote_console">Remote-Konsole</string>
+    <string name="display_host_waking_console">Konsole wird geweckt</string>
+
+    <string name="gaikai_error_allocate_slot">Zuweisung des Slots fehlgeschlagen</string>
+    <string name="gaikai_error_allocation_cancelled">Zuweisung abgebrochen</string>
+    <string name="gaikai_error_auth_code">gkClientId-Autorisierungscode konnte nicht abgerufen werden</string>
+    <string name="gaikai_error_authorize_session">Sitzung konnte nicht autorisiert werden</string>
+    <string name="gaikai_error_client_ids">Client-IDs konnten nicht abgerufen werden</string>
+    <string name="gaikai_error_config">Konfiguration konnte nicht abgerufen werden</string>
+    <string name="gaikai_error_datacenters">Rechenzentren konnten nicht abgerufen werden</string>
+    <string name="gaikai_error_lock_session">Sitzung konnte nicht gesperrt werden</string>
+    <string name="gaikai_error_missing_launch_slot">Zuweisungsantwort ungültig: launchSlot fehlt</string>
+    <string name="gaikai_error_no_datacenters">Keine Rechenzentren verfügbar</string>
+    <string name="gaikai_error_response_incomplete">Zuweisungsantwort unvollständig</string>
+    <string name="gaikai_error_server_auth_code">Server-Autorisierungscode konnte nicht abgerufen werden</string>
+    <string name="gaikai_error_start_session">Sitzung konnte nicht gestartet werden — %1$s</string>
+
+    <string name="gaikai_progress_allocating_slot">Streaming-Slot wird zugewiesen – Schritt 10 von 10</string>
+    <string name="gaikai_progress_allocating_slot_attempt">Streaming-Slot wird zugewiesen – Versuch %1$d</string>
+    <string name="gaikai_progress_allocating_slot_queue">Streaming-Slot wird zugewiesen – Warteschlangenposition: %1$d – Versuch %2$d</string>
+    <string name="gaikai_progress_authorize_session">Sitzung wird autorisiert – Schritt 6 von 10</string>
+    <string name="gaikai_progress_client_ids">Client-IDs werden abgerufen – Schritt 1 von 10</string>
+    <string name="gaikai_progress_closing_old_session">Alte Sitzung wird geschlossen – Versuch %1$d</string>
+    <string name="gaikai_progress_config">Konfiguration wird abgerufen – Schritt 2 von 10</string>
+    <string name="gaikai_progress_datacenters">Rechenzentren werden abgerufen – Schritt 8 von 10</string>
+    <string name="gaikai_progress_lock_session">Sitzung wird gesperrt – Schritt 7 von 10</string>
+    <string name="gaikai_progress_migrating_data">Daten werden migriert (%1$d%%) – Versuch %2$d</string>
+    <string name="gaikai_progress_pinging_datacenters">Rechenzentren werden gepingt – Schritt 8 von 10</string>
+    <string name="gaikai_progress_selecting_datacenter">Rechenzentrum wird ausgewählt (%1$s) – Schritt 9 von 10</string>
+    <string name="gaikai_progress_server_tokens">Server-Tokens werden abgerufen – Schritt 5 von 10</string>
+    <string name="gaikai_progress_start_session">Sitzung wird gestartet – Schritt 3 von 10</string>
+    <string name="gaikai_progress_tokens">Tokens werden abgerufen – Schritt 4 von 10</string>
+
+    <string name="main_disclaimer_acknowledge_button">Bestätigen</string>
+    <string name="main_exit_app_message">App beenden?</string>
+
+    <string name="psn_login_activity_title">CloudPad-Anmeldung</string>
+    <string name="psn_login_finalise_button">Anmeldung abschließen</string>
+    <string name="psn_login_finalising_status">Anmeldung wird abgeschlossen …</string>
+    <string name="psn_login_npsso_hint">npsso-Wert hier einfügen</string>
+    <string name="psn_login_obtain_npsso_button">NPSSO-Token abrufen</string>
+    <string name="psn_login_obtain_npsso_status">Chrome zeigt eine Seite wie {\"npsso\":\"...\"} an — kopiere den Wert zwischen den Anführungszeichen und füge ihn unten ein, tippe dann auf „Anmeldung abschließen“.</string>
+    <string name="psn_login_paste_npsso_toast">Füge zuerst den npsso-Wert (oder die vollständige {\"npsso\":\"...\"}-Antwort) aus Chrome ein.</string>
+    <string name="psn_login_remote_play_retry_toast">Cloud-Anmeldung abgeschlossen. Remote Play-Einrichtung muss möglicherweise wiederholt werden.</string>
+    <string name="psn_login_start_status">Melde dich in Chrome bei Sony an, komm dann zurück und tippe auf „NPSSO-Token abrufen“.</string>
+
+    <string name="remote_play_auto_registration_confirm_ps4">Möchtest du die automatische Registrierung verwenden (muss die für dein Konto registrierte Haupt-PS4-Konsole sein)?</string>
+    <string name="remote_play_auto_registration_confirm_ps5">Möchtest du die automatische Registrierung verwenden?</string>
+
+    <string name="remote_play_auto_regist_connecting_psn">Verbindung mit PSN wird hergestellt …</string>
+    <string name="remote_play_auto_regist_console_not_responding">Konsole reagiert nicht</string>
+    <string name="remote_play_auto_regist_contacting_host">%1$s wird kontaktiert …</string>
+    <string name="remote_play_auto_regist_create_offer_failed">Steuerungsangebot konnte nicht erstellt werden</string>
+    <string name="remote_play_auto_regist_create_session_exception">Sitzung konnte nicht erstellt werden</string>
+    <string name="remote_play_auto_regist_create_session_failed">PSN-Sitzung konnte nicht erstellt werden</string>
+    <string name="remote_play_auto_regist_discovering_network">Netzwerk wird ermittelt …</string>
+    <string name="remote_play_auto_regist_establish_connection_failed">Verbindung konnte nicht hergestellt werden</string>
+    <string name="remote_play_auto_regist_establishing_connection">Verbindung wird hergestellt …</string>
+    <string name="remote_play_auto_regist_failed_format">Registrierung fehlgeschlagen: %1$s</string>
+    <string name="remote_play_auto_regist_initializing">Initialisierung …</string>
+    <string name="remote_play_auto_regist_invalid_token">Gültiges PSN-Token konnte nicht abgerufen werden</string>
+    <string name="remote_play_auto_regist_no_tokens">Keine PSN-Tokens. Bitte melde dich zuerst an.</string>
+    <string name="remote_play_auto_regist_registering_status">%1$s wird registriert …</string>
+    <string name="remote_play_auto_regist_save_failed">Registrierung erfolgreich, aber Speichern fehlgeschlagen</string>
+    <string name="remote_play_auto_regist_setting_up_connection">Verbindung wird eingerichtet …</string>
+    <string name="remote_play_auto_regist_unknown_error">unbekannter Fehler</string>
+
+    <string name="remote_play_console_setup_title">Konsoleneinrichtung</string>
+    <string name="remote_play_console_setup_message">Melde dich für die automatische Konsoleneinrichtung an oder gib die Konsoleninformationen manuell ein.</string>
+
+    <string name="remote_play_login_required_title">PSN-Anmeldung erforderlich</string>
+    <string name="remote_play_login_required_message">Melde dich an, um deine PS5-Konsolen automatisch zu erkennen und hinzuzufügen.</string>
+
+    <string name="remote_play_login_to_add_consoles_button">Anmelden, um Konsolen hinzuzufügen</string>
+
+    <string name="remote_play_psn_login_required_for_holepunch_message">Du musst dich mit deinem PSN-Konto anmelden, um dich über das Internet mit Konsolen zu verbinden. Bitte melde dich über die Einstellungen oder den Cloud Play-Tab an.</string>
+
+    <string name="remote_play_psn_login_success_toast">PSN-Anmeldung erfolgreich</string>
+
+    <string name="remote_play_refresh_consoles_button">Konsolen aktualisieren</string>
+    <string name="remote_play_refreshing_consoles_toast">Konsolenliste wird aktualisiert …</string>
+
+    <string name="remote_play_registered_successfully_toast">%1$s erfolgreich registriert</string>
+    <string name="remote_play_registering_title">%1$s wird registriert</string>
+
+    <string name="remote_play_registration_type_title">Registrierungsart</string>
+
+    <string name="remote_play_setting_up_psn_toast">PSN für Remote Play wird eingerichtet …</string>
+
+    <string name="remote_play_starting_registration">Registrierung wird gestartet …</string>
+
+    <string name="remote_play_token_exchange_failed_toast">Token-Austausch fehlgeschlagen. Melde dich in den Einstellungen erneut an.</string>
+
+    <string name="stream_disconnect_confirm_message">Vom Stream trennen?</string>
+
+    <string name="trophy_earned_date_format">Erhalten am %1$s</string>
+    <string name="trophy_group_fallback_header">Trophäen</string>
+    <string name="trophy_hidden_description">Schließe diese Trophäe ab, um ihre Details anzuzeigen</string>
+    <string name="trophy_hidden_name">Verborgene Trophäe</string>
+    <string name="trophy_progress_percent_complete">%1$d %% abgeschlossen</string>
+
+    <string name="cloud_tab_ps3_catalog">PS3-Katalog</string>
+    <string name="cloud_tab_ps4_catalog">PS4-Katalog</string>
+    <string name="cloud_tab_ps5_library">PS5-Bibliothek</string>
+    <string name="cloud_no_games_found">Keine Spiele gefunden</string>
+    <string name="cloud_refresh_games_list_button">Spieleliste aktualisieren</string>
+    <string name="disclaimer_title">Haftungsausschluss</string>
+    <string name="disclaimer_message">CloudPad befindet sich noch in der Entwicklung. Du bist verantwortlich für:\n\n• Ein aktives PS Plus-Abonnement.\n• Die Verfügbarkeit von PS Now und PS5 Cloud Gaming in deiner Region.\n• Dass PS5-Spiele, die du kaufst oder bereits besitzt, für Cloud-Streaming berechtigt sind.\n\nWenn du dir unsicher bist, besuche bitte entweder den offiziellen PSN Store online oder verwende die offizielle PS App, um zu prüfen, ob ein Titel in deiner Region zum Streamen verfügbar ist.</string>
+
+    <string name="remote_play_refresh_consoles_list_button">Konsolenliste aktualisieren</string>
+    <string name="remote_play_manually_register_console_button">Konsole manuell registrieren</string>
+    <string name="remote_play_manually_add_console_button">Konsole manuell hinzufügen</string>
+
+    <string name="friend_status_playing">%1$s wird gespielt</string>
+    <string name="friend_status_busy">Beschäftigt</string>
+    <string name="friend_status_online">Online</string>
+    <string name="friend_status_last_online">Zuletzt online %1$s</string>
+    <string name="friend_status_offline">Offline</string>
+    <string name="friends_error_auth_failed">PSN-Authentifizierung für Freundesdaten fehlgeschlagen</string>
+    <string name="friends_error_fetch_failed">Freunde konnten nicht abgerufen werden</string>
+    <string name="friends_error_auth_failed_messaging">PSN-Authentifizierung für Nachrichten fehlgeschlagen</string>
+    <string name="friends_error_start_conversation_failed">Unterhaltung mit diesem Freund konnte nicht gestartet werden</string>
+    <string name="friends_error_load_history_failed">Der Gesprächsverlauf konnte nicht geladen werden</string>
+    <string name="friends_error_open_conversation_failed">Unterhaltung konnte nicht geöffnet werden</string>
+    <string name="friends_error_refresh_conversation_failed">Unterhaltung konnte nicht aktualisiert werden</string>
+    <string name="friends_error_refresh_conversation_failed_generic">Unterhaltung konnte nicht aktualisiert werden</string>
+
+    <string name="psn_login_status_instructions">1. Tippe auf „Beim Konto anmelden“ und melde dich bei Sony an.\n2. Tippe auf „NPSSO-Token abrufen“ — Chrome zeigt eine Seite wie {\"npsso\":\"...\"} an.\n3. Kopiere den npsso-Wert und füge ihn unten ein.\n4. Tippe auf „Anmeldung abschließen“.</string>
+
+    <string name="trophy_compare_error_auth_failed">Authentifizierung bei PSN für Trophäendaten fehlgeschlagen</string>
+    <string name="trophy_compare_error_my_titles_failed">Deine Trophäentitel konnten nicht geladen werden</string>
+    <string name="trophy_compare_error_my_summary_failed">Deine Trophäenübersicht konnte nicht geladen werden</string>
+    <string name="trophy_compare_error_their_data_unavailable">Die Trophäendaten dieses Spielers sind privat oder nicht verfügbar</string>
+    <string name="trophy_compare_error_generic">Trophäenvergleich konnte nicht geladen werden</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Cloud-Sitzungsinformationen fehlen</string>
+    <string name="stream_restart_preparing">Wird vorbereitet…</string>
+    <string name="stream_restart_error_apply_settings_failed">Neue Einstellungen konnten nicht übernommen werden</string>
+
+    <string name="controller_group_left_stick">Linker Stick</string>
+    <string name="controller_group_right_stick">Rechter Stick</string>
+    <string name="controller_group_dpad">Steuerkreuz</string>
+    <string name="controller_group_shoulder_buttons">Schultertasten</string>
+    <string name="controller_group_face_buttons">Aktionstasten</string>
+    <string name="controller_group_menu">Menü</string>
+    <string name="controller_group_system">System</string>
+    <string name="controller_group_touchpad">Touchpad</string>
+
+    <string name="controller_action_left_stick_up">Linker Stick nach oben</string>
+    <string name="controller_action_left_stick_down">Linker Stick nach unten</string>
+    <string name="controller_action_left_stick_left">Linker Stick nach links</string>
+    <string name="controller_action_left_stick_right">Linker Stick nach rechts</string>
+    <string name="controller_action_l3">L3-Klick</string>
+    <string name="controller_action_right_stick_up">Rechter Stick nach oben</string>
+    <string name="controller_action_right_stick_down">Rechter Stick nach unten</string>
+    <string name="controller_action_right_stick_left">Rechter Stick nach links</string>
+    <string name="controller_action_right_stick_right">Rechter Stick nach rechts</string>
+    <string name="controller_action_r3">R3-Klick</string>
+    <string name="controller_action_dpad_up">Steuerkreuz oben</string>
+    <string name="controller_action_dpad_down">Steuerkreuz unten</string>
+    <string name="controller_action_dpad_left">Steuerkreuz links</string>
+    <string name="controller_action_dpad_right">Steuerkreuz rechts</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Kreuz (×)</string>
+    <string name="controller_action_triangle">Dreieck (△)</string>
+    <string name="controller_action_square">Viereck (□)</string>
+    <string name="controller_action_circle">Kreis (○)</string>
+    <string name="controller_action_start">Start / Optionen</string>
+    <string name="controller_action_select">Auswählen</string>
+    <string name="controller_action_home">Home (PS-Taste)</string>
+    <string name="controller_action_touchpad_click">Touchpad-Klick</string>
+    <string name="controller_action_touchpad_hold">Touchpad halten</string>
+    <string name="controller_action_touchpad_left_click">Linker Touchpad-Klick</string>
+    <string name="controller_action_touchpad_right_click">Rechter Touchpad-Klick</string>
+    <string name="controller_action_touchpad_swipe_up">Touchpad nach oben wischen</string>
+    <string name="controller_action_touchpad_swipe_down">Touchpad nach unten wischen</string>
+    <string name="controller_action_touchpad_swipe_left">Touchpad nach links wischen</string>
+    <string name="controller_action_touchpad_swipe_right">Touchpad nach rechts wischen</string>
+</resources>

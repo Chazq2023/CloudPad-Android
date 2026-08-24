@@ -10,6 +10,7 @@ import android.widget.TextView
 import coil.load
 import com.metallic.chiaki.trophy.model.Trophy
 import com.metallic.chiaki.trophy.model.TrophyType
+import com.metallic.chiaki.trophy.trophyTypeLabelRes
 import com.pylux.stream.R
 
 /**
@@ -58,7 +59,7 @@ class TrophyUnlockPopupPresenter(
 		else
 			iconView.setImageResource(android.R.drawable.ic_menu_gallery)
 
-		badgeView.text = next.type.name
+		badgeView.text = badgeView.context.getString(trophyTypeLabelRes(next.type))
 		badgeView.setBackgroundResource(
 			when (next.type)
 			{

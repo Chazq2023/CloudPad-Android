@@ -34,7 +34,7 @@ object GameShortcutHelper {
         if (!ShortcutManagerCompat.isRequestPinShortcutSupported(context)) {
             Toast.makeText(
                 context,
-                "Your launcher does not support pinned shortcuts",
+                R.string.cloud_shortcut_launcher_unsupported_toast,
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -68,7 +68,7 @@ object GameShortcutHelper {
 
         ShortcutManagerCompat.requestPinShortcut(context, shortcut, null)
 
-        Toast.makeText(context, "Adding ${game.name} shortcut", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.cloud_shortcut_adding_toast, game.name), Toast.LENGTH_SHORT).show()
     }
 
     private suspend fun loadGameIcon(
