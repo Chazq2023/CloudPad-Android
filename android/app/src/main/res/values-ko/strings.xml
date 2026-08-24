@@ -1,0 +1,435 @@
+<resources>
+    <string name="title_main">CloudPad</string>
+    <string name="title_settings">설정</string>
+    <string name="tab_remote_play">리모트 플레이</string>
+    <string name="tab_cloud_play">클라우드 플레이</string>
+    <string name="error">오류</string>
+    <string name="error_network_title">네트워크 오류</string>
+    <string name="action_retry">다시 시도</string>
+    <string name="action_ok">확인</string>
+    <string name="action_cancel">취소</string>
+    <string name="action_back">뒤로</string>
+
+    <string name="controller_remap_title">컨트롤러 레이아웃</string>
+    <string name="controller_remap_preference_title">컨트롤러 다시 매핑</string>
+    <string name="controller_remap_preference_summary">컨트롤러의 버튼 매핑을 사용자 지정합니다</string>
+    <string name="controller_remap_press_button">버튼을 누른 상태로 다른 버튼을 눌러 조합을 만들거나, 한 번 탭하여 단일 버튼을 매핑하세요. 스틱이나 트리거를 움직여 축을 매핑합니다.</string>
+    <string name="controller_remap_modifier_held">보조키: %1$s\n\n이제 트리거 버튼을 누르거나 스틱/트리거를 움직여 조합을 만드세요 — 또는 %1$s를 놓아 단일 버튼으로 저장하세요.</string>
+    <string name="controller_remap_not_mapped">매핑되지 않음</string>
+    <string name="controller_remap_clear">지우기</string>
+    <string name="controller_remap_reset_title">기본값으로 재설정</string>
+    <string name="controller_remap_reset_message">모든 버튼 매핑을 기본 레이아웃으로 재설정하시겠습니까?</string>
+    <string name="controller_remap_reset_confirm">재설정</string>
+    <string name="controller_remap_restore_defaults">기본값으로 복원</string>
+    <string name="alert_message_standby_wakeup">콘솔이 현재 대기 모드입니다. 바로 연결을 시도하는 대신 깨우기 패킷을 보내시겠습니까?</string>
+    <string name="alert_message_session_quit">세션이 종료되었습니다: %s</string>
+    <string name="alert_message_session_create_error">세션 생성에 실패했습니다: %s</string>
+    <string name="alert_message_session_restart_failed">새 설정을 적용하지 못했습니다: %s</string>
+    <string name="alert_message_console_power_options">콘솔로 무엇을 하시겠습니까?</string>
+    <string name="action_console_sleep">콘솔 절전 모드로 전환</string>
+    <string name="action_disconnect_session">세션 연결 해제</string>
+    <string name="alert_message_login_pin_request">로그인 PIN:</string>
+    <string name="alert_message_login_pin_request_incorrect">입력한 PIN이 올바르지 않습니다!\n로그인 PIN:</string>
+    <string name="action_reconnect">다시 연결</string>
+    <string name="action_wakeup">깨우기</string>
+    <string name="action_connect_immediately">연결</string>
+    <string name="action_connect_cancel_connect">취소</string>
+    <string name="action_quit_session">종료</string>
+    <string name="action_login_pin_connect">연결</string>
+    <string name="stream_disconnect_button">연결 해제</string>
+    <string name="action_settings">설정</string>
+    <string name="action_discover">콘솔 자동 검색</string>
+    <string name="display_host_host">주소: %s</string>
+    <string name="display_host_id_unregistered">ID: %s</string>
+    <string name="display_host_id_registered">ID: %s (등록됨)</string>
+    <string name="display_host_app_title_id">앱: %1$s\n타이틀 ID: %2$s</string>
+    <string name="action_register">콘솔 등록</string>
+    <string name="action_add_manual">콘솔 수동으로 추가</string>
+    <string name="regist_pin_instructions_ps4_before">콘솔에서 다음으로 이동하세요</string>
+    <string name="regist_pin_instructions_ps4_navigation">설정 →\n리모트 플레이 연결 설정 →\n기기 추가</string>
+    <string name="regist_pin_instructions_ps5_before">콘솔에서 다음으로 이동하세요</string>
+    <string name="regist_pin_instructions_ps5_navigation">설정 →\n시스템 → 리모트 플레이 →\n기기 연결</string>
+    <string name="regist_pin_instructions_after">에서 PIN을 확인하세요</string>
+    <string name="title_regist">콘솔 등록</string>
+    <string name="hint_regist_host">호스트</string>
+    <string name="regist_broadcast">브로드캐스트</string>
+    <string name="regist_option_ps4_lt_7">4세대 &lt; 7.0</string>
+    <string name="regist_option_ps4_ge_7">4세대 ≥ 7.0, &lt; 8</string>
+    <string name="regist_option_ps4_ge_8">4세대 ≥ 8.0</string>
+    <string name="regist_option_ps5">5세대</string>
+    <string name="regist_psn_account_id_help">계정 ID를 얻는 방법은 여기를 참고하세요</string>
+    <string name="regist_psn_account_id_help_cloudpad">또는 CloudPad(클라우드 플레이)로 로그인한 경우 아래 버튼을 사용해 계정 ID를 얻을 수 있습니다</string>
+    <string name="action_obtain_account_id">계정 ID 가져오기</string>
+    <string name="regist_obtain_account_id_not_logged_in">이 방법으로 계정 ID를 얻으려면 먼저 CloudPad(클라우드 플레이)로 로그인하세요</string>
+    <string name="hint_regist_psn_online_id">온라인 ID(사용자 이름, 대소문자 구분)</string>
+    <string name="hint_regist_psn_account_id">계정 ID(8바이트, Base64)</string>
+    <string name="hint_regist_pin">PIN</string>
+    <string name="action_regist">등록</string>
+    <string name="entered_host_invalid">유효한 호스트 이름을 입력하세요</string>
+    <string name="regist_psn_online_id_invalid">유효한 온라인 ID를 입력하세요</string>
+    <string name="regist_psn_account_id_invalid">유효한 8바이트 Base64 계정 ID를 입력하세요</string>
+    <string name="regist_pin_invalid">유효한 %d자리 PIN을 입력하세요</string>
+    <string name="action_share_log">로그 공유</string>
+    <string name="action_export_settings">설정 내보내기</string>
+    <string name="regist_info_success">등록에 성공했습니다.</string>
+    <string name="regist_info_failed">등록에 실패했습니다.</string>
+    <string name="alert_regist_duplicate">MAC이 %s인 콘솔은 이미 등록되어 있습니다. 이전 기록을 덮어쓰시겠습니까?</string>
+    <string name="action_regist_overwrite">덮어쓰기</string>
+    <string name="action_regist_discard">취소</string>
+    <string name="action_import_import">가져오기</string>
+    <string name="action_import_cancel">취소</string>
+    <string name="alert_title_import">가져오기</string>
+    <string name="alert_message_import">등록된 호스트: %1$s\n\n수동 호스트: %2$s</string>
+    <string name="alert_message_import_failed">파일에서 설정을 가져오지 못했습니다:\n%s</string>
+    <string name="action_import_failed_ack">닫기</string>
+    <string name="title_edit_manual">수동 콘솔 항목</string>
+    <string name="action_add_manual_save">저장</string>
+    <string name="hint_add_manual_regist_host">등록된 콘솔</string>
+    <string name="add_manual_regist_on_connect">최초 연결 시 등록</string>
+    <string name="preferences_category_title_support">후원</string>
+    <string name="preferences_donate_title">CloudPad 후원</string>
+    <string name="preferences_donate_summary">개발을 지원하려면 후원해 주세요. CloudPad를 이용해 주셔서 감사합니다.</string>
+    <string name="preferences_donate_no_products">이 빌드에서는 후원 옵션을 사용할 수 없습니다.</string>
+    <string name="preferences_donate_billing_unavailable">이 기기에서는 Google Play 결제를 사용할 수 없습니다. Play 스토어를 설치하거나 업데이트하거나, Google Play(예: 내부 테스트)에서 CloudPad를 설치하면 후원 구매를 이용할 수 있습니다.</string>
+    <string name="donation_paywall_external_title">PayPal로 후원</string>
+    <string name="donation_paywall_external_hint">여기서는 Google Play 결제를 사용할 수 없습니다. 휴대폰으로 QR 코드를 스캔해 PayPal을 열거나, 아래의 링크 열기를 사용하세요.</string>
+    <string name="donation_paywall_external_open_link">PayPal 링크 열기</string>
+    <string name="donation_paywall_external_no_browser">이 기기에서 링크를 열 수 있는 앱이 없습니다.</string>
+    <string name="donation_paywall_qr_content_description">PayPal 후원 페이지로 연결되는 QR 코드</string>
+    <string name="donation_paywall_trust_paypal">브라우저에서 PayPal로 후원하세요.</string>
+    <string name="preferences_donate_already_supporting">이 계정에는 이미 후원 구매 내역이 있습니다. 감사합니다!</string>
+
+    <!-- Theme colour preference -->
+    <string name="preferences_category_title_appearance">모양</string>
+    <string name="preferences_theme_colour_title">테마 색상</string>
+    <string name="preferences_theme_colour_summary">앱 색상 테마를 선택하세요</string>
+    <string name="preferences_theme_colour_pink">네온 핑크</string>
+    <string name="preferences_theme_colour_blue">네온 블루</string>
+    <string name="preferences_theme_colour_green">네온 그린</string>
+    <string name="preferences_theme_colour_yellow">네온 옐로우</string>
+    <string name="preferences_theme_colour_orange">네온 오렌지</string>
+
+    <string name="preferences_app_language_title">앱 언어</string>
+
+    <string name="preferences_category_title_general">일반</string>
+    <string name="preferences_category_title_stream">리모트 플레이 설정</string>
+    <string name="preferences_category_title_export">내보내기</string>
+    <string name="preferences_registered_hosts_title">등록된 콘솔</string>
+    <string name="preferences_logs_title">세션 로그</string>
+    <string name="preferences_logs_summary">디버깅을 위해 이전 세션에서 수집된 로그 파일</string>
+    <string name="preferences_export_settings_title">설정 내보내기</string>
+    <string name="preferences_export_settings_summary">경고: 이 파일에는 리모트 플레이 비밀 키가 포함될 수 있습니다! 공유하지 마세요.</string>
+    <string name="preferences_import_settings_title">설정 가져오기</string>
+    <string name="preferences_import_settings_summary">JSON에서 설정 가져오기</string>
+    <string name="preferences_category_title_about">정보</string>
+    <string name="preferences_app_version_title">CloudPad 애플리케이션 버전</string>
+    <string name="preferences_view_license_title">라이선스 계약</string>
+    <string name="preferences_view_license_summary">라이선스 조건 및 고지 사항 보기</string>
+    <string name="preferences_category_title_icon_key">PS5 라이브러리 아이콘 설명</string>
+    <string name="preferences_icon_key_streamable_title">스트리밍 가능으로 확인된 게임</string>
+    <string name="preferences_icon_key_not_streamable_title">스트리밍 불가능으로 확인된 게임</string>
+    <string name="preferences_icon_key_unknown_title">스트리밍 가능 여부가 확인되지 않은 게임입니다. 상태를 확인하려면 게임을 실행하세요.</string>
+    <string name="preferences_category_title_controller_shortcuts">컨트롤러 단축키</string>
+    <string name="preferences_controller_shortcut_refresh_title">세모(누르기)</string>
+    <string name="preferences_controller_shortcut_refresh_summary">현재 선택된 게임 카탈로그/라이브러리를 새로고침합니다</string>
+    <string name="preferences_controller_shortcut_playtime_title">네모(누르기) — 게임이 강조 표시된 동안</string>
+    <string name="preferences_controller_shortcut_playtime_summary">게임의 플레이 시간을 표시합니다</string>
+    <string name="preferences_controller_shortcut_trophies_title">네모(길게 누르기) — 게임이 강조 표시된 동안</string>
+    <string name="preferences_controller_shortcut_trophies_summary">게임의 트로피를 엽니다</string>
+    <string name="preferences_controller_shortcut_add_to_home_title">스타트(누르기) — 게임이 강조 표시된 동안</string>
+    <string name="preferences_controller_shortcut_add_to_home_summary">홈 화면에 추가 확인 창을 엽니다</string>
+    <string name="preferences_controller_shortcut_icon_nav_title">셀렉트(누르기) — 게임이 강조 표시된 동안</string>
+    <string name="preferences_controller_shortcut_icon_nav_summary">즐겨찾기 아이콘에 초점을 맞추고, 트로피·플레이 시간·홈 화면 바로가기로 이동할 수 있습니다. 셀렉트를 다시 누르면 게임 타일로 돌아갑니다</string>
+    <string name="preferences_controller_shortcut_quick_menu_title">백 — 스트리밍 중</string>
+    <string name="preferences_controller_shortcut_quick_menu_summary">퀵 메뉴를 열고 닫습니다</string>
+    <string name="preferences_registered_hosts_summary">현재 등록됨: %d</string>
+    <string name="preferences_resolution_title">해상도</string>
+    <string name="preferences_fps_title">FPS</string>
+    <string name="preferences_bitrate_title">비트레이트</string>
+    <string name="preferences_codec_title">코덱</string>
+    <string name="preferences_log_verbose_title">상세 로깅</string>
+    <string name="preferences_log_verbose_summary">경고: 로그가 매우 많이 기록됩니다! 일반적인 사용 시에는 활성화하지 마세요.</string>
+    <string name="preferences_resolution_title_360p">360p</string>
+    <string name="preferences_resolution_title_540p">540p</string>
+    <string name="preferences_resolution_title_720p">720p</string>
+    <string name="preferences_resolution_title_1080p">1080p</string>
+    <string name="preferences_fps_title_30">30</string>
+    <string name="preferences_fps_title_60">60</string>
+    <string name="preferences_bitrate_auto">자동 (%d)</string>
+    <string name="preferences_codec_title_h264">H264</string>
+    <string name="preferences_codec_title_h265">H265 (5세대 전용)</string>
+    <string name="preferences_pip_enabled_title">화면 속 화면(PiP)</string>
+    <string name="preferences_pip_enabled_summary">스트리밍 중 최소화 시 PiP 모드를 사용합니다(Android 8.0 이상)</string>
+    <string name="preferences_adaptive_frame_pacing_title">적응형 프레임 페이싱</string>
+    <string name="preferences_adaptive_frame_pacing_summary">프레임이 미리 버퍼링되는 정도를 조정하고 네트워크가 불안정할 때 몰린 프레임을 가끔 드롭하여 고르지 않은 프레임 전달을 완화합니다. 불안정한 연결에서 더 안정적인 움직임을 위해 약간의 지연이 추가됩니다. 리모트 플레이, 게임 라이브러리, 게임 카탈로그에 적용됩니다.</string>
+    <string name="preferences_swap_cross_moon_title">엑스/동그라미 및 네모/세모 버튼 바꾸기</string>
+    <string name="preferences_swap_cross_moon_summary">기본 매핑이 올바르지 않을 경우 전면 버튼을 바꿉니다(예: 8BitDo 컨트롤러)</string>
+    <string name="preferences_microphone_enabled_title">마이크(리모트 플레이 전용)</string>
+    <string name="preferences_microphone_enabled_summary">리모트 플레이 중 기기의 마이크 오디오를 콘솔로 전송합니다</string>
+    <string name="preferences_microphone_permission_denied">이 기능을 사용하려면 마이크 권한이 필요합니다</string>
+    <string name="preferences_motion_enabled_title">모션</string>
+    <string name="preferences_motion_enabled_summary">컨트롤러 모션에 기기의 모션 센서를 사용합니다</string>
+    <string name="preferences_button_haptic_enabled_title">터치 햅틱</string>
+    <string name="preferences_button_haptic_enabled_summary">터치스크린 버튼을 누를 때 휴대폰을 진동시킵니다</string>
+    <string name="preferences_category_title_cas_sharpening">CAS 이미지 샤프닝</string>
+    <string name="preferences_cas_sharpening_enabled_title">CAS 이미지 샤프닝 사용</string>
+    <string name="preferences_cas_sharpening_enabled_summary">AMD FidelityFX Contrast Adaptive Sharpening을 사용하여 스트림 이미지를 실시간으로 선명하게 합니다</string>
+    <string name="preferences_cas_sharpening_level_title">샤프닝 수준</string>
+    <string name="quick_settings_cas_sharpening_level">샤프닝 수준: %d</string>
+    <string name="preferences_category_title_fsr">FSR 1</string>
+    <string name="preferences_fsr_enabled_title">FSR 1 사용</string>
+    <string name="preferences_fsr_enabled_summary">AMD FidelityFX 업스케일링 및 샤프닝을 사용합니다</string>
+    <string name="preferences_fsr_upscaling_title">업스케일링</string>
+    <string name="preferences_fsr_upscaling_summary">스트림이 720p로 설정되고 업스케일링이 활성화되면 1080p로 업스케일됩니다. 스트림이 1080p로 설정되고 업스케일링이 활성화되면 1440p로 업스케일됩니다. 참고: 기기의 최대 해상도가 1080p인 경우 Android가 1440p 출력을 1080p로 다운샘플링하여 화면이 흐릿해질 수 있습니다. 이런 경우 업스케일링을 비활성화하세요.</string>
+    <string name="preferences_fsr_sharpening_title">샤프닝</string>
+    <string name="quick_settings_fsr_sharpening">샤프닝: %d%%</string>
+    <string name="preferences_category_title_image_quality">화질</string>
+    <string name="preferences_image_processing_title">이미지 처리</string>
+    <string name="preferences_image_processing_off">끄기</string>
+    <string name="preferences_image_processing_cas">CAS</string>
+    <string name="preferences_image_processing_fsr">FSR 1</string>
+    <string name="preferences_quality_reset_title">화질 재설정</string>
+    <string name="preferences_quality_reset_summary">기본 스트림 및 이미지 처리 값을 복원합니다</string>
+    <string name="preferences_cas_recommended">권장 시작 수준: 1</string>
+    <string name="preferences_fsr_recommended">권장 범위: 30–60%%</string>
+    <string name="preferences_applies_immediately">즉시 적용됨</string>
+    <string name="preferences_restarts_stream">스트림을 다시 시작한 후 적용됨</string>
+    <string name="preferences_fsr_output_720">720p 스트림 → 1080p 출력</string>
+    <string name="preferences_fsr_output_1080">1080p 스트림 → 1440p 출력</string>
+    <string name="preferences_fsr_output_downsample">1080p 스트림 → 1440p 출력; 이 %1$dp 디스플레이는 이를 다운샘플링하여 화면이 흐릿해질 수 있습니다. 이런 경우 업스케일링을 비활성화하세요.</string>
+    <string name="preferences_fsr_output_unchanged">%1$dp 스트림; FSR 업스케일이 적용되지 않음</string>
+    <string name="preferences_fsr_output_all">리모트 플레이: %1$s\n게임 라이브러리: %2$s\n게임 카탈로그: %3$s</string>
+    <string name="quick_settings_image_quality">화질 · 즉시 적용됨</string>
+    <string name="quick_settings_restart_note">아래 스트림 설정은 적용 시 스트림을 다시 시작합니다</string>
+    <string name="preferences_quality_apply_title">변경 사항 적용 시점</string>
+    <string name="preferences_quality_apply_summary">이미지 처리 및 샤프닝은 스트리밍 중 즉시 적용됩니다. 해상도, 프레임 속도, 비트레이트, 코덱은 스트림을 다시 시작한 후 적용됩니다.</string>
+    <string name="quick_settings_title">퀵 설정</string>
+    <string name="quick_settings_close">닫기</string>
+    <string name="quick_settings_minimize">최소화</string>
+    <string name="quick_settings_current_game">현재 게임: %s</string>
+    <string name="quick_settings_performance_overlay_title">성능 오버레이</string>
+    <string name="quick_settings_overlay_type_title">오버레이 유형</string>
+    <string name="quick_settings_osc_title">화면 속 컨트롤</string>
+    <string name="touch_controls_customise">사용자 지정</string>
+    <string name="touch_controls_customise_button">버튼 사용자 지정</string>
+    <string name="touch_controls_size">크기: %1$d%%</string>
+    <string name="touch_controls_opacity">투명도: %1$d%%</string>
+    <string name="touch_controls_save">저장</string>
+    <string name="touch_controls_move_button">버튼 이동</string>
+    <string name="touch_controls_finish">완료</string>
+    <string name="touch_controls_always_show">항상 표시</string>
+    <string name="touch_controls_restore_default">기본값으로 복원</string>
+    <string name="touch_control_dpad">방향키</string>
+    <string name="touch_control_left_stick">왼쪽 스틱</string>
+    <string name="touch_control_right_stick">오른쪽 스틱</string>
+    <string name="touch_control_touchpad">터치패드</string>
+    <string name="touch_control_cross">엑스</string>
+    <string name="touch_control_circle">동그라미</string>
+    <string name="touch_control_triangle">세모</string>
+    <string name="touch_control_square">네모</string>
+    <string name="touch_control_l1">L1</string>
+    <string name="touch_control_l2">L2</string>
+    <string name="touch_control_l3">L3</string>
+    <string name="touch_control_r1">R1</string>
+    <string name="touch_control_r2">R2</string>
+    <string name="touch_control_r3">R3</string>
+    <string name="touch_control_share">공유</string>
+    <string name="touch_control_options">옵션</string>
+    <string name="touch_control_ps">PS</string>
+    <string name="quick_settings_touchpad_title">터치패드 전용</string>
+    <string name="quick_settings_window_size">창 크기</string>
+    <string name="quick_settings_session_tab_description">세션 설정</string>
+    <string name="quick_settings_session_restart_notice">여기서 설정을 변경하고 적용을 누르면 스트림이 잠시 다시 시작됩니다</string>
+    <string name="quick_settings_session_apply">적용</string>
+    <string name="quick_settings_session_restarting">스트림 다시 시작 중…</string>
+    <string name="quick_settings_trophies_tab_description">트로피</string>
+    <string name="quick_settings_trophies_header_label">트로피 목록 새로고침</string>
+    <string name="quick_settings_trophies_refresh">트로피 새로고침</string>
+    <string name="quick_settings_trophies_empty">%1$s의 트로피 데이터를 가져올 수 없습니다. 게임을 실행하여 트로피 데이터가 동기화되도록 하세요.\n\n세션 중 5~10분 정도 걸릴 수 있습니다. 그런 다음 트로피 목록을 새로고침하면 트로피 데이터가 표시됩니다.\n\n트로피 데이터가 계속 표시되지 않으면 CloudPad GitHub 저장소에 이슈를 등록해 주세요</string>
+    <string name="trophy_unlock_popup_header">트로피 획득!</string>
+    <string name="trophy_achieved_count_format">%1$d/%2$d 트로피 획득</string>
+    <string name="trophy_sort_content_description">트로피 정렬</string>
+    <string name="trophy_filter_content_description">트로피 필터</string>
+    <string name="trophy_sort_default">기본값</string>
+    <string name="trophy_sort_earned_date">획득 날짜</string>
+    <string name="trophy_filter_default">기본값</string>
+    <string name="trophy_filter_bronze">브론즈</string>
+    <string name="trophy_filter_silver">실버</string>
+    <string name="trophy_filter_gold">골드</string>
+    <string name="trophy_filter_platinum">플래티넘</string>
+    <string name="trophy_filter_no_matches">이 필터와 일치하는 트로피가 없습니다.</string>
+    <string name="action_friends">친구</string>
+    <string name="action_account">계정</string>
+    <string name="account_menu_log_out">로그아웃</string>
+    <string name="friends_empty_state">이 PSN 계정에서 친구를 찾을 수 없습니다.</string>
+    <string name="friend_chat_empty_state">아직 메시지가 없습니다 — 인사해 보세요!</string>
+    <string name="friend_chat_input_hint">메시지</string>
+    <string name="friend_chat_send">보내기</string>
+    <string name="quick_settings_friends_tab_description">친구</string>
+    <string name="quick_settings_friends_header_label">친구</string>
+    <string name="quick_settings_friends_refresh">친구 목록 새로고침</string>
+    <string name="quick_settings_friends_empty">이 PSN 계정에서 친구를 찾을 수 없습니다.</string>
+    <string name="quick_settings_friend_chat_back">친구 목록으로 돌아가기</string>
+    <string name="quick_settings_friend_chat_refresh">대화 새로고침</string>
+    <string name="friend_chat_refresh">대화 새로고침</string>
+    <string name="friends_refresh">친구 목록 새로고침</string>
+    <string name="trophy_compare_content_description">트로피 비교</string>
+    <string name="trophy_compare_title">트로피 비교 · %1$s</string>
+    <string name="trophy_compare_you">나</string>
+    <string name="trophy_compare_vs">VS</string>
+    <string name="trophy_compare_level_unknown">–</string>
+    <string name="trophy_compare_level_format">레벨: %1$s</string>
+    <string name="trophy_compare_total_trophies_format">총 트로피: %1$d</string>
+    <string name="trophy_compare_you_ahead">내가 앞서고 있습니다</string>
+    <string name="trophy_compare_them_ahead">상대가 앞서고 있습니다</string>
+    <string name="trophy_compare_tied">동점</string>
+    <string name="trophy_compare_shared_games">공유 게임 · %1$d</string>
+    <string name="trophy_compare_empty">트로피 데이터가 있는 공유 게임이 아직 없습니다 — 함께 플레이하고 다시 확인해 보세요.</string>
+    <string name="trophy_compare_refresh">비교 새로고침</string>
+    <string name="quick_settings_trophy_compare_back">친구 목록으로 돌아가기</string>
+    <string name="trophy_compare_my_progress">나 %1$d%%</string>
+    <string name="trophy_compare_their_progress">상대 %1$d%%</string>
+    <string name="alert_message_delete_registered_host">등록된 콘솔 %1$s(ID: %2$s)을(를) 삭제하시겠습니까?</string>
+    <string name="alert_message_delete_manual_host">%s의 콘솔 항목을 삭제하시겠습니까?</string>
+    <string name="action_keep">유지</string>
+    <string name="action_delete">삭제</string>
+    <string name="action_edit">편집</string>
+    <string name="session_logs_empty_info">기록된 세션 로그가 없습니다.</string>
+    <string name="registered_hosts_empty_info">등록된 콘솔이 없습니다.</string>
+    <string name="display_hosts_empty_discovery_off_info">아직 추가된 콘솔이 없습니다.\n검색을 활성화하면 로컬 네트워크에서 콘솔을 자동으로 찾습니다.</string>
+    <string name="display_hosts_empty_discovery_on_info">추가되거나 검색된 콘솔이 없습니다.</string>
+    <string name="preferences_category_title_cloud">클라우드 스트리밍</string>
+    <string name="preferences_psn_login_title">계정</string>
+    <string name="preferences_psn_login_summary">로그인되지 않음 - 탭하여 로그인</string>
+    <string name="preferences_psn_login_summary_logged_in">탭하여 로그아웃</string>
+    <string name="preferences_psn_logout_title">로그아웃</string>
+    <string name="preferences_psn_logout_message">로그아웃하시겠습니까?</string>
+    <string name="preferences_psn_logout_confirm">로그아웃</string>
+    <string name="preferences_psn_logout_success">로그아웃되었습니다</string>
+    <string name="preferences_psn_login_row_title">로그인</string>
+    <string name="preferences_psn_login_row_summary">탭하여 로그인</string>
+    <string name="preferences_locale_title">지역</string>
+    <string name="preferences_locale_summary_not_set">설정되지 않음 - 로그인하여 지역을 가져오세요</string>
+    <string name="preferences_cached_locale_title">캐시된 지역</string>
+    <string name="preferences_cached_locale_summary_not_set">캐시된 지역이 없습니다</string>
+
+    <!-- Game Library (PSCloud) Settings - supports up to 4K -->
+    <string name="preferences_category_title_game_library">게임 라이브러리</string>
+    <string name="preferences_cloud_resolution_pscloud_title">해상도</string>
+    <string name="preferences_cloud_resolution_pscloud_summary">게임 라이브러리 스트리밍 해상도(최대 4K)</string>
+    <string name="preferences_cloud_datacenter_pscloud_title">데이터 센터</string>
+    <string name="preferences_cloud_datacenter_pscloud_summary">특정 데이터 센터를 선택하거나 최적의 핑을 위해 자동을 사용하세요</string>
+
+    <!-- Game Catalog (PSNOW) Settings - up to 1080p -->
+    <string name="preferences_category_title_game_catalog">게임 카탈로그</string>
+    <string name="preferences_cloud_resolution_psnow_title">해상도</string>
+    <string name="preferences_cloud_resolution_psnow_summary">게임 카탈로그 스트리밍 해상도</string>
+    <string name="preferences_cloud_datacenter_psnow_title">데이터 센터</string>
+    <string name="preferences_cloud_datacenter_psnow_summary">특정 데이터 센터를 선택하거나 최적의 핑을 위해 자동을 사용하세요</string>
+
+    <!-- PSN Login -->
+    <string name="psn_login_title">로그인</string>
+    <string name="psn_login_button">로그인</string>
+    <string name="psn_login_success">로그인 성공</string>
+    <string name="psn_login_failed">로그인에 실패했습니다. 다시 시도해 주세요.</string>
+    <string name="psn_login_required_title">로그인 필요</string>
+    <string name="psn_login_required_message">클라우드 스트리밍을 이용하려면 로그인하세요</string>
+    <string name="psn_login_prompt_message">클라우드 스트리밍을 이용하려면 계정이 필요합니다. 지금 로그인하시겠습니까?</string>
+    <string name="psn_login_session_expired_message">세션이 만료되었습니다. 계속하려면 다시 로그인하세요.</string>
+    <string name="psn_login_external_browser_error">외부 브라우저를 여는 데 실패했습니다</string>
+    <string name="psn_login_instructions">Sony로 로그인한 다음, SSO 쿠키를 가져와 로그인을 완료하세요.</string>
+    <string name="psn_login_code_label">Sony 로그인</string>
+    <string name="psn_login_open_browser">계정에 로그인</string>
+    <string name="psn_login_check_status">SSO 쿠키 값 가져오기</string>
+    <string name="psn_login_connecting">서버에 연결 중…</string>
+    <string name="psn_login_code_ready">로그인 준비 완료</string>
+    <string name="psn_login_checking_status">로그인 완료 여부 확인 중…</string>
+    <string name="psn_login_browser_opened">Sony 로그인을 완료한 다음 SSO 쿠키 값 가져오기를 탭하세요</string>
+    <string name="psn_login_not_complete">아직 로그인이 완료되지 않았습니다. 먼저 Sony 로그인을 완료하세요.</string>
+    <string name="psn_login_not_complete_toast">먼저 Sony 로그인을 완료해 주세요</string>
+    <string name="psn_login_server_error">로그인을 완료하지 못했습니다</string>
+
+    <!-- Theme colour options -->
+    <string-array name="theme_colour_entries">
+        <item>네온 핑크</item>
+        <item>네온 블루</item>
+        <item>네온 그린</item>
+        <item>네온 옐로우</item>
+        <item>네온 오렌지</item>
+    </string-array>
+
+    <!-- Datacenter options -->
+    <string-array name="cloud_datacenter_entries">
+        <item>자동 (최적의 핑)</item>
+    </string-array>
+
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <string-array name="cloud_resolution_psnow_entries">
+        <item>720p (1280x720)</item>
+        <item>1080p (1920x1080)</item>
+    </string-array>
+
+    <!-- Resolution options for Game Library (PSCloud) -->
+    <string-array name="cloud_resolution_pscloud_entries">
+        <item>720p (1280x720)</item>
+        <item>1080p (1920x1080)</item>
+    </string-array>
+
+    <string name="quick_settings_overlay_mode_full">전체</string>
+    <string name="quick_settings_overlay_mode_minimal">최소</string>
+    <string name="quick_settings_configure_overlay">오버레이 구성</string>
+    <string name="overlay_configure_title">오버레이 구성</string>
+    <string name="overlay_configure_opacity_label">불투명도 — %1$d%%</string>
+    <string name="overlay_configure_move">오버레이 이동</string>
+    <string name="overlay_configure_restore_defaults">기본값으로 복원</string>
+    <string name="overlay_move_done">완료</string>
+    <string name="action_save">저장</string>
+    <string name="donation_dialog_title">CloudPad 후원</string>
+    <string name="donation_dialog_body">CloudPad는 커뮤니티가 만들었습니다. 이 앱이 마음에 드신다면 개발 지원을 고려해 주세요. 여러분의 기여는 지속적인 업데이트를 지원하고 프로젝트를 유지하는 데 도움이 됩니다.</string>
+    <!-- Play Console product title and localized price, shown on each tier button -->
+    <string name="donation_tier_button_label">%1$s · %2$s</string>
+    <string name="donation_action_not_now">나중에</string>
+
+    <string name="bullet_dot">•</string>
+
+    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
+    <string name="donation_paywall_headline">CloudPad를 계속 이어가 주세요</string>
+    <string name="donation_paywall_tagline">오픈 소스이며 커뮤니티가 유지 관리합니다.</string>
+    <string name="donation_paywall_story_title">CloudPad를 즐기고 계신가요?</string>
+    <string name="donation_paywall_story_lead">이 앱은 오픈 소스이며 커뮤니티가 유지 관리합니다. 프로젝트 후원을 고려해 주세요. 후원금은 프로젝트를 유지 관리하는 개발자들에게 전달됩니다.</string>
+    <string name="donation_paywall_bullet_1">후원금은 CloudPad를 만들고 유지 관리하는 사람들에게 전달됩니다.</string>
+    <string name="donation_paywall_bullet_2">Google Play에서 한 번만 결제합니다. 구독이 아닙니다.</string>
+    <string name="donation_paywall_bullet_3">선택 사항입니다. 후원 여부와 관계없이 전체 앱을 이용할 수 있습니다.</string>
+    <string name="donation_paywall_pick_title">금액 선택</string>
+    <string name="donation_paywall_pick_hint">아래에서 등급을 선택하세요. 한 번만 결제합니다.</string>
+    <string name="donation_paywall_maybe_later">나중에 할게요</string>
+    <string name="donation_paywall_trust">Google Play에서 한 번만 결제합니다. 구독이 아닙니다.</string>
+    <!-- Accessibility: tier name + localized price from Play -->
+    <string name="donation_tier_content_description">%1$s, %2$s. Google Play로 한 번 후원하려면 두 번 탭하세요.</string>
+    <string name="donation_tier_bronze">브론즈 후원</string>
+    <string name="donation_tier_silver">실버 후원</string>
+    <string name="donation_tier_gold">골드 후원</string>
+    <string name="donation_tier_platinum">플래티넘 후원</string>
+    <string name="donation_tier_blurb_bronze">모든 후원이 소중합니다.</string>
+    <string name="donation_tier_blurb_silver">조금 더 많은 후원입니다.</string>
+    <string name="donation_tier_blurb_gold">더 많이 후원하고 싶을 때.</string>
+    <string name="donation_tier_blurb_platinum">가장 많이 후원하고 싶을 때.</string>
+    <string name="donation_tier_blurb_default">CloudPad를 후원해 주셔서 감사합니다.</string>
+    <string name="donation_paywall_close">닫기</string>
+    <string name="donation_paywall_logo_content_description">CloudPad</string>
+    <string name="donation_paywall_restore_purchases">구매 복원</string>
+    <string name="donation_paywall_restore_none">이 Google 계정에 대한 후원 구매 내역이 없습니다.</string>
+    <string name="donation_paywall_restore_already">이미 이 기기에 후원 구매 내역이 있습니다.</string>
+    <string name="donation_paywall_restore_success">구매가 복원되었습니다. CloudPad를 후원해 주셔서 감사합니다!</string>
+    <string name="donation_paywall_restore_unavailable">Google Play에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.</string>
+    <string name="preferences_cloud_bitrate_pscloud_title">비트레이트</string>
+    <string name="preferences_cloud_bitrate_pscloud_summary">게임 라이브러리 스트리밍의 경우 %d Mbps</string>
+
+    <string name="preferences_cloud_bitrate_psnow_title">비트레이트</string>
+    <string name="preferences_cloud_bitrate_psnow_summary">게임 카탈로그 스트리밍의 경우 %d Mbps</string>
+
+    <string name="stream_background_channel_name">백그라운드 스트리밍</string>
+    <string name="stream_background_notification_title">스트림이 계속 실행 중입니다</string>
+    <string name="stream_background_notification_text">탭하여 게임으로 돌아가기</string>
+    <string name="stream_background_notification_disconnect">연결 해제</string>
+</resources>

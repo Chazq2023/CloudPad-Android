@@ -30,6 +30,12 @@
             app:entryValues="@array/theme_colour_values"
             app:defaultValue="@string/preferences_theme_value_pink"
             app:icon="@drawable/ic_resolution"/>
+
+        <ListPreference
+            app:key="@string/preferences_app_language_key"
+            app:title="@string/preferences_app_language_title"
+            app:summary="%s"
+            app:icon="@drawable/ic_locale"/>
     </PreferenceCategory>
 
     <PreferenceCategory

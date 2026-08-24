@@ -17,6 +17,7 @@ jobs:
     env:
       RELEASE_NOTES: |-
         - Added an "Adaptive Frame Pacing" toggle (Settings, off by default) that smooths out uneven frame delivery on unstable connections: it widens the presentation buffer based on recently-measured network jitter instead of using a fixed value, and proactively drops frames that arrive in a burst rather than letting latency build up. Applies to Remote Play, Game Library, and Game Catalog.
+        - Added an "App Language" setting (Settings > Appearance) that lets you switch CloudPad's own interface to one of 10 languages (English UK/US, German, French, Finnish, Italian, Spanish, Dutch, Brazilian Portuguese, Japanese, Korean) or follow your device's language, independent of your system language.
 
     steps:
       - name: Checkout repo

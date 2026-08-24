@@ -1039,6 +1039,11 @@ class Preferences(context: Context)
 
 	val themeColourKey get() = resources.getString(R.string.preferences_theme_colour_key)
 
+	// No get/set here — state lives in AppCompatDelegate.getApplicationLocales() /
+	// setApplicationLocales() (AndroidX per-app language), not SharedPreferences. See
+	// SettingsFragment's DataStore.getString/putString for the "preferences_app_language_key" branch.
+	val appLanguageKey get() = resources.getString(R.string.preferences_app_language_key)
+
 	fun getThemeColour(): String = sharedPreferences.getString(themeColourKey, "pink") ?: "pink"
 
 	fun setThemeColour(value: String) {

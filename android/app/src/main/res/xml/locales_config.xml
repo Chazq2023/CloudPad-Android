@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Lets Android 13+ list CloudPad's supported languages under Settings > Apps > CloudPad >
+     Language, in addition to the in-app "App Language" preference (SettingsFragment.kt), which
+     both read/write through the same AppCompatDelegate.setApplicationLocales() API. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en-US"/>
+    <locale android:name="en-GB"/>
+    <locale android:name="de-DE"/>
+    <locale android:name="fr-FR"/>
+    <locale android:name="fi-FI"/>
+    <locale android:name="it-IT"/>
+    <locale android:name="es-ES"/>
+    <locale android:name="nl-NL"/>
+    <locale android:name="pt-BR"/>
+    <locale android:name="ja-JP"/>
+    <locale android:name="ko-KR"/>
+</locale-config>

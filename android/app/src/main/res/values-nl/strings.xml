@@ -1,0 +1,436 @@
+<resources>
+    <string name="title_main">CloudPad</string>
+    <string name="title_settings">Instellingen</string>
+    <string name="tab_remote_play">Remote Play</string>
+    <string name="tab_cloud_play">Cloud Play</string>
+    <string name="error">Fout</string>
+    <string name="error_network_title">Netwerkfout</string>
+    <string name="action_retry">Opnieuw proberen</string>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Annuleren</string>
+    <string name="action_back">Terug</string>
+
+    <string name="controller_remap_title">Controllerindeling</string>
+    <string name="controller_remap_preference_title">Controller opnieuw toewijzen</string>
+    <string name="controller_remap_preference_summary">Pas de knoptoewijzing voor je controller aan</string>
+    <string name="controller_remap_press_button">Houd een knop ingedrukt en druk op een andere voor een combinatie, of tik één keer voor een enkele knop. Beweeg een stick of trigger om een as toe te wijzen.</string>
+    <string name="controller_remap_modifier_held">Modifier: %1$s\n\nDruk nu op de triggerknop of beweeg een stick/trigger voor een combinatie — of laat %1$s los om als enkele knop op te slaan.</string>
+    <string name="controller_remap_not_mapped">Niet toegewezen</string>
+    <string name="controller_remap_clear">Wissen</string>
+    <string name="controller_remap_reset_title">Standaardwaarden herstellen</string>
+    <string name="controller_remap_reset_message">Alle knoptoewijzingen terugzetten naar de standaardindeling?</string>
+    <string name="controller_remap_reset_confirm">Herstellen</string>
+    <string name="controller_remap_restore_defaults">Standaardwaarden herstellen</string>
+    <string name="alert_message_standby_wakeup">De console staat momenteel in stand-bymodus. Wil je een wake-uppakket sturen in plaats van direct te proberen te verbinden?</string>
+    <string name="alert_message_session_quit">Sessie is gestopt: %s</string>
+    <string name="alert_message_session_create_error">Sessie maken mislukt: %s</string>
+    <string name="alert_message_session_restart_failed">Nieuwe instellingen toepassen mislukt: %s</string>
+    <string name="alert_message_console_power_options">Wat wil je met je console doen?</string>
+    <string name="action_console_sleep">Console in slaapstand zetten</string>
+    <string name="action_disconnect_session">Sessie verbreken</string>
+    <string name="alert_message_login_pin_request">Inlog-pincode:</string>
+    <string name="alert_message_login_pin_request_incorrect">Ingevoerde pincode was onjuist!\nInlog-pincode:</string>
+    <string name="action_reconnect">Opnieuw verbinden</string>
+    <string name="action_wakeup">Wakker maken</string>
+    <string name="action_connect_immediately">Verbinden</string>
+    <string name="action_connect_cancel_connect">Annuleren</string>
+    <string name="action_quit_session">Stoppen</string>
+    <string name="action_login_pin_connect">Verbinden</string>
+    <string name="stream_disconnect_button">Verbinding verbreken</string>
+    <string name="action_settings">Instellingen</string>
+    <string name="action_discover">Consoles automatisch zoeken</string>
+    <string name="display_host_host">Adres: %s</string>
+    <string name="display_host_id_unregistered">ID: %s</string>
+    <string name="display_host_id_registered">ID: %s (geregistreerd)</string>
+    <string name="display_host_app_title_id">App: %1$s\nTitel-ID: %2$s</string>
+    <string name="action_register">Console registreren</string>
+    <string name="action_add_manual">Console handmatig toevoegen</string>
+    <string name="regist_pin_instructions_ps4_before">Navigeer op je console naar</string>
+    <string name="regist_pin_instructions_ps4_navigation">Instellingen →\nRemote Play-verbindingsinstellingen →\nApparaat toevoegen</string>
+    <string name="regist_pin_instructions_ps5_before">Navigeer op je console naar</string>
+    <string name="regist_pin_instructions_ps5_navigation">Instellingen →\nSysteem → Remote Play →\nApparaat koppelen</string>
+    <string name="regist_pin_instructions_after">om de pincode te verkrijgen</string>
+    <string name="title_regist">Console registreren</string>
+    <string name="hint_regist_host">Host</string>
+    <string name="regist_broadcast">Broadcast</string>
+    <string name="regist_option_ps4_lt_7">Gen 4 &lt; 7.0</string>
+    <string name="regist_option_ps4_ge_7">Gen 4 ≥ 7.0, &lt; 8</string>
+    <string name="regist_option_ps4_ge_8">Gen 4 ≥ 8.0</string>
+    <string name="regist_option_ps5">Gen 5</string>
+    <string name="regist_psn_account_id_help">Voor meer over het verkrijgen van je account-ID, zie</string>
+    <string name="regist_psn_account_id_help_cloudpad">of als je al bent ingelogd via CloudPad, gebruik dan de knop hieronder om je account-ID te verkrijgen</string>
+    <string name="action_obtain_account_id">Account-ID verkrijgen</string>
+    <string name="regist_obtain_account_id_not_logged_in">Log eerst in via CloudPad (Cloud Play) om je account-ID op deze manier te verkrijgen</string>
+    <string name="hint_regist_psn_online_id">Online-ID (gebruikersnaam, hoofdlettergevoelig)</string>
+    <string name="hint_regist_psn_account_id">Account-ID (8 bytes, base64)</string>
+    <string name="hint_regist_pin">Pincode</string>
+    <string name="action_regist">Registreren</string>
+    <string name="entered_host_invalid">Voer een geldige hostnaam in</string>
+    <string name="regist_psn_online_id_invalid">Voer een geldige online-ID in</string>
+    <string name="regist_psn_account_id_invalid">Voer een geldige account-ID van 8 bytes in Base64 in</string>
+    <string name="regist_pin_invalid">Voer een geldige %d-cijferige pincode in</string>
+    <string name="action_share_log">Logboek delen</string>
+    <string name="action_export_settings">Instellingen exporteren</string>
+    <string name="regist_info_success">Registratie geslaagd.</string>
+    <string name="regist_info_failed">Registratie mislukt.</string>
+    <string name="alert_regist_duplicate">De console met MAC-adres %s is al geregistreerd. Wil je de vorige registratie overschrijven?</string>
+    <string name="action_regist_overwrite">Overschrijven</string>
+    <string name="action_regist_discard">Annuleren</string>
+    <string name="action_import_import">Importeren</string>
+    <string name="action_import_cancel">Annuleren</string>
+    <string name="alert_title_import">Importeren</string>
+    <string name="alert_message_import">Geregistreerde hosts: %1$s\n\nHandmatige hosts: %2$s</string>
+    <string name="alert_message_import_failed">Instellingen importeren uit bestand mislukt:\n%s</string>
+    <string name="action_import_failed_ack">Sluiten</string>
+    <string name="title_edit_manual">Handmatige consolevermelding</string>
+    <string name="action_add_manual_save">Opslaan</string>
+    <string name="hint_add_manual_regist_host">Geregistreerde console</string>
+    <string name="add_manual_regist_on_connect">Registreren bij eerste verbinding</string>
+    <string name="preferences_category_title_support">Ondersteuning</string>
+    <string name="preferences_donate_title">CloudPad ondersteunen</string>
+    <string name="preferences_donate_summary">Doneer om de ontwikkeling te steunen. Bedankt voor het gebruik van CloudPad.</string>
+    <string name="preferences_donate_no_products">Ondersteuningsopties zijn niet beschikbaar in deze build.</string>
+    <string name="preferences_donate_billing_unavailable">Google Play-facturering is niet beschikbaar op dit apparaat. Installeer of update de Play Store, of installeer CloudPad via Google Play (bijv. interne test), zodat steunaankopen werken.</string>
+    <string name="donation_paywall_external_title">Ondersteunen via PayPal</string>
+    <string name="donation_paywall_external_hint">Google Play-facturering is hier niet beschikbaar. Scan de QR-code met je telefoon om PayPal te openen, of gebruik hieronder Link openen.</string>
+    <string name="donation_paywall_external_open_link">PayPal-link openen</string>
+    <string name="donation_paywall_external_no_browser">Geen enkele app op dit apparaat kan de link openen.</string>
+    <string name="donation_paywall_qr_content_description">QR-code die naar de PayPal-ondersteuningspagina linkt</string>
+    <string name="donation_paywall_trust_paypal">Doneer via PayPal in je browser.</string>
+    <string name="preferences_donate_already_supporting">Je hebt al een steunaankoop op dit account. Bedankt!</string>
+
+    <!-- Theme colour preference -->
+    <string name="preferences_category_title_appearance">Weergave</string>
+    <string name="preferences_theme_colour_title">Themakleur</string>
+    <string name="preferences_theme_colour_summary">Kies het kleurthema van de app</string>
+    <string name="preferences_theme_colour_pink">Neon Roze</string>
+    <string name="preferences_theme_colour_blue">Neon Blauw</string>
+    <string name="preferences_theme_colour_green">Neon Groen</string>
+    <string name="preferences_theme_colour_yellow">Neon Geel</string>
+    <string name="preferences_theme_colour_orange">Neon Oranje</string>
+
+    <string name="preferences_app_language_title">App-taal</string>
+
+    <string name="preferences_category_title_general">Algemeen</string>
+    <string name="preferences_category_title_stream">Remote Play-instellingen</string>
+    <string name="preferences_category_title_export">Exporteren</string>
+    <string name="preferences_registered_hosts_title">Geregistreerde consoles</string>
+    <string name="preferences_logs_title">Sessielogboeken</string>
+    <string name="preferences_logs_summary">Verzamelde logbestanden van eerdere sessies voor foutopsporing</string>
+    <string name="preferences_export_settings_title">Instellingen exporteren</string>
+    <string name="preferences_export_settings_summary">Waarschuwing: het resulterende bestand kan je geheime Remote Play-sleutels bevatten! Deel het niet.</string>
+    <string name="preferences_import_settings_title">Instellingen importeren</string>
+    <string name="preferences_import_settings_summary">Instellingen importeren vanuit JSON</string>
+    <string name="preferences_category_title_about">Over</string>
+    <string name="preferences_app_version_title">CloudPad-appversie</string>
+    <string name="preferences_view_license_title">Licentieovereenkomst</string>
+    <string name="preferences_view_license_summary">Licentievoorwaarden en disclaimers bekijken</string>
+    <string name="preferences_category_title_icon_key">PS5-bibliotheekpictogramlegenda</string>
+    <string name="preferences_icon_key_streamable_title">Spel is geverifieerd als streambaar</string>
+    <string name="preferences_icon_key_not_streamable_title">Spel is geverifieerd als niet-streambaar</string>
+    <string name="preferences_icon_key_unknown_title">Spel is niet geverifieerd als streambaar of niet-streambaar. Start het spel om de status te verifiëren.</string>
+    <string name="preferences_category_title_controller_shortcuts">Controllersnelkoppelingen</string>
+    <string name="preferences_controller_shortcut_refresh_title">Driehoek (indrukken)</string>
+    <string name="preferences_controller_shortcut_refresh_summary">Vernieuwt de momenteel geselecteerde spelcatalogus/bibliotheek</string>
+    <string name="preferences_controller_shortcut_playtime_title">Vierkant (indrukken) — terwijl een spel is gemarkeerd</string>
+    <string name="preferences_controller_shortcut_playtime_summary">Toont de speeltijd van het spel</string>
+    <string name="preferences_controller_shortcut_trophies_title">Vierkant (ingedrukt houden) — terwijl een spel is gemarkeerd</string>
+    <string name="preferences_controller_shortcut_trophies_summary">Opent de trofeeën van het spel</string>
+    <string name="preferences_controller_shortcut_add_to_home_title">Start (indrukken) — terwijl een spel is gemarkeerd</string>
+    <string name="preferences_controller_shortcut_add_to_home_summary">Opent de bevestiging voor toevoegen aan startscherm</string>
+    <string name="preferences_controller_shortcut_icon_nav_title">Select (indrukken) — terwijl een spel is gemarkeerd</string>
+    <string name="preferences_controller_shortcut_icon_nav_summary">Focust het favorietenpictogram, waarna je kunt navigeren naar trofeeën, speeltijd en de startschermsnelkoppeling. Druk nogmaals op select om terug te keren naar de speltegel</string>
+    <string name="preferences_controller_shortcut_quick_menu_title">Terug — tijdens streamen</string>
+    <string name="preferences_controller_shortcut_quick_menu_summary">Opent en sluit het snelmenu</string>
+    <string name="preferences_registered_hosts_summary">Momenteel geregistreerd: %d</string>
+    <string name="preferences_resolution_title">Resolutie</string>
+    <string name="preferences_fps_title">Beeldsnelheid</string>
+    <string name="preferences_bitrate_title">Bitrate</string>
+    <string name="preferences_codec_title">Codec</string>
+    <string name="preferences_log_verbose_title">Uitgebreide logboekregistratie</string>
+    <string name="preferences_log_verbose_summary">Waarschuwing: dit registreert HEEL VEEL! Niet inschakelen voor regulier gebruik.</string>
+    <string name="preferences_resolution_title_360p">360p</string>
+    <string name="preferences_resolution_title_540p">540p</string>
+    <string name="preferences_resolution_title_720p">720p</string>
+    <string name="preferences_resolution_title_1080p">1080p</string>
+    <string name="preferences_fps_title_30">30</string>
+    <string name="preferences_fps_title_60">60</string>
+    <string name="preferences_bitrate_auto">Automatisch (%d)</string>
+    <string name="preferences_codec_title_h264">H264</string>
+    <string name="preferences_codec_title_h265">H265 (alleen Gen 5)</string>
+    <string name="preferences_pip_enabled_title">Beeld-in-beeld</string>
+    <string name="preferences_pip_enabled_summary">Schakel PiP-modus in bij het minimaliseren tijdens streamen (Android 8.0+)</string>
+    <string name="preferences_adaptive_frame_pacing_title">Adaptieve framepacing</string>
+    <string name="preferences_adaptive_frame_pacing_summary">Verzacht ongelijkmatige framelevering door aan te passen hoe ver vooruit frames worden gebufferd en incidenteel opgehoopte frames te laten vallen wanneer het netwerk hapert. Voegt wat vertraging toe in ruil voor stabielere beweging bij onstabiele verbindingen. Van toepassing op Remote Play, Spelbibliotheek en Spelcatalogus.</string>
+    <string name="preferences_swap_cross_moon_title">Kruis/Maan- en Vierkant/Piramideknoppen omwisselen</string>
+    <string name="preferences_swap_cross_moon_summary">Wissel gezichtsknoppen om als de standaardtoewijzing onjuist is (bijv. voor 8BitDo-controllers)</string>
+    <string name="preferences_microphone_enabled_title">Microfoon (alleen Remote Play)</string>
+    <string name="preferences_microphone_enabled_summary">Stuur de microfoonaudio van je apparaat naar de console tijdens Remote Play</string>
+    <string name="preferences_microphone_permission_denied">Microfoontoestemming is vereist om deze functie te gebruiken</string>
+    <string name="preferences_motion_enabled_title">Beweging</string>
+    <string name="preferences_motion_enabled_summary">Gebruik de bewegingssensoren van je apparaat voor controllerbeweging</string>
+    <string name="preferences_button_haptic_enabled_title">Aanraaktrilling</string>
+    <string name="preferences_button_haptic_enabled_summary">Laat de telefoon trillen bij touchscreen-knopindrukken</string>
+    <string name="preferences_category_title_cas_sharpening">CAS-beeldverscherping</string>
+    <string name="preferences_cas_sharpening_enabled_title">CAS-beeldverscherping inschakelen</string>
+    <string name="preferences_cas_sharpening_enabled_summary">Verscherpt het streambeeld in realtime met AMD FidelityFX Contrast Adaptive Sharpening</string>
+    <string name="preferences_cas_sharpening_level_title">Verscherpingsniveau</string>
+    <string name="quick_settings_cas_sharpening_level">Verscherpingsniveau: %d</string>
+    <string name="preferences_category_title_fsr">FSR 1</string>
+    <string name="preferences_fsr_enabled_title">FSR 1 inschakelen</string>
+    <string name="preferences_fsr_enabled_summary">AMD FidelityFX-upscaling en -verscherping inschakelen</string>
+    <string name="preferences_fsr_upscaling_title">Upscaling</string>
+    <string name="preferences_fsr_upscaling_summary">Als de stream is ingesteld op 720p en Upscaling is ingeschakeld, wordt deze opgeschaald naar 1080p. Als de stream is ingesteld op 1080p en Upscaling is ingeschakeld, wordt deze opgeschaald naar 1440p. Let op: als de maximale resolutie van je apparaat 1080p is, zal Android de 1440p-uitvoer downsamplen naar 1080p, wat een wazig beeld kan veroorzaken. Laat Upscaling in dat geval uitgeschakeld.</string>
+    <string name="preferences_fsr_sharpening_title">Verscherping</string>
+    <string name="quick_settings_fsr_sharpening">Verscherping: %d%%</string>
+    <string name="preferences_category_title_image_quality">Beeldkwaliteit</string>
+    <string name="preferences_image_processing_title">Beeldverwerking</string>
+    <string name="preferences_image_processing_off">Uit</string>
+    <string name="preferences_image_processing_cas">CAS</string>
+    <string name="preferences_image_processing_fsr">FSR 1</string>
+    <string name="preferences_quality_reset_title">Beeldkwaliteit resetten</string>
+    <string name="preferences_quality_reset_summary">Herstel de standaard stream- en beeldverwerkingswaarden</string>
+    <string name="preferences_cas_recommended">Aanbevolen startniveau: 1</string>
+    <string name="preferences_fsr_recommended">Aanbevolen bereik: 30–60%%</string>
+    <string name="preferences_applies_immediately">Wordt direct toegepast</string>
+    <string name="preferences_restarts_stream">Wordt toegepast na herstart van de stream</string>
+    <string name="preferences_fsr_output_720">720p-stream → 1080p-uitvoer</string>
+    <string name="preferences_fsr_output_1080">1080p-stream → 1440p-uitvoer</string>
+    <string name="preferences_fsr_output_downsample">1080p-stream → 1440p-uitvoer; dit %1$dp-scherm zal dit downsamplen en kan zachter overkomen. Laat Upscaling in dat geval uitgeschakeld.</string>
+    <string name="preferences_fsr_output_unchanged">%1$dp-stream; geen FSR-upscale toegepast</string>
+    <string name="preferences_fsr_output_all">Remote Play: %1$s\nSpelbibliotheek: %2$s\nSpelcatalogus: %3$s</string>
+    <string name="quick_settings_image_quality">Beeldkwaliteit · Wordt direct toegepast</string>
+    <string name="quick_settings_restart_note">Onderstaande streaminstellingen herstarten de stream bij toepassing</string>
+    <string name="preferences_quality_apply_title">Wanneer wijzigingen worden toegepast</string>
+    <string name="preferences_quality_apply_summary">Beeldverwerking en verscherping worden direct toegepast tijdens een stream. Resolutie, beeldsnelheid, bitrate en codec worden toegepast na herstart van de stream.</string>
+    <string name="quick_settings_title">Snelle instellingen</string>
+    <string name="quick_settings_close">Sluiten</string>
+    <string name="quick_settings_minimize">Minimaliseren</string>
+    <string name="quick_settings_current_game">Huidig spel: %s</string>
+    <string name="quick_settings_performance_overlay_title">Prestatie-overlay</string>
+    <string name="quick_settings_overlay_type_title">Overlaytype</string>
+    <string name="quick_settings_osc_title">Schermbediening</string>
+    <string name="touch_controls_customise">Aanpassen</string>
+    <string name="touch_controls_customise_button">Knop aanpassen</string>
+    <string name="touch_controls_size">Grootte: %1$d%%</string>
+    <string name="touch_controls_opacity">Transparantieniveau: %1$d%%</string>
+    <string name="touch_controls_save">Opslaan</string>
+    <string name="touch_controls_move_button">Knop verplaatsen</string>
+    <string name="touch_controls_finish">Voltooien</string>
+    <string name="touch_controls_always_show">Altijd tonen</string>
+    <string name="touch_controls_restore_default">Standaardwaarde herstellen</string>
+    <string name="touch_control_dpad">D-pad</string>
+    <string name="touch_control_left_stick">Linkerstick</string>
+    <string name="touch_control_right_stick">Rechterstick</string>
+    <string name="touch_control_touchpad">Touchpad</string>
+    <string name="touch_control_cross">Kruis</string>
+    <string name="touch_control_circle">Cirkel</string>
+    <string name="touch_control_triangle">Driehoek</string>
+    <string name="touch_control_square">Vierkant</string>
+    <string name="touch_control_l1">L1</string>
+    <string name="touch_control_l2">L2</string>
+    <string name="touch_control_l3">L3</string>
+    <string name="touch_control_r1">R1</string>
+    <string name="touch_control_r2">R2</string>
+    <string name="touch_control_r3">R3</string>
+    <string name="touch_control_share">Delen</string>
+    <string name="touch_control_options">Opties</string>
+    <string name="touch_control_ps">PS</string>
+    <string name="quick_settings_touchpad_title">Alleen touchpad</string>
+    <string name="quick_settings_window_size">Vensterformaat</string>
+    <string name="quick_settings_session_tab_description">Sessie-instellingen</string>
+    <string name="quick_settings_session_restart_notice">Het wijzigen van een instelling hier herstart de stream kort zodra je op Toepassen tikt</string>
+    <string name="quick_settings_session_apply">Toepassen</string>
+    <string name="quick_settings_session_restarting">Stream wordt herstart…</string>
+    <string name="quick_settings_trophies_tab_description">Trofeeën</string>
+    <string name="quick_settings_trophies_header_label">Trofeeënlijst vernieuwen</string>
+    <string name="quick_settings_trophies_refresh">Trofeeën vernieuwen</string>
+    <string name="quick_settings_trophies_empty">Er konden geen trofeegegevens worden opgehaald voor %1$s. Start het spel en laat de trofeegegevens synchroniseren.\n\nDit kan ongeveer 5-10 minuten duren tijdens een sessie. Daarna kun je de trofeeënlijst vernieuwen en zouden de trofeegegevens moeten verschijnen.\n\nAls de trofeegegevens nog steeds ontbreken, meld dit dan als issue op de CloudPad GitHub-repository</string>
+    <string name="trophy_unlock_popup_header">Trofee ontgrendeld!</string>
+    <string name="trophy_achieved_count_format">%1$d/%2$d trofeeën behaald</string>
+    <string name="trophy_sort_content_description">Trofeeën sorteren</string>
+    <string name="trophy_filter_content_description">Trofeeën filteren</string>
+    <string name="trophy_sort_default">Standaard</string>
+    <string name="trophy_sort_earned_date">Behaaldatum</string>
+    <string name="trophy_filter_default">Standaard</string>
+    <string name="trophy_filter_bronze">Brons</string>
+    <string name="trophy_filter_silver">Zilver</string>
+    <string name="trophy_filter_gold">Goud</string>
+    <string name="trophy_filter_platinum">Platina</string>
+    <string name="trophy_filter_no_matches">Geen trofeeën komen overeen met dit filter.</string>
+    <string name="action_friends">Vrienden</string>
+    <string name="action_account">Account</string>
+    <string name="account_menu_log_out">Uitloggen</string>
+    <string name="friends_empty_state">Geen vrienden gevonden op dit PSN-account.</string>
+    <string name="friend_chat_empty_state">Nog geen berichten — zeg eens hallo!</string>
+    <string name="friend_chat_input_hint">Bericht</string>
+    <string name="friend_chat_send">Verzenden</string>
+    <string name="quick_settings_friends_tab_description">Vrienden</string>
+    <string name="quick_settings_friends_header_label">Vrienden</string>
+    <string name="quick_settings_friends_refresh">Vriendenlijst vernieuwen</string>
+    <string name="quick_settings_friends_empty">Geen vrienden gevonden op dit PSN-account.</string>
+    <string name="quick_settings_friend_chat_back">Terug naar vriendenlijst</string>
+    <string name="quick_settings_friend_chat_refresh">Gesprek vernieuwen</string>
+    <string name="friend_chat_refresh">Gesprek vernieuwen</string>
+    <string name="friends_refresh">Vriendenlijst vernieuwen</string>
+    <string name="trophy_compare_content_description">Trofeeën vergelijken</string>
+    <string name="trophy_compare_title">Trofeeën vergelijken · %1$s</string>
+    <string name="trophy_compare_you">Jij</string>
+    <string name="trophy_compare_vs">VS</string>
+    <string name="trophy_compare_level_unknown">–</string>
+    <string name="trophy_compare_level_format">Niveau: %1$s</string>
+    <string name="trophy_compare_total_trophies_format">Totaal trofeeën: %1$d</string>
+    <string name="trophy_compare_you_ahead">Jij loopt voor</string>
+    <string name="trophy_compare_them_ahead">Zij lopen voor</string>
+    <string name="trophy_compare_tied">Gelijk</string>
+    <string name="trophy_compare_shared_games">Gedeelde spellen · %1$d</string>
+    <string name="trophy_compare_empty">Nog geen gedeelde spellen met trofeegegevens — speel iets samen en kom later terug.</string>
+    <string name="trophy_compare_refresh">Vergelijking vernieuwen</string>
+    <string name="quick_settings_trophy_compare_back">Terug naar vriendenlijst</string>
+    <string name="trophy_compare_my_progress">Jij %1$d%%</string>
+    <string name="trophy_compare_their_progress">Zij %1$d%%</string>
+    <string name="alert_message_delete_registered_host">Weet je zeker dat je de geregistreerde console %1$s met ID %2$s wilt verwijderen?</string>
+    <string name="alert_message_delete_manual_host">Weet je zeker dat je de consolevermelding voor %s wilt verwijderen?</string>
+    <string name="action_keep">Behouden</string>
+    <string name="action_delete">Verwijderen</string>
+    <string name="action_edit">Bewerken</string>
+    <string name="session_logs_empty_info">Geen sessielogboeken vastgelegd.</string>
+    <string name="registered_hosts_empty_info">Geen consoles geregistreerd.</string>
+    <string name="display_hosts_empty_discovery_off_info">Nog geen consoles toegevoegd.\nSchakel Detectie in om automatisch consoles op je lokale netwerk te vinden.</string>
+    <string name="display_hosts_empty_discovery_on_info">Geen consoles toegevoegd of gedetecteerd.</string>
+    <string name="preferences_category_title_cloud">Cloudstreaming</string>
+    <string name="preferences_psn_login_title">Account</string>
+    <string name="preferences_psn_login_summary">Niet ingelogd - Tik om in te loggen</string>
+    <string name="preferences_psn_login_summary_logged_in">Tik om uit te loggen</string>
+    <string name="preferences_psn_logout_title">Uitloggen</string>
+    <string name="preferences_psn_logout_message">Weet je zeker dat je wilt uitloggen?</string>
+    <string name="preferences_psn_logout_confirm">Uitloggen</string>
+    <string name="preferences_psn_logout_success">Succesvol uitgelogd</string>
+    <string name="preferences_psn_login_row_title">Inloggen</string>
+    <string name="preferences_psn_login_row_summary">Tik om in te loggen</string>
+    <string name="preferences_locale_title">Regio</string>
+    <string name="preferences_locale_summary_not_set">Niet ingesteld - Log in om de regio te verkrijgen</string>
+    <string name="preferences_cached_locale_title">Gecachte regio</string>
+    <string name="preferences_cached_locale_summary_not_set">Geen gecachte regio opgeslagen</string>
+
+    <!-- Game Library (PSCloud) Settings - supports up to 4K -->
+    <string name="preferences_category_title_game_library">Spelbibliotheek</string>
+    <string name="preferences_cloud_resolution_pscloud_title">Resolutie</string>
+    <string name="preferences_cloud_resolution_pscloud_summary">Streamresolutie voor Spelbibliotheek (tot 4K)</string>
+    <string name="preferences_cloud_datacenter_pscloud_title">Datacenter</string>
+    <string name="preferences_cloud_datacenter_pscloud_summary">Selecteer een specifiek datacenter of gebruik Automatisch voor de beste ping</string>
+
+    <!-- Game Catalog (PSNOW) Settings - up to 1080p -->
+    <string name="preferences_category_title_game_catalog">Spelcatalogus</string>
+    <string name="preferences_cloud_resolution_psnow_title">Resolutie</string>
+    <string name="preferences_cloud_resolution_psnow_summary">Streamresolutie voor Spelcatalogus</string>
+    <string name="preferences_cloud_datacenter_psnow_title">Datacenter</string>
+    <string name="preferences_cloud_datacenter_psnow_summary">Selecteer een specifiek datacenter of gebruik Automatisch voor de beste ping</string>
+
+    <!-- PSN Login -->
+    <string name="psn_login_title">Inloggen</string>
+    <string name="psn_login_button">INLOGGEN</string>
+    <string name="psn_login_success">Inloggen geslaagd</string>
+    <string name="psn_login_failed">Inloggen mislukt. Probeer het opnieuw.</string>
+    <string name="psn_login_required_title">Inloggen vereist</string>
+    <string name="psn_login_required_message">Log in om toegang te krijgen tot cloudstreaming</string>
+    <string name="psn_login_prompt_message">Cloudstreaming vereist een account. Wil je nu inloggen?</string>
+    <string name="psn_login_session_expired_message">Je sessie is verlopen. Log opnieuw in om door te gaan.</string>
+    <string name="psn_login_external_browser_error">Openen van externe browser mislukt</string>
+    <string name="psn_login_instructions">Log in bij Sony, haal vervolgens je SSO-cookie op en rond het inloggen af.</string>
+    <string name="psn_login_code_label">Sony-inlog</string>
+    <string name="psn_login_open_browser">Inloggen bij account</string>
+    <string name="psn_login_check_status">SSO-cookiewaarde ophalen</string>
+    <string name="psn_login_connecting">Verbinden met server…</string>
+    <string name="psn_login_code_ready">Klaar om in te loggen</string>
+    <string name="psn_login_checking_status">Controleren of inloggen is voltooid…</string>
+    <string name="psn_login_browser_opened">Rond Sony-inlog af en tik dan op SSO-cookiewaarde ophalen</string>
+    <string name="psn_login_not_complete">Inloggen nog niet voltooid. Rond eerst de Sony-inlog af.</string>
+    <string name="psn_login_not_complete_toast">Rond eerst de Sony-inlog af</string>
+    <string name="psn_login_server_error">Inloggen voltooien mislukt</string>
+
+    <!-- Theme colour options -->
+    <string-array name="theme_colour_entries">
+        <item>Neon Roze</item>
+        <item>Neon Blauw</item>
+        <item>Neon Groen</item>
+        <item>Neon Geel</item>
+        <item>Neon Oranje</item>
+    </string-array>
+
+    <!-- Datacenter options -->
+    <string-array name="cloud_datacenter_entries">
+        <item>Automatisch (beste ping)</item>
+    </string-array>
+
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <string-array name="cloud_resolution_psnow_entries">
+        <item>720p (1280x720)</item>
+        <item>1080p (1920x1080)</item>
+    </string-array>
+
+    <!-- Resolution options for Game Library (PSCloud) -->
+    <string-array name="cloud_resolution_pscloud_entries">
+        <item>720p (1280x720)</item>
+        <item>1080p (1920x1080)</item>
+    </string-array>
+
+    <!-- Don't localize these -->
+    <string name="quick_settings_overlay_mode_full">Volledig</string>
+    <string name="quick_settings_overlay_mode_minimal">Minimaal</string>
+    <string name="quick_settings_configure_overlay">Overlay configureren</string>
+    <string name="overlay_configure_title">Overlay configureren</string>
+    <string name="overlay_configure_opacity_label">Dekking — %1$d%%</string>
+    <string name="overlay_configure_move">Overlay verplaatsen</string>
+    <string name="overlay_configure_restore_defaults">Standaardwaarden herstellen</string>
+    <string name="overlay_move_done">Klaar</string>
+    <string name="action_save">Opslaan</string>
+    <string name="donation_dialog_title">CloudPad ondersteunen</string>
+    <string name="donation_dialog_body">CloudPad wordt gebouwd door de community. Als je de app graag gebruikt, overweeg dan de ontwikkeling ervan te steunen. Jouw bijdrage helpt doorlopende updates te financieren en houdt het project levend.</string>
+    <!-- Play Console product title and localized price, shown on each tier button -->
+    <string name="donation_tier_button_label">%1$s · %2$s</string>
+    <string name="donation_action_not_now">Niet nu</string>
+
+    <string name="bullet_dot">•</string>
+
+    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
+    <string name="donation_paywall_headline">Houd CloudPad in leven</string>
+    <string name="donation_paywall_tagline">Open source en onderhouden door de community.</string>
+    <string name="donation_paywall_story_title">Geniet je van CloudPad?</string>
+    <string name="donation_paywall_story_lead">De app is open source en wordt onderhouden door de community. Overweeg het project te steunen. Donaties gaan naar de ontwikkelaars die de app onderhouden.</string>
+    <string name="donation_paywall_bullet_1">Jouw donatie gaat naar de mensen die CloudPad bouwen en onderhouden.</string>
+    <string name="donation_paywall_bullet_2">Eenmalige betaling via Google Play. Geen abonnement.</string>
+    <string name="donation_paywall_bullet_3">Optioneel. Je krijgt hoe dan ook de volledige app.</string>
+    <string name="donation_paywall_pick_title">Kies een bedrag</string>
+    <string name="donation_paywall_pick_hint">Kies hieronder een niveau. Je betaalt maar één keer.</string>
+    <string name="donation_paywall_maybe_later">Misschien later</string>
+    <string name="donation_paywall_trust">Eenmalige betaling via Google Play. Geen abonnement.</string>
+    <!-- Accessibility: tier name + localized price from Play -->
+    <string name="donation_tier_content_description">%1$s, %2$s. Dubbeltik om eenmalig te doneren via Google Play.</string>
+    <string name="donation_tier_bronze">Bronzen donatie</string>
+    <string name="donation_tier_silver">Zilveren donatie</string>
+    <string name="donation_tier_gold">Gouden donatie</string>
+    <string name="donation_tier_platinum">Platina donatie</string>
+    <string name="donation_tier_blurb_bronze">Elke donatie telt.</string>
+    <string name="donation_tier_blurb_silver">Een beetje meer steun.</string>
+    <string name="donation_tier_blurb_gold">Als je meer wilt geven.</string>
+    <string name="donation_tier_blurb_platinum">Als je het meeste wilt geven.</string>
+    <string name="donation_tier_blurb_default">Bedankt voor het steunen van CloudPad.</string>
+    <string name="donation_paywall_close">Sluiten</string>
+    <string name="donation_paywall_logo_content_description">CloudPad</string>
+    <string name="donation_paywall_restore_purchases">Aankopen herstellen</string>
+    <string name="donation_paywall_restore_none">Geen steunaankopen gevonden voor dit Google-account.</string>
+    <string name="donation_paywall_restore_already">Je steunaankoop staat al op dit apparaat.</string>
+    <string name="donation_paywall_restore_success">Aankopen hersteld. Bedankt voor het steunen van CloudPad!</string>
+    <string name="donation_paywall_restore_unavailable">Kon Google Play niet bereiken. Probeer het straks opnieuw.</string>
+    <string name="preferences_cloud_bitrate_pscloud_title">Bitrate</string>
+    <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps voor Spelbibliotheek-streaming</string>
+
+    <string name="preferences_cloud_bitrate_psnow_title">Bitrate</string>
+    <string name="preferences_cloud_bitrate_psnow_summary">%d Mbps voor Spelcatalogus-streaming</string>
+
+    <string name="stream_background_channel_name">Achtergrondstreaming</string>
+    <string name="stream_background_notification_title">Stream loopt nog</string>
+    <string name="stream_background_notification_text">Tik om terug te gaan naar je spel</string>
+    <string name="stream_background_notification_disconnect">Verbinding verbreken</string>
+</resources>

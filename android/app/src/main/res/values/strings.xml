@@ -43,7 +43,7 @@
     <string name="display_host_host">Address: %s</string>
     <string name="display_host_id_unregistered">ID: %s</string>
     <string name="display_host_id_registered">ID: %s (registered)</string>
-    <string name="display_host_app_title_id">App: %s\nTitle ID: %s</string>
+    <string name="display_host_app_title_id">App: %1$s\nTitle ID: %2$s</string>
     <string name="action_register">Register Console</string>
     <string name="action_add_manual">Add Console Manually</string>
     <string name="regist_pin_instructions_ps4_before">On your console, navigate to</string>
@@ -81,7 +81,7 @@
     <string name="action_import_import">Import</string>
     <string name="action_import_cancel">Cancel</string>
     <string name="alert_title_import">Import</string>
-    <string name="alert_message_import">Registered Hosts: %s\n\nManual Hosts: %s</string>
+    <string name="alert_message_import">Registered Hosts: %1$s\n\nManual Hosts: %2$s</string>
     <string name="alert_message_import_failed">Failed to import settings from file:\n%s</string>
     <string name="action_import_failed_ack">Dismiss</string>
     <string name="title_edit_manual">Manual Console Entry</string>
@@ -117,6 +117,8 @@
     <string name="preferences_theme_value_green">green</string>
     <string name="preferences_theme_value_yellow">yellow</string>
     <string name="preferences_theme_value_orange">orange</string>
+
+    <string name="preferences_app_language_title">App Language</string>
 
     <string name="preferences_category_title_general">General</string>
     <string name="preferences_category_title_stream">Remote Play Settings</string>
@@ -296,7 +298,7 @@
     <string name="quick_settings_trophy_compare_back">Back to friends list</string>
     <string name="trophy_compare_my_progress">You %1$d%%</string>
     <string name="trophy_compare_their_progress">Them %1$d%%</string>
-    <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %s with ID %s?</string>
+    <string name="alert_message_delete_registered_host">Are you sure you want to delete the registered console %1$s with ID %2$s?</string>
     <string name="alert_message_delete_manual_host">Are you sure you want to delete the console entry for %s?</string>
     <string name="action_keep">Keep</string>
     <string name="action_delete">Delete</string>
@@ -437,6 +439,7 @@
     <string name="preferences_cloud_resolution_pscloud_key">cloud_resolution_pscloud</string>
     <string name="preferences_pip_enabled_key">pip_enabled</string>
     <string name="preferences_adaptive_frame_pacing_key">adaptive_frame_pacing_enabled</string>
+    <string name="preferences_app_language_key">app_language</string>
     <string name="preferences_cas_sharpening_enabled_key">cas_sharpening_enabled</string>
     <string name="preferences_cas_sharpening_level_key">cas_sharpening_level</string>
     <string name="preferences_fsr_enabled_key">fsr_enabled</string>
