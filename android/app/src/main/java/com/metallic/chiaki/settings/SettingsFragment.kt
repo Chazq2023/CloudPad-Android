@@ -41,6 +41,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
 		preferences.fsrEnabledKey -> preferences.fsrEnabled
 		preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled
+		preferences.adaptiveFramePacingEnabledKey -> preferences.adaptiveFramePacingEnabled
 		else -> defValue
 	}
 
@@ -56,6 +57,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
 			preferences.fsrEnabledKey -> preferences.fsrEnabled = value
 			preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled = value
+			preferences.adaptiveFramePacingEnabledKey -> preferences.adaptiveFramePacingEnabled = value
 		}
 	}
 

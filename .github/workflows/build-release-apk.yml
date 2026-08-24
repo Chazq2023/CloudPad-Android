@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Documentation and release-workflow update only — no app functionality changes in this release.
+        - Added an "Adaptive Frame Pacing" toggle (Settings, off by default) that smooths out uneven frame delivery on unstable connections: it widens the presentation buffer based on recently-measured network jitter instead of using a fixed value, and proactively drops frames that arrive in a burst rather than letting latency build up. Applies to Remote Play, Game Library, and Game Catalog.
 
     steps:
       - name: Checkout repo

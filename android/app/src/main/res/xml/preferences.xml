@@ -94,6 +94,13 @@
             app:icon="@drawable/ic_resolution"/>
 
         <SwitchPreference
+            app:key="@string/preferences_adaptive_frame_pacing_key"
+            app:title="@string/preferences_adaptive_frame_pacing_title"
+            app:summary="@string/preferences_adaptive_frame_pacing_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_fps"/>
+
+        <SwitchPreference
             app:key="@string/preferences_log_verbose_key"
             app:title="@string/preferences_log_verbose_title"
             app:summary="@string/preferences_log_verbose_summary"

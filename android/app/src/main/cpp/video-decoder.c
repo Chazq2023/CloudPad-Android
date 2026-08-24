@@ -28,7 +28,7 @@ static int64_t now_us()
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
 static void *android_chiaki_video_decoder_input_thread_func(void *user);
 
-ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec)
+ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec, bool adaptive_frame_pacing_enabled)
 {
 	decoder->log = log;
 	decoder->codec = NULL;
@@ -40,6 +40,7 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->output_frames_total = 0;
 	decoder->next_render_ns = 0;
 	decoder->input_timeouts = 0;
+	decoder->adaptive_frame_pacing_enabled = adaptive_frame_pacing_enabled;
 
 	decoder->frame_queue_head = 0;
 	decoder->frame_queue_tail = 0;
@@ -160,6 +161,8 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 		CHIAKI_LOGI(decoder->log, "Set ANativeWindow frame rate to %d fps", decoder->target_fps);
 	}
 #endif
+
+	CHIAKI_LOGI(decoder->log, "Adaptive Frame Pacing: %s", decoder->adaptive_frame_pacing_enabled ? "enabled" : "disabled");
 
 	const char *mime = chiaki_codec_is_h265(decoder->target_codec) ? "video/hevc" : "video/avc";
 	CHIAKI_LOGI(decoder->log, "Initializing decoder with mime %s", mime);
@@ -367,6 +370,13 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int64_t min_headroom_ns   = INT64_MAX; // minimum raw grid headroom per bucket
 	int64_t ema_inter_frame_ns = vsync_period_ns; // EMA of actual inter-frame interval
 
+	// Adaptive Frame Pacing: continuously-updated jitter magnitude (independent of the
+	// short/long bucket counts above, which reset every second) used to size the
+	// presentation buffer dynamically instead of a fixed constant. Computed unconditionally
+	// (cheap) but only changes presentation behavior when adaptive_frame_pacing_enabled.
+	int64_t ema_jitter_ns    = 0;
+	int     adaptive_dropped = 0; // frames dropped this second to thin a burst
+
 	decoder->next_render_ns = 0;
 
 	while(1)
@@ -392,6 +402,9 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 						long_intervals++;
 					else
 						ema_inter_frame_ns = (ema_inter_frame_ns * 7 + delta_ns) / 8;
+
+					int64_t deviation_ns = delta_ns > vsync_period_ns ? delta_ns - vsync_period_ns : vsync_period_ns - delta_ns;
+					ema_jitter_ns = (ema_jitter_ns * 7 + deviation_ns) / 8;
 				}
 				last_frame_ns = now_ns;
 
@@ -408,6 +421,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d",
 						bucket_frames * 1e9f / (float)elapsed_ns,
 						short_intervals, long_intervals, new_timeouts, min_hdm_ms);
+					if(decoder->adaptive_frame_pacing_enabled)
+					{
+						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f dropped=%d",
+							(double)ema_jitter_ns / 1000000.0, adaptive_dropped);
+						adaptive_dropped = 0;
+					}
 					bucket_start_ns   = now_ns;
 					bucket_frames     = 0;
 					short_intervals   = 0;
@@ -421,29 +440,55 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				//
 				// 2x vsync (33ms at 60fps) baseline minimises display-side input latency.
 				// Cap at 8x vsync (133ms at 60fps) as a safety net for extreme jitter bursts.
-				const int64_t baseline_ns = 2 * vsync_period_ns;
-				const int64_t cap_ns      = 8 * vsync_period_ns;
+				// Adaptive Frame Pacing (when enabled) scales the baseline up with recently
+				// observed jitter (ema_jitter_ns above) instead of using the fixed value, and
+				// proactively drops frames that arrive well ahead of schedule during a burst —
+				// see below — rather than queueing them further into the future and letting
+				// latency creep up until a hard cap-reset is needed.
+				int64_t baseline_ns = 2 * vsync_period_ns;
+				if(decoder->adaptive_frame_pacing_enabled)
+				{
+					const int64_t adaptive_max_ns = 8 * vsync_period_ns;
+					int64_t adaptive_baseline_ns = baseline_ns + ema_jitter_ns * 2;
+					baseline_ns = adaptive_baseline_ns > adaptive_max_ns ? adaptive_max_ns : adaptive_baseline_ns;
+				}
+				const int64_t cap_ns = 4 * baseline_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
 				// Skip headroom recording on the very first frame (next_render_ns==0
 				// gives a boot-time-sized negative that pollutes the min_hdm log).
 				if(decoder->next_render_ns > 0 && headroom_ns < min_headroom_ns)
 					min_headroom_ns = headroom_ns;
-				if(headroom_ns <= 1000000LL || headroom_ns > cap_ns)
-					render_ns = now_ns + baseline_ns;
 
-				AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
-				// Target baseline headroom: when above baseline use vsync_period so excess
-				// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
-				// counteract systematic drain if server delivers slightly below 60fps.
-				// This keeps headroom near baseline and prevents cap-overflow resets, which
-				// cause timestamp inversions (newer frame scheduled before older frame in
-				// SurfaceFlinger queue → visible stutter every ~13s).
-				int64_t advance_ns = (headroom_ns > baseline_ns)
-					? vsync_period_ns
-					: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
-				decoder->next_render_ns = render_ns + advance_ns;
-				decoder->output_frames_total++;
+				// Adaptive Frame Pacing: this frame arrived as part of a burst and the
+				// schedule is already comfortably ahead — drop it instead of queueing yet
+				// another vsync_period_ns onto next_render_ns, which would otherwise let
+				// presentation latency creep up through the whole burst until the cap-reset
+				// below eventually fires (itself a visible stutter).
+				if(decoder->adaptive_frame_pacing_enabled && decoder->next_render_ns > 0
+					&& headroom_ns > baseline_ns + 2 * vsync_period_ns)
+				{
+					AMediaCodec_releaseOutputBuffer(decoder->codec, (size_t)status, false);
+					adaptive_dropped++;
+				}
+				else
+				{
+					if(headroom_ns <= 1000000LL || headroom_ns > cap_ns)
+						render_ns = now_ns + baseline_ns;
+
+					AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
+					// Target baseline headroom: when above baseline use vsync_period so excess
+					// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
+					// counteract systematic drain if server delivers slightly below 60fps.
+					// This keeps headroom near baseline and prevents cap-overflow resets, which
+					// cause timestamp inversions (newer frame scheduled before older frame in
+					// SurfaceFlinger queue → visible stutter every ~13s).
+					int64_t advance_ns = (headroom_ns > baseline_ns)
+						? vsync_period_ns
+						: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
+					decoder->next_render_ns = render_ns + advance_ns;
+					decoder->output_frames_total++;
+				}
 			}
 			else
 			{

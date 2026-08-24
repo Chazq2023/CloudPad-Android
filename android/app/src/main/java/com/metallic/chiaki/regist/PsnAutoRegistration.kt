@@ -129,6 +129,7 @@ class PsnAutoRegistration(
 					registKey = ByteArray(CHIAKI_SESSION_AUTH_SIZE),
 					morning = ByteArray(CHIAKI_KEY_SIZE),
 					videoProfile = prefs.videoProfile,
+					adaptiveFramePacingEnabled = prefs.adaptiveFramePacingEnabled,
 					duid = duid,
 					psnToken = token,
 					psnAccountId = prefs.psnAccountId,
