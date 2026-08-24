@@ -42,6 +42,13 @@
     <string name="cloud_add_to_library_add_now_button">Add Now</string>
     <string name="cloud_add_to_library_qr_message">Scan this QR code on your phone or tablet to add \"%1$s\" to your PlayStation library.\n\nAfter adding the game, press Refresh Games.</string>
     <string name="cloud_failed_to_open_browser_toast">Failed to open browser</string>
+    <string name="cloud_tab_ps3_catalog">PS3 Catalog</string>
+    <string name="cloud_tab_ps4_catalog">PS4 Catalog</string>
+    <string name="cloud_tab_ps5_library">PS5 Library</string>
+    <string name="cloud_no_games_found">No games found</string>
+    <string name="cloud_refresh_games_list_button">Refresh Games List</string>
+    <string name="disclaimer_title">Disclaimer</string>
+    <string name="disclaimer_message">CloudPad is still a work in progress. You are responsible for:\n\n• Ensuring you have an active PS Plus Subscription.\n• PS Now and PS5 Cloud Gaming is available in your region.\n• PS5 Games that you purchase or already own are eligible for Cloud Streaming.\n\nIf you are unsure, please either visit the official PSN Store online or use the official PS App to check whether a title is available in your region for streaming.</string>
     <string name="cloud_starting_allocation">Starting allocation...</string>
     <string name="cloud_streaming_unavailable_title">Streaming Unavailable</string>
     <string name="cloud_streaming_unavailable_psnow_message">Please ensure that you have a PS Plus Premium subscription and PS Now streaming is available in your region</string>
@@ -414,6 +421,9 @@
 
     <!-- Remote Play tab: consoles list, PSN discovery, and auto-registration -->
     <string name="remote_play_refresh_consoles_button">Refresh Consoles</string>
+    <string name="remote_play_refresh_consoles_list_button">Refresh Consoles List</string>
+    <string name="remote_play_manually_register_console_button">Manually Register Console</string>
+    <string name="remote_play_manually_add_console_button">Manually Add Console</string>
     <string name="remote_play_login_to_add_consoles_button">Login to Add Consoles</string>
     <string name="remote_play_psn_login_success_toast">PSN login successful</string>
     <string name="remote_play_refreshing_consoles_toast">Refreshing consoles list...</string>

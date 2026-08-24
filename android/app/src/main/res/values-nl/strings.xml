@@ -577,4 +577,16 @@
     <string name="trophy_hidden_description">Voltooi deze trofee om de details te onthullen</string>
     <string name="trophy_hidden_name">Verborgen trofee</string>
     <string name="trophy_progress_percent_complete">%1$d%% voltooid</string>
+
+    <string name="cloud_tab_ps3_catalog">PS3-catalogus</string>
+    <string name="cloud_tab_ps4_catalog">PS4-catalogus</string>
+    <string name="cloud_tab_ps5_library">PS5-bibliotheek</string>
+    <string name="cloud_no_games_found">Geen games gevonden</string>
+    <string name="cloud_refresh_games_list_button">Gamelijst vernieuwen</string>
+    <string name="disclaimer_title">Disclaimer</string>
+    <string name="disclaimer_message">CloudPad is nog in ontwikkeling. Je bent zelf verantwoordelijk voor:\n\n• Een actief PS Plus-abonnement.\n• Of PS Now en PS5 Cloud Gaming beschikbaar zijn in jouw regio.\n• Of PS5-games die je koopt of al bezit, in aanmerking komen voor Cloud Streaming.\n\nAls je het niet zeker weet, bezoek dan de officiële PSN Store online of gebruik de officiële PS-app om te controleren of een titel beschikbaar is voor streamen in jouw regio.</string>
+
+    <string name="remote_play_refresh_consoles_list_button">Consolelijst vernieuwen</string>
+    <string name="remote_play_manually_register_console_button">Console handmatig registreren</string>
+    <string name="remote_play_manually_add_console_button">Console handmatig toevoegen</string>
 </resources>

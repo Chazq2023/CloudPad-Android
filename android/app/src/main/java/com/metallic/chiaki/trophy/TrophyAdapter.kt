@@ -57,6 +57,17 @@ fun itemIdToFilterMode(itemId: Int): TrophyFilterMode = when (itemId)
 	else -> TrophyFilterMode.DEFAULT
 }
 
+/** [TrophyType.name] is the raw Kotlin enum constant (always English, e.g. "BRONZE") — used for
+ *  the rarity badge's background lookup, but never for display text. This is the translated
+ *  equivalent for the badge label. */
+fun trophyTypeLabelRes(type: TrophyType): Int = when (type)
+{
+	TrophyType.BRONZE -> R.string.trophy_filter_bronze
+	TrophyType.SILVER -> R.string.trophy_filter_silver
+	TrophyType.GOLD -> R.string.trophy_filter_gold
+	TrophyType.PLATINUM -> R.string.trophy_filter_platinum
+}
+
 /** Shared by [TrophiesActivity] and [QuickSettingsPanel]'s in-stream Trophies tab so both
  *  present identical group-header + trophy-row structure from the same fetched detail, under
  *  whichever sort/filter the user currently has selected. */
@@ -134,7 +145,7 @@ fun showTrophyDetailDialog(context: Context, trophy: Trophy)
 		trophy.detail
 
 	val typeBadge = view.findViewById<TextView>(R.id.trophyDetailTypeBadge)
-	typeBadge.text = trophy.type.name
+	typeBadge.text = context.getString(trophyTypeLabelRes(trophy.type))
 	typeBadge.setBackgroundResource(
 		when (trophy.type)
 		{
@@ -258,7 +269,7 @@ class TrophyAdapter(
 			else
 				trophy.detail
 
-			binding.trophyItemTypeBadge.text = trophy.type.name
+			binding.trophyItemTypeBadge.text = binding.root.context.getString(trophyTypeLabelRes(trophy.type))
 			binding.trophyItemTypeBadge.setBackgroundResource(
 				when (trophy.type)
 				{

@@ -575,4 +575,16 @@
     <string name="trophy_hidden_description">Terminez ce trophée pour révéler ses détails</string>
     <string name="trophy_hidden_name">Trophée caché</string>
     <string name="trophy_progress_percent_complete">%1$d %% terminé</string>
+
+    <string name="cloud_tab_ps3_catalog">Catalogue PS3</string>
+    <string name="cloud_tab_ps4_catalog">Catalogue PS4</string>
+    <string name="cloud_tab_ps5_library">Bibliothèque PS5</string>
+    <string name="cloud_no_games_found">Aucun jeu trouvé</string>
+    <string name="cloud_refresh_games_list_button">Actualiser la liste des jeux</string>
+    <string name="disclaimer_title">Avertissement</string>
+    <string name="disclaimer_message">CloudPad est encore en cours de développement. Vous êtes responsable de :\n\n• Disposer d\'un abonnement PS Plus actif.\n• Vérifier que PS Now et PS5 Cloud Gaming sont disponibles dans votre région.\n• Vérifier que les jeux PS5 que vous achetez ou possédez déjà sont éligibles au Cloud Streaming.\n\nEn cas de doute, veuillez consulter le PSN Store officiel en ligne ou utiliser l\'application PS officielle pour vérifier si un titre est disponible en streaming dans votre région.</string>
+
+    <string name="remote_play_refresh_consoles_list_button">Actualiser la liste des consoles</string>
+    <string name="remote_play_manually_register_console_button">Enregistrer manuellement une console</string>
+    <string name="remote_play_manually_add_console_button">Ajouter manuellement une console</string>
 </resources>

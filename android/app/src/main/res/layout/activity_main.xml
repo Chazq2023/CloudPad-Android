@@ -60,7 +60,7 @@
                             android:layout_height="match_parent"
                             android:padding="8dp"
                             android:src="@drawable/ic_gamepad_modern"
-                            android:contentDescription="Remote Play"
+                            android:contentDescription="@string/tab_remote_play"
                             android:background="@android:color/transparent"
                             android:focusable="false"
                             android:clickable="false" />
@@ -80,7 +80,7 @@
                             android:layout_height="match_parent"
                             android:padding="8dp"
                             android:src="@drawable/ic_cloud"
-                            android:contentDescription="Cloud Play"
+                            android:contentDescription="@string/tab_cloud_play"
                             android:background="@android:color/transparent"
                             android:focusable="false"
                             android:clickable="false" />
