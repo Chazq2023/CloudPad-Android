@@ -432,4 +432,183 @@
     <string name="stream_background_notification_title">스트림이 계속 실행 중입니다</string>
     <string name="stream_background_notification_text">탭하여 게임으로 돌아가기</string>
     <string name="stream_background_notification_disconnect">연결 해제</string>
+
+    <string name="action_automatic">자동</string>
+    <string name="action_done">완료</string>
+    <string name="action_exit">종료</string>
+    <string name="action_manual">수동</string>
+    <string name="action_no">아니요</string>
+    <string name="action_yes">예</string>
+
+    <string name="app_integrity_verification_required_title">확인 필요</string>
+    <string name="app_integrity_verification_required_message">애플리케이션 출처를 확인할 수 없습니다. 인터넷에 연결되어 있는지, 그리고 앱이 공식 소스에서 설치되었는지 확인해 주세요.</string>
+
+    <string name="cloud_account_settings_update_title">계정 설정 업데이트 필요</string>
+    <string name="cloud_account_settings_update_message">클라우드 스트리밍을 사용하려면 계정 개인정보 설정을 업데이트해야 합니다.\n\n업데이트 URL: %1$s</string>
+
+    <string name="cloud_add_to_home_confirm_message">%1$s 항목을 홈 화면에 추가하시겠습니까?</string>
+
+    <string name="cloud_add_to_library_title">라이브러리에 추가</string>
+    <string name="cloud_add_to_library_add_now_button">지금 추가</string>
+    <string name="cloud_add_to_library_message">이 게임을 스트리밍하려면 먼저 라이브러리에 추가해야 합니다.\n\n게임을 추가한 후 게임 새로고침 버튼을 눌러 목록을 업데이트하세요.</string>
+    <string name="cloud_add_to_library_no_url_message">이 게임을 라이브러리에 추가할 수 없습니다. 게임 URL을 사용할 수 없습니다.</string>
+    <string name="cloud_add_to_library_qr_message">휴대폰이나 태블릿으로 이 QR 코드를 스캔하여 \"%1$s\"을(를) PlayStation 라이브러리에 추가하세요.\n\n게임을 추가한 후 게임 새로고침을 누르세요.</string>
+
+    <string name="cloud_authorization_failed_title">인증 실패</string>
+    <string name="cloud_authorization_failed_message">PlayStation Network 계정 인증에 실패했습니다. NPSSO 토큰을 확인하고 다시 시도해 주세요.</string>
+
+    <string name="cloud_datacenter_auto_option">자동 (최적 핑)</string>
+
+    <string name="cloud_failed_to_open_browser_toast">브라우저를 열지 못했습니다</string>
+
+    <string name="cloud_filter_all_games">표시: 모든 게임</string>
+    <string name="cloud_filter_button_all">표시: 전체</string>
+    <string name="cloud_filter_button_owned">표시: 보유 게임</string>
+    <string name="cloud_filter_favorites">표시: 즐겨찾기</string>
+    <string name="cloud_filter_owned_only">표시: 보유 게임만</string>
+
+    <plurals name="cloud_game_count">
+        <item quantity="other">게임 %1$d개</item>
+    </plurals>
+
+    <string name="cloud_owned_toggle_all">전체</string>
+    <string name="cloud_owned_toggle_owned">보유</string>
+
+    <string name="cloud_ping_too_high_title">핑이 너무 높습니다</string>
+    <string name="cloud_ping_too_high_message">클라우드 세션을 시작하려면 핑이 80ms 미만이어야 합니다.\n\n계속 진행하려면 설정 → 클라우드로 이동하여 %1$s 서비스의 데이터센터를 수동으로 선택하세요.</string>
+
+    <string name="cloud_playtime_last_played">마지막 플레이: %1$s</string>
+    <string name="cloud_playtime_longest_session">최장 세션: %1$s</string>
+    <string name="cloud_playtime_never">없음</string>
+    <string name="cloud_playtime_total">총 플레이 시간: %1$s</string>
+
+    <string name="cloud_shortcut_adding_toast">%1$s 바로가기 추가 중</string>
+    <string name="cloud_shortcut_launcher_unsupported_toast">런처가 고정 바로가기를 지원하지 않습니다</string>
+    <string name="cloud_shortcut_owned_only_toast">보유한 PS Cloud 게임만 실행 바로가기로 추가할 수 있습니다</string>
+
+    <string name="cloud_sort_button_az">정렬: A→Z</string>
+    <string name="cloud_sort_button_recently_played">정렬: 최근 플레이</string>
+    <string name="cloud_sort_button_za">정렬: Z→A</string>
+    <string name="cloud_sort_name_az">이름: A → Z</string>
+    <string name="cloud_sort_name_az_default">이름: A → Z (기본값)</string>
+    <string name="cloud_sort_name_za">이름: Z → A</string>
+    <string name="cloud_sort_recently_played">최근 플레이</string>
+    <string name="cloud_sort_title">정렬</string>
+
+    <string name="cloud_starting_allocation">할당 시작 중...</string>
+
+    <string name="cloud_streaming_unavailable_title">스트리밍 사용 불가</string>
+    <string name="cloud_streaming_unavailable_psnow_message">PS Plus 프리미엄 구독이 있는지, 그리고 사용 중인 지역에서 PS Now 스트리밍을 이용할 수 있는지 확인해 주세요</string>
+    <string name="cloud_streaming_unavailable_pscloud_message">PS Plus 프리미엄 구독이 있는지, 해당 게임이 PS Cloud 스트리밍을 지원하는지, 사용 중인 지역에서 PS Cloud 스트리밍을 이용할 수 있는지, 그리고 현재 PS 서버가 다운되지 않았는지 확인해 주세요</string>
+
+    <string name="console_generic_name">콘솔</string>
+
+    <string name="display_host_asleep">절전 모드</string>
+    <string name="display_host_console_offline">콘솔 오프라인</string>
+    <string name="display_host_console_ready_wait">콘솔이 켜졌습니다. 준비 상태가 될 때까지 기다려 주세요</string>
+    <string name="display_host_console_sleeping">콘솔이 절전 모드로 전환 중입니다. 잠시 기다려 주세요</string>
+    <string name="display_host_getting_status">콘솔 상태 확인 중</string>
+    <string name="display_host_mac_format">MAC: %1$s</string>
+    <string name="display_host_offline">오프라인</string>
+    <string name="display_host_ready">준비 완료</string>
+    <string name="display_host_remote_console">원격 콘솔</string>
+    <string name="display_host_waking_console">콘솔을 깨우는 중</string>
+
+    <string name="gaikai_error_allocate_slot">슬롯 할당 실패</string>
+    <string name="gaikai_error_allocation_cancelled">할당이 취소되었습니다</string>
+    <string name="gaikai_error_auth_code">gkClientId 인증 코드를 가져오지 못했습니다</string>
+    <string name="gaikai_error_authorize_session">세션 인증에 실패했습니다</string>
+    <string name="gaikai_error_client_ids">클라이언트 ID를 가져오지 못했습니다</string>
+    <string name="gaikai_error_config">구성을 가져오지 못했습니다</string>
+    <string name="gaikai_error_datacenters">데이터센터를 가져오지 못했습니다</string>
+    <string name="gaikai_error_lock_session">세션 잠금에 실패했습니다</string>
+    <string name="gaikai_error_missing_launch_slot">할당 응답이 유효하지 않습니다: launchSlot 누락</string>
+    <string name="gaikai_error_no_datacenters">사용 가능한 데이터센터가 없습니다</string>
+    <string name="gaikai_error_response_incomplete">할당 응답이 불완전합니다</string>
+    <string name="gaikai_error_server_auth_code">서버 인증 코드를 가져오지 못했습니다</string>
+    <string name="gaikai_error_start_session">세션 시작 실패 — %1$s</string>
+
+    <string name="gaikai_progress_allocating_slot">스트리밍 슬롯 할당 중 - 10단계 중 10단계</string>
+    <string name="gaikai_progress_allocating_slot_attempt">스트리밍 슬롯 할당 중 - 시도 %1$d</string>
+    <string name="gaikai_progress_allocating_slot_queue">스트리밍 슬롯 할당 중 - 대기열 위치: %1$d - 시도 %2$d</string>
+    <string name="gaikai_progress_authorize_session">세션 인증 중 - 10단계 중 6단계</string>
+    <string name="gaikai_progress_client_ids">클라이언트 ID 가져오는 중 - 10단계 중 1단계</string>
+    <string name="gaikai_progress_closing_old_session">이전 세션 종료 중 - 시도 %1$d</string>
+    <string name="gaikai_progress_config">구성 가져오는 중 - 10단계 중 2단계</string>
+    <string name="gaikai_progress_datacenters">데이터센터 가져오는 중 - 10단계 중 8단계</string>
+    <string name="gaikai_progress_lock_session">세션 잠그는 중 - 10단계 중 7단계</string>
+    <string name="gaikai_progress_migrating_data">데이터 이전 중 (%1$d%%) - 시도 %2$d</string>
+    <string name="gaikai_progress_pinging_datacenters">데이터센터 핑 확인 중 - 10단계 중 8단계</string>
+    <string name="gaikai_progress_selecting_datacenter">데이터센터 선택 중 (%1$s) - 10단계 중 9단계</string>
+    <string name="gaikai_progress_server_tokens">서버 토큰 가져오는 중 - 10단계 중 5단계</string>
+    <string name="gaikai_progress_start_session">세션 시작 중 - 10단계 중 3단계</string>
+    <string name="gaikai_progress_tokens">토큰 가져오는 중 - 10단계 중 4단계</string>
+
+    <string name="main_disclaimer_acknowledge_button">확인함</string>
+    <string name="main_exit_app_message">앱을 종료하시겠습니까?</string>
+
+    <string name="psn_login_activity_title">CloudPad 로그인</string>
+    <string name="psn_login_finalise_button">로그인 완료</string>
+    <string name="psn_login_finalising_status">로그인 완료 처리 중…</string>
+    <string name="psn_login_npsso_hint">여기에 npsso 값을 붙여넣으세요</string>
+    <string name="psn_login_obtain_npsso_button">NPSSO 토큰 가져오기</string>
+    <string name="psn_login_obtain_npsso_status">Chrome에 {\"npsso\":\"...\"}와 같은 페이지가 표시됩니다 — 따옴표 안의 값을 복사하여 아래에 붙여넣은 다음 로그인 완료를 누르세요.</string>
+    <string name="psn_login_paste_npsso_toast">먼저 Chrome에서 npsso 값(또는 전체 {\"npsso\":\"...\"} 응답)을 붙여넣으세요.</string>
+    <string name="psn_login_remote_play_retry_toast">클라우드 로그인이 완료되었습니다. 리모트 플레이 설정을 다시 시도해야 할 수 있습니다.</string>
+    <string name="psn_login_start_status">Chrome에서 Sony 계정으로 로그인한 후 돌아와서 NPSSO 토큰 가져오기를 누르세요.</string>
+
+    <string name="remote_play_auto_registration_confirm_ps4">자동 등록을 사용하시겠습니까? (계정에 등록된 기본 PS4 콘솔이어야 합니다)</string>
+    <string name="remote_play_auto_registration_confirm_ps5">자동 등록을 사용하시겠습니까?</string>
+
+    <string name="remote_play_auto_regist_connecting_psn">PSN에 연결 중...</string>
+    <string name="remote_play_auto_regist_console_not_responding">콘솔이 응답하지 않습니다</string>
+    <string name="remote_play_auto_regist_contacting_host">%1$s에 연결 중...</string>
+    <string name="remote_play_auto_regist_create_offer_failed">제어 오퍼 생성에 실패했습니다</string>
+    <string name="remote_play_auto_regist_create_session_exception">세션 생성에 실패했습니다</string>
+    <string name="remote_play_auto_regist_create_session_failed">PSN 세션 생성에 실패했습니다</string>
+    <string name="remote_play_auto_regist_discovering_network">네트워크 검색 중...</string>
+    <string name="remote_play_auto_regist_establish_connection_failed">연결 설정에 실패했습니다</string>
+    <string name="remote_play_auto_regist_establishing_connection">연결 설정 중...</string>
+    <string name="remote_play_auto_regist_failed_format">등록 실패: %1$s</string>
+    <string name="remote_play_auto_regist_initializing">초기화 중...</string>
+    <string name="remote_play_auto_regist_invalid_token">유효한 PSN 토큰을 가져오지 못했습니다</string>
+    <string name="remote_play_auto_regist_no_tokens">PSN 토큰이 없습니다. 먼저 로그인해 주세요.</string>
+    <string name="remote_play_auto_regist_registering_status">%1$s 등록 중...</string>
+    <string name="remote_play_auto_regist_save_failed">등록은 성공했지만 저장에 실패했습니다</string>
+    <string name="remote_play_auto_regist_setting_up_connection">연결을 준비하는 중...</string>
+    <string name="remote_play_auto_regist_unknown_error">알 수 없는 오류</string>
+
+    <string name="remote_play_console_setup_title">콘솔 설정</string>
+    <string name="remote_play_console_setup_message">자동 콘솔 설정을 위해 로그인하거나 콘솔 정보를 수동으로 입력하세요.</string>
+
+    <string name="remote_play_login_required_title">PSN 로그인 필요</string>
+    <string name="remote_play_login_required_message">로그인하면 PS5 콘솔을 자동으로 검색하여 추가할 수 있습니다.</string>
+
+    <string name="remote_play_login_to_add_consoles_button">로그인하여 콘솔 추가</string>
+
+    <string name="remote_play_psn_login_required_for_holepunch_message">인터넷을 통해 콘솔에 연결하려면 PSN 계정으로 로그인해야 합니다. 설정 또는 클라우드 플레이 탭에서 로그인해 주세요.</string>
+
+    <string name="remote_play_psn_login_success_toast">PSN 로그인 성공</string>
+
+    <string name="remote_play_refresh_consoles_button">콘솔 새로고침</string>
+    <string name="remote_play_refreshing_consoles_toast">콘솔 목록 새로고침 중...</string>
+
+    <string name="remote_play_registered_successfully_toast">%1$s이(가) 성공적으로 등록되었습니다</string>
+    <string name="remote_play_registering_title">%1$s 등록 중</string>
+
+    <string name="remote_play_registration_type_title">등록 유형</string>
+
+    <string name="remote_play_setting_up_psn_toast">리모트 플레이용 PSN 설정 중...</string>
+
+    <string name="remote_play_starting_registration">등록 시작 중...</string>
+
+    <string name="remote_play_token_exchange_failed_toast">토큰 교환에 실패했습니다. 설정에서 다시 로그인해 주세요.</string>
+
+    <string name="stream_disconnect_confirm_message">스트림 연결을 해제하시겠습니까?</string>
+
+    <string name="trophy_earned_date_format">%1$s 획득</string>
+    <string name="trophy_group_fallback_header">트로피</string>
+    <string name="trophy_hidden_description">이 트로피를 완료하면 세부 정보가 표시됩니다</string>
+    <string name="trophy_hidden_name">숨겨진 트로피</string>
+    <string name="trophy_progress_percent_complete">%1$d%% 완료</string>
 </resources>

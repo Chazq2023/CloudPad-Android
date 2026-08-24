@@ -1,15 +1,23 @@
 package com.metallic.chiaki.trophy
 
+import android.content.Context
 import com.metallic.chiaki.trophy.model.Trophy
 import com.metallic.chiaki.trophy.model.TrophyCounts
 import com.metallic.chiaki.trophy.model.TrophyGroup
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import com.metallic.chiaki.trophy.model.TrophyType
+import com.pylux.stream.R
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class TrophyAdapterTest {
+
+    private val context: Context = mockk(relaxed = true) {
+        every { getString(R.string.trophy_group_fallback_header) } returns "Trophies"
+    }
 
     private fun group(id: String, name: String) = TrophyGroup(
         groupId = id,
@@ -58,7 +66,7 @@ class TrophyAdapterTest {
         val groups = listOf(group("default", ""), group("001", ""), group("002", ""))
         val trophies = listOf(trophy(1, "default"), trophy(2, "001"), trophy(3, "002"))
 
-        val items = buildTrophyListItems(detail(groups, trophies))
+        val items = buildTrophyListItems(context, detail(groups, trophies))
 
         val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
         assertEquals(listOf("Trophies"), headers.map { it.name })
@@ -70,7 +78,7 @@ class TrophyAdapterTest {
         val groups = listOf(group("default", ""), group("001", "Expansion Pack"), group("002", ""))
         val trophies = listOf(trophy(1, "default"), trophy(2, "001"), trophy(3, "002"))
 
-        val items = buildTrophyListItems(detail(groups, trophies))
+        val items = buildTrophyListItems(context, detail(groups, trophies))
 
         val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
         assertEquals(listOf("Trophies", "Expansion Pack"), headers.map { it.name })
@@ -81,7 +89,7 @@ class TrophyAdapterTest {
         val groups = listOf(group("default", "My Game"))
         val trophies = listOf(trophy(1, "default"))
 
-        val items = buildTrophyListItems(detail(groups, trophies))
+        val items = buildTrophyListItems(context, detail(groups, trophies))
 
         val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
         assertEquals(listOf("My Game"), headers.map { it.name })
@@ -91,7 +99,7 @@ class TrophyAdapterTest {
     fun `no groups produces trophy rows with no header at all`() {
         val trophies = listOf(trophy(1, "default"))
 
-        val items = buildTrophyListItems(detail(emptyList(), trophies))
+        val items = buildTrophyListItems(context, detail(emptyList(), trophies))
 
         assertEquals(0, items.filterIsInstance<TrophyListItem.GroupHeader>().size)
         assertEquals(1, items.filterIsInstance<TrophyListItem.TrophyRow>().size)
@@ -107,7 +115,7 @@ class TrophyAdapterTest {
             trophy(4, "default", earned = false)
         )
 
-        val items = buildTrophyListItems(detail(groups, trophies), sortMode = TrophySortMode.EARNED_DATE)
+        val items = buildTrophyListItems(context, detail(groups, trophies), sortMode = TrophySortMode.EARNED_DATE)
 
         assertEquals(0, items.filterIsInstance<TrophyListItem.GroupHeader>().size)
         val order = items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId }
@@ -121,7 +129,7 @@ class TrophyAdapterTest {
             trophy(2, "default", earned = true, earnedDateTimeMs = 1500L)
         )
 
-        val items = buildTrophyListItems(detail(emptyList(), trophies), sortMode = TrophySortMode.EARNED_DATE)
+        val items = buildTrophyListItems(context, detail(emptyList(), trophies), sortMode = TrophySortMode.EARNED_DATE)
 
         val order = items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId }
         assertEquals(listOf(2, 1), order)
@@ -137,7 +145,7 @@ class TrophyAdapterTest {
             trophy(4, "default", type = TrophyType.PLATINUM)
         )
 
-        val items = buildTrophyListItems(detail(groups, trophies), filterMode = TrophyFilterMode.GOLD)
+        val items = buildTrophyListItems(context, detail(groups, trophies), filterMode = TrophyFilterMode.GOLD)
 
         val order = items.filterIsInstance<TrophyListItem.TrophyRow>().map { it.trophy.trophyId }
         assertEquals(listOf(2, 3), order)
@@ -151,7 +159,7 @@ class TrophyAdapterTest {
             trophy(2, "001", type = TrophyType.SILVER)
         )
 
-        val items = buildTrophyListItems(detail(groups, trophies), filterMode = TrophyFilterMode.SILVER)
+        val items = buildTrophyListItems(context, detail(groups, trophies), filterMode = TrophyFilterMode.SILVER)
 
         val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
         assertEquals(listOf("Expansion Pack"), headers.map { it.name })
@@ -163,7 +171,7 @@ class TrophyAdapterTest {
         val groups = listOf(group("default", ""), group("001", ""), group("002", ""))
         val trophies = listOf(trophy(1, "default"), trophy(2, "001"), trophy(3, "002"))
 
-        val items = buildTrophyListItems(detail(groups, trophies), filterMode = TrophyFilterMode.DEFAULT)
+        val items = buildTrophyListItems(context, detail(groups, trophies), filterMode = TrophyFilterMode.DEFAULT)
 
         val headers = items.filterIsInstance<TrophyListItem.GroupHeader>()
         assertEquals(listOf("Trophies"), headers.map { it.name })

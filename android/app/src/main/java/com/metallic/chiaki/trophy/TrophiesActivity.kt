@@ -127,7 +127,7 @@ class TrophiesActivity : AppCompatActivity()
 		currentDetail = detail
 
 		val summary = detail.summary
-		binding.trophyHeaderProgress.text = "${summary.progressPercent}% Complete"
+		binding.trophyHeaderProgress.text = getString(R.string.trophy_progress_percent_complete, summary.progressPercent)
 		binding.trophyHeaderPlatinumCount.text = summary.earnedTrophies.platinum.toString()
 		binding.trophyHeaderGoldCount.text = summary.earnedTrophies.gold.toString()
 		binding.trophyHeaderSilverCount.text = summary.earnedTrophies.silver.toString()
@@ -150,7 +150,7 @@ class TrophiesActivity : AppCompatActivity()
 	private fun renderTrophyList(gameName: String): Boolean
 	{
 		val detail = currentDetail ?: return false
-		val items = buildTrophyListItems(detail, sortMode, filterMode)
+		val items = buildTrophyListItems(this, detail, sortMode, filterMode)
 
 		if (items.isEmpty())
 		{

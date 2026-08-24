@@ -421,4 +421,184 @@
     <string name="stream_background_notification_title">Stream läuft noch</string>
     <string name="stream_background_notification_text">Tippen, um zu deinem Spiel zurückzukehren</string>
     <string name="stream_background_notification_disconnect">Trennen</string>
+
+    <string name="action_automatic">Automatisch</string>
+    <string name="action_done">Fertig</string>
+    <string name="action_exit">Beenden</string>
+    <string name="action_manual">Manuell</string>
+    <string name="action_no">Nein</string>
+    <string name="action_yes">Ja</string>
+
+    <string name="app_integrity_verification_required_title">Verifizierung erforderlich</string>
+    <string name="app_integrity_verification_required_message">Die App-Quelle konnte nicht verifiziert werden. Stelle sicher, dass eine aktive Internetverbindung besteht und die App aus einer offiziellen Quelle installiert wurde.</string>
+
+    <string name="cloud_account_settings_update_title">Kontoeinstellungen müssen aktualisiert werden</string>
+    <string name="cloud_account_settings_update_message">Deine Datenschutzeinstellungen müssen aktualisiert werden, um Cloud-Streaming zu nutzen.\n\nUpgrade-URL: %1$s</string>
+
+    <string name="cloud_add_to_home_confirm_message">Möchtest du %1$s zu deinem Startbildschirm hinzufügen?</string>
+
+    <string name="cloud_add_to_library_title">Zur Bibliothek hinzufügen</string>
+    <string name="cloud_add_to_library_add_now_button">Jetzt hinzufügen</string>
+    <string name="cloud_add_to_library_message">Dieses Spiel muss deiner Bibliothek hinzugefügt werden, bevor du es streamen kannst.\n\nTippe nach dem Hinzufügen auf „Spiele aktualisieren“, um deine Liste zu aktualisieren.</string>
+    <string name="cloud_add_to_library_no_url_message">Dieses Spiel kann nicht zu deiner Bibliothek hinzugefügt werden. Die Spiele-URL ist nicht verfügbar.</string>
+    <string name="cloud_add_to_library_qr_message">Scanne diesen QR-Code mit deinem Smartphone oder Tablet, um „%1$s“ zu deiner PlayStation-Bibliothek hinzuzufügen.\n\nTippe nach dem Hinzufügen auf „Spiele aktualisieren“.</string>
+
+    <string name="cloud_authorization_failed_title">Autorisierung fehlgeschlagen</string>
+    <string name="cloud_authorization_failed_message">Dein PlayStation Network-Konto konnte nicht autorisiert werden. Bitte überprüfe dein NPSSO-Token und versuche es erneut.</string>
+
+    <string name="cloud_datacenter_auto_option">Automatisch (beste Ping-Zeit)</string>
+
+    <string name="cloud_failed_to_open_browser_toast">Browser konnte nicht geöffnet werden</string>
+
+    <string name="cloud_filter_all_games">Anzeigen: Alle Spiele</string>
+    <string name="cloud_filter_button_all">Anzeigen: Alle</string>
+    <string name="cloud_filter_button_owned">Anzeigen: Im Besitz</string>
+    <string name="cloud_filter_favorites">Anzeigen: Favoriten</string>
+    <string name="cloud_filter_owned_only">Anzeigen: Nur im Besitz</string>
+
+    <plurals name="cloud_game_count">
+        <item quantity="one">%1$d Spiel</item>
+        <item quantity="other">%1$d Spiele</item>
+    </plurals>
+
+    <string name="cloud_owned_toggle_all">Alle</string>
+    <string name="cloud_owned_toggle_owned">Im Besitz</string>
+
+    <string name="cloud_ping_too_high_title">Ping zu hoch</string>
+    <string name="cloud_ping_too_high_message">Der Ping muss unter 80 ms liegen, um eine Cloud-Sitzung zu starten.\n\nUm trotzdem fortzufahren, gehe zu Einstellungen → Cloud und wähle manuell ein Rechenzentrum für deinen Dienst (%1$s).</string>
+
+    <string name="cloud_playtime_last_played">Zuletzt gespielt: %1$s</string>
+    <string name="cloud_playtime_longest_session">Längste Sitzung: %1$s</string>
+    <string name="cloud_playtime_never">Nie</string>
+    <string name="cloud_playtime_total">Gesamtspielzeit: %1$s</string>
+
+    <string name="cloud_shortcut_adding_toast">%1$s-Verknüpfung wird hinzugefügt</string>
+    <string name="cloud_shortcut_launcher_unsupported_toast">Dein Launcher unterstützt keine angehefteten Verknüpfungen</string>
+    <string name="cloud_shortcut_owned_only_toast">Nur PS Cloud-Spiele im Besitz können als Start-Verknüpfung hinzugefügt werden</string>
+
+    <string name="cloud_sort_button_az">Sortieren: A→Z</string>
+    <string name="cloud_sort_button_recently_played">Sortieren: Zuletzt gespielt</string>
+    <string name="cloud_sort_button_za">Sortieren: Z→A</string>
+    <string name="cloud_sort_name_az">Name: A → Z</string>
+    <string name="cloud_sort_name_az_default">Name: A → Z (Standard)</string>
+    <string name="cloud_sort_name_za">Name: Z → A</string>
+    <string name="cloud_sort_recently_played">Zuletzt gespielt</string>
+    <string name="cloud_sort_title">Sortieren</string>
+
+    <string name="cloud_starting_allocation">Zuweisung wird gestartet …</string>
+
+    <string name="cloud_streaming_unavailable_title">Streaming nicht verfügbar</string>
+    <string name="cloud_streaming_unavailable_psnow_message">Stelle sicher, dass du ein PS Plus Premium-Abonnement hast und PS Now-Streaming in deiner Region verfügbar ist</string>
+    <string name="cloud_streaming_unavailable_pscloud_message">Stelle sicher, dass du ein PS Plus Premium-Abonnement hast, dass das Spiel für PS Cloud-Streaming verfügbar ist, dass PS Cloud-Streaming in deiner Region verfügbar ist und dass die PS-Server derzeit nicht ausgefallen sind</string>
+
+    <string name="console_generic_name">Konsole</string>
+
+    <string name="display_host_asleep">Ruhezustand</string>
+    <string name="display_host_console_offline">Konsole offline</string>
+    <string name="display_host_console_ready_wait">Konsole ist an, bitte warte, bis sie bereit ist</string>
+    <string name="display_host_console_sleeping">Konsole schläft, bitte warten</string>
+    <string name="display_host_getting_status">Konsolenstatus wird abgerufen</string>
+    <string name="display_host_mac_format">MAC: %1$s</string>
+    <string name="display_host_offline">Offline</string>
+    <string name="display_host_ready">Bereit</string>
+    <string name="display_host_remote_console">Remote-Konsole</string>
+    <string name="display_host_waking_console">Konsole wird geweckt</string>
+
+    <string name="gaikai_error_allocate_slot">Zuweisung des Slots fehlgeschlagen</string>
+    <string name="gaikai_error_allocation_cancelled">Zuweisung abgebrochen</string>
+    <string name="gaikai_error_auth_code">gkClientId-Autorisierungscode konnte nicht abgerufen werden</string>
+    <string name="gaikai_error_authorize_session">Sitzung konnte nicht autorisiert werden</string>
+    <string name="gaikai_error_client_ids">Client-IDs konnten nicht abgerufen werden</string>
+    <string name="gaikai_error_config">Konfiguration konnte nicht abgerufen werden</string>
+    <string name="gaikai_error_datacenters">Rechenzentren konnten nicht abgerufen werden</string>
+    <string name="gaikai_error_lock_session">Sitzung konnte nicht gesperrt werden</string>
+    <string name="gaikai_error_missing_launch_slot">Zuweisungsantwort ungültig: launchSlot fehlt</string>
+    <string name="gaikai_error_no_datacenters">Keine Rechenzentren verfügbar</string>
+    <string name="gaikai_error_response_incomplete">Zuweisungsantwort unvollständig</string>
+    <string name="gaikai_error_server_auth_code">Server-Autorisierungscode konnte nicht abgerufen werden</string>
+    <string name="gaikai_error_start_session">Sitzung konnte nicht gestartet werden — %1$s</string>
+
+    <string name="gaikai_progress_allocating_slot">Streaming-Slot wird zugewiesen – Schritt 10 von 10</string>
+    <string name="gaikai_progress_allocating_slot_attempt">Streaming-Slot wird zugewiesen – Versuch %1$d</string>
+    <string name="gaikai_progress_allocating_slot_queue">Streaming-Slot wird zugewiesen – Warteschlangenposition: %1$d – Versuch %2$d</string>
+    <string name="gaikai_progress_authorize_session">Sitzung wird autorisiert – Schritt 6 von 10</string>
+    <string name="gaikai_progress_client_ids">Client-IDs werden abgerufen – Schritt 1 von 10</string>
+    <string name="gaikai_progress_closing_old_session">Alte Sitzung wird geschlossen – Versuch %1$d</string>
+    <string name="gaikai_progress_config">Konfiguration wird abgerufen – Schritt 2 von 10</string>
+    <string name="gaikai_progress_datacenters">Rechenzentren werden abgerufen – Schritt 8 von 10</string>
+    <string name="gaikai_progress_lock_session">Sitzung wird gesperrt – Schritt 7 von 10</string>
+    <string name="gaikai_progress_migrating_data">Daten werden migriert (%1$d%%) – Versuch %2$d</string>
+    <string name="gaikai_progress_pinging_datacenters">Rechenzentren werden gepingt – Schritt 8 von 10</string>
+    <string name="gaikai_progress_selecting_datacenter">Rechenzentrum wird ausgewählt (%1$s) – Schritt 9 von 10</string>
+    <string name="gaikai_progress_server_tokens">Server-Tokens werden abgerufen – Schritt 5 von 10</string>
+    <string name="gaikai_progress_start_session">Sitzung wird gestartet – Schritt 3 von 10</string>
+    <string name="gaikai_progress_tokens">Tokens werden abgerufen – Schritt 4 von 10</string>
+
+    <string name="main_disclaimer_acknowledge_button">Bestätigen</string>
+    <string name="main_exit_app_message">App beenden?</string>
+
+    <string name="psn_login_activity_title">CloudPad-Anmeldung</string>
+    <string name="psn_login_finalise_button">Anmeldung abschließen</string>
+    <string name="psn_login_finalising_status">Anmeldung wird abgeschlossen …</string>
+    <string name="psn_login_npsso_hint">npsso-Wert hier einfügen</string>
+    <string name="psn_login_obtain_npsso_button">NPSSO-Token abrufen</string>
+    <string name="psn_login_obtain_npsso_status">Chrome zeigt eine Seite wie {\"npsso\":\"...\"} an — kopiere den Wert zwischen den Anführungszeichen und füge ihn unten ein, tippe dann auf „Anmeldung abschließen“.</string>
+    <string name="psn_login_paste_npsso_toast">Füge zuerst den npsso-Wert (oder die vollständige {\"npsso\":\"...\"}-Antwort) aus Chrome ein.</string>
+    <string name="psn_login_remote_play_retry_toast">Cloud-Anmeldung abgeschlossen. Remote Play-Einrichtung muss möglicherweise wiederholt werden.</string>
+    <string name="psn_login_start_status">Melde dich in Chrome bei Sony an, komm dann zurück und tippe auf „NPSSO-Token abrufen“.</string>
+
+    <string name="remote_play_auto_registration_confirm_ps4">Möchtest du die automatische Registrierung verwenden (muss die für dein Konto registrierte Haupt-PS4-Konsole sein)?</string>
+    <string name="remote_play_auto_registration_confirm_ps5">Möchtest du die automatische Registrierung verwenden?</string>
+
+    <string name="remote_play_auto_regist_connecting_psn">Verbindung mit PSN wird hergestellt …</string>
+    <string name="remote_play_auto_regist_console_not_responding">Konsole reagiert nicht</string>
+    <string name="remote_play_auto_regist_contacting_host">%1$s wird kontaktiert …</string>
+    <string name="remote_play_auto_regist_create_offer_failed">Steuerungsangebot konnte nicht erstellt werden</string>
+    <string name="remote_play_auto_regist_create_session_exception">Sitzung konnte nicht erstellt werden</string>
+    <string name="remote_play_auto_regist_create_session_failed">PSN-Sitzung konnte nicht erstellt werden</string>
+    <string name="remote_play_auto_regist_discovering_network">Netzwerk wird ermittelt …</string>
+    <string name="remote_play_auto_regist_establish_connection_failed">Verbindung konnte nicht hergestellt werden</string>
+    <string name="remote_play_auto_regist_establishing_connection">Verbindung wird hergestellt …</string>
+    <string name="remote_play_auto_regist_failed_format">Registrierung fehlgeschlagen: %1$s</string>
+    <string name="remote_play_auto_regist_initializing">Initialisierung …</string>
+    <string name="remote_play_auto_regist_invalid_token">Gültiges PSN-Token konnte nicht abgerufen werden</string>
+    <string name="remote_play_auto_regist_no_tokens">Keine PSN-Tokens. Bitte melde dich zuerst an.</string>
+    <string name="remote_play_auto_regist_registering_status">%1$s wird registriert …</string>
+    <string name="remote_play_auto_regist_save_failed">Registrierung erfolgreich, aber Speichern fehlgeschlagen</string>
+    <string name="remote_play_auto_regist_setting_up_connection">Verbindung wird eingerichtet …</string>
+    <string name="remote_play_auto_regist_unknown_error">unbekannter Fehler</string>
+
+    <string name="remote_play_console_setup_title">Konsoleneinrichtung</string>
+    <string name="remote_play_console_setup_message">Melde dich für die automatische Konsoleneinrichtung an oder gib die Konsoleninformationen manuell ein.</string>
+
+    <string name="remote_play_login_required_title">PSN-Anmeldung erforderlich</string>
+    <string name="remote_play_login_required_message">Melde dich an, um deine PS5-Konsolen automatisch zu erkennen und hinzuzufügen.</string>
+
+    <string name="remote_play_login_to_add_consoles_button">Anmelden, um Konsolen hinzuzufügen</string>
+
+    <string name="remote_play_psn_login_required_for_holepunch_message">Du musst dich mit deinem PSN-Konto anmelden, um dich über das Internet mit Konsolen zu verbinden. Bitte melde dich über die Einstellungen oder den Cloud Play-Tab an.</string>
+
+    <string name="remote_play_psn_login_success_toast">PSN-Anmeldung erfolgreich</string>
+
+    <string name="remote_play_refresh_consoles_button">Konsolen aktualisieren</string>
+    <string name="remote_play_refreshing_consoles_toast">Konsolenliste wird aktualisiert …</string>
+
+    <string name="remote_play_registered_successfully_toast">%1$s erfolgreich registriert</string>
+    <string name="remote_play_registering_title">%1$s wird registriert</string>
+
+    <string name="remote_play_registration_type_title">Registrierungsart</string>
+
+    <string name="remote_play_setting_up_psn_toast">PSN für Remote Play wird eingerichtet …</string>
+
+    <string name="remote_play_starting_registration">Registrierung wird gestartet …</string>
+
+    <string name="remote_play_token_exchange_failed_toast">Token-Austausch fehlgeschlagen. Melde dich in den Einstellungen erneut an.</string>
+
+    <string name="stream_disconnect_confirm_message">Vom Stream trennen?</string>
+
+    <string name="trophy_earned_date_format">Erhalten am %1$s</string>
+    <string name="trophy_group_fallback_header">Trophäen</string>
+    <string name="trophy_hidden_description">Schließe diese Trophäe ab, um ihre Details anzuzeigen</string>
+    <string name="trophy_hidden_name">Verborgene Trophäe</string>
+    <string name="trophy_progress_percent_complete">%1$d %% abgeschlossen</string>
 </resources>

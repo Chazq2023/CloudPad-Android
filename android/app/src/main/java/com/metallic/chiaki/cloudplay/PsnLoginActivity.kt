@@ -119,7 +119,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		val titleText = TextView(this).apply {
-			text = "CloudPad Sign In"
+			text = getString(R.string.psn_login_activity_title)
 			setTextColor(Color.WHITE)
 			textSize = 22f
 			gravity = Gravity.CENTER
@@ -134,7 +134,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		npssoInput = EditText(this).apply {
-			hint = "Paste npsso value here"
+			hint = getString(R.string.psn_login_npsso_hint)
 			setTextColor(Color.WHITE)
 			setHintTextColor(Color.GRAY)
 			isSingleLine = false
@@ -157,7 +157,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		signInButton = Button(this).apply {
-			text = "Sign into account"
+			text = getString(R.string.psn_login_open_browser)
 			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				startSonySignIn()
@@ -165,7 +165,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		obtainNpssoButton = Button(this).apply {
-			text = "Obtain NPSSO Token"
+			text = getString(R.string.psn_login_obtain_npsso_button)
 			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				obtainNpssoToken()
@@ -173,7 +173,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		finaliseButton = Button(this).apply {
-			text = "Finalise log in"
+			text = getString(R.string.psn_login_finalise_button)
 			isEnabled = true
 			styleCloudPadCancelButton(this)
 			setOnClickListener {
@@ -182,7 +182,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		cancelButton = Button(this).apply {
-			text = "Cancel"
+			text = getString(R.string.action_cancel)
 			styleCloudPadCancelButton(this)
 			setOnClickListener {
 				setResult(RESULT_LOGIN_CANCELLED)
@@ -203,14 +203,13 @@ class PsnLoginActivity : AppCompatActivity() {
 	}
 
 	private fun startSonySignIn() {
-		statusTextView.text = "Sign in with Sony in Chrome, then come back and tap Obtain NPSSO Token."
+		statusTextView.text = getString(R.string.psn_login_start_status)
 		val customTabsIntent = CustomTabsIntent.Builder().build()
 		customTabsIntent.launchUrl(this, Uri.parse(SONY_SIGN_IN_URL))
 	}
 
 	private fun obtainNpssoToken() {
-		statusTextView.text =
-			"Chrome will show a page like {\"npsso\":\"...\"} — copy the value between the quotes and paste it below, then tap Finalise log in."
+		statusTextView.text = getString(R.string.psn_login_obtain_npsso_status)
 		val customTabsIntent = CustomTabsIntent.Builder().build()
 		customTabsIntent.launchUrl(this, Uri.parse(PsnAuthConstants.SSOCOOKIE_ENDPOINT))
 	}
@@ -222,7 +221,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		if (npsso == null) {
 			Toast.makeText(
 				this,
-				"Paste the npsso value (or the full {\"npsso\":\"...\"} response) from Chrome first.",
+				R.string.psn_login_paste_npsso_toast,
 				Toast.LENGTH_LONG
 			).show()
 			return
@@ -233,7 +232,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		finaliseButton.isEnabled = false
 		signInButton.isEnabled = false
 		obtainNpssoButton.isEnabled = false
-		statusTextView.text = "Finalising login…"
+		statusTextView.text = getString(R.string.psn_login_finalising_status)
 
 		scope.launch {
 			try {
@@ -253,7 +252,7 @@ class PsnLoginActivity : AppCompatActivity() {
 					Log.w(TAG, "PSN login: NPSSO saved, but Remote Play token exchange failed")
 					Toast.makeText(
 						this@PsnLoginActivity,
-						"Cloud login complete. Remote Play setup may need retrying.",
+						R.string.psn_login_remote_play_retry_toast,
 						Toast.LENGTH_LONG
 					).show()
 				}

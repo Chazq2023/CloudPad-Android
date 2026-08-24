@@ -679,7 +679,7 @@ class CloudPlayFragment : Fragment() {
 
     private fun updateOwnedToggleButton() {
         val isOwned = viewModel.preferences.getPsCloudFilterOwned()
-        binding.ownedToggleButton.text = if (isOwned) "Owned" else "All"
+        binding.ownedToggleButton.text = if (isOwned) getString(R.string.cloud_owned_toggle_owned) else getString(R.string.cloud_owned_toggle_all)
         binding.ownedToggleButton.setTextColor(
             if (isOwned) resources.getColor(android.R.color.holo_green_light, null)
             else resources.getColor(android.R.color.white, null)
@@ -724,10 +724,10 @@ class CloudPlayFragment : Fragment() {
 
 
     private fun showSortMenu() {
-        val sortOptions = arrayOf("Name: A → Z", "Name: Z → A", "Recently Played")
+        val sortOptions = resources.getStringArray(R.array.cloud_sort_options)
 
         requireContext().alertDialogBuilder()
-            .setTitle("Sort")
+            .setTitle(R.string.cloud_sort_title)
             .setSingleChoiceItems(sortOptions, sortState) { dialog, which ->
                 applySortState(which)
                 dialog.dismiss()
@@ -782,9 +782,9 @@ class CloudPlayFragment : Fragment() {
 
         val popup = androidx.appcompat.widget.PopupMenu(requireContext(), anchor)
 
-        popup.menu.add(0, 0, 0, "Name: A → Z (Default)")
-        popup.menu.add(0, 1, 1, "Name: Z → A")
-        popup.menu.add(0, 2, 2, "Recently Played")
+        popup.menu.add(0, 0, 0, getString(R.string.cloud_sort_name_az_default))
+        popup.menu.add(0, 1, 1, getString(R.string.cloud_sort_name_za))
+        popup.menu.add(0, 2, 2, getString(R.string.cloud_sort_recently_played))
 
         // Highlight current selection with radio button style
         popup.menu.findItem(sortState)?.isChecked = true
@@ -831,10 +831,10 @@ class CloudPlayFragment : Fragment() {
 
     private fun updateSortButtonText() {
         val text = when (sortState) {
-            0 -> "Sort: A→Z"
-            1 -> "Sort: Z→A"
-            2 -> "Sort: Recently Played"
-            else -> "Sort: A→Z"
+            0 -> getString(R.string.cloud_sort_button_az)
+            1 -> getString(R.string.cloud_sort_button_za)
+            2 -> getString(R.string.cloud_sort_button_recently_played)
+            else -> getString(R.string.cloud_sort_button_az)
         }
         binding.sortLabelButton.text = text
     }
@@ -847,16 +847,16 @@ class CloudPlayFragment : Fragment() {
 
         if (currentSection == "pscloud") {
             // Game Library: Owned Games only, plus optional Favorites filter.
-            popup.menu.add(0, 1, 0, "Show: Owned Only")
-            popup.menu.add(0, 2, 1, "Show: Favorites")
+            popup.menu.add(0, 1, 0, getString(R.string.cloud_filter_owned_only))
+            popup.menu.add(0, 2, 1, getString(R.string.cloud_filter_favorites))
 
             // Highlight current selection
             val currentItem = if (preferences.getPsCloudFilterFavorites()) 2 else 1
             popup.menu.findItem(currentItem)?.isChecked = true
         } else {
             // Game Catalog: All Games, Favorites
-            popup.menu.add(0, 0, 0, "Show: All Games")
-            popup.menu.add(0, 1, 1, "Show: Favorites")
+            popup.menu.add(0, 0, 0, getString(R.string.cloud_filter_all_games))
+            popup.menu.add(0, 1, 1, getString(R.string.cloud_filter_favorites))
 
             // Highlight current selection
             val currentItem = if (preferences.getPsnowFilterFavorites()) 1 else 0
@@ -922,10 +922,10 @@ class CloudPlayFragment : Fragment() {
         val currentSection = viewModel.getCurrentSection()
         val text = if (currentSection == "pscloud") {
             // Game Library is always owned-only.
-            if (preferences.getPsCloudFilterFavorites()) "Show: Favorites" else "Show: Owned"
+            if (preferences.getPsCloudFilterFavorites()) getString(R.string.cloud_filter_favorites) else getString(R.string.cloud_filter_button_owned)
         } else {
             // Game Catalog
-            if (preferences.getPsnowFilterFavorites()) "Show: Favorites" else "Show: All"
+            if (preferences.getPsnowFilterFavorites()) getString(R.string.cloud_filter_favorites) else getString(R.string.cloud_filter_button_all)
         }
         binding.filterLabelButton.text = text
     }
@@ -954,7 +954,7 @@ class CloudPlayFragment : Fragment() {
         if (game.serviceType == "pscloud" && !game.isOwned) {
             Toast.makeText(
                 requireContext(),
-                "Only owned PS Cloud games can be added as launch shortcuts",
+                R.string.cloud_shortcut_owned_only_toast,
                 Toast.LENGTH_LONG
             ).show()
             return
@@ -971,9 +971,9 @@ class CloudPlayFragment : Fragment() {
      *  and pin logic. */
     private fun confirmAddToHomeScreen(game: CloudGame) {
         requireContext().alertDialogBuilder()
-            .setMessage("Would you like to add ${game.name} to your home screen?")
-            .setPositiveButton("Yes") { _, _ -> onAddShortcutClicked(game) }
-            .setNegativeButton("No", null)
+            .setMessage(getString(R.string.cloud_add_to_home_confirm_message, game.name))
+            .setPositiveButton(R.string.action_yes) { _, _ -> onAddShortcutClicked(game) }
+            .setNegativeButton(R.string.action_no, null)
             .create()
             .show()
     }
@@ -998,21 +998,21 @@ class CloudPlayFragment : Fragment() {
         }
 
         view.findViewById<TextView>(R.id.playtimeTotalText).text =
-            "Total Playtime: ${com.metallic.chiaki.cloudplay.model.PlaytimeFormatter.formatTotalPlaytime(stats?.totalPlaytimeMs ?: 0L)}"
+            getString(R.string.cloud_playtime_total, com.metallic.chiaki.cloudplay.model.PlaytimeFormatter.formatTotalPlaytime(stats?.totalPlaytimeMs ?: 0L))
         view.findViewById<TextView>(R.id.playtimeLastPlayedText).text =
-            "Last Played: ${formatLastPlayed(stats?.lastPlayedMs ?: 0L)}"
+            getString(R.string.cloud_playtime_last_played, formatLastPlayed(stats?.lastPlayedMs ?: 0L))
         view.findViewById<TextView>(R.id.playtimeLongestSessionText).text =
-            "Longest Session: ${com.metallic.chiaki.cloudplay.model.PlaytimeFormatter.formatSessionDuration(stats?.longestSessionMs ?: 0L)}"
+            getString(R.string.cloud_playtime_longest_session, com.metallic.chiaki.cloudplay.model.PlaytimeFormatter.formatSessionDuration(stats?.longestSessionMs ?: 0L))
 
         val dialog = requireContext().alertDialogBuilder()
             .setView(view)
-            .setPositiveButton("Close", null)
+            .setPositiveButton(R.string.quick_settings_close, null)
             .create()
         dialog.show()
     }
 
     private fun formatLastPlayed(ms: Long): String {
-        if (ms <= 0L) return "Never"
+        if (ms <= 0L) return getString(R.string.cloud_playtime_never)
         val format = java.text.DateFormat.getDateTimeInstance(
             java.text.DateFormat.MEDIUM,
             java.text.DateFormat.SHORT
@@ -1335,9 +1335,9 @@ class CloudPlayFragment : Fragment() {
         if (game.conceptUrl.isEmpty()) {
             Log.e(TAG, "Missing concept URL for: ${game.name}")
             requireContext().alertDialogBuilder()
-                .setTitle("Add to Library")
-                .setMessage("Unable to add this game to your library. The game URL is not available.")
-                .setPositiveButton("OK", null)
+                .setTitle(R.string.cloud_add_to_library_title)
+                .setMessage(R.string.cloud_add_to_library_no_url_message)
+                .setPositiveButton(R.string.action_ok, null)
                 .show()
             return
         }
@@ -1346,12 +1346,12 @@ class CloudPlayFragment : Fragment() {
             showAddToLibraryQrDialog(game)
         } else {
             requireContext().alertDialogBuilder()
-                .setTitle("Add to Library")
-                .setMessage("This game needs to be added to your library before you can stream it.\n\nAfter adding the game, press the Refresh Games button to update your list.")
-                .setPositiveButton("Add Now") { _, _ ->
+                .setTitle(R.string.cloud_add_to_library_title)
+                .setMessage(R.string.cloud_add_to_library_message)
+                .setPositiveButton(R.string.cloud_add_to_library_add_now_button) { _, _ ->
                     openUrlInBrowser(game.conceptUrl)
                 }
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton(R.string.action_cancel, null)
                 .show()
         }
     }
@@ -1370,8 +1370,7 @@ class CloudPlayFragment : Fragment() {
         }
 
         val message = TextView(ctx).apply {
-            text =
-                "Scan this QR code on your phone or tablet to add \"${game.name}\" to your PlayStation library.\n\nAfter adding the game, press Refresh Games."
+            text = getString(R.string.cloud_add_to_library_qr_message, game.name)
             textSize = 18f
             setTextColor(Color.WHITE)
             gravity = Gravity.CENTER
@@ -1395,9 +1394,9 @@ class CloudPlayFragment : Fragment() {
         val scroll = ScrollView(ctx).apply { addView(layout) }
 
         ctx.alertDialogBuilder()
-            .setTitle("Add to Library")
+            .setTitle(R.string.cloud_add_to_library_title)
             .setView(scroll)
-            .setPositiveButton("Done", null)
+            .setPositiveButton(R.string.action_done, null)
             .show()
     }
 
@@ -1427,7 +1426,7 @@ class CloudPlayFragment : Fragment() {
             Log.e(TAG, "Failed to open URL: $url", e)
             android.widget.Toast.makeText(
                 requireContext(),
-                "Failed to open browser",
+                R.string.cloud_failed_to_open_browser_toast,
                 android.widget.Toast.LENGTH_SHORT
             ).show()
         }
@@ -1460,7 +1459,7 @@ class CloudPlayFragment : Fragment() {
             val cancelButton =
                 dialogView.findViewById<com.google.android.material.button.MaterialButton>(R.id.cancelButton)
 
-            allocationProgressTextView?.text = "Starting allocation..."
+            allocationProgressTextView?.text = getString(R.string.cloud_starting_allocation)
 
             // Load landscape game image using Coil (for full-screen loading dialog)
             val imageUrlToLoad = if (game.landscapeImageUrl.isNotEmpty()) {
@@ -1679,14 +1678,14 @@ class CloudPlayFragment : Fragment() {
      */
     private fun showStreamingUnavailableErrorDialog(serviceType: String) {
         val message = if (serviceType == "psnow")
-            "Please ensure that you have a PS Plus Premium subscription and PS Now streaming is available in your region"
+            getString(R.string.cloud_streaming_unavailable_psnow_message)
         else
-            "Please ensure that you have a PS Plus Premium subscription, that the game is available for PS Cloud Streaming, that PS Cloud streaming is available in your region and that the PS servers are not currently down"
+            getString(R.string.cloud_streaming_unavailable_pscloud_message)
 
         requireContext().alertDialogBuilder()
-            .setTitle("Streaming Unavailable")
+            .setTitle(R.string.cloud_streaming_unavailable_title)
             .setMessage(message)
-            .setPositiveButton("OK", null)
+            .setPositiveButton(R.string.action_ok, null)
             .show()
     }
 
@@ -1695,9 +1694,9 @@ class CloudPlayFragment : Fragment() {
      */
     private fun showAccountPrivacySettingsErrorDialog(upgradeUrl: String) {
         requireContext().alertDialogBuilder()
-            .setTitle("Account Settings Update Required")
-            .setMessage("Your account privacy settings need to be updated to use cloud streaming.\n\nUpgrade URL: $upgradeUrl")
-            .setPositiveButton("OK", null)
+            .setTitle(R.string.cloud_account_settings_update_title)
+            .setMessage(getString(R.string.cloud_account_settings_update_message, upgradeUrl))
+            .setPositiveButton(R.string.action_ok, null)
             .show()
     }
 
@@ -1705,11 +1704,11 @@ class CloudPlayFragment : Fragment() {
      * Show ping timeout error dialog
      */
     private fun showPingTimeoutErrorDialog(serviceType: String) {
-        val sectionName = if (serviceType == "psnow") "Game Catalog" else "Game Library"
+        val sectionName = if (serviceType == "psnow") getString(R.string.preferences_category_title_game_catalog) else getString(R.string.preferences_category_title_game_library)
         requireContext().alertDialogBuilder()
-            .setTitle("Ping Too High")
-            .setMessage("Ping must be less than 80ms to start a cloud session.\n\nTo continue anyway, go to Settings → Cloud and manually select a datacenter for your service ($sectionName).")
-            .setPositiveButton("OK", null)
+            .setTitle(R.string.cloud_ping_too_high_title)
+            .setMessage(getString(R.string.cloud_ping_too_high_message, sectionName))
+            .setPositiveButton(R.string.action_ok, null)
             .show()
     }
 
@@ -1718,9 +1717,9 @@ class CloudPlayFragment : Fragment() {
      */
     private fun showAuthorizationFailedDialog() {
         requireContext().alertDialogBuilder()
-            .setTitle("Authorization Failed")
-            .setMessage("Failed to authorize your PlayStation Network account. Please check your NPSSO token and try again.")
-            .setPositiveButton("OK", null)
+            .setTitle(R.string.cloud_authorization_failed_title)
+            .setMessage(R.string.cloud_authorization_failed_message)
+            .setPositiveButton(R.string.action_ok, null)
             .show()
     }
 
@@ -1731,7 +1730,7 @@ class CloudPlayFragment : Fragment() {
         requireContext().alertDialogBuilder()
             .setTitle(title)
             .setMessage(message)
-            .setPositiveButton("OK", null)
+            .setPositiveButton(R.string.action_ok, null)
             .show()
     }
 

@@ -94,7 +94,7 @@ class DisplayHostRecyclerViewAdapter(
 			// status needs to visually read as "blue", distinct from ready/asleep/offline.
 			if(host is PsnDisplayHost)
 			{
-				it.hostTextView.text = "Remote Console"
+				it.hostTextView.text = context.getString(R.string.display_host_remote_console)
 				it.hostTextView.setTextColor(android.graphics.Color.parseColor("#FFFFFF"))
 				it.hostTextView.textSize = 16f
 				it.idTextView.visibility = View.GONE
@@ -103,12 +103,12 @@ class DisplayHostRecyclerViewAdapter(
 				{
 					transition == HostTransitionState.WAKING ->
 					{
-						it.statusTextView.text = "Waking console"
+						it.statusTextView.text = context.getString(R.string.display_host_waking_console)
 						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#F97316")) // Orange-500
 					}
 					transition == HostTransitionState.CONFIRMED_ON_WAITING ->
 					{
-						it.statusTextView.text = "Console on, please wait until in Ready state"
+						it.statusTextView.text = context.getString(R.string.display_host_console_ready_wait)
 						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#22C55E")) // Green-500
 					}
 					// This tile only shows once local discovery has stopped seeing the console (a
@@ -120,12 +120,12 @@ class DisplayHostRecyclerViewAdapter(
 					// definitive verdict instead of sitting in "Getting Console Status" forever.
 					host.confirmedOffline ->
 					{
-						it.statusTextView.text = "Console Offline"
+						it.statusTextView.text = context.getString(R.string.display_host_console_offline)
 						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#EF4444")) // Red-500
 					}
 					else ->
 					{
-						it.statusTextView.text = "Getting Console Status"
+						it.statusTextView.text = context.getString(R.string.display_host_getting_status)
 						it.statusIcon.setColorFilter(android.graphics.Color.parseColor("#3B82F6")) // Blue-500
 					}
 				}
@@ -146,7 +146,7 @@ class DisplayHostRecyclerViewAdapter(
 						id.chunked(2).joinToString(":")
 					else
 						id
-					it.idTextView.text = "MAC: $formatted"
+					it.idTextView.text = context.getString(R.string.display_host_mac_format, formatted)
 					it.idTextView.visibility = View.VISIBLE
 				}
 				else
@@ -162,17 +162,17 @@ class DisplayHostRecyclerViewAdapter(
 				val (stateText, statusIconTint) = when
 				{
 					transition == HostTransitionState.WAKING ->
-						"Waking console" to android.graphics.Color.parseColor("#F97316") // Orange-500
+						context.getString(R.string.display_host_waking_console) to android.graphics.Color.parseColor("#F97316") // Orange-500
 					transition == HostTransitionState.CONFIRMED_ON_WAITING ->
-						"Console on, please wait until in Ready state" to android.graphics.Color.parseColor("#22C55E") // Green-500
+						context.getString(R.string.display_host_console_ready_wait) to android.graphics.Color.parseColor("#22C55E") // Green-500
 					isPendingSleep && !(host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY) ->
-						"Console sleeping, please wait" to android.graphics.Color.parseColor("#EAB308") // Yellow-500
+						context.getString(R.string.display_host_console_sleeping) to android.graphics.Color.parseColor("#EAB308") // Yellow-500
 					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.READY ->
-						"Ready" to android.graphics.Color.parseColor("#22C55E") // Green-500
+						context.getString(R.string.display_host_ready) to android.graphics.Color.parseColor("#22C55E") // Green-500
 					host is DiscoveredDisplayHost && host.discoveredHost.state == DiscoveryHost.State.STANDBY ->
-						"Asleep" to android.graphics.Color.parseColor("#EAB308") // Yellow-500
+						context.getString(R.string.display_host_asleep) to android.graphics.Color.parseColor("#EAB308") // Yellow-500
 					else ->
-						"Offline" to android.graphics.Color.parseColor("#EF4444") // Red-500
+						context.getString(R.string.display_host_offline) to android.graphics.Color.parseColor("#EF4444") // Red-500
 				}
 				it.statusTextView.text = stateText
 				it.statusLayout.visibility = View.VISIBLE

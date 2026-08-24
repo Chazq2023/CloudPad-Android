@@ -8,6 +8,7 @@ import android.util.Log
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.android.billingclient.api.*
 import com.pylux.stream.BuildConfig
+import com.pylux.stream.R
 import kotlinx.coroutines.*
 
 /**
@@ -216,16 +217,16 @@ class AppIntegrityManager(private val context: Context)
 	{
 		activity.runOnUiThread {
 			activity.alertDialogBuilder()
-				.setTitle("Verification Required")
-				.setMessage("Unable to verify application source. Please ensure you have an active internet connection and the app was installed from an official source.")
-				.setPositiveButton("Retry") { _, _ ->
+				.setTitle(R.string.app_integrity_verification_required_title)
+				.setMessage(R.string.app_integrity_verification_required_message)
+				.setPositiveButton(R.string.action_retry) { _, _ ->
 					context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 						.edit()
 						.clear()
 						.apply()
 					activity.recreate()
 				}
-				.setNegativeButton("Exit") { _, _ ->
+				.setNegativeButton(R.string.action_exit) { _, _ ->
 					activity.finish()
 				}
 				.setCancelable(false)

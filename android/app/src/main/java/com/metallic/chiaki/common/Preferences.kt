@@ -97,6 +97,10 @@ class Preferences(context: Context)
 
 	private val resources = context.resources
 
+	// Lets non-UI classes that only hold a Preferences instance (no Context of their own, e.g.
+	// PSGaikaiStreaming) resolve user-facing string resources for progress/error messages.
+	fun getString(@StringRes resId: Int, vararg formatArgs: Any): String = resources.getString(resId, *formatArgs)
+
 	val discoveryEnabledKey get() = resources.getString(R.string.preferences_discovery_enabled_key)
 	var discoveryEnabled
 		get() = sharedPreferences.getBoolean(discoveryEnabledKey, true)
