@@ -688,4 +688,59 @@
     <string name="stream_background_notification_title">Stream still running</string>
     <string name="stream_background_notification_text">Tap to return to your game</string>
     <string name="stream_background_notification_disconnect">Disconnect</string>
+
+    <string name="psn_login_status_instructions">1. Tap Sign into account and sign in with Sony.\n2. Tap Obtain NPSSO Token — Chrome will show a page like {\"npsso\":\"...\"}.\n3. Copy the npsso value and paste it below.\n4. Tap Finalise log in.</string>
+
+    <string name="trophy_compare_error_auth_failed">Could not authenticate with PSN for trophy data</string>
+    <string name="trophy_compare_error_my_titles_failed">Could not load your trophy titles</string>
+    <string name="trophy_compare_error_my_summary_failed">Could not load your trophy summary</string>
+    <string name="trophy_compare_error_their_data_unavailable">This player\'s trophy data is private or unavailable</string>
+    <string name="trophy_compare_error_generic">Failed to load trophy comparison</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Missing cloud session info</string>
+    <string name="stream_restart_preparing">Preparing…</string>
+    <string name="stream_restart_error_apply_settings_failed">Failed to apply new settings</string>
+
+    <string name="controller_group_left_stick">Left Stick</string>
+    <string name="controller_group_right_stick">Right Stick</string>
+    <string name="controller_group_dpad">D-Pad</string>
+    <string name="controller_group_shoulder_buttons">Shoulder Buttons</string>
+    <string name="controller_group_face_buttons">Face Buttons</string>
+    <string name="controller_group_menu">Menu</string>
+    <string name="controller_group_system">System</string>
+    <string name="controller_group_touchpad">Touchpad</string>
+
+    <string name="controller_action_left_stick_up">Left Stick Up</string>
+    <string name="controller_action_left_stick_down">Left Stick Down</string>
+    <string name="controller_action_left_stick_left">Left Stick Left</string>
+    <string name="controller_action_left_stick_right">Left Stick Right</string>
+    <string name="controller_action_l3">L3 Click</string>
+    <string name="controller_action_right_stick_up">Right Stick Up</string>
+    <string name="controller_action_right_stick_down">Right Stick Down</string>
+    <string name="controller_action_right_stick_left">Right Stick Left</string>
+    <string name="controller_action_right_stick_right">Right Stick Right</string>
+    <string name="controller_action_r3">R3 Click</string>
+    <string name="controller_action_dpad_up">D-Pad Up</string>
+    <string name="controller_action_dpad_down">D-Pad Down</string>
+    <string name="controller_action_dpad_left">D-Pad Left</string>
+    <string name="controller_action_dpad_right">D-Pad Right</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Cross (×)</string>
+    <string name="controller_action_triangle">Triangle (△)</string>
+    <string name="controller_action_square">Square (□)</string>
+    <string name="controller_action_circle">Circle (○)</string>
+    <string name="controller_action_start">Start / Options</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Home (PS Button)</string>
+    <string name="controller_action_touchpad_click">Touchpad Click</string>
+    <string name="controller_action_touchpad_hold">Touchpad Hold</string>
+    <string name="controller_action_touchpad_left_click">Left Touchpad Click</string>
+    <string name="controller_action_touchpad_right_click">Right Touchpad Click</string>
+    <string name="controller_action_touchpad_swipe_up">Touchpad Swipe Up</string>
+    <string name="controller_action_touchpad_swipe_down">Touchpad Swipe Down</string>
+    <string name="controller_action_touchpad_swipe_left">Touchpad Swipe Left</string>
+    <string name="controller_action_touchpad_swipe_right">Touchpad Swipe Right</string>
 </resources>

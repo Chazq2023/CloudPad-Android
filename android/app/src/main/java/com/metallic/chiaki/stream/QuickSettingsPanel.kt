@@ -2094,13 +2094,13 @@ class QuickSettingsPanel(
 	private fun buildRemapItems(): List<RemapItem>
 	{
 		val items = mutableListOf<RemapItem>()
-		var lastGroup = ""
+		var lastGroupRes = 0
 		for(action in ControllerAction.values())
 		{
-			if(action.group != lastGroup)
+			if(action.groupRes != lastGroupRes)
 			{
-				items.add(RemapItem.Header(action.group))
-				lastGroup = action.group
+				items.add(RemapItem.Header(activity.getString(action.groupRes)))
+				lastGroupRes = action.groupRes
 			}
 			items.add(RemapItem.ActionItem(action, currentMapping[action]))
 		}

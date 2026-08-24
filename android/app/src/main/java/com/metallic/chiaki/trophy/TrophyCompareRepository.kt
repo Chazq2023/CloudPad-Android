@@ -5,6 +5,7 @@ package com.metallic.chiaki.trophy
 import android.util.Log
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
+import com.pylux.stream.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
@@ -52,7 +53,7 @@ class TrophyCompareRepository(private val preferences: Preferences, private val 
 		try
 		{
 			val token = tokenManager.getValidToken()
-				?: return@withContext TrophyComparisonResult.Error("Could not authenticate with PSN for trophy data")
+				?: return@withContext TrophyComparisonResult.Error(preferences.getString(R.string.trophy_compare_error_auth_failed))
 
 			val myTitlesDeferred = async { trophyRepository.fetchMyTrophyTitles() }
 			val theirTitlesDeferred = async { TrophyService.fetchAllTrophyTitles(token, friendAccountId) }
@@ -61,12 +62,12 @@ class TrophyCompareRepository(private val preferences: Preferences, private val 
 			val myAvatarDeferred = async { TrophyService.fetchAvatarUrl(token) }
 
 			val myTitles = myTitlesDeferred.await()
-				?: return@withContext TrophyComparisonResult.Error("Could not load your trophy titles")
+				?: return@withContext TrophyComparisonResult.Error(preferences.getString(R.string.trophy_compare_error_my_titles_failed))
 			val theirTitles = theirTitlesDeferred.await()
 			val mySummary = mySummaryDeferred.await()
-				?: return@withContext TrophyComparisonResult.Error("Could not load your trophy summary")
+				?: return@withContext TrophyComparisonResult.Error(preferences.getString(R.string.trophy_compare_error_my_summary_failed))
 			val theirSummary = theirSummaryDeferred.await()
-				?: return@withContext TrophyComparisonResult.Error("This player's trophy data is private or unavailable")
+				?: return@withContext TrophyComparisonResult.Error(preferences.getString(R.string.trophy_compare_error_their_data_unavailable))
 			val myAvatarUrl = myAvatarDeferred.await()
 
 			val sharedGames = matchSharedGames(myTitles, theirTitles)
@@ -78,7 +79,7 @@ class TrophyCompareRepository(private val preferences: Preferences, private val 
 		catch (e: Exception)
 		{
 			Log.e(TAG, "fetchComparison failed for $friendAccountId", e)
-			TrophyComparisonResult.Error(e.message ?: "Failed to load trophy comparison")
+			TrophyComparisonResult.Error(e.message ?: preferences.getString(R.string.trophy_compare_error_generic))
 		}
 	}
 }

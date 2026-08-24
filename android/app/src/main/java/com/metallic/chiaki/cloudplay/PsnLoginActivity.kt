@@ -83,10 +83,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		psnTokenManager = PsnTokenManager(preferences)
 
 		setupUi()
-		statusTextView.text = "1. Tap Sign into account and sign in with Sony.\n" +
-			"2. Tap Obtain NPSSO Token — Chrome will show a page like {\"npsso\":\"...\"}.\n" +
-			"3. Copy the npsso value and paste it below.\n" +
-			"4. Tap Finalise log in."
+		statusTextView.text = getString(R.string.psn_login_status_instructions)
 	}
 
 	private fun resolveThemeColor(attrId: Int): Int {

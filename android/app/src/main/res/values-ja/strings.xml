@@ -600,4 +600,59 @@
     <string name="friends_error_open_conversation_failed">会話を開けませんでした</string>
     <string name="friends_error_refresh_conversation_failed">会話を更新できませんでした</string>
     <string name="friends_error_refresh_conversation_failed_generic">会話の更新に失敗しました</string>
+
+    <string name="psn_login_status_instructions">1. 「アカウントにサインイン」をタップしてSonyでサインインします。\n2. 「NPSSOトークンを取得」をタップすると、Chromeに{\"npsso\":\"...\"}のようなページが表示されます。\n3. npssoの値をコピーし、下に貼り付けます。\n4. 「ログインを完了」をタップします。</string>
+
+    <string name="trophy_compare_error_auth_failed">トロフィーデータの取得にPSN認証が必要です</string>
+    <string name="trophy_compare_error_my_titles_failed">自分のトロフィータイトルを読み込めませんでした</string>
+    <string name="trophy_compare_error_my_summary_failed">自分のトロフィー概要を読み込めませんでした</string>
+    <string name="trophy_compare_error_their_data_unavailable">このプレイヤーのトロフィーデータは非公開か利用できません</string>
+    <string name="trophy_compare_error_generic">トロフィー比較の読み込みに失敗しました</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">クラウドセッション情報がありません</string>
+    <string name="stream_restart_preparing">準備中…</string>
+    <string name="stream_restart_error_apply_settings_failed">新しい設定を適用できませんでした</string>
+
+    <string name="controller_group_left_stick">左スティック</string>
+    <string name="controller_group_right_stick">右スティック</string>
+    <string name="controller_group_dpad">十字ボタン</string>
+    <string name="controller_group_shoulder_buttons">ショルダーボタン</string>
+    <string name="controller_group_face_buttons">フェイスボタン</string>
+    <string name="controller_group_menu">メニュー</string>
+    <string name="controller_group_system">システム</string>
+    <string name="controller_group_touchpad">タッチパッド</string>
+
+    <string name="controller_action_left_stick_up">左スティック上</string>
+    <string name="controller_action_left_stick_down">左スティック下</string>
+    <string name="controller_action_left_stick_left">左スティック左</string>
+    <string name="controller_action_left_stick_right">左スティック右</string>
+    <string name="controller_action_l3">L3クリック</string>
+    <string name="controller_action_right_stick_up">右スティック上</string>
+    <string name="controller_action_right_stick_down">右スティック下</string>
+    <string name="controller_action_right_stick_left">右スティック左</string>
+    <string name="controller_action_right_stick_right">右スティック右</string>
+    <string name="controller_action_r3">R3クリック</string>
+    <string name="controller_action_dpad_up">十字ボタン上</string>
+    <string name="controller_action_dpad_down">十字ボタン下</string>
+    <string name="controller_action_dpad_left">十字ボタン左</string>
+    <string name="controller_action_dpad_right">十字ボタン右</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">×ボタン</string>
+    <string name="controller_action_triangle">△ボタン</string>
+    <string name="controller_action_square">□ボタン</string>
+    <string name="controller_action_circle">○ボタン</string>
+    <string name="controller_action_start">スタート / オプション</string>
+    <string name="controller_action_select">セレクト</string>
+    <string name="controller_action_home">ホーム(PSボタン)</string>
+    <string name="controller_action_touchpad_click">タッチパッドクリック</string>
+    <string name="controller_action_touchpad_hold">タッチパッド長押し</string>
+    <string name="controller_action_touchpad_left_click">タッチパッド左クリック</string>
+    <string name="controller_action_touchpad_right_click">タッチパッド右クリック</string>
+    <string name="controller_action_touchpad_swipe_up">タッチパッド上スワイプ</string>
+    <string name="controller_action_touchpad_swipe_down">タッチパッド下スワイプ</string>
+    <string name="controller_action_touchpad_swipe_left">タッチパッド左スワイプ</string>
+    <string name="controller_action_touchpad_swipe_right">タッチパッド右スワイプ</string>
 </resources>

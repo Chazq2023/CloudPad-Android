@@ -602,4 +602,59 @@
     <string name="friends_error_open_conversation_failed">No se pudo abrir la conversación</string>
     <string name="friends_error_refresh_conversation_failed">No se pudo actualizar la conversación</string>
     <string name="friends_error_refresh_conversation_failed_generic">Error al actualizar la conversación</string>
+
+    <string name="psn_login_status_instructions">1. Toca Iniciar sesión y accede con tu cuenta de Sony.\n2. Toca Obtener token NPSSO — Chrome mostrará una página como {\"npsso\":\"...\"}.\n3. Copia el valor de npsso y pégalo a continuación.\n4. Toca Finalizar inicio de sesión.</string>
+
+    <string name="trophy_compare_error_auth_failed">No se pudo autenticar con PSN para obtener datos de trofeos</string>
+    <string name="trophy_compare_error_my_titles_failed">No se pudieron cargar tus títulos de trofeos</string>
+    <string name="trophy_compare_error_my_summary_failed">No se pudo cargar tu resumen de trofeos</string>
+    <string name="trophy_compare_error_their_data_unavailable">Los datos de trofeos de este jugador son privados o no están disponibles</string>
+    <string name="trophy_compare_error_generic">Error al cargar la comparación de trofeos</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Falta información de la sesión en la nube</string>
+    <string name="stream_restart_preparing">Preparando…</string>
+    <string name="stream_restart_error_apply_settings_failed">Error al aplicar los nuevos ajustes</string>
+
+    <string name="controller_group_left_stick">Stick izquierdo</string>
+    <string name="controller_group_right_stick">Stick derecho</string>
+    <string name="controller_group_dpad">Cruceta</string>
+    <string name="controller_group_shoulder_buttons">Botones superiores</string>
+    <string name="controller_group_face_buttons">Botones frontales</string>
+    <string name="controller_group_menu">Menú</string>
+    <string name="controller_group_system">Sistema</string>
+    <string name="controller_group_touchpad">Panel táctil</string>
+
+    <string name="controller_action_left_stick_up">Stick izquierdo arriba</string>
+    <string name="controller_action_left_stick_down">Stick izquierdo abajo</string>
+    <string name="controller_action_left_stick_left">Stick izquierdo a la izquierda</string>
+    <string name="controller_action_left_stick_right">Stick izquierdo a la derecha</string>
+    <string name="controller_action_l3">Pulsación L3</string>
+    <string name="controller_action_right_stick_up">Stick derecho arriba</string>
+    <string name="controller_action_right_stick_down">Stick derecho abajo</string>
+    <string name="controller_action_right_stick_left">Stick derecho a la izquierda</string>
+    <string name="controller_action_right_stick_right">Stick derecho a la derecha</string>
+    <string name="controller_action_r3">Pulsación R3</string>
+    <string name="controller_action_dpad_up">Cruceta arriba</string>
+    <string name="controller_action_dpad_down">Cruceta abajo</string>
+    <string name="controller_action_dpad_left">Cruceta izquierda</string>
+    <string name="controller_action_dpad_right">Cruceta derecha</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Equis (×)</string>
+    <string name="controller_action_triangle">Triángulo (△)</string>
+    <string name="controller_action_square">Cuadrado (□)</string>
+    <string name="controller_action_circle">Círculo (○)</string>
+    <string name="controller_action_start">Start / Opciones</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Inicio (botón PS)</string>
+    <string name="controller_action_touchpad_click">Pulsación del panel táctil</string>
+    <string name="controller_action_touchpad_hold">Mantener pulsado el panel táctil</string>
+    <string name="controller_action_touchpad_left_click">Pulsación izquierda del panel táctil</string>
+    <string name="controller_action_touchpad_right_click">Pulsación derecha del panel táctil</string>
+    <string name="controller_action_touchpad_swipe_up">Deslizar hacia arriba en el panel táctil</string>
+    <string name="controller_action_touchpad_swipe_down">Deslizar hacia abajo en el panel táctil</string>
+    <string name="controller_action_touchpad_swipe_left">Deslizar hacia la izquierda en el panel táctil</string>
+    <string name="controller_action_touchpad_swipe_right">Deslizar hacia la derecha en el panel táctil</string>
 </resources>

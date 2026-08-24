@@ -602,4 +602,59 @@
     <string name="friends_error_open_conversation_failed">Falha ao abrir a conversa</string>
     <string name="friends_error_refresh_conversation_failed">Não foi possível atualizar a conversa</string>
     <string name="friends_error_refresh_conversation_failed_generic">Falha ao atualizar a conversa</string>
+
+    <string name="psn_login_status_instructions">1. Toque em Entrar na conta e faça login com a Sony.\n2. Toque em Obter Token NPSSO — o Chrome mostrará uma página como {\"npsso\":\"...\"}.\n3. Copie o valor do npsso e cole abaixo.\n4. Toque em Finalizar login.</string>
+
+    <string name="trophy_compare_error_auth_failed">Não foi possível autenticar com a PSN para os dados de troféus</string>
+    <string name="trophy_compare_error_my_titles_failed">Não foi possível carregar seus jogos com troféus</string>
+    <string name="trophy_compare_error_my_summary_failed">Não foi possível carregar seu resumo de troféus</string>
+    <string name="trophy_compare_error_their_data_unavailable">Os dados de troféus deste jogador são privados ou estão indisponíveis</string>
+    <string name="trophy_compare_error_generic">Falha ao carregar a comparação de troféus</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Informações da sessão em nuvem ausentes</string>
+    <string name="stream_restart_preparing">Preparando…</string>
+    <string name="stream_restart_error_apply_settings_failed">Falha ao aplicar as novas configurações</string>
+
+    <string name="controller_group_left_stick">Analógico Esquerdo</string>
+    <string name="controller_group_right_stick">Analógico Direito</string>
+    <string name="controller_group_dpad">Direcional</string>
+    <string name="controller_group_shoulder_buttons">Gatilhos</string>
+    <string name="controller_group_face_buttons">Botões de Ação</string>
+    <string name="controller_group_menu">Menu</string>
+    <string name="controller_group_system">Sistema</string>
+    <string name="controller_group_touchpad">Touchpad</string>
+
+    <string name="controller_action_left_stick_up">Analógico Esquerdo para Cima</string>
+    <string name="controller_action_left_stick_down">Analógico Esquerdo para Baixo</string>
+    <string name="controller_action_left_stick_left">Analógico Esquerdo para a Esquerda</string>
+    <string name="controller_action_left_stick_right">Analógico Esquerdo para a Direita</string>
+    <string name="controller_action_l3">Clique L3</string>
+    <string name="controller_action_right_stick_up">Analógico Direito para Cima</string>
+    <string name="controller_action_right_stick_down">Analógico Direito para Baixo</string>
+    <string name="controller_action_right_stick_left">Analógico Direito para a Esquerda</string>
+    <string name="controller_action_right_stick_right">Analógico Direito para a Direita</string>
+    <string name="controller_action_r3">Clique R3</string>
+    <string name="controller_action_dpad_up">Direcional para Cima</string>
+    <string name="controller_action_dpad_down">Direcional para Baixo</string>
+    <string name="controller_action_dpad_left">Direcional para a Esquerda</string>
+    <string name="controller_action_dpad_right">Direcional para a Direita</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Cruz (×)</string>
+    <string name="controller_action_triangle">Triângulo (△)</string>
+    <string name="controller_action_square">Quadrado (□)</string>
+    <string name="controller_action_circle">Círculo (○)</string>
+    <string name="controller_action_start">Start / Options</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Início (Botão PS)</string>
+    <string name="controller_action_touchpad_click">Clique no Touchpad</string>
+    <string name="controller_action_touchpad_hold">Segurar Touchpad</string>
+    <string name="controller_action_touchpad_left_click">Clique no Touchpad Esquerdo</string>
+    <string name="controller_action_touchpad_right_click">Clique no Touchpad Direito</string>
+    <string name="controller_action_touchpad_swipe_up">Deslizar Touchpad para Cima</string>
+    <string name="controller_action_touchpad_swipe_down">Deslizar Touchpad para Baixo</string>
+    <string name="controller_action_touchpad_swipe_left">Deslizar Touchpad para a Esquerda</string>
+    <string name="controller_action_touchpad_swipe_right">Deslizar Touchpad para a Direita</string>
 </resources>

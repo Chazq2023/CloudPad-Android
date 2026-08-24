@@ -603,4 +603,59 @@
     <string name="friends_error_open_conversation_failed">Openen van gesprek mislukt</string>
     <string name="friends_error_refresh_conversation_failed">Kan het gesprek niet vernieuwen</string>
     <string name="friends_error_refresh_conversation_failed_generic">Vernieuwen van gesprek mislukt</string>
+
+    <string name="psn_login_status_instructions">1. Tik op Inloggen bij account en log in met Sony.\n2. Tik op NPSSO-token ophalen — Chrome toont een pagina zoals {\"npsso\":\"...\"}.\n3. Kopieer de npsso-waarde en plak deze hieronder.\n4. Tik op Inloggen voltooien.</string>
+
+    <string name="trophy_compare_error_auth_failed">Kon niet authenticeren bij PSN voor trofeegegevens</string>
+    <string name="trophy_compare_error_my_titles_failed">Kon je trofeetitels niet laden</string>
+    <string name="trophy_compare_error_my_summary_failed">Kon je trofeeoverzicht niet laden</string>
+    <string name="trophy_compare_error_their_data_unavailable">De trofeegegevens van deze speler zijn privé of niet beschikbaar</string>
+    <string name="trophy_compare_error_generic">Laden van trofeevergelijking mislukt</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Cloudsessiegegevens ontbreken</string>
+    <string name="stream_restart_preparing">Voorbereiden…</string>
+    <string name="stream_restart_error_apply_settings_failed">Toepassen van nieuwe instellingen mislukt</string>
+
+    <string name="controller_group_left_stick">Linkerstick</string>
+    <string name="controller_group_right_stick">Rechterstick</string>
+    <string name="controller_group_dpad">D-Pad</string>
+    <string name="controller_group_shoulder_buttons">Schouderknoppen</string>
+    <string name="controller_group_face_buttons">Actieknoppen</string>
+    <string name="controller_group_menu">Menu</string>
+    <string name="controller_group_system">Systeem</string>
+    <string name="controller_group_touchpad">Touchpad</string>
+
+    <string name="controller_action_left_stick_up">Linkerstick omhoog</string>
+    <string name="controller_action_left_stick_down">Linkerstick omlaag</string>
+    <string name="controller_action_left_stick_left">Linkerstick links</string>
+    <string name="controller_action_left_stick_right">Linkerstick rechts</string>
+    <string name="controller_action_l3">L3-klik</string>
+    <string name="controller_action_right_stick_up">Rechterstick omhoog</string>
+    <string name="controller_action_right_stick_down">Rechterstick omlaag</string>
+    <string name="controller_action_right_stick_left">Rechterstick links</string>
+    <string name="controller_action_right_stick_right">Rechterstick rechts</string>
+    <string name="controller_action_r3">R3-klik</string>
+    <string name="controller_action_dpad_up">D-Pad omhoog</string>
+    <string name="controller_action_dpad_down">D-Pad omlaag</string>
+    <string name="controller_action_dpad_left">D-Pad links</string>
+    <string name="controller_action_dpad_right">D-Pad rechts</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Cross (×)</string>
+    <string name="controller_action_triangle">Triangle (△)</string>
+    <string name="controller_action_square">Square (□)</string>
+    <string name="controller_action_circle">Circle (○)</string>
+    <string name="controller_action_start">Start / Options</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Home (PS-knop)</string>
+    <string name="controller_action_touchpad_click">Touchpad-klik</string>
+    <string name="controller_action_touchpad_hold">Touchpad ingedrukt houden</string>
+    <string name="controller_action_touchpad_left_click">Linker touchpad-klik</string>
+    <string name="controller_action_touchpad_right_click">Rechter touchpad-klik</string>
+    <string name="controller_action_touchpad_swipe_up">Touchpad omhoog vegen</string>
+    <string name="controller_action_touchpad_swipe_down">Touchpad omlaag vegen</string>
+    <string name="controller_action_touchpad_swipe_left">Touchpad naar links vegen</string>
+    <string name="controller_action_touchpad_swipe_right">Touchpad naar rechts vegen</string>
 </resources>

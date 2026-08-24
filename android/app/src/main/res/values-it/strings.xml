@@ -601,4 +601,59 @@
     <string name="friends_error_open_conversation_failed">Impossibile aprire la conversazione</string>
     <string name="friends_error_refresh_conversation_failed">Impossibile aggiornare la conversazione</string>
     <string name="friends_error_refresh_conversation_failed_generic">Aggiornamento della conversazione non riuscito</string>
+
+    <string name="psn_login_status_instructions">1. Tocca Accedi all\'account ed esegui l\'accesso con Sony.\n2. Tocca Ottieni token NPSSO — Chrome mostrerà una pagina simile a {\"npsso\":\"...\"}.\n3. Copia il valore npsso e incollalo qui sotto.\n4. Tocca Finalizza accesso.</string>
+
+    <string name="trophy_compare_error_auth_failed">Impossibile autenticarsi con PSN per i dati sui trofei</string>
+    <string name="trophy_compare_error_my_titles_failed">Impossibile caricare i tuoi titoli con trofei</string>
+    <string name="trophy_compare_error_my_summary_failed">Impossibile caricare il tuo riepilogo trofei</string>
+    <string name="trophy_compare_error_their_data_unavailable">I dati sui trofei di questo giocatore sono privati o non disponibili</string>
+    <string name="trophy_compare_error_generic">Impossibile caricare il confronto dei trofei</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Informazioni sulla sessione cloud mancanti</string>
+    <string name="stream_restart_preparing">Preparazione…</string>
+    <string name="stream_restart_error_apply_settings_failed">Impossibile applicare le nuove impostazioni</string>
+
+    <string name="controller_group_left_stick">Levetta sinistra</string>
+    <string name="controller_group_right_stick">Levetta destra</string>
+    <string name="controller_group_dpad">Croce direzionale</string>
+    <string name="controller_group_shoulder_buttons">Dorsali</string>
+    <string name="controller_group_face_buttons">Tasti frontali</string>
+    <string name="controller_group_menu">Menu</string>
+    <string name="controller_group_system">Sistema</string>
+    <string name="controller_group_touchpad">Touchpad</string>
+
+    <string name="controller_action_left_stick_up">Levetta sinistra su</string>
+    <string name="controller_action_left_stick_down">Levetta sinistra giù</string>
+    <string name="controller_action_left_stick_left">Levetta sinistra a sinistra</string>
+    <string name="controller_action_left_stick_right">Levetta sinistra a destra</string>
+    <string name="controller_action_l3">Pressione L3</string>
+    <string name="controller_action_right_stick_up">Levetta destra su</string>
+    <string name="controller_action_right_stick_down">Levetta destra giù</string>
+    <string name="controller_action_right_stick_left">Levetta destra a sinistra</string>
+    <string name="controller_action_right_stick_right">Levetta destra a destra</string>
+    <string name="controller_action_r3">Pressione R3</string>
+    <string name="controller_action_dpad_up">Croce direzionale su</string>
+    <string name="controller_action_dpad_down">Croce direzionale giù</string>
+    <string name="controller_action_dpad_left">Croce direzionale sinistra</string>
+    <string name="controller_action_dpad_right">Croce direzionale destra</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Croce (×)</string>
+    <string name="controller_action_triangle">Triangolo (△)</string>
+    <string name="controller_action_square">Quadrato (□)</string>
+    <string name="controller_action_circle">Cerchio (○)</string>
+    <string name="controller_action_start">Start / Opzioni</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Home (tasto PS)</string>
+    <string name="controller_action_touchpad_click">Pressione touchpad</string>
+    <string name="controller_action_touchpad_hold">Pressione prolungata touchpad</string>
+    <string name="controller_action_touchpad_left_click">Pressione touchpad sinistra</string>
+    <string name="controller_action_touchpad_right_click">Pressione touchpad destra</string>
+    <string name="controller_action_touchpad_swipe_up">Scorrimento touchpad su</string>
+    <string name="controller_action_touchpad_swipe_down">Scorrimento touchpad giù</string>
+    <string name="controller_action_touchpad_swipe_left">Scorrimento touchpad sinistra</string>
+    <string name="controller_action_touchpad_swipe_right">Scorrimento touchpad destra</string>
 </resources>

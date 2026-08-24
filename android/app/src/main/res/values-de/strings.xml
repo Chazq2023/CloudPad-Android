@@ -627,4 +627,59 @@
     <string name="friends_error_open_conversation_failed">Unterhaltung konnte nicht geöffnet werden</string>
     <string name="friends_error_refresh_conversation_failed">Unterhaltung konnte nicht aktualisiert werden</string>
     <string name="friends_error_refresh_conversation_failed_generic">Unterhaltung konnte nicht aktualisiert werden</string>
+
+    <string name="psn_login_status_instructions">1. Tippe auf „Beim Konto anmelden“ und melde dich bei Sony an.\n2. Tippe auf „NPSSO-Token abrufen“ — Chrome zeigt eine Seite wie {\"npsso\":\"...\"} an.\n3. Kopiere den npsso-Wert und füge ihn unten ein.\n4. Tippe auf „Anmeldung abschließen“.</string>
+
+    <string name="trophy_compare_error_auth_failed">Authentifizierung bei PSN für Trophäendaten fehlgeschlagen</string>
+    <string name="trophy_compare_error_my_titles_failed">Deine Trophäentitel konnten nicht geladen werden</string>
+    <string name="trophy_compare_error_my_summary_failed">Deine Trophäenübersicht konnte nicht geladen werden</string>
+    <string name="trophy_compare_error_their_data_unavailable">Die Trophäendaten dieses Spielers sind privat oder nicht verfügbar</string>
+    <string name="trophy_compare_error_generic">Trophäenvergleich konnte nicht geladen werden</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Cloud-Sitzungsinformationen fehlen</string>
+    <string name="stream_restart_preparing">Wird vorbereitet…</string>
+    <string name="stream_restart_error_apply_settings_failed">Neue Einstellungen konnten nicht übernommen werden</string>
+
+    <string name="controller_group_left_stick">Linker Stick</string>
+    <string name="controller_group_right_stick">Rechter Stick</string>
+    <string name="controller_group_dpad">Steuerkreuz</string>
+    <string name="controller_group_shoulder_buttons">Schultertasten</string>
+    <string name="controller_group_face_buttons">Aktionstasten</string>
+    <string name="controller_group_menu">Menü</string>
+    <string name="controller_group_system">System</string>
+    <string name="controller_group_touchpad">Touchpad</string>
+
+    <string name="controller_action_left_stick_up">Linker Stick nach oben</string>
+    <string name="controller_action_left_stick_down">Linker Stick nach unten</string>
+    <string name="controller_action_left_stick_left">Linker Stick nach links</string>
+    <string name="controller_action_left_stick_right">Linker Stick nach rechts</string>
+    <string name="controller_action_l3">L3-Klick</string>
+    <string name="controller_action_right_stick_up">Rechter Stick nach oben</string>
+    <string name="controller_action_right_stick_down">Rechter Stick nach unten</string>
+    <string name="controller_action_right_stick_left">Rechter Stick nach links</string>
+    <string name="controller_action_right_stick_right">Rechter Stick nach rechts</string>
+    <string name="controller_action_r3">R3-Klick</string>
+    <string name="controller_action_dpad_up">Steuerkreuz oben</string>
+    <string name="controller_action_dpad_down">Steuerkreuz unten</string>
+    <string name="controller_action_dpad_left">Steuerkreuz links</string>
+    <string name="controller_action_dpad_right">Steuerkreuz rechts</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Kreuz (×)</string>
+    <string name="controller_action_triangle">Dreieck (△)</string>
+    <string name="controller_action_square">Viereck (□)</string>
+    <string name="controller_action_circle">Kreis (○)</string>
+    <string name="controller_action_start">Start / Optionen</string>
+    <string name="controller_action_select">Auswählen</string>
+    <string name="controller_action_home">Home (PS-Taste)</string>
+    <string name="controller_action_touchpad_click">Touchpad-Klick</string>
+    <string name="controller_action_touchpad_hold">Touchpad halten</string>
+    <string name="controller_action_touchpad_left_click">Linker Touchpad-Klick</string>
+    <string name="controller_action_touchpad_right_click">Rechter Touchpad-Klick</string>
+    <string name="controller_action_touchpad_swipe_up">Touchpad nach oben wischen</string>
+    <string name="controller_action_touchpad_swipe_down">Touchpad nach unten wischen</string>
+    <string name="controller_action_touchpad_swipe_left">Touchpad nach links wischen</string>
+    <string name="controller_action_touchpad_swipe_right">Touchpad nach rechts wischen</string>
 </resources>

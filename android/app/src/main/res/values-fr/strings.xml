@@ -601,4 +601,59 @@
     <string name="friends_error_open_conversation_failed">Échec de l\'ouverture de la conversation</string>
     <string name="friends_error_refresh_conversation_failed">Impossible d\'actualiser la conversation</string>
     <string name="friends_error_refresh_conversation_failed_generic">Échec de l\'actualisation de la conversation</string>
+
+    <string name="psn_login_status_instructions">1. Appuyez sur Se connecter au compte et connectez-vous avec Sony.\n2. Appuyez sur Obtenir le jeton NPSSO — Chrome affichera une page du type {\"npsso\":\"...\"}.\n3. Copiez la valeur npsso et collez-la ci-dessous.\n4. Appuyez sur Finaliser la connexion.</string>
+
+    <string name="trophy_compare_error_auth_failed">Impossible de s\'authentifier auprès du PSN pour les données de trophées</string>
+    <string name="trophy_compare_error_my_titles_failed">Impossible de charger vos titres de trophées</string>
+    <string name="trophy_compare_error_my_summary_failed">Impossible de charger votre résumé de trophées</string>
+    <string name="trophy_compare_error_their_data_unavailable">Les données de trophées de ce joueur sont privées ou indisponibles</string>
+    <string name="trophy_compare_error_generic">Échec du chargement de la comparaison des trophées</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Informations de session cloud manquantes</string>
+    <string name="stream_restart_preparing">Préparation…</string>
+    <string name="stream_restart_error_apply_settings_failed">Échec de l\'application des nouveaux paramètres</string>
+
+    <string name="controller_group_left_stick">Stick gauche</string>
+    <string name="controller_group_right_stick">Stick droit</string>
+    <string name="controller_group_dpad">Croix directionnelle</string>
+    <string name="controller_group_shoulder_buttons">Gâchettes</string>
+    <string name="controller_group_face_buttons">Boutons d\'action</string>
+    <string name="controller_group_menu">Menu</string>
+    <string name="controller_group_system">Système</string>
+    <string name="controller_group_touchpad">Pavé tactile</string>
+
+    <string name="controller_action_left_stick_up">Stick gauche vers le haut</string>
+    <string name="controller_action_left_stick_down">Stick gauche vers le bas</string>
+    <string name="controller_action_left_stick_left">Stick gauche vers la gauche</string>
+    <string name="controller_action_left_stick_right">Stick gauche vers la droite</string>
+    <string name="controller_action_l3">Clic L3</string>
+    <string name="controller_action_right_stick_up">Stick droit vers le haut</string>
+    <string name="controller_action_right_stick_down">Stick droit vers le bas</string>
+    <string name="controller_action_right_stick_left">Stick droit vers la gauche</string>
+    <string name="controller_action_right_stick_right">Stick droit vers la droite</string>
+    <string name="controller_action_r3">Clic R3</string>
+    <string name="controller_action_dpad_up">Croix directionnelle haut</string>
+    <string name="controller_action_dpad_down">Croix directionnelle bas</string>
+    <string name="controller_action_dpad_left">Croix directionnelle gauche</string>
+    <string name="controller_action_dpad_right">Croix directionnelle droite</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Croix (×)</string>
+    <string name="controller_action_triangle">Triangle (△)</string>
+    <string name="controller_action_square">Carré (□)</string>
+    <string name="controller_action_circle">Rond (○)</string>
+    <string name="controller_action_start">Start / Options</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Accueil (bouton PS)</string>
+    <string name="controller_action_touchpad_click">Clic du pavé tactile</string>
+    <string name="controller_action_touchpad_hold">Maintien du pavé tactile</string>
+    <string name="controller_action_touchpad_left_click">Clic gauche du pavé tactile</string>
+    <string name="controller_action_touchpad_right_click">Clic droit du pavé tactile</string>
+    <string name="controller_action_touchpad_swipe_up">Glissement du pavé tactile vers le haut</string>
+    <string name="controller_action_touchpad_swipe_down">Glissement du pavé tactile vers le bas</string>
+    <string name="controller_action_touchpad_swipe_left">Glissement du pavé tactile vers la gauche</string>
+    <string name="controller_action_touchpad_swipe_right">Glissement du pavé tactile vers la droite</string>
 </resources>

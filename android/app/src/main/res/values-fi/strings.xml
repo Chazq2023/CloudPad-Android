@@ -601,4 +601,59 @@
     <string name="friends_error_open_conversation_failed">Keskustelun avaaminen epäonnistui</string>
     <string name="friends_error_refresh_conversation_failed">Keskustelun päivittäminen epäonnistui</string>
     <string name="friends_error_refresh_conversation_failed_generic">Keskustelun päivittäminen epäonnistui</string>
+
+    <string name="psn_login_status_instructions">1. Napauta Kirjaudu tilille ja kirjaudu sisään Sonyn tunnuksilla.\n2. Napauta Hae NPSSO-tunnus – Chrome näyttää sivun, jolla lukee esimerkiksi {\"npsso\":\"...\"}.\n3. Kopioi npsso-arvo ja liitä se alle.\n4. Napauta Viimeistele kirjautuminen.</string>
+
+    <string name="trophy_compare_error_auth_failed">PSN-todennus epäonnistui pokaalitietoja varten</string>
+    <string name="trophy_compare_error_my_titles_failed">Pokaalinimikkeidesi lataaminen epäonnistui</string>
+    <string name="trophy_compare_error_my_summary_failed">Pokaaliyhteenvetosi lataaminen epäonnistui</string>
+    <string name="trophy_compare_error_their_data_unavailable">Tämän pelaajan pokaalitiedot ovat yksityisiä tai eivät ole saatavilla</string>
+    <string name="trophy_compare_error_generic">Pokaalivertailun lataaminen epäonnistui</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">Pilvi-istunnon tiedot puuttuvat</string>
+    <string name="stream_restart_preparing">Valmistellaan…</string>
+    <string name="stream_restart_error_apply_settings_failed">Uusien asetusten käyttöönotto epäonnistui</string>
+
+    <string name="controller_group_left_stick">Vasen sauva</string>
+    <string name="controller_group_right_stick">Oikea sauva</string>
+    <string name="controller_group_dpad">Ristiohjain</string>
+    <string name="controller_group_shoulder_buttons">Olkapainikkeet</string>
+    <string name="controller_group_face_buttons">Etupainikkeet</string>
+    <string name="controller_group_menu">Valikko</string>
+    <string name="controller_group_system">Järjestelmä</string>
+    <string name="controller_group_touchpad">Kosketuslevy</string>
+
+    <string name="controller_action_left_stick_up">Vasen sauva ylös</string>
+    <string name="controller_action_left_stick_down">Vasen sauva alas</string>
+    <string name="controller_action_left_stick_left">Vasen sauva vasemmalle</string>
+    <string name="controller_action_left_stick_right">Vasen sauva oikealle</string>
+    <string name="controller_action_l3">L3-painallus</string>
+    <string name="controller_action_right_stick_up">Oikea sauva ylös</string>
+    <string name="controller_action_right_stick_down">Oikea sauva alas</string>
+    <string name="controller_action_right_stick_left">Oikea sauva vasemmalle</string>
+    <string name="controller_action_right_stick_right">Oikea sauva oikealle</string>
+    <string name="controller_action_r3">R3-painallus</string>
+    <string name="controller_action_dpad_up">Ristiohjain ylös</string>
+    <string name="controller_action_dpad_down">Ristiohjain alas</string>
+    <string name="controller_action_dpad_left">Ristiohjain vasemmalle</string>
+    <string name="controller_action_dpad_right">Ristiohjain oikealle</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">Rasti (×)</string>
+    <string name="controller_action_triangle">Kolmio (△)</string>
+    <string name="controller_action_square">Neliö (□)</string>
+    <string name="controller_action_circle">Ympyrä (○)</string>
+    <string name="controller_action_start">Start / Valinnat</string>
+    <string name="controller_action_select">Select</string>
+    <string name="controller_action_home">Koti (PS-painike)</string>
+    <string name="controller_action_touchpad_click">Kosketuslevyn painallus</string>
+    <string name="controller_action_touchpad_hold">Kosketuslevyn pito</string>
+    <string name="controller_action_touchpad_left_click">Kosketuslevyn vasen painallus</string>
+    <string name="controller_action_touchpad_right_click">Kosketuslevyn oikea painallus</string>
+    <string name="controller_action_touchpad_swipe_up">Kosketuslevyn pyyhkäisy ylös</string>
+    <string name="controller_action_touchpad_swipe_down">Kosketuslevyn pyyhkäisy alas</string>
+    <string name="controller_action_touchpad_swipe_left">Kosketuslevyn pyyhkäisy vasemmalle</string>
+    <string name="controller_action_touchpad_swipe_right">Kosketuslevyn pyyhkäisy oikealle</string>
 </resources>

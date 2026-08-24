@@ -637,4 +637,59 @@
     <string name="friends_error_open_conversation_failed">대화를 열지 못했습니다</string>
     <string name="friends_error_refresh_conversation_failed">대화를 새로고침할 수 없습니다</string>
     <string name="friends_error_refresh_conversation_failed_generic">대화 새로고침에 실패했습니다</string>
+
+    <string name="psn_login_status_instructions">1. \'계정으로 로그인\'을 눌러 Sony 계정으로 로그인하세요.\n2. \'NPSSO 토큰 받기\'를 누르면 Chrome에 {\"npsso\":\"...\"}와 같은 페이지가 표시됩니다.\n3. npsso 값을 복사하여 아래에 붙여넣으세요.\n4. \'로그인 완료\'를 누르세요.</string>
+
+    <string name="trophy_compare_error_auth_failed">트로피 데이터에 대해 PSN 인증을 할 수 없습니다</string>
+    <string name="trophy_compare_error_my_titles_failed">내 트로피 타이틀을 불러올 수 없습니다</string>
+    <string name="trophy_compare_error_my_summary_failed">내 트로피 요약 정보를 불러올 수 없습니다</string>
+    <string name="trophy_compare_error_their_data_unavailable">이 플레이어의 트로피 데이터가 비공개이거나 사용할 수 없습니다</string>
+    <string name="trophy_compare_error_generic">트로피 비교를 불러오지 못했습니다</string>
+
+    <string name="stream_restart_error_missing_cloud_session_info">클라우드 세션 정보가 없습니다</string>
+    <string name="stream_restart_preparing">준비 중…</string>
+    <string name="stream_restart_error_apply_settings_failed">새 설정을 적용하지 못했습니다</string>
+
+    <string name="controller_group_left_stick">왼쪽 스틱</string>
+    <string name="controller_group_right_stick">오른쪽 스틱</string>
+    <string name="controller_group_dpad">방향 패드</string>
+    <string name="controller_group_shoulder_buttons">숄더 버튼</string>
+    <string name="controller_group_face_buttons">전면 버튼</string>
+    <string name="controller_group_menu">메뉴</string>
+    <string name="controller_group_system">시스템</string>
+    <string name="controller_group_touchpad">터치패드</string>
+
+    <string name="controller_action_left_stick_up">왼쪽 스틱 위</string>
+    <string name="controller_action_left_stick_down">왼쪽 스틱 아래</string>
+    <string name="controller_action_left_stick_left">왼쪽 스틱 왼쪽</string>
+    <string name="controller_action_left_stick_right">왼쪽 스틱 오른쪽</string>
+    <string name="controller_action_l3">L3 클릭</string>
+    <string name="controller_action_right_stick_up">오른쪽 스틱 위</string>
+    <string name="controller_action_right_stick_down">오른쪽 스틱 아래</string>
+    <string name="controller_action_right_stick_left">오른쪽 스틱 왼쪽</string>
+    <string name="controller_action_right_stick_right">오른쪽 스틱 오른쪽</string>
+    <string name="controller_action_r3">R3 클릭</string>
+    <string name="controller_action_dpad_up">방향 패드 위</string>
+    <string name="controller_action_dpad_down">방향 패드 아래</string>
+    <string name="controller_action_dpad_left">방향 패드 왼쪽</string>
+    <string name="controller_action_dpad_right">방향 패드 오른쪽</string>
+    <string name="controller_action_l1">L1</string>
+    <string name="controller_action_l2">L2</string>
+    <string name="controller_action_r1">R1</string>
+    <string name="controller_action_r2">R2</string>
+    <string name="controller_action_cross">크로스 (×)</string>
+    <string name="controller_action_triangle">트라이앵글 (△)</string>
+    <string name="controller_action_square">스퀘어 (□)</string>
+    <string name="controller_action_circle">서클 (○)</string>
+    <string name="controller_action_start">스타트 / 옵션</string>
+    <string name="controller_action_select">셀렉트</string>
+    <string name="controller_action_home">홈 (PS 버튼)</string>
+    <string name="controller_action_touchpad_click">터치패드 클릭</string>
+    <string name="controller_action_touchpad_hold">터치패드 길게 누르기</string>
+    <string name="controller_action_touchpad_left_click">터치패드 왼쪽 클릭</string>
+    <string name="controller_action_touchpad_right_click">터치패드 오른쪽 클릭</string>
+    <string name="controller_action_touchpad_swipe_up">터치패드 위로 스와이프</string>
+    <string name="controller_action_touchpad_swipe_down">터치패드 아래로 스와이프</string>
+    <string name="controller_action_touchpad_swipe_left">터치패드 왼쪽으로 스와이프</string>
+    <string name="controller_action_touchpad_swipe_right">터치패드 오른쪽으로 스와이프</string>
 </resources>

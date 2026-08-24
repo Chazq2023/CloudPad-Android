@@ -231,10 +231,10 @@ class StreamViewModel(
 		val serviceType = connectInfo.serviceType
 		val gameIdentifier = connectInfo.cloudGameIdentifier
 		if(serviceType == null || gameIdentifier == null) {
-			_sessionRestartState.value = SessionRestartState.Failed("Missing cloud session info")
+			_sessionRestartState.value = SessionRestartState.Failed(application.getString(R.string.stream_restart_error_missing_cloud_session_info))
 			return
 		}
-		_sessionRestartState.value = SessionRestartState.InProgress("Preparing…")
+		_sessionRestartState.value = SessionRestartState.InProgress(application.getString(R.string.stream_restart_preparing))
 		viewModelScope.launch {
 			val backend = CloudStreamingBackend(application, preferences)
 			val result = backend.startCompleteCloudSession(
@@ -254,7 +254,7 @@ class StreamViewModel(
 				session.restartWithNewConnectInfo(newConnectInfo)
 			}
 			result.onFailure { error ->
-				_sessionRestartState.value = SessionRestartState.Failed(error.message ?: "Failed to apply new settings")
+				_sessionRestartState.value = SessionRestartState.Failed(error.message ?: application.getString(R.string.stream_restart_error_apply_settings_failed))
 			}
 		}
 	}
