@@ -78,6 +78,7 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ItemQuickSettingsDropdownBinding
 import com.pylux.stream.databinding.ItemQuickSettingsEdittextBinding
 import com.pylux.stream.databinding.ItemQuickSettingsSeekbarBinding
+import com.pylux.stream.databinding.ItemQuickSettingsSwitchBinding
 import com.pylux.stream.databinding.DialogConfigureOverlayBinding
 import com.pylux.stream.databinding.DialogTouchControlsCustomiseBinding
 import com.pylux.stream.databinding.StreamQuickSettingsPanelBinding
@@ -283,13 +284,15 @@ class QuickSettingsPanel(
 		val resolution: Preferences.Resolution,
 		val fps: Preferences.FPS,
 		val bitrate: Int?,
-		val codec: Preferences.Codec
+		val codec: Preferences.Codec,
+		val adaptiveFramePacingEnabled: Boolean
 	)
 
 	private data class CloudSettingsSnapshot(
 		val resolution: Int,
 		val datacenter: String,
-		val bitrateKbps: Int
+		val bitrateKbps: Int,
+		val adaptiveFramePacingEnabled: Boolean
 	)
 
 	/** Snapshot of the settings the live stream actually last (re)started with, i.e. what's
@@ -1235,6 +1238,14 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
+		sessionRowControls += addSwitchRow(
+			container, R.string.preferences_adaptive_frame_pacing_title,
+			currentValue = preferences.adaptiveFramePacingEnabled
+		) { isChecked ->
+			pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(adaptiveFramePacingEnabled = isChecked)
+			updateSessionApplyVisibility()
+		}
+
 		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_codec_title,
 			entries = Preferences.codecAll.map { activity.getString(it.title) },
@@ -1297,6 +1308,14 @@ class QuickSettingsPanel(
 			pendingCloudSettings = pendingCloudSettings?.copy(bitrateKbps = valueMbps * 1000)
 			updateSessionApplyVisibility()
 		}
+
+		sessionRowControls += addSwitchRow(
+			container, R.string.preferences_adaptive_frame_pacing_title,
+			currentValue = preferences.adaptiveFramePacingEnabled
+		) { isChecked ->
+			pendingCloudSettings = pendingCloudSettings?.copy(adaptiveFramePacingEnabled = isChecked)
+			updateSessionApplyVisibility()
+		}
 	}
 
 	/** Writes this tab's pending, not-yet-persisted edits into [preferences] — see
@@ -1312,6 +1331,7 @@ class QuickSettingsPanel(
 				preferences.fps = pending.fps
 				preferences.bitrate = pending.bitrate
 				preferences.codec = pending.codec
+				preferences.adaptiveFramePacingEnabled = pending.adaptiveFramePacingEnabled
 			}
 			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
 				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
@@ -1326,6 +1346,7 @@ class QuickSettingsPanel(
 					preferences.setCloudDatacenterPsnow(pending.datacenter)
 					preferences.setCloudBitratePsnow(pending.bitrateKbps)
 				}
+				preferences.adaptiveFramePacingEnabled = pending.adaptiveFramePacingEnabled
 			}
 		}
 	}
@@ -1334,7 +1355,8 @@ class QuickSettingsPanel(
 		resolution = preferences.resolution,
 		fps = preferences.fps,
 		bitrate = preferences.bitrate,
-		codec = preferences.codec
+		codec = preferences.codec,
+		adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
 	)
 
 	/** Reads whichever of the Catalog (PSNow)/Library (PSCloud) preference keys applies to this
@@ -1346,7 +1368,8 @@ class QuickSettingsPanel(
 		return CloudSettingsSnapshot(
 			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
 			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
-			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
+			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow(),
+			adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
 		)
 	}
 
@@ -1508,6 +1531,21 @@ class QuickSettingsPanel(
 		})
 		addFocusHighlight(row.quickSettingsSeekBar, pyluxAccentColor)
 		return row.quickSettingsSeekBar
+	}
+
+	private fun addSwitchRow(
+		container: LinearLayout,
+		labelRes: Int,
+		currentValue: Boolean,
+		onChanged: (Boolean) -> Unit
+	): View
+	{
+		val row = ItemQuickSettingsSwitchBinding.inflate(activity.layoutInflater, container, true)
+		row.quickSettingsRowLabel.text = activity.getString(labelRes)
+		row.quickSettingsRowSwitch.isChecked = currentValue
+		row.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked -> onChanged(isChecked) }
+		addFocusHighlight(row.quickSettingsRowSwitch, pyluxAccentColor)
+		return row.quickSettingsRowSwitch
 	}
 
 	private fun addEditTextRow(

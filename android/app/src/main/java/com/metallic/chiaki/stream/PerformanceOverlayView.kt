@@ -22,7 +22,8 @@ class PerformanceOverlayView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     /** FULL is every metric (the original view); MINIMAL is just the numbers most people
-     *  actually glance at mid-session — FPS, Bitrate, Resolution, Video Loss, Drops and Ping. */
+     *  actually glance at mid-session — FPS, Bitrate, Resolution, Video Loss, Drops, Ping and
+     *  Adaptive Frame Pacing status. */
     enum class OverlayMode { FULL, MINIMAL }
 
     private val headerView: TextView
@@ -41,6 +42,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelDT = metricRow("DT")
     private val labelVL = metricRow("VL")
     private val labelDrops = metricRow("Drops")
+    private val labelAfp = metricRow("AFP")
 
     init {
         orientation = VERTICAL
@@ -85,6 +87,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         qualityCol.addView(labelDT)
         qualityCol.addView(labelVL)
         qualityCol.addView(labelDrops)
+        qualityCol.addView(labelAfp)
 
         columns.addView(
             latencyCol,
@@ -274,6 +277,14 @@ class PerformanceOverlayView @JvmOverloads constructor(
         labelVL.setTextColor(lossColor)
 
         labelDrops.text = String.format(Locale.US, "%-5s %-5d", "Drops", m.drops)
+
+        labelAfp.text = String.format(
+            Locale.US, "%-5s %-5s", "AFP",
+            if (data.adaptiveFramePacingEnabled) "Enabled" else "Disabled"
+        )
+        labelAfp.setTextColor(
+            if (data.adaptiveFramePacingEnabled) Color.rgb(0, 220, 100) else Color.argb(180, 255, 255, 255)
+        )
 
         sparklineView.setData(data.fpsHistory)
     }

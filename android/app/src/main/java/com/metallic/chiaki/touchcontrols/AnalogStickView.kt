@@ -66,6 +66,15 @@ class AnalogStickView @JvmOverloads constructor(
 		}
 	}
 
+	/** The stick's base drawable is always given a square bounding box (same radius on both
+	 *  axes), so on a layout region shorter than the stick's natural diameter — e.g. a wide/
+	 *  short-aspect-ratio phone where the D-Pad's fixed height leaves less room below it than
+	 *  usual — the view's own canvas doesn't have enough vertical space to show the full
+	 *  circle, and it renders with its top and bottom edges flattened off instead of round.
+	 *  Clamping to the view's own half-width/half-height keeps the drawn circle a true circle
+	 *  (just a smaller one) on any screen, instead of a squashed oval. */
+	private fun visibleCircleRadius() = minOf(radius + handleRadius, width / 2f, height / 2f)
+
 	override fun onDraw(canvas: Canvas)
 	{
 		super.onDraw(canvas)
@@ -73,13 +82,14 @@ class AnalogStickView @JvmOverloads constructor(
 		val center = center
 		if(center != null)
 		{
-			val circleRadius = radius + handleRadius
+			val circleRadius = visibleCircleRadius()
 			drawableBase?.setBounds((center.x - circleRadius).toInt(), (center.y - circleRadius).toInt(), (center.x + circleRadius).toInt(), (center.y + circleRadius).toInt())
 			drawableBase?.draw(canvas)
 
+			val handleDrawRadius = minOf(handleRadius, circleRadius)
 			val handleX = center.x + handlePosition.x * radius
 			val handleY = center.y + handlePosition.y * radius
-			drawableHandle?.setBounds((handleX - handleRadius).toInt(), (handleY - handleRadius).toInt(), (handleX + handleRadius).toInt(),(handleY + handleRadius).toInt())
+			drawableHandle?.setBounds((handleX - handleDrawRadius).toInt(), (handleY - handleDrawRadius).toInt(), (handleX + handleDrawRadius).toInt(),(handleY + handleDrawRadius).toInt())
 			drawableHandle?.draw(canvas)
 		}
 	}
@@ -143,7 +153,7 @@ class AnalogStickView @JvmOverloads constructor(
 		val center = center ?: return false
 		val dx = x - center.x
 		val dy = y - center.y
-		val visibleRadius = radius + handleRadius
+		val visibleRadius = visibleCircleRadius()
 		return dx * dx + dy * dy <= visibleRadius * visibleRadius
 	}
 }
