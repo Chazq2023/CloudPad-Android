@@ -70,6 +70,9 @@ data class ConnectInfo(
 	val registKey: ByteArray,
 	val morning: ByteArray,
 	val videoProfile: ConnectVideoProfile,
+	// Applies to every session type (Remote Play, PS Cloud, Game Catalog) — see
+	// AndroidChiakiVideoDecoder.adaptive_frame_pacing_enabled in video-decoder.c.
+	val adaptiveFramePacingEnabled: Boolean = false,
 	// Cloud streaming fields (optional, null for remote play)
 
 	val serviceType: String? = null, // "psnow" or "pscloud"

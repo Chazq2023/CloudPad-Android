@@ -218,6 +218,13 @@ class Preferences(context: Context)
 		get() = sharedPreferences.getBoolean(pipEnabledKey, true)
 		set(value) { sharedPreferences.edit().putBoolean(pipEnabledKey, value).apply() }
 
+	// Applies to every session type (Remote Play, PS Cloud, Game Catalog) - see
+	// AndroidChiakiVideoDecoder's adaptive_frame_pacing_enabled in video-decoder.c.
+	val adaptiveFramePacingEnabledKey get() = resources.getString(R.string.preferences_adaptive_frame_pacing_key)
+	var adaptiveFramePacingEnabled
+		get() = sharedPreferences.getBoolean(adaptiveFramePacingEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(adaptiveFramePacingEnabledKey, value).apply() }
+
 	val casSharpeningEnabledKey get() = resources.getString(R.string.preferences_cas_sharpening_enabled_key)
 	var casSharpeningEnabled
 		get() = sharedPreferences.getBoolean(casSharpeningEnabledKey, false)

@@ -490,6 +490,11 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 
 	connect_info.video_profile_auto_downgrade = true;
 
+	// Applies to every session type — Android video-decoder presentation concern only, not
+	// part of the core ChiakiConnectInfo/session protocol, so it's read straight into a local
+	// rather than connect_info.
+	bool adaptive_frame_pacing_enabled = E->GetBooleanField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "adaptiveFramePacingEnabled", "Z"));
+
 	// Auto-registration field (for PSN remote registration)
 	jboolean auto_regist = E->GetBooleanField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "autoRegist", "Z"));
 	connect_info.auto_regist = auto_regist;
@@ -597,7 +602,8 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	session->metrics_drops = 0;
 	err = android_chiaki_video_decoder_init(&session->video_decoder, log, connect_info.video_profile.width, connect_info.video_profile.height,
 			(int32_t)connect_info.video_profile.max_fps,
-			connect_info.ps5 ? connect_info.video_profile.codec : CHIAKI_CODEC_H264);
+			connect_info.ps5 ? connect_info.video_profile.codec : CHIAKI_CODEC_H264,
+			adaptive_frame_pacing_enabled);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		free(session);
