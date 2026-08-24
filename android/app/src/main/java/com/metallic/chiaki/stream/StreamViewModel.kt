@@ -28,7 +28,8 @@ data class OverlayData(
 	val jitter: Double,
 	val smoothedPing: Double,
 	val header: String,
-	val fpsHistory: List<Float>
+	val fpsHistory: List<Float>,
+	val adaptiveFramePacingEnabled: Boolean
 )
 
 /** State of an in-stream settings-driven session restart (Quick Settings panel's Apply button).
@@ -139,7 +140,13 @@ class StreamViewModel(
 							jitter = jitter,
 							smoothedPing = smoothedPing,
 							header = header,
-							fpsHistory = fpsHistory.toList()
+							fpsHistory = fpsHistory.toList(),
+							// session.connectInfo (not preferences directly) so this only flips once
+							// a restart has actually swapped in the new session — not the instant a
+							// pending Quick Settings change is applied. See
+							// StreamSession.restartWithNewConnectInfo, which reassigns connectInfo
+							// right before the new session is actually created.
+							adaptiveFramePacingEnabled = session.connectInfo.adaptiveFramePacingEnabled
 						)
 					)
 				}
@@ -214,7 +221,10 @@ class StreamViewModel(
 	 *  for the full story (a real, on-device crash without this). */
 	fun restartRemotePlaySession() {
 		_sessionRestartState.value = SessionRestartState.InProgress(application.getString(R.string.quick_settings_session_restarting))
-		val newConnectInfo = session.connectInfo.copy(videoProfile = preferences.videoProfile)
+		val newConnectInfo = session.connectInfo.copy(
+			videoProfile = preferences.videoProfile,
+			adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
+		)
 		session.restartWithNewConnectInfo(newConnectInfo, onResuming = {
 			_sessionRestartState.value = SessionRestartState.Idle
 		})
