@@ -26,7 +26,7 @@ object GaikaiConsts
 	
 	// PSCLOUD URIs and headers
 	const val REDIRECT_URI = "gaikai://local"
-	const val USER_AGENT = "PlayStation Portal/6.0.0-rel.444+6a9cea6f5"
+	const val USER_AGENT = "PlayStation Portal/7.0.0"
 }
 
 /**
