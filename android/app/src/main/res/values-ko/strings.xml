@@ -623,4 +623,18 @@
     <string name="remote_play_refresh_consoles_list_button">콘솔 목록 새로고침</string>
     <string name="remote_play_manually_register_console_button">콘솔 수동 등록</string>
     <string name="remote_play_manually_add_console_button">콘솔 수동 추가</string>
+
+    <string name="friend_status_playing">%1$s 플레이 중</string>
+    <string name="friend_status_busy">다른 용무 중</string>
+    <string name="friend_status_online">온라인</string>
+    <string name="friend_status_last_online">마지막 접속 %1$s</string>
+    <string name="friend_status_offline">오프라인</string>
+    <string name="friends_error_auth_failed">친구 데이터를 위한 PSN 인증에 실패했습니다</string>
+    <string name="friends_error_fetch_failed">친구 목록을 가져오지 못했습니다</string>
+    <string name="friends_error_auth_failed_messaging">메시지를 위한 PSN 인증에 실패했습니다</string>
+    <string name="friends_error_start_conversation_failed">이 친구와 대화를 시작할 수 없습니다</string>
+    <string name="friends_error_load_history_failed">대화 기록을 불러올 수 없습니다</string>
+    <string name="friends_error_open_conversation_failed">대화를 열지 못했습니다</string>
+    <string name="friends_error_refresh_conversation_failed">대화를 새로고침할 수 없습니다</string>
+    <string name="friends_error_refresh_conversation_failed_generic">대화 새로고침에 실패했습니다</string>
 </resources>

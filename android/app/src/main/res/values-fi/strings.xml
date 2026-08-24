@@ -587,4 +587,18 @@
     <string name="remote_play_refresh_consoles_list_button">Päivitä konsoliluettelo</string>
     <string name="remote_play_manually_register_console_button">Rekisteröi konsoli manuaalisesti</string>
     <string name="remote_play_manually_add_console_button">Lisää konsoli manuaalisesti</string>
+
+    <string name="friend_status_playing">Pelaa peliä %1$s</string>
+    <string name="friend_status_busy">Varattu</string>
+    <string name="friend_status_online">Paikalla</string>
+    <string name="friend_status_last_online">Viimeksi paikalla %1$s</string>
+    <string name="friend_status_offline">Poissa</string>
+    <string name="friends_error_auth_failed">PSN-todennus epäonnistui kaveritietojen hakemiseksi</string>
+    <string name="friends_error_fetch_failed">Kavereiden hakeminen epäonnistui</string>
+    <string name="friends_error_auth_failed_messaging">PSN-todennus epäonnistui viestitoimintoa varten</string>
+    <string name="friends_error_start_conversation_failed">Keskustelun aloittaminen tämän kaverin kanssa epäonnistui</string>
+    <string name="friends_error_load_history_failed">Keskusteluhistorian lataaminen epäonnistui</string>
+    <string name="friends_error_open_conversation_failed">Keskustelun avaaminen epäonnistui</string>
+    <string name="friends_error_refresh_conversation_failed">Keskustelun päivittäminen epäonnistui</string>
+    <string name="friends_error_refresh_conversation_failed_generic">Keskustelun päivittäminen epäonnistui</string>
 </resources>

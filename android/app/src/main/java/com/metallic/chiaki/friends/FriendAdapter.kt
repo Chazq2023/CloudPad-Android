@@ -149,15 +149,17 @@ class FriendAdapter(
 			this.friend = friend
 
 			binding.friendItemOnlineId.text = friend.onlineId
+			val context = binding.root.context
 			binding.friendItemStatus.text = when
 			{
-				friend.currentGame.isNotEmpty() -> "Playing ${friend.currentGame}"
-				friend.isBusy -> "Busy"
-				friend.isOnline -> "Online"
-				friend.lastOnlineDateMs != null -> "Last online " + DateUtils.getRelativeTimeSpanString(
-					friend.lastOnlineDateMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS
+				friend.currentGame.isNotEmpty() -> context.getString(R.string.friend_status_playing, friend.currentGame)
+				friend.isBusy -> context.getString(R.string.friend_status_busy)
+				friend.isOnline -> context.getString(R.string.friend_status_online)
+				friend.lastOnlineDateMs != null -> context.getString(
+					R.string.friend_status_last_online,
+					DateUtils.getRelativeTimeSpanString(friend.lastOnlineDateMs, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
 				)
-				else -> "Offline"
+				else -> context.getString(R.string.friend_status_offline)
 			}
 			binding.friendItemStatus.setTextColor(
 				when

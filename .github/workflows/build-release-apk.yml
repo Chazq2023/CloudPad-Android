@@ -20,6 +20,7 @@ jobs:
         - Added an "App Language" setting (Settings > Appearance) that lets you switch CloudPad's own interface to one of 10 languages (English UK/US, German, French, Finnish, Italian, Spanish, Dutch, Brazilian Portuguese, Japanese, Korean) or follow your device's language, independent of your system language.
         - Extended App Language coverage to text that was previously always in English regardless of the selected language — dialogs, toasts, and status messages across Remote Play registration, Cloud Play, trophies, and console list screens now translate correctly too.
         - Fixed more App Language gaps that only lived in screen layouts rather than code: the PS3 Catalog/PS4 Catalog/PS5 Library tab labels, the "No games found" and "Refresh Games List" text, the cloud allocation screen's progress message and Cancel button, the Trophies/Friends screen headers, the License Agreement screen, the startup disclaimer, and the trophy rarity badges (Bronze/Silver/Gold/Platinum) all now translate correctly.
+        - Fixed the friends list's status text ("Playing X", "Online", "Busy", "Last online...", "Offline") and friends/messaging error messages, which were still always in English regardless of the selected App Language.
 
     steps:
       - name: Checkout repo

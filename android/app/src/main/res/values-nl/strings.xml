@@ -589,4 +589,18 @@
     <string name="remote_play_refresh_consoles_list_button">Consolelijst vernieuwen</string>
     <string name="remote_play_manually_register_console_button">Console handmatig registreren</string>
     <string name="remote_play_manually_add_console_button">Console handmatig toevoegen</string>
+
+    <string name="friend_status_playing">Speelt %1$s</string>
+    <string name="friend_status_busy">Bezet</string>
+    <string name="friend_status_online">Online</string>
+    <string name="friend_status_last_online">Laatst online %1$s</string>
+    <string name="friend_status_offline">Offline</string>
+    <string name="friends_error_auth_failed">PSN-authenticatie voor vriendengegevens mislukt</string>
+    <string name="friends_error_fetch_failed">Ophalen van vrienden mislukt</string>
+    <string name="friends_error_auth_failed_messaging">PSN-authenticatie voor berichten mislukt</string>
+    <string name="friends_error_start_conversation_failed">Kan geen gesprek starten met deze vriend</string>
+    <string name="friends_error_load_history_failed">Kan de gespreksgeschiedenis niet laden</string>
+    <string name="friends_error_open_conversation_failed">Openen van gesprek mislukt</string>
+    <string name="friends_error_refresh_conversation_failed">Kan het gesprek niet vernieuwen</string>
+    <string name="friends_error_refresh_conversation_failed_generic">Vernieuwen van gesprek mislukt</string>
 </resources>

@@ -587,4 +587,18 @@
     <string name="remote_play_refresh_consoles_list_button">Aggiorna elenco console</string>
     <string name="remote_play_manually_register_console_button">Registra manualmente la console</string>
     <string name="remote_play_manually_add_console_button">Aggiungi manualmente la console</string>
+
+    <string name="friend_status_playing">Sta giocando a %1$s</string>
+    <string name="friend_status_busy">Occupato</string>
+    <string name="friend_status_online">Online</string>
+    <string name="friend_status_last_online">Ultimo accesso %1$s</string>
+    <string name="friend_status_offline">Offline</string>
+    <string name="friends_error_auth_failed">Autenticazione PSN non riuscita per i dati amici</string>
+    <string name="friends_error_fetch_failed">Impossibile recuperare gli amici</string>
+    <string name="friends_error_auth_failed_messaging">Autenticazione PSN non riuscita per la messaggistica</string>
+    <string name="friends_error_start_conversation_failed">Impossibile avviare una conversazione con questo amico</string>
+    <string name="friends_error_load_history_failed">Impossibile caricare la cronologia della conversazione</string>
+    <string name="friends_error_open_conversation_failed">Impossibile aprire la conversazione</string>
+    <string name="friends_error_refresh_conversation_failed">Impossibile aggiornare la conversazione</string>
+    <string name="friends_error_refresh_conversation_failed_generic">Aggiornamento della conversazione non riuscito</string>
 </resources>
