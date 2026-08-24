@@ -22,7 +22,7 @@ jobs:
         - Fixed more App Language gaps that only lived in screen layouts rather than code: the PS3 Catalog/PS4 Catalog/PS5 Library tab labels, the "No games found" and "Refresh Games List" text, the cloud allocation screen's progress message and Cancel button, the Trophies/Friends screen headers, the License Agreement screen, the startup disclaimer, and the trophy rarity badges (Bronze/Silver/Gold/Platinum) all now translate correctly.
         - Fixed the friends list's status text ("Playing X", "Online", "Busy", "Last online...", "Offline") and friends/messaging error messages, which were still always in English regardless of the selected App Language.
         - Fixed the Controller Remap screen (Settings and the in-stream Quick Settings panel), the PSN sign-in instructions, the trophy-unlock popup's rarity badge, and various trophy-comparison and stream-restart error messages, which were still always in English regardless of the selected App Language.
-        - Updated the PS Cloud streaming client identity to PlayStation Portal 7.0.0.
+        - Fixed PS Cloud's datacenter-selection request to include every tested datacenter's ping result (not just the one picked), matching what the server expects for a complete network picture.
 
     steps:
       - name: Checkout repo

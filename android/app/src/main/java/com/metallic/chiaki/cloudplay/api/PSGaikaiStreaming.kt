@@ -26,7 +26,7 @@ object GaikaiConsts
 	
 	// PSCLOUD URIs and headers
 	const val REDIRECT_URI = "gaikai://local"
-	const val USER_AGENT = "PlayStation Portal/7.0.0"
+	const val USER_AGENT = "PlayStation Portal/6.0.0-rel.444+6a9cea6f5"
 }
 
 /**
@@ -1080,7 +1080,7 @@ catch (e: Exception)
 				selectedDatacenterPort = selectedDc.getInt("port")
 				
 				// Submit to /datacenters/select (skip validation, go straight to submission)
-				return submitDatacenterSelection(dummyPingResult, false)  // false = skip validation
+				return submitDatacenterSelection(JSONArray().put(dummyPingResult), dummyPingResult, false)  // false = skip validation
 			}
 			
 			// Auto-select: Ping all datacenters (Qt lines 1259-1308)
@@ -1097,12 +1097,12 @@ catch (e: Exception)
 			persistDatacenterPicker(datacenters, pingResults)
 			
 			// Select best datacenter based on ping results (Qt lines 1310-1365)
-			val bestPingResult = if (pingResults.length() > 0)
+			val (bestPingResult, submittedPingResults) = if (pingResults.length() > 0)
 			{
 				// Find datacenter with lowest RTT (Qt lines 1315-1324)
 				var bestResult = pingResults.getJSONObject(0)
 				var bestRtt = bestResult.getInt("rtt")
-				
+
 				for (i in 1 until pingResults.length())
 				{
 					val result = pingResults.getJSONObject(i)
@@ -1113,9 +1113,12 @@ catch (e: Exception)
 						bestRtt = rtt
 					}
 				}
-				
+
 				Log.i(TAG, "Step 12: Best datacenter: ${bestResult.getString("dataCenter")} with ${bestRtt}ms RTT")
-				bestResult
+				// Submit every tested datacenter's ping result, not just the winner — the
+				// server uses the full set (not just one row) to gauge the client's network
+				// picture when it builds the session's bandwidth ladder.
+				bestResult to pingResults
 			}
 			else
 			{
@@ -1131,11 +1134,11 @@ catch (e: Exception)
 				fallbackResult.put("port", firstDc.optInt("port"))
 				fallbackResult.put("publicIp", firstDc.optString("publicIp"))
 				fallbackResult.put("maxBandwidth", firstDc.optInt("maxBandwidth"))
-				fallbackResult
+				fallbackResult to JSONArray().put(fallbackResult)
 			}
-			
+
 			// Submit with validation (auto-selected datacenters must have <80ms ping)
-			return submitDatacenterSelection(bestPingResult, true)  // true = validate ping
+			return submitDatacenterSelection(submittedPingResults, bestPingResult, true)  // true = validate ping
 		}
 		catch (e: PingTimeoutException)
 		{
@@ -1449,7 +1452,7 @@ catch (e: Exception)
 		spec.put("clientWidth", clientWidth)
 		spec.put("clientHeight", clientHeight)
 		spec.put("adaptiveStreamMode", "resize")
-		spec.put("useClientBwLadder", false)
+		spec.put("useClientBwLadder", true)
 
 		val requestedBitrateKbps = if (serviceType == "pscloud")
 		{
@@ -1619,15 +1622,15 @@ catch (e: Exception)
 	 * Helper: Submit datacenter selection to Gaikai API
 	 * (Qt lines 1435-1461)
 	 */
-	private fun submitDatacenterSelection(pingResult: JSONObject, validatePing: Boolean): String?
+	private fun submitDatacenterSelection(pingResults: JSONArray, selectedPingResult: JSONObject, validatePing: Boolean): String?
 	{
 		try
 		{
-			val datacenterName = pingResult.getString("dataCenter")
-			val rtt = pingResult.getInt("rtt")
-			val mtuIn = pingResult.getInt("mtu_in")
-			val mtuOut = pingResult.getInt("mtu_out")
-			
+			val datacenterName = selectedPingResult.getString("dataCenter")
+			val rtt = selectedPingResult.getInt("rtt")
+			val mtuIn = selectedPingResult.getInt("mtu_in")
+			val mtuOut = selectedPingResult.getInt("mtu_out")
+
 			// Validate ping for auto-selected datacenters (Qt lines 1393-1404)
 			// Manual selection bypasses this check
 			if (validatePing && rtt > 80)
@@ -1635,17 +1638,17 @@ catch (e: Exception)
 				Log.w(TAG, "Selected datacenter ping too high: $datacenterName RTT: ${rtt}ms (max: 80ms)")
 				throw PingTimeoutException("Ping must be < 80ms to start a cloud session. Selected datacenter $datacenterName has ${rtt}ms latency.")
 			}
-			
+
 			// Store for Step 13
-			selectedDatacenterPingResult = pingResult
+			selectedDatacenterPingResult = selectedPingResult
 			selectedDatacenter = datacenterName
-			selectedDatacenterPort = pingResult.getInt("port")
-			
+			selectedDatacenterPort = selectedPingResult.getInt("port")
+
 			Log.i(TAG, "Step 12: Submitting selection - $datacenterName (RTT: ${rtt}ms, MTU in: $mtuIn, out: $mtuOut)")
-			
+
 			// Submit to /datacenters/select (Qt lines 1435-1461)
 			val url = "${GaikaiConsts.GAIKAI_BASE}/sessions/$gaikaiSessionId/datacenters/select"
-			
+
 			val headers = mapOf(
 				"Content-Type" to "application/json",
 				"User-Agent" to userAgentString,
@@ -1653,11 +1656,13 @@ catch (e: Exception)
 				"X-Gaikai-Session" to configKey,
 				"X-Gaikai-SessionId" to gaikaiSessionId
 			)
-			
-			// Body needs BOTH requestGameSpecification AND pingResults (Qt line 1435-1436)
+
+			// requestGameSpecification is required here — omitting it 500s server-side
+			// ("rgs is null"). pingResults carries every tested datacenter (not just the one
+			// picked) so the server sees the full network picture behind the selection.
 			val body = JSONObject()
 			body.put("requestGameSpecification", requestGameSpec)
-			body.put("pingResults", JSONArray().put(pingResult))
+			body.put("pingResults", pingResults)
 			
 			val response = HttpClient.post(url, body.toString(), headers)
 			
