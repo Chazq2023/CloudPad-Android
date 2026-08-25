@@ -163,6 +163,22 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `matches when the catalogue title drops a mid-title word Sony's trophy title includes`() {
+        // Regression test (actual reported bug): CloudPad's PS3 catalogue lists this game as
+        // "Ratchet & Clank: Nexus", but Sony's own trophy title is "Ratchet & Clank: Into the
+        // Nexus" — "Into the" is inserted in the *middle*, not appended/truncated at either
+        // end, so a plain substring check can't bridge it and previously fell back to the
+        // unrelated base "Ratchet & Clank" trophy title, which also exists on the account.
+        val titles = listOf(
+            title("NPWR02335_00", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR04695_00", "Ratchet & Clank: Into the Nexus™", platform = "PS3,PSVITA"),
+            title("NPWR07942_00", "Ratchet & Clank™", platform = "PS4")
+        )
+        val match = TrophyMatcher.findBestMatch("Ratchet & Clank™: Nexus (PS3)", "ps3", titles)
+        assertEquals("NPWR04695_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)

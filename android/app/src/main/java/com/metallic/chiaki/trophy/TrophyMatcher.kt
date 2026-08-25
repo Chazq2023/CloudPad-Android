@@ -74,6 +74,31 @@ object TrophyMatcher
 		}
 	}
 
+	private fun tokens(normalizedTitle: String): List<String> =
+		normalizedTitle.split(whitespacePattern).filter { it.isNotEmpty() }
+
+	/**
+	 * True if every token of [shorter] appears in [longer], in the same relative order,
+	 * with other tokens allowed in between. Unlike a raw substring check, this tolerates a
+	 * word being inserted or dropped in the *middle* of a title — e.g. a catalogue title
+	 * "Ratchet & Clank: Nexus" against Sony's own "Ratchet & Clank: Into the Nexus" — not
+	 * just truncation/expansion at either end.
+	 */
+	private fun isTokenSubsequence(shorter: List<String>, longer: List<String>): Boolean
+	{
+		var index = 0
+
+		for (token in longer)
+		{
+			if (index < shorter.size && token == shorter[index])
+			{
+				index++
+			}
+		}
+
+		return index == shorter.size
+	}
+
 	private fun numericTokens(
 		normalizedTitle: String
 	): Set<String>
@@ -223,6 +248,7 @@ object TrophyMatcher
          * original game or a different numbered title.
          */
 		val originalNumbers = numericTokens(normalizedGame)
+		val gameTokens = tokens(normalizedGame)
 
 		val partial = candidates
 			.filter { candidate ->
@@ -231,8 +257,8 @@ object TrophyMatcher
 				normalizedCandidate.isNotEmpty() &&
 						numericTokens(normalizedCandidate) == originalNumbers &&
 						(
-								normalizedCandidate.contains(normalizedGame) ||
-										normalizedGame.contains(normalizedCandidate)
+								isTokenSubsequence(gameTokens, tokens(normalizedCandidate)) ||
+										isTokenSubsequence(tokens(normalizedCandidate), gameTokens)
 								)
 			}
 			/*
