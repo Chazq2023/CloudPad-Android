@@ -22,6 +22,7 @@ jobs:
         - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing the unstyled system popup (white background, black text) instead of the app's themed style used everywhere else.
         - Sped up trophy loading by fetching independent trophy data (title list pages, trophy groups, and each group's definitions/earned status) concurrently instead of one request at a time.
         - Fixed Ratchet & Clank: Gladiator not finding its trophies — Sony lists it under its NA name "Deadlocked", which shares no words with the EU catalogue title.
+        - Fixed the controller's PS Home button combo (hold Select + Start) not working in PS3, PS4 and PS5 Cloud gaming sessions — it previously only worked in Remote Play.
 
     steps:
       - name: Checkout repo
