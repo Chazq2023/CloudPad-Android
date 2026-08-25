@@ -50,10 +50,10 @@ class TrophyRepository(private val preferences: Preferences)
 
 			val titles = getTrophyTitles(token, forceRefresh)
 
-			val subGameNames = CollectionCatalog.subGameNamesFor(gameName, platform)
-			if (subGameNames != null)
+			val subGames = CollectionCatalog.subGamesFor(gameName, platform)
+			if (subGames != null)
 			{
-				return@withContext fetchCollectionTrophies(token, gameName, platform, subGameNames, titles)
+				return@withContext fetchCollectionTrophies(token, gameName, platform, subGames, titles)
 			}
 
 			val match = TrophyMatcher.findBestMatch(gameName, platform, titles)
@@ -90,10 +90,14 @@ class TrophyRepository(private val preferences: Preferences)
 		token: String,
 		gameName: String,
 		platform: String,
-		subGameNames: List<String>,
+		subGames: List<List<String>>,
 		titles: List<TrophyTitleSummary>
 	): TrophyResult = coroutineScope {
-		val matches = subGameNames.mapNotNull { subGameName -> TrophyMatcher.findBestMatch(subGameName, platform, titles) }
+		// Each bundled game may be registered under any one of several candidate names (see
+		// CollectionCatalog) — try them in order and take the first that matches.
+		val matches = subGames.mapNotNull { candidateNames ->
+			candidateNames.firstNotNullOfOrNull { name -> TrophyMatcher.findBestMatch(name, platform, titles) }
+		}
 
 		if (matches.isEmpty())
 		{
@@ -102,7 +106,7 @@ class TrophyRepository(private val preferences: Preferences)
 			return@coroutineScope TrophyResult.NoMatchFound
 		}
 
-		Log.i(TAG, "Matched collection \"$gameName\" ($platform) to ${matches.size}/${subGameNames.size} of its games: " +
+		Log.i(TAG, "Matched collection \"$gameName\" ($platform) to ${matches.size}/${subGames.size} of its games: " +
 			matches.joinToString { "\"${it.trophyTitleName}\" (${it.npCommunicationId})" })
 
 		val details = matches
