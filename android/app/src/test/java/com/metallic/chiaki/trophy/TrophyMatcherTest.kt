@@ -179,6 +179,23 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `does not fall back to a short unrelated franchise entry when the catalogue title has its own distinct subtitle`() {
+        // Regression test (actual reported bug): PS3 "Ratchet & Clank: Tools of Destruction",
+        // "Quest for Booty" and "QForce" have no trophy title of their own on this account yet,
+        // but the base "Ratchet & Clank" entry's tokens are a prefix of each catalogue title's
+        // tokens, so the old bidirectional subsequence check wrongly matched them to the base
+        // game's (unrelated) trophy list instead of correctly reporting no match.
+        val titles = listOf(
+            title("NPWR02335_00", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR04695_00", "Ratchet & Clank: Into the Nexus™", platform = "PS3,PSVITA")
+        )
+
+        assertNull(TrophyMatcher.findBestMatch("Ratchet & Clank™: Tools of Destruction", "ps3", titles))
+        assertNull(TrophyMatcher.findBestMatch("Ratchet & Clank™: Quest for Booty", "ps3", titles))
+        assertNull(TrophyMatcher.findBestMatch("Ratchet & Clank™: QForce", "ps3", titles))
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)

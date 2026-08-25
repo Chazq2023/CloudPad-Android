@@ -335,6 +335,13 @@
              pink colour (see the pyluxAccent* comment below); every other theme colour switches to
              an AppTheme.<colour> subtheme via setTheme(), which already inherits this from AppTheme. -->
         <item name="alertDialogTheme">@style/AppTheme.AlertDialog.NonMaterial</item>
+        <!-- StreamTheme's parent (Theme.MaterialComponents.Light.NoActionBar) is a *separate*
+             hierarchy from AppTheme, so it doesn't inherit AppTheme's popupMenuStyle override
+             below — without these, every in-stream PopupMenu (Quick Settings' trophy sort/filter
+             dropdowns, etc.) fell back to the platform's light-themed default (white background,
+             black text, no border) instead of matching the app's themed popups everywhere else. -->
+        <item name="android:popupMenuStyle">@style/AppPopupMenuStyle</item>
+        <item name="actionOverflowMenuStyle">@style/AppPopupMenuStyle</item>
         <item name="android:windowBackground">@color/stream_background</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:windowTranslucentNavigation">true</item>

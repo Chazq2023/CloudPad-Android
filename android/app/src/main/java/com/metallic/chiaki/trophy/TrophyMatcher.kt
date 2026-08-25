@@ -254,12 +254,20 @@ object TrophyMatcher
 			.filter { candidate ->
 				val normalizedCandidate = candidate.second
 
+				/*
+				 * Only accept Sony's title as the longer, more-complete side (catalogue tokens
+				 * must be a subsequence of it), never the reverse. Sony's trophyTitleName is the
+				 * authoritative full title; catalogue listings are sometimes abbreviated
+				 * (justifying catalogue-is-shorter). But when the catalogue name is the longer
+				 * side — e.g. catalogue "Ratchet & Clank: Tools of Destruction" against Sony's
+				 * unrelated, shorter "Ratchet & Clank" — the extra words are a real, distinct
+				 * subtitle identifying a different game, not filler to ignore, and Sony simply
+				 * has no trophy title for it yet. Matching that would silently show the wrong
+				 * game's trophies instead of correctly reporting no match.
+				 */
 				normalizedCandidate.isNotEmpty() &&
 						numericTokens(normalizedCandidate) == originalNumbers &&
-						(
-								isTokenSubsequence(gameTokens, tokens(normalizedCandidate)) ||
-										isTokenSubsequence(tokens(normalizedCandidate), gameTokens)
-								)
+						isTokenSubsequence(gameTokens, tokens(normalizedCandidate))
 			}
 			/*
 			 * A short, generic title (e.g. "Ratchet & Clank") is a substring of every

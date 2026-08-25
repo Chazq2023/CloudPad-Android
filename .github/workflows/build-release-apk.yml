@@ -18,6 +18,9 @@ jobs:
       RELEASE_NOTES: |-
         - Fixed trophies sometimes displaying for the wrong game within a franchise (e.g. a PS3 Ratchet & Clank title showing another game's trophy list), caused by a short, generic trophy title winning a name-matching fallback over the correct, more specific entry.
         - Added a refresh button to the standalone Trophies screen (previously only the in-stream Quick Settings Trophies tab had one) so a newly-synced trophy title can be picked up without leaving and reopening the screen.
+        - Fixed several PS3 titles (e.g. Ratchet & Clank: Tools of Destruction, Quest for Booty, QForce) incorrectly showing an unrelated base game's trophies instead of correctly reporting no trophy data yet.
+        - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing the unstyled system popup (white background, black text) instead of the app's themed style used everywhere else.
+        - Sped up trophy loading by fetching independent trophy data (title list pages, trophy groups, and each group's definitions/earned status) concurrently instead of one request at a time.
 
     steps:
       - name: Checkout repo
