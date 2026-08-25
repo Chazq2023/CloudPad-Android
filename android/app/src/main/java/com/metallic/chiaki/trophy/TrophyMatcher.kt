@@ -12,11 +12,21 @@ import com.metallic.chiaki.trophy.model.TrophyTitleSummary
  */
 object TrophyMatcher
 {
+	// The optional "(\s+\w+)?" allows one branded modifier word between the edition tier and
+	// the literal "edition" (e.g. "Ultimate Sith Edition"), not just "Ultimate Edition" —
+	// confirmed against a real catalogue title (Star Wars: The Force Unleashed: Ultimate Sith
+	// Edition) whose Sony trophy title is the bare "Star Wars: The Force Unleashed", three
+	// tokens shorter than Pass 3 can bridge without this being stripped first.
 	private val editionSuffixPattern = Regex(
 		"[:\\-–—]\\s*(standard|digital|deluxe|ultimate|complete|goty|game of the year|" +
-			"definitive|remastered?|anniversary|legendary|gold|special|enhanced)\\s*edition.*",
+			"definitive|remastered?|anniversary|legendary|gold|special|enhanced)(\\s+\\w+)?\\s*edition.*",
 		RegexOption.IGNORE_CASE
 	)
+	// A separate, non-"edition" storefront qualifier — confirmed against a real catalogue title
+	// ("inFAMOUS: Festival of Blood – Full Game") distinguishing the paid full release from a
+	// free/trial storefront listing, which Sony's own trophy title (bare "inFAMOUS: Festival of
+	// Blood") never carries.
+	private val fullGameSuffixPattern = Regex("[:\\-–—]\\s*full\\s+game.*", RegexOption.IGNORE_CASE)
 	private val platformSuffixPattern = Regex(
 		"\\((?:ps3|ps4|ps5|playstation ?[345])\\)",
 		RegexOption.IGNORE_CASE
@@ -79,6 +89,7 @@ object TrophyMatcher
 		result = trademarkPattern.replace(result, "")
 		result = platformSuffixPattern.replace(result, "")
 		result = editionSuffixPattern.replace(result, "")
+		result = fullGameSuffixPattern.replace(result, "")
 		result = nonAlphaNumPattern.replace(result, " ")
 		result = whitespacePattern.replace(result, " ").trim()
 
