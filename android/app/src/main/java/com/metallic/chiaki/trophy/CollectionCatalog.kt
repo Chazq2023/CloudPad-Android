@@ -14,8 +14,9 @@ package com.metallic.chiaki.trophy
  * [TrophyRepository.fetchCollectionTrophies]).
  *
  * Not every multi-game disc behaves this way — e.g. Uncharted: Legacy of Thieves Collection (PS5)
- * has been confirmed to have one single combined Sony trophy title matching its own catalogue
- * name, so it needs no entry here at all and is handled by the ordinary single-title match path.
+ * and Serious Sam Collection (PS4) have both been confirmed to have one single combined Sony
+ * trophy title matching their own catalogue name, so neither needs an entry here at all and both
+ * are handled by the ordinary single-title match path.
  */
 object CollectionCatalog
 {
@@ -71,15 +72,13 @@ object CollectionCatalog
 				listOf("Assassin's Creed Brotherhood"),
 				listOf("Assassin's Creed Revelations")
 			)
-		),
-		TrophyMatcher.normalize("Serious Sam Collection") to Collection(
-			platform = "ps4",
-			subGames = listOf(
-				listOf("Serious Sam HD: The First Encounter"),
-				listOf("Serious Sam HD: The Second Encounter"),
-				listOf("Serious Sam 3: BFE")
-			)
 		)
+		// Serious Sam Collection deliberately has no entry here — confirmed against a real
+		// account that Sony gives it one single combined trophy title ("Serious Sam Collection",
+		// matching its own catalogue name exactly), the same as Uncharted: Legacy of Thieves
+		// Collection above. It was originally guessed to split per-game like the others; that
+		// guess was wrong and meant this path never even tried the real, matching entry — always
+		// searching for three sub-game names that don't exist instead.
 	)
 
 	/** The individual bundled games' candidate search names for [gameName]/[platform] if it's a

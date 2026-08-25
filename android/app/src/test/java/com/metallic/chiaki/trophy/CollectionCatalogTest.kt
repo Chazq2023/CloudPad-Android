@@ -67,6 +67,16 @@ class CollectionCatalogTest {
     fun `recognizes every configured collection`() {
         assertEquals(3, CollectionCatalog.subGamesFor("Devil May Cry HD Collection", "ps3")?.size)
         assertEquals(3, CollectionCatalog.subGamesFor("Assassin's Creed The Ezio Collection", "ps4")?.size)
-        assertEquals(3, CollectionCatalog.subGamesFor("Serious Sam Collection", "ps4")?.size)
+    }
+
+    @Test
+    fun `does not treat Serious Sam Collection as a split-per-game collection`() {
+        // Regression test (real account data): Serious Sam Collection was originally guessed to
+        // split per-game like Sly Trilogy/Nathan Drake Collection, but Sony actually gives it one
+        // single combined trophy title ("Serious Sam Collection") matching its own catalogue name
+        // exactly — the same as Uncharted: Legacy of Thieves Collection. Treating it as a
+        // collection meant this path only ever searched for three sub-game names that don't
+        // exist, and never tried the real, matching entry at all.
+        assertNull(CollectionCatalog.subGamesFor("Serious Sam Collection", "ps4"))
     }
 }
