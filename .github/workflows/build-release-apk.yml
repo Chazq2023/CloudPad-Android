@@ -18,7 +18,6 @@ jobs:
       RELEASE_NOTES: |-
         - Fixed Star Wars: The Force Unleashed - Ultimate Sith Edition (and other titles with a similar multi-word edition suffix) not finding its trophies — Sony's trophy title omits the edition suffix entirely, and the matcher previously only recognized a single-word edition tier (e.g. "Digital Edition"), not a branded one like "Ultimate Sith Edition".
         - Fixed inFAMOUS: Festival of Blood not finding its trophies — the catalogue's "– Full Game" storefront suffix isn't an edition label, so it wasn't being stripped before matching against Sony's bare trophy title.
-        - Fixed The Sly Trilogy's first game not finding its trophies — Sony's trophy title for it on this disc is the bare "Sly 1", the same short-numbered naming convention as the third game.
 
     steps:
       - name: Checkout repo
