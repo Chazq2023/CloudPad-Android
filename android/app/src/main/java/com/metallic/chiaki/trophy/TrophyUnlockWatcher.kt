@@ -34,7 +34,7 @@ class TrophyUnlockWatcher(
 	}
 
 	private var job: Job? = null
-	private var baselineEarnedIds: Set<Int>? = null
+	private var baselineEarnedIds: Set<String>? = null
 
 	fun start(scope: CoroutineScope)
 	{

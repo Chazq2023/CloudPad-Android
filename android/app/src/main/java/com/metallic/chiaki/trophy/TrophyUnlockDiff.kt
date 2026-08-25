@@ -18,17 +18,27 @@ object TrophyUnlockDiff
 	 * this stream, so none are reported), and only trophies earned since baseline are ever
 	 * returned by later calls. Returns the updated baseline to keep, plus the newly-earned
 	 * trophies to notify.
+	 *
+	 * Keyed by groupId+trophyId rather than trophyId alone: Sony's numeric trophyId is only
+	 * guaranteed unique *within* one trophy title's own list, not globally. A collection disc's
+	 * merged detail (see CollectionCatalog/TrophyRepository.fetchCollectionTrophies) can contain
+	 * several bundled games' trophy lists at once, each numbered from a small range like any
+	 * other title, so the same trophyId can easily appear in more than one of them — a bare-ID
+	 * key would then either mask a real new unlock (already "seen" under a different game's
+	 * trophy of the same number) or report the wrong trophy's name in the popup.
 	 */
-	fun diff(previousEarnedIds: Set<Int>?, trophies: List<Trophy>): Pair<Set<Int>, List<Trophy>>
+	fun diff(previousEarnedIds: Set<String>?, trophies: List<Trophy>): Pair<Set<String>, List<Trophy>>
 	{
-		val earnedNow = trophies.filter { it.earned }.map { it.trophyId }.toSet()
+		fun key(trophy: Trophy) = "${trophy.groupId}:${trophy.trophyId}"
+
+		val earnedNow = trophies.filter { it.earned }.map(::key).toSet()
 
 		if (previousEarnedIds == null) return earnedNow to emptyList()
 
-		val newlyEarnedIds = earnedNow - previousEarnedIds
-		if (newlyEarnedIds.isEmpty()) return previousEarnedIds to emptyList()
+		val newlyEarnedKeys = earnedNow - previousEarnedIds
+		if (newlyEarnedKeys.isEmpty()) return previousEarnedIds to emptyList()
 
-		val newlyEarned = trophies.filter { it.trophyId in newlyEarnedIds }
+		val newlyEarned = trophies.filter { key(it) in newlyEarnedKeys }
 		return earnedNow to newlyEarned
 	}
 }

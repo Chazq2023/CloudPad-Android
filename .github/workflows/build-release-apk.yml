@@ -26,6 +26,7 @@ jobs:
         - Fixed Jak II: Renegade not finding its trophies — Sony's own trophy title is the unsubtitled NA name "Jak II".
         - Fixed Sly 3: Honour Among Thieves not finding its trophies — Sony spells it the American way ("Honor") while the catalogue uses the British spelling.
         - Added trophy support for HD Collection discs whose bundled games each have their own separate Sony trophy list rather than one combined one (The Sly Trilogy, Uncharted: The Nathan Drake Collection, Devil May Cry HD Collection, Assassin's Creed The Ezio Collection, Serious Sam Collection) — each bundled game's trophies now appear together under its own heading.
+        - Fixed a potential missed or mislabelled in-stream trophy-unlock popup for HD Collection discs, where two different bundled games could share the same internal trophy number.
 
     steps:
       - name: Checkout repo
