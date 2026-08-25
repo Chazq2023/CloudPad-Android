@@ -318,6 +318,7 @@
     <string name="quick_settings_trophies_empty">No trophy data could be retrieved for %1$s, please launch the game and allow the trophy data to be synched.\n\nThis can take around 5-10 minutes during a session. Then you can refresh the trophy list and the trophy data should appear.\n\nIf the trophy data is still missing, please raise an issue on the CloudPad github repository to be looked into</string>
     <string name="trophy_unlock_popup_header">Trophy unlocked!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d Trophies Achieved</string>
+    <string name="trophy_refresh_content_description">Refresh trophies</string>
     <string name="trophy_sort_content_description">Sort trophies</string>
     <string name="trophy_filter_content_description">Filter trophies</string>
     <string name="trophy_sort_default">Default</string>

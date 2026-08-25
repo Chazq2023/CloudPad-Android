@@ -348,7 +348,12 @@ class StreamInput(
 		ControllerAction.R3 -> ControllerState.BUTTON_R3
 		ControllerAction.START -> ControllerState.BUTTON_OPTIONS
 		ControllerAction.SELECT -> if(!isRemotePlay) ControllerState.BUTTON_SHARE else null
-		ControllerAction.HOME -> if(isRemotePlay) ControllerState.BUTTON_PS else null
+		// Unlike SELECT above, BUTTON_PS isn't session-type-specific — the on-screen touch
+		// controls' PS button (TouchControlsFragment.psButtonView) already sends it
+		// unconditionally in both Remote Play and Cloud sessions. This physical-controller combo
+		// path used to only send it for Remote Play, leaving the PS Home combo silently dead in
+		// PS3/PS4/PS5 Cloud sessions even though the wire protocol accepts it fine.
+		ControllerAction.HOME -> ControllerState.BUTTON_PS
 		ControllerAction.DPAD_UP -> ControllerState.BUTTON_DPAD_UP
 		ControllerAction.DPAD_DOWN -> ControllerState.BUTTON_DPAD_DOWN
 		ControllerAction.DPAD_LEFT -> ControllerState.BUTTON_DPAD_LEFT

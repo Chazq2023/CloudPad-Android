@@ -16,8 +16,19 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed on-screen analog sticks rendering with flattened top/bottom edges instead of a full circle on some phone screen aspect ratios, where the stick's layout region ended up shorter than its visual size.
-        - Added an "Adaptive Frame Pacing" toggle to the in-stream Quick Settings panel (Session tab, under Bitrate) alongside the existing Settings screen toggle. Since it only takes effect on a fresh session, changing it here requires hitting Apply like Resolution/Bitrate/Codec do, and the performance overlay's new "AFP" status line only updates once that restart actually completes.
+        - Fixed trophies sometimes displaying for the wrong game within a franchise (e.g. a PS3 Ratchet & Clank title showing another game's trophy list), caused by a short, generic trophy title winning a name-matching fallback over the correct, more specific entry.
+        - Added a refresh button to the standalone Trophies screen (previously only the in-stream Quick Settings Trophies tab had one) so a newly-synced trophy title can be picked up without leaving and reopening the screen.
+        - Fixed several PS3 titles (e.g. Ratchet & Clank: Tools of Destruction, Quest for Booty, QForce) incorrectly showing an unrelated base game's trophies instead of correctly reporting no trophy data yet.
+        - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing black text on their themed popup background instead of white, matching the standalone Trophies screen.
+        - Sped up trophy loading by fetching independent trophy data (title list pages, trophy groups, and each group's definitions/earned status) concurrently instead of one request at a time.
+        - Fixed Ratchet & Clank: Gladiator and Sly Raccoon not finding their trophies — Sony lists both under their NA names ("Deadlocked" and "Sly Cooper and the Thievius Raccoonus"), which share no words with the EU catalogue titles.
+        - Fixed the controller's PS Home button combo (hold Select + Start) not working in PS3, PS4 and PS5 Cloud gaming sessions — it previously only worked in Remote Play.
+        - Fixed Jak II: Renegade not finding its trophies — Sony's own trophy title is the unsubtitled NA name "Jak II".
+        - Fixed Sly 3: Honour Among Thieves not finding its trophies — Sony spells it the American way ("Honor") while the catalogue uses the British spelling.
+        - Added trophy support for HD Collection discs whose bundled games each have their own separate Sony trophy list rather than one combined one (The Sly Trilogy, Uncharted: The Nathan Drake Collection, Devil May Cry HD Collection, Assassin's Creed The Ezio Collection) — each bundled game's trophies now appear together under its own heading.
+        - Fixed a potential missed or mislabelled in-stream trophy-unlock popup for HD Collection discs, where two different bundled games could share the same internal trophy number.
+        - Fixed Serious Sam Collection never finding its trophies — unlike the other HD Collection discs above, Sony gives it one single combined trophy list matching its own name, so it needs the normal match instead of being split per-game.
+        - Fixed The Sly Trilogy's first game not finding its trophies — Sony's trophy title for it on this disc is the bare "Sly 1", the same short-numbered naming convention as the third game.
 
     steps:
       - name: Checkout repo

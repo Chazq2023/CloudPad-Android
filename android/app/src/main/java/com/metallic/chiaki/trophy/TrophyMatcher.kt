@@ -26,6 +26,48 @@ object TrophyMatcher
 	private val whitespacePattern = Regex("\\s+")
 
 	/**
+	 * A handful of games were released under a different name per region — either an entirely
+	 * different subtitle (the catalogue and Sony's own trophyTitleName can each independently be
+	 * either one, so this canonicalises both to the same word) or an extra regional subtitle
+	 * Sony's own title never registered. Neither is something the generic token-subsequence
+	 * matching in [findBestMatch] can bridge: the first shares no words at all with the other
+	 * name, and the second looks identical in shape to a real, distinct game having an extra,
+	 * genuinely-unmatched subtitle (see the Pass 3 comment below) — matching it generically would
+	 * reopen that bug. Left-hand pattern is rewritten to the right-hand canonical form wherever
+	 * it appears.
+	 */
+	private val titleAliasPatterns = listOf(
+		// EU "Gladiator" vs NA "Deadlocked" (PS2/PS3 Ratchet & Clank).
+		Regex("\\bgladiator\\b") to "deadlocked",
+		// EU "QForce" vs NA "Full Frontal Assault" (PS3 Ratchet & Clank).
+		Regex("\\bq\\s*force\\b") to "full frontal assault",
+		// EU "Sly Raccoon" vs NA "Sly Cooper and the Thievius Raccoonus" (PS1/PS5 Sly Cooper) —
+		// confirmed via a real account's trophy data, which uses the NA name. "the" is stripped
+		// from the canonical form since normalize() only removes it after alias substitution runs.
+		Regex("\\bsly raccoon\\b") to "sly cooper and thievius raccoonus",
+		// EU "Jak II: Renegade" vs Sony's plain "Jak II" (PS2/PS4) — "Renegade" was added only
+		// for the EU release; Sony's own trophy title never carries it.
+		Regex("\\bjak ii renegade\\b") to "jak ii"
+	)
+
+	/**
+	 * British vs American spelling of the same word — unlike [titleAliasPatterns] above, this
+	 * isn't a per-game naming decision but a general linguistic pattern that can turn up in any
+	 * title (confirmed case: catalogue "Sly 3: Honour Among Thieves" vs Sony's own "Sly 3: Honor
+	 * Among Thieves"), so it's kept as its own small, general word-level table rather than one
+	 * more whole-phrase alias.
+	 */
+	private val spellingPatterns = listOf(
+		Regex("\\bhonour\\b") to "honor",
+		Regex("\\bcolour\\b") to "color",
+		Regex("\\barmour\\b") to "armor",
+		Regex("\\bdefence\\b") to "defense",
+		Regex("\\boffence\\b") to "offense",
+		Regex("\\bcentre\\b") to "center",
+		Regex("\\bfavourite\\b") to "favorite"
+	)
+
+	/**
 	 * Store/catalogue titles and Sony's own trophyTitleName are inconsistent about including
 	 * the word "the" (e.g. a catalogue entry "Tainted Grail: Fall of Avalon" vs Sony's trophy
 	 * title "Tainted Grail: The Fall of Avalon"), and the word can appear mid-title rather than
@@ -39,6 +81,11 @@ object TrophyMatcher
 		result = editionSuffixPattern.replace(result, "")
 		result = nonAlphaNumPattern.replace(result, " ")
 		result = whitespacePattern.replace(result, " ").trim()
+
+		for ((pattern, canonical) in titleAliasPatterns)
+			result = pattern.replace(result, canonical)
+		for ((pattern, canonical) in spellingPatterns)
+			result = pattern.replace(result, canonical)
 
 		return result
 			.split(" ")
@@ -72,6 +119,31 @@ object TrophyMatcher
 				match.value
 			}
 		}
+	}
+
+	private fun tokens(normalizedTitle: String): List<String> =
+		normalizedTitle.split(whitespacePattern).filter { it.isNotEmpty() }
+
+	/**
+	 * True if every token of [shorter] appears in [longer], in the same relative order,
+	 * with other tokens allowed in between. Unlike a raw substring check, this tolerates a
+	 * word being inserted or dropped in the *middle* of a title — e.g. a catalogue title
+	 * "Ratchet & Clank: Nexus" against Sony's own "Ratchet & Clank: Into the Nexus" — not
+	 * just truncation/expansion at either end.
+	 */
+	private fun isTokenSubsequence(shorter: List<String>, longer: List<String>): Boolean
+	{
+		var index = 0
+
+		for (token in longer)
+		{
+			if (index < shorter.size && token == shorter[index])
+			{
+				index++
+			}
+		}
+
+		return index == shorter.size
 	}
 
 	private fun numericTokens(
@@ -223,17 +295,37 @@ object TrophyMatcher
          * original game or a different numbered title.
          */
 		val originalNumbers = numericTokens(normalizedGame)
+		val gameTokens = tokens(normalizedGame)
 
 		val partial = candidates
 			.filter { candidate ->
 				val normalizedCandidate = candidate.second
 
+				/*
+				 * Only accept Sony's title as the longer, more-complete side (catalogue tokens
+				 * must be a subsequence of it), never the reverse. Sony's trophyTitleName is the
+				 * authoritative full title; catalogue listings are sometimes abbreviated
+				 * (justifying catalogue-is-shorter). But when the catalogue name is the longer
+				 * side — e.g. catalogue "Ratchet & Clank: Tools of Destruction" against Sony's
+				 * unrelated, shorter "Ratchet & Clank" — the extra words are a real, distinct
+				 * subtitle identifying a different game, not filler to ignore, and Sony simply
+				 * has no trophy title for it yet. Matching that would silently show the wrong
+				 * game's trophies instead of correctly reporting no match.
+				 */
 				normalizedCandidate.isNotEmpty() &&
 						numericTokens(normalizedCandidate) == originalNumbers &&
-						(
-								normalizedCandidate.contains(normalizedGame) ||
-										normalizedGame.contains(normalizedCandidate)
-								)
+						isTokenSubsequence(gameTokens, tokens(normalizedCandidate))
+			}
+			/*
+			 * A short, generic title (e.g. "Ratchet & Clank") is a substring of every
+			 * longer subtitled entry in the same franchise (e.g. "Ratchet & Clank: Into
+			 * the Nexus"), so when several candidates satisfy the containment check above,
+			 * the one whose length is closest to the requested name is almost always the
+			 * correct, more specific match — pick that first rather than whichever happens
+			 * to come first in Sony's list order.
+			 */
+			.sortedBy { candidate ->
+				kotlin.math.abs(candidate.second.length - normalizedGame.length)
 			}
 			.map { candidate ->
 				candidate.first

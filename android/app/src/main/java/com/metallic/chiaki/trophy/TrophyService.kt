@@ -11,6 +11,10 @@ import com.metallic.chiaki.trophy.model.TrophyGroup
 import com.metallic.chiaki.trophy.model.TrophyTitleDetail
 import com.metallic.chiaki.trophy.model.TrophyTitleSummary
 import com.metallic.chiaki.trophy.model.TrophyType
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.SimpleDateFormat
@@ -23,42 +27,52 @@ object TrophyService
 	private const val TAG = "TrophyService"
 	private const val PAGE_SIZE = 100
 
-	/** All trophy titles (games with trophy data) for [accountId] ("me" by default), across every
-	 *  page — parameterised so [TrophyCompareRepository] can fetch a friend's titles through the
-	 *  exact same call, just with their accountId instead of "me". */
-	suspend fun fetchAllTrophyTitles(accessToken: String, accountId: String = "me"): List<TrophyTitleSummary>
+	private data class TrophyTitlesPage(val titles: List<TrophyTitleSummary>, val totalItemCount: Int)
+
+	private fun fetchTrophyTitlesPage(accessToken: String, accountId: String, offset: Int): TrophyTitlesPage
 	{
-		val all = mutableListOf<TrophyTitleSummary>()
-		var offset = 0
+		val url = "${PsnTrophyConstants.TROPHY_BASE}/users/$accountId/trophyTitles?limit=$PAGE_SIZE&offset=$offset"
+		val response = HttpClient.get(
+			url = url,
+			headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
+		)
 
-		while (true)
+		if (response.statusCode != 200)
 		{
-			val url = "${PsnTrophyConstants.TROPHY_BASE}/users/$accountId/trophyTitles?limit=$PAGE_SIZE&offset=$offset"
-			val response = HttpClient.get(
-				url = url,
-				headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
-			)
-
-			if (response.statusCode != 200)
-			{
-				Log.e(TAG, "fetchAllTrophyTitles failed for $accountId at offset=$offset: ${response.statusCode} - ${response.body}")
-				if (response.statusCode == 403)
-					throw Exception("Failed to fetch trophy titles: Please logout and back into cloudpad, if this fails, then ensure that the PS servers are up and running")
-				throw Exception("Failed to fetch trophy titles: HTTP ${response.statusCode}")
-			}
-
-			val json = JSONObject(response.body)
-			val titlesArray = json.optJSONArray("trophyTitles") ?: JSONArray()
-			for (i in 0 until titlesArray.length())
-				parseTrophyTitleSummary(titlesArray.getJSONObject(i))?.let { all.add(it) }
-
-			val totalItemCount = json.optInt("totalItemCount", all.size)
-			offset += titlesArray.length()
-			if (titlesArray.length() == 0 || offset >= totalItemCount) break
+			Log.e(TAG, "fetchAllTrophyTitles failed for $accountId at offset=$offset: ${response.statusCode} - ${response.body}")
+			if (response.statusCode == 403)
+				throw Exception("Failed to fetch trophy titles: Please logout and back into cloudpad, if this fails, then ensure that the PS servers are up and running")
+			throw Exception("Failed to fetch trophy titles: HTTP ${response.statusCode}")
 		}
 
+		val json = JSONObject(response.body)
+		val titlesArray = json.optJSONArray("trophyTitles") ?: JSONArray()
+		val titles = (0 until titlesArray.length()).mapNotNull { parseTrophyTitleSummary(titlesArray.getJSONObject(it)) }
+		val totalItemCount = json.optInt("totalItemCount", offset + titles.size)
+		return TrophyTitlesPage(titles, totalItemCount)
+	}
+
+	/** All trophy titles (games with trophy data) for [accountId] ("me" by default), across every
+	 *  page — parameterised so [TrophyCompareRepository] can fetch a friend's titles through the
+	 *  exact same call, just with their accountId instead of "me". The first page's response tells
+	 *  us the total count, so every remaining page is known upfront and fetched concurrently rather
+	 *  than one-at-a-time — with 200+ titles (2-3 pages) on a real account, this turns what was a
+	 *  chain of sequential round trips into a single one plus one parallel batch. */
+	suspend fun fetchAllTrophyTitles(accessToken: String, accountId: String = "me"): List<TrophyTitleSummary> = coroutineScope {
+		val firstPage = async(Dispatchers.IO) { fetchTrophyTitlesPage(accessToken, accountId, offset = 0) }.await()
+
+		val remainingOffsets = if (firstPage.titles.isEmpty())
+			emptyList()
+		else
+			(PAGE_SIZE until firstPage.totalItemCount step PAGE_SIZE).toList()
+
+		val remainingPages = remainingOffsets
+			.map { offset -> async(Dispatchers.IO) { fetchTrophyTitlesPage(accessToken, accountId, offset) } }
+			.awaitAll()
+
+		val all = firstPage.titles + remainingPages.flatMap { it.titles }
 		Log.i(TAG, "fetchAllTrophyTitles($accountId): ${all.size} titles")
-		return all
+		all
 	}
 
 	/** Overall account-level trophy stats (level + total earned counts) — the same figure PSN
@@ -143,23 +157,25 @@ object TrophyService
 		return JSONObject(response.body).optString("accountId", "").ifEmpty { null }
 	}
 
-	/** Full detail (groups + every trophy, earned state merged in) for one trophy title. */
-	suspend fun fetchTrophyTitleDetail(accessToken: String, summary: TrophyTitleSummary): TrophyTitleDetail
-	{
+	/** Full detail (groups + every trophy, earned state merged in) for one trophy title. Each
+	 *  group's trophies are independent of every other group's, so a title with several trophy
+	 *  groups (base game + DLC packs) fetches them all concurrently rather than one at a time. */
+	suspend fun fetchTrophyTitleDetail(accessToken: String, summary: TrophyTitleSummary): TrophyTitleDetail = coroutineScope {
 		val groups = fetchTrophyGroups(accessToken, summary)
-		val trophies = mutableListOf<Trophy>()
 
-		if (groups.isEmpty())
+		val trophies = if (groups.isEmpty())
 		{
-			trophies.addAll(fetchTrophiesForGroup(accessToken, summary, "default"))
+			fetchTrophiesForGroup(accessToken, summary, "default")
 		}
 		else
 		{
-			for (group in groups)
-				trophies.addAll(fetchTrophiesForGroup(accessToken, summary, group.groupId))
+			groups
+				.map { group -> async(Dispatchers.IO) { fetchTrophiesForGroup(accessToken, summary, group.groupId) } }
+				.awaitAll()
+				.flatten()
 		}
 
-		return TrophyTitleDetail(summary, groups, trophies)
+		TrophyTitleDetail(summary, groups, trophies)
 	}
 
 	private suspend fun fetchTrophyGroups(accessToken: String, summary: TrophyTitleSummary): List<TrophyGroup>
@@ -208,14 +224,15 @@ object TrophyService
 		accessToken: String,
 		summary: TrophyTitleSummary,
 		groupId: String
-	): List<Trophy>
-	{
-		val definitions = fetchTrophyDefinitions(accessToken, summary, groupId)
-		val earnedStatus = fetchTrophyEarnedStatus(accessToken, summary, groupId)
+	): List<Trophy> = coroutineScope {
+		val definitionsDeferred = async(Dispatchers.IO) { fetchTrophyDefinitions(accessToken, summary, groupId) }
+		val earnedStatusDeferred = async(Dispatchers.IO) { fetchTrophyEarnedStatus(accessToken, summary, groupId) }
+		val definitions = definitionsDeferred.await()
+		val earnedStatus = earnedStatusDeferred.await()
 
-		if (definitions.isEmpty()) return earnedStatus.values.toList()
+		if (definitions.isEmpty()) return@coroutineScope earnedStatus.values.toList()
 
-		return definitions.map { (trophyId, definition) ->
+		definitions.map { (trophyId, definition) ->
 			val status = earnedStatus[trophyId]
 			definition.copy(
 				earned = status?.earned ?: definition.earned,

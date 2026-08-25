@@ -149,6 +149,129 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `prefers the more specific franchise entry over a short generic prefix match`() {
+        // Regression test: PS3 "Ratchet & Clank" games all share the "Ratchet & Clank" prefix,
+        // so a generic entry like the base "Ratchet & Clank" trophy title is a substring of
+        // "Ratchet & Clank: Into the Nexus" and must not win over the actual matching title
+        // when both exist in the account's trophy list.
+        val titles = listOf(
+            title("NPWR-BASE", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR-NEXUS", "Ratchet & Clank: Into the Nexus", platform = "PS3")
+        )
+        val match = TrophyMatcher.findBestMatch("Ratchet & Clank: Into the Nexus", "ps3", titles)
+        assertEquals("NPWR-NEXUS", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches when the catalogue title drops a mid-title word Sony's trophy title includes`() {
+        // Regression test (actual reported bug): CloudPad's PS3 catalogue lists this game as
+        // "Ratchet & Clank: Nexus", but Sony's own trophy title is "Ratchet & Clank: Into the
+        // Nexus" — "Into the" is inserted in the *middle*, not appended/truncated at either
+        // end, so a plain substring check can't bridge it and previously fell back to the
+        // unrelated base "Ratchet & Clank" trophy title, which also exists on the account.
+        val titles = listOf(
+            title("NPWR02335_00", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR04695_00", "Ratchet & Clank: Into the Nexus™", platform = "PS3,PSVITA"),
+            title("NPWR07942_00", "Ratchet & Clank™", platform = "PS4")
+        )
+        val match = TrophyMatcher.findBestMatch("Ratchet & Clank™: Nexus (PS3)", "ps3", titles)
+        assertEquals("NPWR04695_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `does not fall back to a short unrelated franchise entry when the catalogue title has its own distinct subtitle`() {
+        // Regression test (actual reported bug): PS3 "Ratchet & Clank: Tools of Destruction",
+        // "Quest for Booty" and "QForce" have no trophy title of their own on this account yet,
+        // but the base "Ratchet & Clank" entry's tokens are a prefix of each catalogue title's
+        // tokens, so the old bidirectional subsequence check wrongly matched them to the base
+        // game's (unrelated) trophy list instead of correctly reporting no match.
+        val titles = listOf(
+            title("NPWR02335_00", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR04695_00", "Ratchet & Clank: Into the Nexus™", platform = "PS3,PSVITA")
+        )
+
+        assertNull(TrophyMatcher.findBestMatch("Ratchet & Clank™: Tools of Destruction", "ps3", titles))
+        assertNull(TrophyMatcher.findBestMatch("Ratchet & Clank™: Quest for Booty", "ps3", titles))
+        assertNull(TrophyMatcher.findBestMatch("Ratchet & Clank™: QForce", "ps3", titles))
+    }
+
+    @Test
+    fun `characterization- a short generic search name can still wrongly match an unrelated longer title`() {
+        // Not a bug fix — a characterization test documenting a real limitation found via
+        // CollectionCatalog: a short search name like "Sly Cooper" is a literal prefix of the
+        // real, unrelated, separately released "Sly Cooper: Thieves in Time", so Pass 3 matches
+        // it whenever the correct, more specific title hasn't synced yet to win Pass 1 first.
+        // This is why CollectionCatalog avoids ambiguous bare candidate names unless confirmed
+        // safe against real data (see its "Sly Cooper" comment) rather than TrophyMatcher trying
+        // to reject this case generically — doing so would very likely reopen the Tools of
+        // Destruction/Quest for Booty/QForce regression above, which has the same token shape.
+        val titles = listOf(title("NPWR03581_00", "Sly Cooper: Thieves in Time™", platform = "PS3"))
+        val match = TrophyMatcher.findBestMatch("Sly Cooper", "ps3", titles)
+        assertEquals("NPWR03581_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `a numbered short search name does not collide the same way a bare one does`() {
+        // Confirms the "Sly 1" candidate CollectionCatalog uses instead of bare "Sly Cooper" is
+        // actually safe: unlike "Sly Cooper" (a literal prefix of the unrelated "Sly Cooper:
+        // Thieves in Time"), no "1" token appears anywhere in that different game's title, so
+        // Pass 3 correctly finds no match for it instead of colliding.
+        val titles = listOf(title("NPWR03581_00", "Sly Cooper: Thieves in Time™", platform = "PS3"))
+        assertNull(TrophyMatcher.findBestMatch("Sly 1", "ps3", titles))
+    }
+
+    @Test
+    fun `matches a franchise title released under a different regional subtitle`() {
+        // Regression test: the PS3 "Ratchet" spin-off shipped as "Gladiator" in EU catalogues
+        // but Sony's own trophy title (confirmed from a real account) uses the NA name
+        // "Deadlocked" — the two names share no words at all, so no amount of token/substring
+        // matching can bridge them without an explicit alias.
+        val titles = listOf(
+            title("NPWR02335_00", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR02348_00", "Ratchet: Deadlocked™", platform = "PS3")
+        )
+        val match = TrophyMatcher.findBestMatch("Ratchet™: Gladiator", "ps3", titles)
+        assertEquals("NPWR02348_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches Sly Raccoon's EU catalogue name against Sony's NA trophy title`() {
+        // Regression test (real account data): the catalogue lists this PS5 title as "Sly
+        // Raccoon" (its EU name), but Sony's trophy title uses the NA name "Sly Cooper and the
+        // Thievius Raccoonus" — again no shared words, so this needs the same kind of alias as
+        // Gladiator/Deadlocked above.
+        val titles = listOf(
+            title("NPWR42542_00", "Sly Cooper and the Thievius Raccoonus", platform = "PS5")
+        )
+        val match = TrophyMatcher.findBestMatch("Sly Raccoon", "ps5", titles)
+        assertEquals("NPWR42542_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches Jak II's EU catalogue subtitle against Sony's unsubtitled trophy title`() {
+        // Regression test (real account data, found via a full catalogue scan): the catalogue
+        // lists this as "Jak II: Renegade" (the EU release added "Renegade"), but Sony's own
+        // trophy title is plain "Jak II". Unlike the Gladiator/Sly Raccoon aliases above, this
+        // pair otherwise has the *same* shape as the Tools of Destruction/Quest for Booty
+        // regression above (catalogue = Sony's title + one extra word), so it needs its own
+        // alias rather than a generic loosening of the Pass 3 subsequence direction check.
+        val titles = listOf(title("NPWR12791_00", "Jak II", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Jak II™: Renegade", "ps4", titles)
+        assertEquals("NPWR12791_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches British vs American spelling of the same word`() {
+        // Regression test (real account data): the catalogue lists this as "Sly 3: Honour Among
+        // Thieves" (UK spelling), but Sony's own trophy title spells it "Sly 3: Honor Among
+        // Thieves" (US spelling) — a general linguistic pattern, not a per-game naming choice
+        // like the aliases above, so it's handled by its own word-level spelling table.
+        val titles = listOf(title("NPWR43319_00", "Sly 3: Honor Among Thieves", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Sly 3: Honour Among Thieves™", "ps4", titles)
+        assertEquals("NPWR43319_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)
