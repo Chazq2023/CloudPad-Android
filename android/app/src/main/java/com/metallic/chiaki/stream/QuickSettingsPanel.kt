@@ -905,6 +905,7 @@ class QuickSettingsPanel(
 		popup.menu.add(0, 1, 1, R.string.trophy_sort_earned_date)
 		popup.menu.setGroupCheckable(0, true, true)
 		popup.menu.findItem(if(trophySortMode == TrophySortMode.EARNED_DATE) 1 else 0)?.isChecked = true
+		whitenMenuItemText(popup.menu)
 
 		popup.setOnMenuItemClickListener { item ->
 			trophySortMode = if(item.itemId == 1) TrophySortMode.EARNED_DATE else TrophySortMode.DEFAULT
@@ -924,6 +925,7 @@ class QuickSettingsPanel(
 		popup.menu.add(0, 4, 4, R.string.trophy_filter_platinum)
 		popup.menu.setGroupCheckable(0, true, true)
 		popup.menu.findItem(filterModeToItemId(trophyFilterMode))?.isChecked = true
+		whitenMenuItemText(popup.menu)
 
 		popup.setOnMenuItemClickListener { item ->
 			trophyFilterMode = itemIdToFilterMode(item.itemId)
@@ -931,6 +933,22 @@ class QuickSettingsPanel(
 			true
 		}
 		popup.show()
+	}
+
+	/** Forces every item's title to white text, applied directly on the title CharSequence via a
+	 *  span rather than through the popup's theme — the theme attributes AppPopupMenuStyle/
+	 *  ThemeOverlay.App.PopupMenu set (styles.xml) kept resolving to black item text in practice
+	 *  on-device despite matching the platform/AppCompat popup menu's documented attribute chain,
+	 *  across two different theming approaches, so this bypasses that resolution entirely. */
+	private fun whitenMenuItemText(menu: android.view.Menu)
+	{
+		for (i in 0 until menu.size())
+		{
+			val item = menu.getItem(i)
+			item.title = SpannableString(item.title).apply {
+				setSpan(ForegroundColorSpan(Color.WHITE), 0, length, 0)
+			}
+		}
 	}
 
 	private fun showTrophiesSummary(summary: TrophyTitleSummary)

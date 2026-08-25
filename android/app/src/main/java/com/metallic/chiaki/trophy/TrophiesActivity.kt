@@ -4,7 +4,10 @@ package com.metallic.chiaki.trophy
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
@@ -178,6 +181,7 @@ class TrophiesActivity : AppCompatActivity()
 		popup.menu.add(0, 1, 1, R.string.trophy_sort_earned_date)
 		popup.menu.setGroupCheckable(0, true, true)
 		popup.menu.findItem(if (sortMode == TrophySortMode.EARNED_DATE) 1 else 0)?.isChecked = true
+		whitenMenuItemText(popup.menu)
 
 		popup.setOnMenuItemClickListener { item ->
 			sortMode = if (item.itemId == 1) TrophySortMode.EARNED_DATE else TrophySortMode.DEFAULT
@@ -197,6 +201,7 @@ class TrophiesActivity : AppCompatActivity()
 		popup.menu.add(0, 4, 4, R.string.trophy_filter_platinum)
 		popup.menu.setGroupCheckable(0, true, true)
 		popup.menu.findItem(filterModeToItemId(filterMode))?.isChecked = true
+		whitenMenuItemText(popup.menu)
 
 		popup.setOnMenuItemClickListener { item ->
 			filterMode = itemIdToFilterMode(item.itemId)
@@ -204,6 +209,22 @@ class TrophiesActivity : AppCompatActivity()
 			true
 		}
 		popup.show()
+	}
+
+	/** Forces every item's title to white text, applied directly on the title CharSequence via a
+	 *  span rather than through the popup's theme — the theme attributes AppPopupMenuStyle/
+	 *  ThemeOverlay.App.PopupMenu set (styles.xml) kept resolving to black item text in practice
+	 *  on-device despite matching the platform/AppCompat popup menu's documented attribute chain,
+	 *  across two different theming approaches, so this bypasses that resolution entirely. */
+	private fun whitenMenuItemText(menu: android.view.Menu)
+	{
+		for (i in 0 until menu.size())
+		{
+			val item = menu.getItem(i)
+			item.title = SpannableString(item.title).apply {
+				setSpan(ForegroundColorSpan(Color.WHITE), 0, length, 0)
+			}
+		}
 	}
 
 	/** Lands D-pad/keyboard focus on the first trophy row (skipping group headers, which aren't
