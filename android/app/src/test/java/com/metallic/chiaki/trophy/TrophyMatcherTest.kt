@@ -196,6 +196,21 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `characterization- a short generic search name can still wrongly match an unrelated longer title`() {
+        // Not a bug fix — a characterization test documenting a real limitation found via
+        // CollectionCatalog: a short search name like "Sly Cooper" is a literal prefix of the
+        // real, unrelated, separately released "Sly Cooper: Thieves in Time", so Pass 3 matches
+        // it whenever the correct, more specific title hasn't synced yet to win Pass 1 first.
+        // This is why CollectionCatalog avoids ambiguous bare candidate names unless confirmed
+        // safe against real data (see its "Sly Cooper" comment) rather than TrophyMatcher trying
+        // to reject this case generically — doing so would very likely reopen the Tools of
+        // Destruction/Quest for Booty/QForce regression above, which has the same token shape.
+        val titles = listOf(title("NPWR03581_00", "Sly Cooper: Thieves in Time™", platform = "PS3"))
+        val match = TrophyMatcher.findBestMatch("Sly Cooper", "ps3", titles)
+        assertEquals("NPWR03581_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `matches a franchise title released under a different regional subtitle`() {
         // Regression test: the PS3 "Ratchet" spin-off shipped as "Gladiator" in EU catalogues
         // but Sony's own trophy title (confirmed from a real account) uses the NA name

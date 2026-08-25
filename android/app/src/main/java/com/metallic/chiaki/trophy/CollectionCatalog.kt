@@ -36,7 +36,12 @@ object CollectionCatalog
 		TrophyMatcher.normalize("The Sly Trilogy") to Collection(
 			platform = "ps3",
 			subGames = listOf(
-				listOf("Sly Cooper", "Sly Cooper and the Thievius Raccoonus"),
+				// No bare "Sly Cooper" candidate here, unlike games 2 and 3 below — confirmed
+				// against a real account that it wrongly matches the unrelated, separately
+				// released "Sly Cooper: Thieves in Time" (2013) via Pass 3's subsequence rule
+				// ("Sly Cooper" is a literal prefix of that different game's real title), since
+				// this disc's own PS3 trophy title for game 1 hadn't synced yet to disambiguate.
+				listOf("Sly Cooper and the Thievius Raccoonus"),
 				listOf("Sly 2", "Sly 2: Band of Thieves"),
 				// "Sly 3" confirmed directly against a real account; the fuller name kept as a
 				// fallback candidate in case a future account's data differs.

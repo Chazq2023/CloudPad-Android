@@ -12,12 +12,24 @@ class CollectionCatalogTest {
         val subGames = CollectionCatalog.subGamesFor("The Sly Trilogy", "ps3")
         assertEquals(
             listOf(
-                listOf("Sly Cooper", "Sly Cooper and the Thievius Raccoonus"),
+                listOf("Sly Cooper and the Thievius Raccoonus"),
                 listOf("Sly 2", "Sly 2: Band of Thieves"),
                 listOf("Sly 3", "Sly 3: Honor Among Thieves")
             ),
             subGames
         )
+    }
+
+    @Test
+    fun `does not offer a bare Sly Cooper candidate that collides with an unrelated game`() {
+        // Regression test (real account data): a bare "Sly Cooper" candidate for this disc's
+        // first game wrongly matched the unrelated, separately released "Sly Cooper: Thieves in
+        // Time" (2013) via TrophyMatcher's Pass 3 subsequence rule — "Sly Cooper" is a literal
+        // prefix of that different game's real title — because this disc's own PS3 trophy title
+        // for game 1 hadn't synced yet to give Pass 1 an exact match to prefer instead. Unlike
+        // "Sly 2"/"Sly 3" (no known collision), game 1 must stick to its full, unambiguous name.
+        val subGames = CollectionCatalog.subGamesFor("The Sly Trilogy", "ps3")
+        assertEquals(listOf("Sly Cooper and the Thievius Raccoonus"), subGames!![0])
     }
 
     @Test
