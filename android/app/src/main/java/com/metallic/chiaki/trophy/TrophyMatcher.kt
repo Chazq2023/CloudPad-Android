@@ -36,7 +36,11 @@ object TrophyMatcher
 		// EU "Gladiator" vs NA "Deadlocked" (PS2/PS3 Ratchet & Clank).
 		Regex("\\bgladiator\\b") to "deadlocked",
 		// EU "QForce" vs NA "Full Frontal Assault" (PS3 Ratchet & Clank).
-		Regex("\\bq\\s*force\\b") to "full frontal assault"
+		Regex("\\bq\\s*force\\b") to "full frontal assault",
+		// EU "Sly Raccoon" vs NA "Sly Cooper and the Thievius Raccoonus" (PS1/PS5 Sly Cooper) —
+		// confirmed via a real account's trophy data, which uses the NA name. "the" is stripped
+		// from the canonical form since normalize() only removes it after alias substitution runs.
+		Regex("\\bsly raccoon\\b") to "sly cooper and thievius raccoonus"
 	)
 
 	/**

@@ -19,9 +19,9 @@ jobs:
         - Fixed trophies sometimes displaying for the wrong game within a franchise (e.g. a PS3 Ratchet & Clank title showing another game's trophy list), caused by a short, generic trophy title winning a name-matching fallback over the correct, more specific entry.
         - Added a refresh button to the standalone Trophies screen (previously only the in-stream Quick Settings Trophies tab had one) so a newly-synced trophy title can be picked up without leaving and reopening the screen.
         - Fixed several PS3 titles (e.g. Ratchet & Clank: Tools of Destruction, Quest for Booty, QForce) incorrectly showing an unrelated base game's trophies instead of correctly reporting no trophy data yet.
-        - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing the unstyled system popup (white background, black text) instead of the app's themed style used everywhere else.
+        - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing the unstyled system popup (white background, black text) instead of the app's themed style (grey background, themed border, white text) used everywhere else.
         - Sped up trophy loading by fetching independent trophy data (title list pages, trophy groups, and each group's definitions/earned status) concurrently instead of one request at a time.
-        - Fixed Ratchet & Clank: Gladiator not finding its trophies — Sony lists it under its NA name "Deadlocked", which shares no words with the EU catalogue title.
+        - Fixed Ratchet & Clank: Gladiator and Sly Raccoon not finding their trophies — Sony lists both under their NA names ("Deadlocked" and "Sly Cooper and the Thievius Raccoonus"), which share no words with the EU catalogue titles.
         - Fixed the controller's PS Home button combo (hold Select + Start) not working in PS3, PS4 and PS5 Cloud gaming sessions — it previously only worked in Remote Play.
 
     steps:

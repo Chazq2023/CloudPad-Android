@@ -239,10 +239,22 @@
              rather than touching android:textColorPrimary on AppTheme itself, which is read by
              far too many other unrelated widgets app-wide to safely override globally. -->
         <item name="android:theme">@style/ThemeOverlay.App.PopupMenu</item>
+        <!-- Belt-and-braces alongside the android:theme override above: the platform's own popup
+             menu item text ultimately resolves through ?android:attr/textColorPrimary too, so on
+             AppTheme's dark MaterialComponents base (where textColorPrimary already defaults to
+             white) the override above was enough on its own. But under StreamTheme's Light
+             MaterialComponents base, in-stream popups (Quick Settings' trophy sort/filter menus)
+             kept rendering black item text, so set it directly via the attribute PopupMenu
+             documents specifically for this rather than relying on the indirect chain. -->
+        <item name="android:itemTextAppearance">@style/AppPopupMenuItemTextAppearance</item>
     </style>
 
     <style name="ThemeOverlay.App.PopupMenu" parent="ThemeOverlay.AppCompat">
         <item name="android:textColorPrimary">@android:color/white</item>
+    </style>
+
+    <style name="AppPopupMenuItemTextAppearance" parent="@android:style/TextAppearance.Material.Widget.PopupMenu.Large">
+        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="MageTheme" parent="Theme.MaterialComponents.NoActionBar">

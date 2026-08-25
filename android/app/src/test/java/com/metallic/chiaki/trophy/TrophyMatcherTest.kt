@@ -210,6 +210,19 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `matches Sly Raccoon's EU catalogue name against Sony's NA trophy title`() {
+        // Regression test (real account data): the catalogue lists this PS5 title as "Sly
+        // Raccoon" (its EU name), but Sony's trophy title uses the NA name "Sly Cooper and the
+        // Thievius Raccoonus" — again no shared words, so this needs the same kind of alias as
+        // Gladiator/Deadlocked above.
+        val titles = listOf(
+            title("NPWR42542_00", "Sly Cooper and the Thievius Raccoonus", platform = "PS5")
+        )
+        val match = TrophyMatcher.findBestMatch("Sly Raccoon", "ps5", titles)
+        assertEquals("NPWR42542_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)
