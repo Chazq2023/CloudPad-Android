@@ -16,8 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed on-screen analog sticks rendering with flattened top/bottom edges instead of a full circle on some phone screen aspect ratios, where the stick's layout region ended up shorter than its visual size.
-        - Added an "Adaptive Frame Pacing" toggle to the in-stream Quick Settings panel (Session tab, under Bitrate) alongside the existing Settings screen toggle. Since it only takes effect on a fresh session, changing it here requires hitting Apply like Resolution/Bitrate/Codec do, and the performance overlay's new "AFP" status line only updates once that restart actually completes.
+        - Fixed trophies sometimes displaying for the wrong game within a franchise (e.g. a PS3 Ratchet & Clank title showing another game's trophy list), caused by a short, generic trophy title winning a name-matching fallback over the correct, more specific entry.
 
     steps:
       - name: Checkout repo

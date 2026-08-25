@@ -235,6 +235,17 @@ object TrophyMatcher
 										normalizedGame.contains(normalizedCandidate)
 								)
 			}
+			/*
+			 * A short, generic title (e.g. "Ratchet & Clank") is a substring of every
+			 * longer subtitled entry in the same franchise (e.g. "Ratchet & Clank: Into
+			 * the Nexus"), so when several candidates satisfy the containment check above,
+			 * the one whose length is closest to the requested name is almost always the
+			 * correct, more specific match — pick that first rather than whichever happens
+			 * to come first in Sony's list order.
+			 */
+			.sortedBy { candidate ->
+				kotlin.math.abs(candidate.second.length - normalizedGame.length)
+			}
 			.map { candidate ->
 				candidate.first
 			}

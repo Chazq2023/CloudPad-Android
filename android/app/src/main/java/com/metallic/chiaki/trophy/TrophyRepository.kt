@@ -49,6 +49,9 @@ class TrophyRepository(private val preferences: Preferences)
 				return@withContext TrophyResult.NoMatchFound
 			}
 
+			Log.i(TAG, "Matched \"$gameName\" ($platform) to trophy title \"${match.trophyTitleName}\" " +
+				"(${match.npCommunicationId}, ${match.trophyTitlePlatform})")
+
 			val detail = TrophyService.fetchTrophyTitleDetail(token, match)
 			TrophyResult.Success(detail)
 		}

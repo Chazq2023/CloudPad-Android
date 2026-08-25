@@ -149,6 +149,20 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `prefers the more specific franchise entry over a short generic prefix match`() {
+        // Regression test: PS3 "Ratchet & Clank" games all share the "Ratchet & Clank" prefix,
+        // so a generic entry like the base "Ratchet & Clank" trophy title is a substring of
+        // "Ratchet & Clank: Into the Nexus" and must not win over the actual matching title
+        // when both exist in the account's trophy list.
+        val titles = listOf(
+            title("NPWR-BASE", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR-NEXUS", "Ratchet & Clank: Into the Nexus", platform = "PS3")
+        )
+        val match = TrophyMatcher.findBestMatch("Ratchet & Clank: Into the Nexus", "ps3", titles)
+        assertEquals("NPWR-NEXUS", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)
