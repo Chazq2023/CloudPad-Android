@@ -236,6 +236,17 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `matches British vs American spelling of the same word`() {
+        // Regression test (real account data): the catalogue lists this as "Sly 3: Honour Among
+        // Thieves" (UK spelling), but Sony's own trophy title spells it "Sly 3: Honor Among
+        // Thieves" (US spelling) — a general linguistic pattern, not a per-game naming choice
+        // like the aliases above, so it's handled by its own word-level spelling table.
+        val titles = listOf(title("NPWR43319_00", "Sly 3: Honor Among Thieves", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Sly 3: Honour Among Thieves™", "ps4", titles)
+        assertEquals("NPWR43319_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)

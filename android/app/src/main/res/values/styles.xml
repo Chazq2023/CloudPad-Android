@@ -11,11 +11,15 @@
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog</item>
         <item name="alertDialogTheme">@style/AppTheme.AlertDialog.NonMaterial</item>
         <item name="android:windowActivityTransitions">true</item>
-        <!-- Every PopupMenu in the app (sort/filter menus, the account menu, etc.) is built with
-             a plain `PopupMenu(context, anchor)` call, which resolves its appearance from this
-             one theme attribute — styling it here covers every call site at once rather than
-             needing each one touched individually. See AppPopupMenuStyle below. -->
-        <item name="android:popupMenuStyle">@style/AppPopupMenuStyle</item>
+        <!-- Every PopupMenu in the app (sort/filter menus, the account menu, etc.) is built as
+             `androidx.appcompat.widget.PopupMenu(context, anchor)`, which resolves its appearance
+             from this AppCompat-declared attribute (not the platform's identically-named
+             android:popupMenuStyle — that one only governs the platform's own
+             android.widget.PopupMenu, a different class, and setting only that one left item text
+             black: confirmed by extracting AppCompat's own popup item layout, which resolves
+             color through this attribute's style chain instead). Styling it here covers every
+             call site at once. See AppPopupMenuStyle below. -->
+        <item name="popupMenuStyle">@style/AppPopupMenuStyle</item>
         <!-- A Toolbar's own "⋮" overflow menu (e.g. Controller Remap's "Restore to defaults")
              resolves through this attribute instead of popupMenuStyle above — confirmed by it
              still showing the platform default even with popupMenuStyle already set. Same shared
@@ -232,29 +236,23 @@
         <item name="colorControlActivated">?attr/pyluxAccent</item>
     </style>
 
-    <!-- Shared look for every PopupMenu in the app — see android:popupMenuStyle on AppTheme. -->
+    <!-- Shared look for every PopupMenu in the app — see popupMenuStyle on AppTheme. -->
     <style name="AppPopupMenuStyle" parent="Widget.AppCompat.PopupMenu">
         <item name="android:popupBackground">@drawable/bg_popup_menu</item>
         <!-- Scopes the white item-text override to just this popup's own inflated views,
              rather than touching android:textColorPrimary on AppTheme itself, which is read by
-             far too many other unrelated widgets app-wide to safely override globally. -->
+             far too many other unrelated widgets app-wide to safely override globally.
+             AppCompat's own abc_popup_menu_item_layout.xml (confirmed by extracting the library)
+             renders item text via ?attr/textAppearanceLargePopupMenu, which under both
+             AppTheme's and StreamTheme's MaterialComponents bases ultimately resolves color from
+             android:textColorPrimary — so this alone is sufficient once the PopupMenu instance
+             is actually androidx.appcompat.widget.PopupMenu (see popupMenuStyle's comment on
+             AppTheme for why that class distinction is what previous attempts missed). -->
         <item name="android:theme">@style/ThemeOverlay.App.PopupMenu</item>
-        <!-- Belt-and-braces alongside the android:theme override above: the platform's own popup
-             menu item text ultimately resolves through ?android:attr/textColorPrimary too, so on
-             AppTheme's dark MaterialComponents base (where textColorPrimary already defaults to
-             white) the override above was enough on its own. But under StreamTheme's Light
-             MaterialComponents base, in-stream popups (Quick Settings' trophy sort/filter menus)
-             kept rendering black item text, so set it directly via the attribute PopupMenu
-             documents specifically for this rather than relying on the indirect chain. -->
-        <item name="android:itemTextAppearance">@style/AppPopupMenuItemTextAppearance</item>
     </style>
 
     <style name="ThemeOverlay.App.PopupMenu" parent="ThemeOverlay.AppCompat">
         <item name="android:textColorPrimary">@android:color/white</item>
-    </style>
-
-    <style name="AppPopupMenuItemTextAppearance" parent="@android:style/TextAppearance.Material.Widget.PopupMenu.Large">
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="MageTheme" parent="Theme.MaterialComponents.NoActionBar">
@@ -350,9 +348,11 @@
         <!-- StreamTheme's parent (Theme.MaterialComponents.Light.NoActionBar) is a *separate*
              hierarchy from AppTheme, so it doesn't inherit AppTheme's popupMenuStyle override
              below — without these, every in-stream PopupMenu (Quick Settings' trophy sort/filter
-             dropdowns, etc.) fell back to the platform's light-themed default (white background,
-             black text, no border) instead of matching the app's themed popups everywhere else. -->
-        <item name="android:popupMenuStyle">@style/AppPopupMenuStyle</item>
+             dropdowns, etc.) fell back to the unstyled default instead of matching the app's
+             themed popups everywhere else. popupMenuStyle (not android:popupMenuStyle) is what
+             actually governs androidx.appcompat.widget.PopupMenu, the class those call sites use
+             — see the matching comment on AppTheme. -->
+        <item name="popupMenuStyle">@style/AppPopupMenuStyle</item>
         <item name="actionOverflowMenuStyle">@style/AppPopupMenuStyle</item>
         <item name="android:windowBackground">@color/stream_background</item>
         <item name="android:windowTranslucentStatus">true</item>

@@ -19,11 +19,12 @@ jobs:
         - Fixed trophies sometimes displaying for the wrong game within a franchise (e.g. a PS3 Ratchet & Clank title showing another game's trophy list), caused by a short, generic trophy title winning a name-matching fallback over the correct, more specific entry.
         - Added a refresh button to the standalone Trophies screen (previously only the in-stream Quick Settings Trophies tab had one) so a newly-synced trophy title can be picked up without leaving and reopening the screen.
         - Fixed several PS3 titles (e.g. Ratchet & Clank: Tools of Destruction, Quest for Booty, QForce) incorrectly showing an unrelated base game's trophies instead of correctly reporting no trophy data yet.
-        - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing the unstyled system popup (white background, black text) instead of the app's themed style (grey background, themed border, white text) used everywhere else.
+        - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing black text on their themed popup background instead of white, matching the standalone Trophies screen.
         - Sped up trophy loading by fetching independent trophy data (title list pages, trophy groups, and each group's definitions/earned status) concurrently instead of one request at a time.
         - Fixed Ratchet & Clank: Gladiator and Sly Raccoon not finding their trophies — Sony lists both under their NA names ("Deadlocked" and "Sly Cooper and the Thievius Raccoonus"), which share no words with the EU catalogue titles.
         - Fixed the controller's PS Home button combo (hold Select + Start) not working in PS3, PS4 and PS5 Cloud gaming sessions — it previously only worked in Remote Play.
         - Fixed Jak II: Renegade not finding its trophies — Sony's own trophy title is the unsubtitled NA name "Jak II".
+        - Fixed Sly 3: Honour Among Thieves not finding its trophies — Sony spells it the American way ("Honor") while the catalogue uses the British spelling.
 
     steps:
       - name: Checkout repo

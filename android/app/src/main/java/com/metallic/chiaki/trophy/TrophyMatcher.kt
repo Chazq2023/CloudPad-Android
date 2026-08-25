@@ -51,6 +51,23 @@ object TrophyMatcher
 	)
 
 	/**
+	 * British vs American spelling of the same word — unlike [titleAliasPatterns] above, this
+	 * isn't a per-game naming decision but a general linguistic pattern that can turn up in any
+	 * title (confirmed case: catalogue "Sly 3: Honour Among Thieves" vs Sony's own "Sly 3: Honor
+	 * Among Thieves"), so it's kept as its own small, general word-level table rather than one
+	 * more whole-phrase alias.
+	 */
+	private val spellingPatterns = listOf(
+		Regex("\\bhonour\\b") to "honor",
+		Regex("\\bcolour\\b") to "color",
+		Regex("\\barmour\\b") to "armor",
+		Regex("\\bdefence\\b") to "defense",
+		Regex("\\boffence\\b") to "offense",
+		Regex("\\bcentre\\b") to "center",
+		Regex("\\bfavourite\\b") to "favorite"
+	)
+
+	/**
 	 * Store/catalogue titles and Sony's own trophyTitleName are inconsistent about including
 	 * the word "the" (e.g. a catalogue entry "Tainted Grail: Fall of Avalon" vs Sony's trophy
 	 * title "Tainted Grail: The Fall of Avalon"), and the word can appear mid-title rather than
@@ -66,6 +83,8 @@ object TrophyMatcher
 		result = whitespacePattern.replace(result, " ").trim()
 
 		for ((pattern, canonical) in titleAliasPatterns)
+			result = pattern.replace(result, canonical)
+		for ((pattern, canonical) in spellingPatterns)
 			result = pattern.replace(result, canonical)
 
 		return result
