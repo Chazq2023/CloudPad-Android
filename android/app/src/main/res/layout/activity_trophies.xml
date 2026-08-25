@@ -50,6 +50,18 @@
                 android:orientation="horizontal">
 
                 <ImageButton
+                    android:id="@+id/trophyRefreshButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:foreground="@drawable/bg_focus_highlight"
+                    android:focusable="true"
+                    android:contentDescription="@string/trophy_refresh_content_description"
+                    android:src="@drawable/ic_refresh"
+                    android:tint="?attr/colorOnPrimary"/>
+
+                <ImageButton
                     android:id="@+id/trophySortButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

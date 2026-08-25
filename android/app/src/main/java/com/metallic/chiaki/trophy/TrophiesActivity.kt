@@ -46,6 +46,8 @@ class TrophiesActivity : AppCompatActivity()
 	private var currentDetail: TrophyTitleDetail? = null
 	private var sortMode = TrophySortMode.DEFAULT
 	private var filterMode = TrophyFilterMode.DEFAULT
+	private var currentGameName = ""
+	private var currentPlatform = ""
 	private val adapter = TrophyAdapter(
 		onTrophyClick = { trophy -> showTrophyDetailDialog(this, trophy) },
 		onTopBoundary = {
@@ -73,6 +75,7 @@ class TrophiesActivity : AppCompatActivity()
 
 		setSupportActionBar(binding.toolbar)
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
+		binding.trophyRefreshButton.setOnClickListener { loadTrophies(currentGameName, currentPlatform, forceRefresh = true) }
 		binding.trophySortButton.setOnClickListener { showSortMenu(it) }
 		binding.trophyFilterButton.setOnClickListener { showFilterMenu(it) }
 		binding.backButton.redirectDpadDownTo {
@@ -83,11 +86,11 @@ class TrophiesActivity : AppCompatActivity()
 
 		repository = TrophyRepository(prefs)
 
-		val gameName = intent.getStringExtra(EXTRA_GAME_NAME) ?: ""
-		val platform = intent.getStringExtra(EXTRA_PLATFORM) ?: ""
+		currentGameName = intent.getStringExtra(EXTRA_GAME_NAME) ?: ""
+		currentPlatform = intent.getStringExtra(EXTRA_PLATFORM) ?: ""
 		val imageUrl = intent.getStringExtra(EXTRA_IMAGE_URL) ?: ""
 
-		binding.trophyHeaderGameName.text = gameName
+		binding.trophyHeaderGameName.text = currentGameName
 		if (imageUrl.isNotEmpty())
 		{
 			binding.trophyHeaderArt.load(imageUrl) { crossfade(true) }
@@ -102,17 +105,17 @@ class TrophiesActivity : AppCompatActivity()
 		binding.trophyRecyclerView.descendantFocusability = android.view.ViewGroup.FOCUS_AFTER_DESCENDANTS
 		binding.trophyRecyclerView.fixFocusOnFastScroll("TrophiesActivity")
 
-		loadTrophies(gameName, platform)
+		loadTrophies(currentGameName, currentPlatform)
 	}
 
-	private fun loadTrophies(gameName: String, platform: String)
+	private fun loadTrophies(gameName: String, platform: String, forceRefresh: Boolean = false)
 	{
 		binding.trophyProgressBar.visibility = View.VISIBLE
 		binding.trophyEmptyStateText.visibility = View.GONE
 		binding.trophyRecyclerView.visibility = View.GONE
 
 		lifecycleScope.launch {
-			when (val result = repository.fetchTrophiesForGame(gameName, platform))
+			when (val result = repository.fetchTrophiesForGame(gameName, platform, forceRefresh))
 			{
 				is TrophyResult.Success -> showTrophies(result.detail, gameName)
 				is TrophyResult.NoMatchFound -> showEmptyState(getString(R.string.quick_settings_trophies_empty, gameName))
