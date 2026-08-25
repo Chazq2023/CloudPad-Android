@@ -22,6 +22,11 @@ object TrophyMatcher
 			"definitive|remastered?|anniversary|legendary|gold|special|enhanced)(\\s+\\w+)?\\s*edition.*",
 		RegexOption.IGNORE_CASE
 	)
+	// A separate, non-"edition" storefront qualifier — confirmed against a real catalogue title
+	// ("inFAMOUS: Festival of Blood – Full Game") distinguishing the paid full release from a
+	// free/trial storefront listing, which Sony's own trophy title (bare "inFAMOUS: Festival of
+	// Blood") never carries.
+	private val fullGameSuffixPattern = Regex("[:\\-–—]\\s*full\\s+game.*", RegexOption.IGNORE_CASE)
 	private val platformSuffixPattern = Regex(
 		"\\((?:ps3|ps4|ps5|playstation ?[345])\\)",
 		RegexOption.IGNORE_CASE
@@ -84,6 +89,7 @@ object TrophyMatcher
 		result = trademarkPattern.replace(result, "")
 		result = platformSuffixPattern.replace(result, "")
 		result = editionSuffixPattern.replace(result, "")
+		result = fullGameSuffixPattern.replace(result, "")
 		result = nonAlphaNumPattern.replace(result, " ")
 		result = whitespacePattern.replace(result, " ").trim()
 

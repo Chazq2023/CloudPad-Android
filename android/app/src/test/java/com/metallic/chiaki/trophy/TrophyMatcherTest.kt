@@ -55,6 +55,18 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `normalize strips a Full Game storefront suffix`() {
+        // Regression test: the catalogue lists this as "...Festival of Blood – Full Game" (a
+        // storefront qualifier distinguishing the paid full release from a free/trial listing),
+        // but Sony's own trophy title is the bare "inFAMOUS: Festival of Blood" — not an
+        // "edition" suffix, so editionSuffixPattern doesn't cover it.
+        assertEquals(
+            "infamous festival of blood",
+            TrophyMatcher.normalize("inFAMOUS™: Festival of Blood – Full Game")
+        )
+    }
+
+    @Test
     fun `normalize drops standalone the tokens anywhere in the title`() {
         assertEquals(
             "tainted grail fall of avalon",
@@ -171,6 +183,16 @@ class TrophyMatcherTest {
             "STAR WARS™: THE FORCE UNLEASHED™: ULTIMATE SITH EDITION", "ps3", titles
         )
         assertEquals("NPWR00156_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches a catalogue title carrying a Full Game suffix Sony's trophy title omits`() {
+        // Regression test (real account data): the PS3 catalogue lists this as "...Festival of
+        // Blood – Full Game", but Sony's own trophy title is the bare "inFAMOUS: Festival of
+        // Blood".
+        val titles = listOf(title("NPWR02654_00", "inFAMOUS: Festival of Blood", platform = "PS3"))
+        val match = TrophyMatcher.findBestMatch("inFAMOUS™: Festival of Blood – Full Game", "ps3", titles)
+        assertEquals("NPWR02654_00", match?.npCommunicationId)
     }
 
     @Test
