@@ -26,11 +26,15 @@ object TrophyMatcher
 	private val whitespacePattern = Regex("\\s+")
 
 	/**
-	 * A handful of games were released under an entirely different subtitle per region (the
-	 * catalogue and Sony's own trophyTitleName can each independently be either one, so this
-	 * canonicalises both to the same word), which no amount of token/substring matching can
-	 * bridge since the two names share no words in common. Left-hand pattern is rewritten to
-	 * the right-hand canonical form wherever it appears.
+	 * A handful of games were released under a different name per region — either an entirely
+	 * different subtitle (the catalogue and Sony's own trophyTitleName can each independently be
+	 * either one, so this canonicalises both to the same word) or an extra regional subtitle
+	 * Sony's own title never registered. Neither is something the generic token-subsequence
+	 * matching in [findBestMatch] can bridge: the first shares no words at all with the other
+	 * name, and the second looks identical in shape to a real, distinct game having an extra,
+	 * genuinely-unmatched subtitle (see the Pass 3 comment below) — matching it generically would
+	 * reopen that bug. Left-hand pattern is rewritten to the right-hand canonical form wherever
+	 * it appears.
 	 */
 	private val titleAliasPatterns = listOf(
 		// EU "Gladiator" vs NA "Deadlocked" (PS2/PS3 Ratchet & Clank).
@@ -40,7 +44,10 @@ object TrophyMatcher
 		// EU "Sly Raccoon" vs NA "Sly Cooper and the Thievius Raccoonus" (PS1/PS5 Sly Cooper) —
 		// confirmed via a real account's trophy data, which uses the NA name. "the" is stripped
 		// from the canonical form since normalize() only removes it after alias substitution runs.
-		Regex("\\bsly raccoon\\b") to "sly cooper and thievius raccoonus"
+		Regex("\\bsly raccoon\\b") to "sly cooper and thievius raccoonus",
+		// EU "Jak II: Renegade" vs Sony's plain "Jak II" (PS2/PS4) — "Renegade" was added only
+		// for the EU release; Sony's own trophy title never carries it.
+		Regex("\\bjak ii renegade\\b") to "jak ii"
 	)
 
 	/**

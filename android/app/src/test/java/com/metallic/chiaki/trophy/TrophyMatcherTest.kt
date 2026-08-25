@@ -223,6 +223,19 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `matches Jak II's EU catalogue subtitle against Sony's unsubtitled trophy title`() {
+        // Regression test (real account data, found via a full catalogue scan): the catalogue
+        // lists this as "Jak II: Renegade" (the EU release added "Renegade"), but Sony's own
+        // trophy title is plain "Jak II". Unlike the Gladiator/Sly Raccoon aliases above, this
+        // pair otherwise has the *same* shape as the Tools of Destruction/Quest for Booty
+        // regression above (catalogue = Sony's title + one extra word), so it needs its own
+        // alias rather than a generic loosening of the Pass 3 subsequence direction check.
+        val titles = listOf(title("NPWR12791_00", "Jak II", platform = "PS4"))
+        val match = TrophyMatcher.findBestMatch("Jak II™: Renegade", "ps4", titles)
+        assertEquals("NPWR12791_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)
