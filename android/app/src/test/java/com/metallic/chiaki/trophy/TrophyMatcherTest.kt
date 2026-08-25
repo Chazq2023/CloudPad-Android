@@ -42,6 +42,19 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `normalize strips an edition suffix with a branded modifier word`() {
+        // Regression test: "Ultimate Sith Edition" has an extra word ("Sith") between the
+        // edition tier ("Ultimate") and the literal "Edition" that the plain "<tier> Edition"
+        // pattern above doesn't cover — without stripping it, the catalogue name stays three
+        // tokens longer than Sony's bare "Star Wars: The Force Unleashed", which Pass 3 can only
+        // bridge when the catalogue name is the *shorter* side.
+        assertEquals(
+            "star wars force unleashed",
+            TrophyMatcher.normalize("STAR WARS™: THE FORCE UNLEASHED™: ULTIMATE SITH EDITION")
+        )
+    }
+
+    @Test
     fun `normalize drops standalone the tokens anywhere in the title`() {
         assertEquals(
             "tainted grail fall of avalon",
@@ -146,6 +159,18 @@ class TrophyMatcherTest {
         val titles = listOf(title("NPWR001_00", "Tainted Grail: The Fall of Avalon", platform = "PS5"))
         val match = TrophyMatcher.findBestMatch("Tainted Grail: Fall of Avalon", "ps5", titles)
         assertEquals("NPWR001_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches a catalogue title carrying an Ultimate Sith Edition suffix Sony's trophy title omits`() {
+        // Regression test: the PS3 catalogue lists this as "...Ultimate Sith Edition", but
+        // Sony's own trophy title is the bare "Star Wars: The Force Unleashed" — confirmed
+        // against a real account.
+        val titles = listOf(title("NPWR00156_00", "Star Wars: The Force Unleashed", platform = "PS3"))
+        val match = TrophyMatcher.findBestMatch(
+            "STAR WARS™: THE FORCE UNLEASHED™: ULTIMATE SITH EDITION", "ps3", titles
+        )
+        assertEquals("NPWR00156_00", match?.npCommunicationId)
     }
 
     @Test
