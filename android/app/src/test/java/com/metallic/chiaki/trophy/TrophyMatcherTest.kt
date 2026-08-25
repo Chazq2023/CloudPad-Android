@@ -196,6 +196,20 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `matches a franchise title released under a different regional subtitle`() {
+        // Regression test: the PS3 "Ratchet" spin-off shipped as "Gladiator" in EU catalogues
+        // but Sony's own trophy title (confirmed from a real account) uses the NA name
+        // "Deadlocked" — the two names share no words at all, so no amount of token/substring
+        // matching can bridge them without an explicit alias.
+        val titles = listOf(
+            title("NPWR02335_00", "Ratchet & Clank", platform = "PS3"),
+            title("NPWR02348_00", "Ratchet: Deadlocked™", platform = "PS3")
+        )
+        val match = TrophyMatcher.findBestMatch("Ratchet™: Gladiator", "ps3", titles)
+        assertEquals("NPWR02348_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `returns null when nothing matches`() {
         val titles = listOf(title("NPWR001_00", "Completely Different Game"))
         val match = TrophyMatcher.findBestMatch("God of War", "ps4", titles)

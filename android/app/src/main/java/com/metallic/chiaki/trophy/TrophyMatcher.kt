@@ -26,6 +26,20 @@ object TrophyMatcher
 	private val whitespacePattern = Regex("\\s+")
 
 	/**
+	 * A handful of games were released under an entirely different subtitle per region (the
+	 * catalogue and Sony's own trophyTitleName can each independently be either one, so this
+	 * canonicalises both to the same word), which no amount of token/substring matching can
+	 * bridge since the two names share no words in common. Left-hand pattern is rewritten to
+	 * the right-hand canonical form wherever it appears.
+	 */
+	private val titleAliasPatterns = listOf(
+		// EU "Gladiator" vs NA "Deadlocked" (PS2/PS3 Ratchet & Clank).
+		Regex("\\bgladiator\\b") to "deadlocked",
+		// EU "QForce" vs NA "Full Frontal Assault" (PS3 Ratchet & Clank).
+		Regex("\\bq\\s*force\\b") to "full frontal assault"
+	)
+
+	/**
 	 * Store/catalogue titles and Sony's own trophyTitleName are inconsistent about including
 	 * the word "the" (e.g. a catalogue entry "Tainted Grail: Fall of Avalon" vs Sony's trophy
 	 * title "Tainted Grail: The Fall of Avalon"), and the word can appear mid-title rather than
@@ -39,6 +53,9 @@ object TrophyMatcher
 		result = editionSuffixPattern.replace(result, "")
 		result = nonAlphaNumPattern.replace(result, " ")
 		result = whitespacePattern.replace(result, " ").trim()
+
+		for ((pattern, canonical) in titleAliasPatterns)
+			result = pattern.replace(result, canonical)
 
 		return result
 			.split(" ")

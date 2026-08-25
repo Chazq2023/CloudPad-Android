@@ -21,6 +21,7 @@ jobs:
         - Fixed several PS3 titles (e.g. Ratchet & Clank: Tools of Destruction, Quest for Booty, QForce) incorrectly showing an unrelated base game's trophies instead of correctly reporting no trophy data yet.
         - Fixed the in-stream Quick Settings trophy sort/filter dropdowns showing the unstyled system popup (white background, black text) instead of the app's themed style used everywhere else.
         - Sped up trophy loading by fetching independent trophy data (title list pages, trophy groups, and each group's definitions/earned status) concurrently instead of one request at a time.
+        - Fixed Ratchet & Clank: Gladiator not finding its trophies — Sony lists it under its NA name "Deadlocked", which shares no words with the EU catalogue title.
 
     steps:
       - name: Checkout repo
