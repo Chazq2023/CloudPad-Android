@@ -28,6 +28,7 @@ jobs:
         - Added trophy support for HD Collection discs whose bundled games each have their own separate Sony trophy list rather than one combined one (The Sly Trilogy, Uncharted: The Nathan Drake Collection, Devil May Cry HD Collection, Assassin's Creed The Ezio Collection) — each bundled game's trophies now appear together under its own heading.
         - Fixed a potential missed or mislabelled in-stream trophy-unlock popup for HD Collection discs, where two different bundled games could share the same internal trophy number.
         - Fixed Serious Sam Collection never finding its trophies — unlike the other HD Collection discs above, Sony gives it one single combined trophy list matching its own name, so it needs the normal match instead of being split per-game.
+        - Fixed The Sly Trilogy's first game not finding its trophies — Sony's trophy title for it on this disc is the bare "Sly 1", the same short-numbered naming convention as the third game.
 
     steps:
       - name: Checkout repo

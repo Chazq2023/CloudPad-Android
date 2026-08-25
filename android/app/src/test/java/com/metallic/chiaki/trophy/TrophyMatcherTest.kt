@@ -211,6 +211,16 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `a numbered short search name does not collide the same way a bare one does`() {
+        // Confirms the "Sly 1" candidate CollectionCatalog uses instead of bare "Sly Cooper" is
+        // actually safe: unlike "Sly Cooper" (a literal prefix of the unrelated "Sly Cooper:
+        // Thieves in Time"), no "1" token appears anywhere in that different game's title, so
+        // Pass 3 correctly finds no match for it instead of colliding.
+        val titles = listOf(title("NPWR03581_00", "Sly Cooper: Thieves in Time™", platform = "PS3"))
+        assertNull(TrophyMatcher.findBestMatch("Sly 1", "ps3", titles))
+    }
+
+    @Test
     fun `matches a franchise title released under a different regional subtitle`() {
         // Regression test: the PS3 "Ratchet" spin-off shipped as "Gladiator" in EU catalogues
         // but Sony's own trophy title (confirmed from a real account) uses the NA name
