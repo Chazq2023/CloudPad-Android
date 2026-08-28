@@ -154,10 +154,20 @@ object PsCloudOwnership
 		Regex("^the\\s+art\\s+of\\s+", RegexOption.IGNORE_CASE), // "The Art of Starfield"-style artbook naming
 		Regex("soundtrack", RegexOption.IGNORE_CASE),
 		Regex("content\\s*viewer", RegexOption.IGNORE_CASE),
-		Regex("bonus\\s*content", RegexOption.IGNORE_CASE), // e.g. "METAL GEAR SOLID: MASTER COLLECTION Vol.1 BONUS CONTENT"
+		Regex("bonus\\s*content", RegexOption.IGNORE_CASE), // e.g. generic "... BONUS CONTENT" cosmetic-extras bundles
 	)
 
-	private fun isDigitalExtra(name: String): Boolean = DIGITAL_EXTRA_NAME_PATTERNS.any { it.containsMatchIn(name) }
+	// Unlike a typical "bonus content" entitlement (cosmetic extras, digital manuals), the Metal
+	// Gear Solid: Master Collection Vol.1/Vol.2 "BONUS CONTENT" entitlement actually bundles
+	// playable classic titles (e.g. the original Metal Gear/Metal Gear 2 MSX games), which are
+	// themselves streamable — so it must not be caught by the generic bonus-content filter above.
+	private val DIGITAL_EXTRA_EXCEPTIONS = listOf(
+		Regex("master\\s*collection.*bonus\\s*content", RegexOption.IGNORE_CASE)
+	)
+
+	private fun isDigitalExtra(name: String): Boolean =
+		DIGITAL_EXTRA_NAME_PATTERNS.any { it.containsMatchIn(name) } &&
+			DIGITAL_EXTRA_EXCEPTIONS.none { it.containsMatchIn(name) }
 
 	/**
 	 * Picks the identifier Gaikai actually validates against when an entitlement's own `id` and

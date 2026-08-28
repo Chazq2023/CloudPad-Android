@@ -16,8 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed Star Wars: The Force Unleashed - Ultimate Sith Edition (and other titles with a similar multi-word edition suffix) not finding its trophies — Sony's trophy title omits the edition suffix entirely, and the matcher previously only recognized a single-word edition tier (e.g. "Digital Edition"), not a branded one like "Ultimate Sith Edition".
-        - Fixed inFAMOUS: Festival of Blood not finding its trophies — the catalogue's "– Full Game" storefront suffix isn't an edition label, so it wasn't being stripped before matching against Sony's bare trophy title.
+        - Fixed Metal Gear Solid: Master Collection Vol.1 and Vol.2 "Bonus Content" being hidden from the PS5 library — it was wrongly caught by the generic bonus-content filter even though it bundles playable, streamable classic titles.
 
     steps:
       - name: Checkout repo
