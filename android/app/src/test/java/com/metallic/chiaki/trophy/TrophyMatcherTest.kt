@@ -168,9 +168,21 @@ class TrophyMatcherTest {
 
     @Test
     fun `matches a catalogue title missing a mid-title the against Sony's trophy title`() {
-        val titles = listOf(title("NPWR001_00", "Tainted Grail: The Fall of Avalon", platform = "PS5"))
-        val match = TrophyMatcher.findBestMatch("Tainted Grail: Fall of Avalon", "ps5", titles)
+        val titles = listOf(title("NPWR001_00", "Some Game: The Subtitle", platform = "PS5"))
+        val match = TrophyMatcher.findBestMatch("Some Game: Subtitle", "ps5", titles)
         assertEquals("NPWR001_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches Tainted Grail's catalogue name against Sony's trophy title with the franchise prefix dropped`() {
+        // Regression test (real account data): the catalogue lists this as "Tainted Grail: Fall
+        // of Avalon", but Sony's own trophy title drops the "Tainted Grail" franchise prefix
+        // entirely, down to just "The Fall of Avalon" — a real, shorter Sony title (not just a
+        // mid-title "the", which is the separate, unrelated case above), so it needs its own
+        // alias the same way MGS2/MGS3 above do.
+        val titles = listOf(title("NPWR50845_00", "The Fall of Avalon", platform = "PS5"))
+        val match = TrophyMatcher.findBestMatch("Tainted Grail: Fall of Avalon", "ps5", titles)
+        assertEquals("NPWR50845_00", match?.npCommunicationId)
     }
 
     @Test
@@ -305,6 +317,30 @@ class TrophyMatcherTest {
         val titles = listOf(title("NPWR12791_00", "Jak II", platform = "PS4"))
         val match = TrophyMatcher.findBestMatch("Jak II™: Renegade", "ps4", titles)
         assertEquals("NPWR12791_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches MGS2's Master Collection catalogue name against Sony's bare trophy title`() {
+        // Regression test (real account data): the PS5 catalogue lists this as "METAL GEAR
+        // SOLID 2: Sons of Liberty - Master Collection Version", but unlike MGS1 in the same
+        // collection (whose Sony trophy title keeps the full catalogue name verbatim), Sony's
+        // trophy title here drops both the "- Master Collection Version" suffix and the "Sons
+        // of Liberty" subtitle down to the bare "METAL GEAR SOLID 2".
+        val titles = listOf(title("NPWR36710_00", "METAL GEAR SOLID 2", platform = "PS5"))
+        val match = TrophyMatcher.findBestMatch(
+            "METAL GEAR SOLID 2: Sons of Liberty - Master Collection Version", "ps5", titles
+        )
+        assertEquals("NPWR36710_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches MGS3's Master Collection catalogue name against Sony's bare trophy title`() {
+        // Regression test (real account data), same shape as the MGS2 case above.
+        val titles = listOf(title("NPWR36708_00", "METAL GEAR SOLID 3", platform = "PS5"))
+        val match = TrophyMatcher.findBestMatch(
+            "METAL GEAR SOLID 3: Snake Eater - Master Collection Version", "ps5", titles
+        )
+        assertEquals("NPWR36708_00", match?.npCommunicationId)
     }
 
     @Test
