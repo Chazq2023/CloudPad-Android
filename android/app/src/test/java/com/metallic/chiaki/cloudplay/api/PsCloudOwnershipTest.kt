@@ -712,18 +712,44 @@ class PsCloudOwnershipTest {
 
     @Test
     fun `'BONUS CONTENT' naming style is excluded`() {
-        // Metal Gear Solid: Master Collection Vol.1-style: a separate entitlement literally named
-        // "... BONUS CONTENT", same PSGD/featureType=3 shape as a real game.
+        // A generic "... BONUS CONTENT" entitlement (cosmetic extras/digital manual), same
+        // PSGD/featureType=3 shape as a real game.
+        val ents = listOf(
+            entitlement(
+                id = "EP0101-PPSA16257_00-GENERICBONUSCONT",
+                productId = "EP0101-PPSA16257_00-GENERICBONUSCONT",
+                packageType = "PSGD",
+                name = "SOME GAME: DELUXE EDITION BONUS CONTENT"
+            )
+        )
+
+        assertTrue(PsCloudOwnership.buildOwnedGamesFromEntitlements(ents).isEmpty())
+    }
+
+    @Test
+    fun `Metal Gear Solid Master Collection 'BONUS CONTENT' is not excluded`() {
+        // Unlike a typical "BONUS CONTENT" entitlement, the MGS Master Collection Vol.1/Vol.2
+        // bonus content actually bundles playable classic titles, so it must still show up.
         val ents = listOf(
             entitlement(
                 id = "EP0101-PPSA16257_00-MGSBONUSCONTENTS",
                 productId = "EP0101-PPSA16257_00-MGSBONUSCONTENTS",
                 packageType = "PSGD",
                 name = "METAL GEAR SOLID: MASTER COLLECTION Vol.1 BONUS CONTENT"
+            ),
+            entitlement(
+                id = "EP0101-PPSA16258_00-MGSBONUSCONTENTS2",
+                productId = "EP0101-PPSA16258_00-MGSBONUSCONTENTS2",
+                packageType = "PSGD",
+                name = "METAL GEAR SOLID: MASTER COLLECTION Vol.2 BONUS CONTENT"
             )
         )
 
-        assertTrue(PsCloudOwnership.buildOwnedGamesFromEntitlements(ents).isEmpty())
+        val games = PsCloudOwnership.buildOwnedGamesFromEntitlements(ents)
+
+        assertEquals(2, games.size)
+        assertTrue(games.any { it.name == "METAL GEAR SOLID: MASTER COLLECTION Vol.1 BONUS CONTENT" })
+        assertTrue(games.any { it.name == "METAL GEAR SOLID: MASTER COLLECTION Vol.2 BONUS CONTENT" })
     }
 
     @Test
