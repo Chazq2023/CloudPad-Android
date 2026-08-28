@@ -57,7 +57,23 @@ object TrophyMatcher
 		Regex("\\bsly raccoon\\b") to "sly cooper and thievius raccoonus",
 		// EU "Jak II: Renegade" vs Sony's plain "Jak II" (PS2/PS4) — "Renegade" was added only
 		// for the EU release; Sony's own trophy title never carries it.
-		Regex("\\bjak ii renegade\\b") to "jak ii"
+		Regex("\\bjak ii renegade\\b") to "jak ii",
+		// PS5 "Metal Gear Solid: Master Collection Vol.1" — confirmed against a real account:
+		// unlike MGS1 (whose Sony trophy title keeps the full "... - Master Collection Version"
+		// catalogue name verbatim, so it already matches via Pass 1), Sony's trophy titles for
+		// MGS2 and MGS3 drop both the "- Master Collection Version" suffix *and* the game's own
+		// subtitle, leaving just the bare numbered name ("METAL GEAR SOLID 2" / "METAL GEAR
+		// SOLID 3"). That makes the catalogue name the longer side by two extra words even after
+		// suffix stripping, which Pass 3's containment check deliberately never bridges (see its
+		// comment above) — so these need an explicit alias like Sly/Jak II rather than a general
+		// suffix pattern.
+		Regex("\\bmetal gear solid 2 sons of liberty master collection version\\b") to "metal gear solid 2",
+		Regex("\\bmetal gear solid 3 snake eater master collection version\\b") to "metal gear solid 3",
+		// Catalogue "Tainted Grail: Fall of Avalon" vs Sony's own trophy title "The Fall of
+		// Avalon" — confirmed against a real account: Sony drops the "Tainted Grail" franchise
+		// prefix entirely rather than just reordering "the" within it, so this is a real, shorter
+		// Sony title Pass 3's containment check can't bridge, same shape as the MGS2/3 case above.
+		Regex("\\btainted grail fall of avalon\\b") to "fall of avalon"
 	)
 
 	/**
@@ -79,9 +95,9 @@ object TrophyMatcher
 
 	/**
 	 * Store/catalogue titles and Sony's own trophyTitleName are inconsistent about including
-	 * the word "the" (e.g. a catalogue entry "Tainted Grail: Fall of Avalon" vs Sony's trophy
-	 * title "Tainted Grail: The Fall of Avalon"), and the word can appear mid-title rather than
-	 * as a leading article, so it must be dropped rather than just trimmed off the start.
+	 * the word "the" (e.g. a catalogue entry "Some Game: Subtitle" vs Sony's trophy title "Some
+	 * Game: The Subtitle"), and the word can appear mid-title rather than as a leading article,
+	 * so it must be dropped rather than just trimmed off the start.
 	 */
 	fun normalize(name: String): String
 	{

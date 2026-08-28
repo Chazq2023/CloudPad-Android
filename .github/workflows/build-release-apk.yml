@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed Metal Gear Solid: Master Collection Vol.1 and Vol.2 "Bonus Content" being hidden from the PS5 library — it was wrongly caught by the generic bonus-content filter even though it bundles playable, streamable classic titles.
+        - Fixed Metal Gear Solid 2 and 3 (Master Collection Vol.1, PS5) not showing any trophy progress — Sony's own trophy titles for these two drop both the "Master Collection Version" suffix and the game's own subtitle, which didn't match the fuller catalogue name.
+        - Fixed Tainted Grail: Fall of Avalon not showing any trophy progress on PS5 — Sony's trophy title drops the "Tainted Grail" franchise prefix entirely, which didn't match the catalogue name.
 
     steps:
       - name: Checkout repo
