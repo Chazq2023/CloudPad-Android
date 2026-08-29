@@ -18,6 +18,7 @@ jobs:
       RELEASE_NOTES: |-
         - Fixed Metal Gear Solid 2 and 3 (Master Collection Vol.1, PS5) not showing any trophy progress — Sony's own trophy titles for these two drop both the "Master Collection Version" suffix and the game's own subtitle, which didn't match the fuller catalogue name.
         - Fixed Tainted Grail: Fall of Avalon not showing any trophy progress on PS5 — Sony's trophy title drops the "Tainted Grail" franchise prefix entirely, which didn't match the catalogue name.
+        - Fixed PS Cloud streams sometimes starting with no audio — the audio output stream now retries with backoff if it fails to open, instead of giving up and leaving the whole session silent.
 
     steps:
       - name: Checkout repo
