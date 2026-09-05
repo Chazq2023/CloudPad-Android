@@ -33,6 +33,10 @@
 #include <sys/socket.h>
 #endif
 
+#if defined(__ANDROID__)
+#include <sys/resource.h>
+#endif
+
 
 // VERY similar to SCTP, see RFC 4960
 
@@ -1070,6 +1074,16 @@ static void takion_data_drop(uint64_t seq_num, void *elem_user, void *cb_user)
 static void *takion_thread_func(void *user)
 {
 	ChiakiTakion *takion = user;
+
+#if defined(__ANDROID__)
+	// Raise above default so the OS schedules us promptly under CPU contention (video decode,
+	// UI rendering, GC) instead of leaving incoming packets sitting in the kernel receive buffer
+	// — a delayed read here is what turns ordinary scheduling jitter into the packet-loss/RTT
+	// spikes seen in ADAPTIVE_PACING and connection-quality metrics. Same class of fix as the
+	// video decoder's own thread priorities (see video-decoder.c); -8 matches its display-class
+	// output thread since a stalled read starves decode of data just as surely as a late frame.
+	setpriority(PRIO_PROCESS, 0, -8);
+#endif
 
 	uint32_t seq_num_remote_initial;
 	if(takion_handshake(takion, &seq_num_remote_initial) != CHIAKI_ERR_SUCCESS)

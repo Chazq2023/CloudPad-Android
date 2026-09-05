@@ -9,6 +9,9 @@
 
 #include <oboe/Oboe.h>
 
+#include <chrono>
+#include <thread>
+
 #define BUFFER_CHUNK_SIZE 1024
 #define BUFFER_CHUNKS_COUNT 32
 
@@ -94,11 +97,26 @@ extern "C" void android_chiaki_audio_output_settings(uint32_t channels, uint32_t
 {
 	auto ao = reinterpret_cast<AudioOutput *>(audio_output);
 	ao->stream = nullptr;
-	if(!android_chiaki_audio_output_open(ao, channels, rate, oboe::PerformanceMode::LowLatency))
+
+	// AAudio can transiently fail to open a stream right at session start (e.g. AAUDIO_ERROR_UNAVAILABLE
+	// while the audio server is still settling from the video decoder/surface setup happening at the same
+	// moment), and this settings callback only ever fires once per stream start — so a failure here isn't
+	// retried later and leaves the session silent for its whole duration. Retry a few times with backoff
+	// before giving up, since these errors typically clear within tens to a couple hundred milliseconds.
+	constexpr int kMaxAttempts = 4;
+	for(int attempt = 1; attempt <= kMaxAttempts; attempt++)
 	{
-		CHIAKI_LOGW(ao->log, "Audio Output retrying without low-latency mode");
-		android_chiaki_audio_output_open(ao, channels, rate, oboe::PerformanceMode::None);
+		if(android_chiaki_audio_output_open(ao, channels, rate, oboe::PerformanceMode::LowLatency))
+			return;
+		if(android_chiaki_audio_output_open(ao, channels, rate, oboe::PerformanceMode::None))
+			return;
+		if(attempt < kMaxAttempts)
+		{
+			CHIAKI_LOGW(ao->log, "Audio Output failed to open in both performance modes, retrying (attempt %d/%d)", attempt, kMaxAttempts);
+			std::this_thread::sleep_for(std::chrono::milliseconds(100 * attempt));
+		}
 	}
+	CHIAKI_LOGE(ao->log, "Audio Output giving up opening Oboe stream after %d attempts — stream will be silent", kMaxAttempts);
 }
 
 extern "C" void android_chiaki_audio_output_frame(int16_t *buf, size_t samples_count, void *audio_output)

@@ -16,8 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed Metal Gear Solid 2 and 3 (Master Collection Vol.1, PS5) not showing any trophy progress — Sony's own trophy titles for these two drop both the "Master Collection Version" suffix and the game's own subtitle, which didn't match the fuller catalogue name.
-        - Fixed Tainted Grail: Fall of Avalon not showing any trophy progress on PS5 — Sony's trophy title drops the "Tainted Grail" franchise prefix entirely, which didn't match the catalogue name.
+        - Fixed Remote Play Over Internet failing to connect with "failed to create PSN session" due to a missing certificate in the app's trust store.
+        - Fixed intermittent ping spikes during Remote Play by keeping the WiFi radio out of power-save mode and prioritizing network packet handling during streaming.
+        - Fixed God of War Collection (PS3) showing no trophies.
+        - Fixed manual PS4 registration failing when the console-version selector defaulted to PS5 instead of the actual console — thanks to DrPopcoin for spotting this one!
 
     steps:
       - name: Checkout repo

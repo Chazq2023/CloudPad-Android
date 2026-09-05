@@ -90,6 +90,52 @@ JavaVM *global_vm;
 // Path to the CA bundle created at startup for curl+mbedTLS
 static char g_ca_bundle_path[512] = {0};
 
+// Bump this when EXTRA_CA_CERTS_PEM changes so already-created bundles on devices get regenerated.
+#define CA_BUNDLE_VERSION_MARKER "# cloudpad-ca-bundle-version: 2\n"
+
+// Sony's PSN push-notification service (used for Remote Play Over Internet holepunching, e.g.
+// *.np.communication.playstation.net) fails to send its "COMODO RSA Domain Validation Secure
+// Server CA" intermediate certificate during the TLS handshake. mbedTLS (unlike Android's own
+// network stack) does not fetch missing intermediates, so verification fails even though the
+// root ("COMODO RSA Certification Authority") is present in the system trust store. Bundle the
+// intermediate ourselves so the chain can be completed.
+static const char *EXTRA_CA_CERTS_PEM =
+"-----BEGIN CERTIFICATE-----\n"
+"MIIGCDCCA/CgAwIBAgIQKy5u6tl1NmwUim7bo3yMBzANBgkqhkiG9w0BAQwFADCB\n"
+"hTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4G\n"
+"A1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNV\n"
+"BAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTQwMjEy\n"
+"MDAwMDAwWhcNMjkwMjExMjM1OTU5WjCBkDELMAkGA1UEBhMCR0IxGzAZBgNVBAgT\n"
+"EkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMR\n"
+"Q09NT0RPIENBIExpbWl0ZWQxNjA0BgNVBAMTLUNPTU9ETyBSU0EgRG9tYWluIFZh\n"
+"bGlkYXRpb24gU2VjdXJlIFNlcnZlciBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEP\n"
+"ADCCAQoCggEBAI7CAhnhoFmk6zg1jSz9AdDTScBkxwtiBUUWOqigwAwCfx3M28Sh\n"
+"bXcDow+G+eMGnD4LgYqbSRutA776S9uMIO3Vzl5ljj4Nr0zCsLdFXlIvNN5IJGS0\n"
+"Qa4Al/e+Z96e0HqnU4A7fK31llVvl0cKfIWLIpeNs4TgllfQcBhglo/uLQeTnaG6\n"
+"ytHNe+nEKpooIZFNb5JPJaXyejXdJtxGpdCsWTWM/06RQ1A/WZMebFEh7lgUq/51\n"
+"UHg+TLAchhP6a5i84DuUHoVS3AOTJBhuyydRReZw3iVDpA3hSqXttn7IzW3uLh0n\n"
+"c13cRTCAquOyQQuvvUSH2rnlG51/ruWFgqUCAwEAAaOCAWUwggFhMB8GA1UdIwQY\n"
+"MBaAFLuvfgI9+qbxPISOre44mOzZMjLUMB0GA1UdDgQWBBSQr2o6lFoL2JDqElZz\n"
+"30O0Oija5zAOBgNVHQ8BAf8EBAMCAYYwEgYDVR0TAQH/BAgwBgEB/wIBADAdBgNV\n"
+"HSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwGwYDVR0gBBQwEjAGBgRVHSAAMAgG\n"
+"BmeBDAECATBMBgNVHR8ERTBDMEGgP6A9hjtodHRwOi8vY3JsLmNvbW9kb2NhLmNv\n"
+"bS9DT01PRE9SU0FDZXJ0aWZpY2F0aW9uQXV0aG9yaXR5LmNybDBxBggrBgEFBQcB\n"
+"AQRlMGMwOwYIKwYBBQUHMAKGL2h0dHA6Ly9jcnQuY29tb2RvY2EuY29tL0NPTU9E\n"
+"T1JTQUFkZFRydXN0Q0EuY3J0MCQGCCsGAQUFBzABhhhodHRwOi8vb2NzcC5jb21v\n"
+"ZG9jYS5jb20wDQYJKoZIhvcNAQEMBQADggIBAE4rdk+SHGI2ibp3wScF9BzWRJ2p\n"
+"mj6q1WZmAT7qSeaiNbz69t2Vjpk1mA42GHWx3d1Qcnyu3HeIzg/3kCDKo2cuH1Z/\n"
+"e+FE6kKVxF0NAVBGFfKBiVlsit2M8RKhjTpCipj4SzR7JzsItG8kO3KdY3RYPBps\n"
+"P0/HEZrIqPW1N+8QRcZs2eBelSaz662jue5/DJpmNXMyYE7l3YphLG5SEXdoltMY\n"
+"dVEVABt0iN3hxzgEQyjpFv3ZBdRdRydg1vs4O2xyopT4Qhrf7W8GjEXCBgCq5Ojc\n"
+"2bXhc3js9iPc0d1sjhqPpepUfJa3w/5Vjo1JXvxku88+vZbrac2/4EjxYoIQ5QxG\n"
+"V/Iz2tDIY+3GH5QFlkoakdH368+PUq4NCNk+qKBR6cGHdNXJ93SrLlP7u3r7l+L4\n"
+"HyaPs9Kg4DdbKDsx5Q5XLVq4rXmsXiBmGqW5prU5wfWYQ//u+aen/e7KJD2AFsQX\n"
+"j4rBYKEMrltDR5FL1ZoXX/nUh8HCjLfn4g8wGTeGrODcQgPmlKidrv0PJFGUzpII\n"
+"0fxQ8ANAe4hZ7Q7drNJ3gjTcBpUC2JD5Leo31Rpg0Gcg19hCC0Wvgmje3WYkN5Ap\n"
+"lBlGGSW4gNfL1IYoakRwJiNiqZ+Gb7+6kHDSVneFeO/qJakXzlByjAA6quPbYzSf\n"
+"+AZxAeKCINT+b72x\n"
+"-----END CERTIFICATE-----\n";
+
 static void android_create_ca_bundle(const char *cache_dir)
 {
 	// mbedTLS (used by curl on Android) requires a single PEM bundle file via CURLOPT_CAINFO.
@@ -98,14 +144,29 @@ static void android_create_ca_bundle(const char *cache_dir)
 	const char *ca_dir = "/system/etc/security/cacerts";
 	snprintf(g_ca_bundle_path, sizeof(g_ca_bundle_path), "%s/ca-bundle.pem", cache_dir);
 
-	// Check if bundle already exists and is non-empty (skip recreation)
+	// Check if bundle already exists, is non-empty, and matches the current version marker
+	// (skip recreation). The marker lets us force regeneration on already-installed devices
+	// when EXTRA_CA_CERTS_PEM changes.
 	struct stat st;
 	if(stat(g_ca_bundle_path, &st) == 0 && st.st_size > 10000)
-		return;
+	{
+		FILE *existing = fopen(g_ca_bundle_path, "r");
+		if(existing)
+		{
+			char marker[sizeof(CA_BUNDLE_VERSION_MARKER)] = {0};
+			size_t read = fread(marker, 1, sizeof(CA_BUNDLE_VERSION_MARKER) - 1, existing);
+			fclose(existing);
+			if(read == sizeof(CA_BUNDLE_VERSION_MARKER) - 1 && strcmp(marker, CA_BUNDLE_VERSION_MARKER) == 0)
+				return;
+		}
+	}
 
 	FILE *bundle = fopen(g_ca_bundle_path, "w");
 	if(!bundle)
 		return;
+
+	fwrite(CA_BUNDLE_VERSION_MARKER, 1, strlen(CA_BUNDLE_VERSION_MARKER), bundle);
+	fwrite(EXTRA_CA_CERTS_PEM, 1, strlen(EXTRA_CA_CERTS_PEM), bundle);
 
 	DIR *dir = opendir(ca_dir);
 	if(!dir)
