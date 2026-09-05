@@ -74,15 +74,16 @@ object TrophyMatcher
 		// prefix entirely rather than just reordering "the" within it, so this is a real, shorter
 		// Sony title Pass 3's containment check can't bridge, same shape as the MGS2/3 case above.
 		Regex("\\btainted grail fall of avalon\\b") to "fall of avalon",
-		// PS3 "God of War Collection" disc — confirmed against a real account: the catalogue
-		// lists the two bundled remasters as separate entries ("God of War® HD" / "God of War®
-		// II HD"), but unlike the Sly Trilogy/DMC HD Collection discs (see CollectionCatalog),
-		// Sony gives this disc a single combined trophy title covering both games' trophies
-		// together, named just "God of War® Trophies" — sharing neither game's own "hd"/"ii hd"
-		// trailing token, so Pass 3's containment check can't bridge either one. Both catalogue
-		// names are aliased to the same canonical form so either resolves to that one title.
+		// PS3 "God of War Collection" disc — confirmed against a real account: each bundled
+		// remaster gets its own separate Sony trophy title, same per-game split as the Sly
+		// Trilogy/DMC HD Collection discs (see CollectionCatalog) — Sony just doesn't create a
+		// game's title at all until something in it is actually launched/earned (confirmed
+		// on-device: "God of War® II Trophies" appeared, sequential npCommunicationId and all,
+		// only after playing God of War II for the first time). Each title's name drops the
+		// catalogue's own "hd"/"ii hd" trailing token in favor of "trophies", which Pass 3's
+		// containment check can't bridge, so both need their own alias.
 		Regex("\\bgod of war hd\\b") to "god of war trophies",
-		Regex("\\bgod of war ii hd\\b") to "god of war trophies"
+		Regex("\\bgod of war ii hd\\b") to "god of war ii trophies"
 	)
 
 	/**

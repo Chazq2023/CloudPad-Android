@@ -186,21 +186,29 @@ class TrophyMatcherTest {
     }
 
     @Test
-    fun `matches God of War HD's catalogue name against Sony's single combined PS3 trophy title`() {
+    fun `matches God of War HD's catalogue name against its own PS3 trophy title`() {
         // Regression test (real account data): the PS3 catalogue lists this bundled remaster as
-        // "God of War® HD", but Sony gives the whole God of War Collection disc one combined
-        // trophy title, "God of War® Trophies" — sharing neither game's own "hd" trailing token,
-        // so Pass 3's containment check can't bridge it, same shape as the MGS2/3 case above.
+        // "God of War® HD", but Sony's own trophy title is "God of War® Trophies" — sharing
+        // neither game's own "hd" trailing token, so Pass 3's containment check can't bridge it,
+        // same shape as the MGS2/3 case above.
         val titles = listOf(title("NPWR00950_00", "God of War® Trophies", platform = "PS3"))
         val match = TrophyMatcher.findBestMatch("God of War® HD", "ps3", titles)
         assertEquals("NPWR00950_00", match?.npCommunicationId)
     }
 
     @Test
-    fun `matches God of War II HD's catalogue name against the same combined PS3 trophy title`() {
-        val titles = listOf(title("NPWR00950_00", "God of War® Trophies", platform = "PS3"))
+    fun `matches God of War II HD's catalogue name against its own separate PS3 trophy title`() {
+        // Regression test (real account data): each bundled remaster gets its own separate Sony
+        // trophy title (confirmed on-device — "God of War® II Trophies" only appeared in the
+        // account's title list, with the next sequential npCommunicationId, after actually
+        // launching/earning something in God of War II for the first time), not a single combined
+        // list shared with God of War HD.
+        val titles = listOf(
+            title("NPWR00950_00", "God of War® Trophies", platform = "PS3"),
+            title("NPWR00951_00", "God of War® II Trophies", platform = "PS3")
+        )
         val match = TrophyMatcher.findBestMatch("God of War® II HD", "ps3", titles)
-        assertEquals("NPWR00950_00", match?.npCommunicationId)
+        assertEquals("NPWR00951_00", match?.npCommunicationId)
     }
 
     @Test
