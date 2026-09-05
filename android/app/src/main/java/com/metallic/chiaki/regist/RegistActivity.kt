@@ -26,6 +26,14 @@ class RegistActivity: AppCompatActivity(), RevealActivity
 		const val EXTRA_HOST = "regist_host"
 		const val EXTRA_BROADCAST = "regist_broadcast"
 		const val EXTRA_ASSIGN_MANUAL_HOST_ID = "assign_manual_host_id"
+		/** Whether the console being registered is a PS5, when already known from local/PSN
+		 *  discovery — pre-selects the matching radio button instead of leaving the console-version
+		 *  picker on its PS5 default (see [RegistViewModel.ps4Version]), which otherwise sends a
+		 *  PS5-formatted registration request to an actual PS4 and times out (confirmed via a real
+		 *  user report: "Regist timed out waiting for search response" for a PS4 console). Absent
+		 *  when the console type genuinely isn't known upfront (e.g. the standalone "Register"
+		 *  button with no host context) — the user must pick manually in that case. */
+		const val EXTRA_IS_PS5 = "regist_is_ps5"
 
 		private const val PIN_LENGTH = 8
 
@@ -52,6 +60,14 @@ class RegistActivity: AppCompatActivity(), RevealActivity
 
 		binding.hostEditText.setText(intent.getStringExtra(EXTRA_HOST) ?: "255.255.255.255")
 		binding.broadcastCheckBox.isChecked = intent.getBooleanExtra(EXTRA_BROADCAST, true)
+
+		if(savedInstanceState == null && intent.hasExtra(EXTRA_IS_PS5))
+		{
+			viewModel.ps4Version.value = if(intent.getBooleanExtra(EXTRA_IS_PS5, true))
+				RegistViewModel.ConsoleVersion.PS5
+			else
+				RegistViewModel.ConsoleVersion.PS4_GE_8
+		}
 
 		binding.registButton.setOnClickListener { doRegist() }
 		binding.obtainAccountIdButton.setOnClickListener { obtainAccountId() }

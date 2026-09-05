@@ -492,6 +492,7 @@ class RemotePlayFragment : Fragment()
 		Intent(requireContext(), RegistActivity::class.java).let {
 			it.putExtra(RegistActivity.EXTRA_HOST, host.host)
 			it.putExtra(RegistActivity.EXTRA_BROADCAST, false)
+			it.putExtra(RegistActivity.EXTRA_IS_PS5, host.isPS5)
 			if(host is ManualDisplayHost)
 				it.putExtra(RegistActivity.EXTRA_ASSIGN_MANUAL_HOST_ID, host.manualHost.id)
 			startActivity(it)
@@ -564,6 +565,7 @@ class RemotePlayFragment : Fragment()
 					Intent(requireContext(), RegistActivity::class.java).let {
 						it.putExtra(RegistActivity.EXTRA_HOST, "")
 						it.putExtra(RegistActivity.EXTRA_BROADCAST, true)
+						it.putExtra(RegistActivity.EXTRA_IS_PS5, host.isPS5)
 						startActivity(it)
 					}
 				}
