@@ -16,7 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed PS Cloud streams sometimes starting with no audio — the audio output stream now retries with backoff if it fails to open, instead of giving up and leaving the whole session silent.
+        - Fixed Remote Play Over Internet failing to connect with "failed to create PSN session" due to a missing certificate in the app's trust store.
+        - Fixed intermittent ping spikes during Remote Play by keeping the WiFi radio out of power-save mode and prioritizing network packet handling during streaming.
+        - Fixed God of War Collection (PS3) showing no trophies.
+        - Fixed manual PS4 registration failing when the console-version selector defaulted to PS5 instead of the actual console — thanks to DrPopcoin for spotting this one!
 
     steps:
       - name: Checkout repo
