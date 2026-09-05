@@ -3,11 +3,13 @@
 package com.metallic.chiaki.session
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.SurfaceTexture
 import android.media.AudioFormat
 import android.media.AudioRecord
 import android.media.MediaRecorder
+import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -56,6 +58,30 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 	 *  [enterBackground]) — kept around so repeated background/foreground cycles within the same
 	 *  session don't reallocate a GL context each time. Released in [close]. */
 	private var backgroundDrainSurface: com.metallic.chiaki.stream.BackgroundDrainSurface? = null
+
+	/** Held for the duration of an active connection so the WiFi radio doesn't drop into
+	 *  power-save mode between packets — without it, the radio dozes and has to wake back up on
+	 *  each new packet, which shows up as erratic 100-300ms RTT spikes on top of otherwise-low
+	 *  ping. Acquired in [resume], released in [shutdown]. */
+	private var wifiLock: WifiManager.WifiLock? = null
+
+	private fun acquireWifiLock()
+	{
+		if(wifiLock != null)
+			return
+		val wifiManager = input.context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager ?: return
+		@Suppress("DEPRECATION")
+		wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "CloudPad:streaming").apply {
+			setReferenceCounted(false)
+			acquire()
+		}
+	}
+
+	private fun releaseWifiLock()
+	{
+		wifiLock?.let { if(it.isHeld) it.release() }
+		wifiLock = null
+	}
 
 	/** True while the decoder is pointed at [backgroundDrainSurface] instead of the real
 	 *  on-screen [surface] — see [enterBackground] / [exitBackground]. */
@@ -306,6 +332,7 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 	fun shutdown(onFullyStopped: (() -> Unit)? = null)
 	{
 		Log.i("StreamSession", "shutdown: session=${session != null}")
+		releaseWifiLock()
 		connectGeneration++
 		// Mic capture thread must be fully joined before the native session pointer can be
 		// freed below (on the background dispose thread) — otherwise a concurrent
@@ -400,6 +427,7 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		Log.i("StreamSession", "resume: session=${session != null}")
 		if(session != null)
 			return
+		acquireWifiLock()
 		_state.value = StreamStateConnecting
 
 		val duid = connectInfo.duid
