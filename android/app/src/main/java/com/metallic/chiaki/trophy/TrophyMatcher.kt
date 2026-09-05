@@ -73,7 +73,16 @@ object TrophyMatcher
 		// Avalon" — confirmed against a real account: Sony drops the "Tainted Grail" franchise
 		// prefix entirely rather than just reordering "the" within it, so this is a real, shorter
 		// Sony title Pass 3's containment check can't bridge, same shape as the MGS2/3 case above.
-		Regex("\\btainted grail fall of avalon\\b") to "fall of avalon"
+		Regex("\\btainted grail fall of avalon\\b") to "fall of avalon",
+		// PS3 "God of War Collection" disc — confirmed against a real account: the catalogue
+		// lists the two bundled remasters as separate entries ("God of War® HD" / "God of War®
+		// II HD"), but unlike the Sly Trilogy/DMC HD Collection discs (see CollectionCatalog),
+		// Sony gives this disc a single combined trophy title covering both games' trophies
+		// together, named just "God of War® Trophies" — sharing neither game's own "hd"/"ii hd"
+		// trailing token, so Pass 3's containment check can't bridge either one. Both catalogue
+		// names are aliased to the same canonical form so either resolves to that one title.
+		Regex("\\bgod of war hd\\b") to "god of war trophies",
+		Regex("\\bgod of war ii hd\\b") to "god of war trophies"
 	)
 
 	/**

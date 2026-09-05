@@ -186,6 +186,24 @@ class TrophyMatcherTest {
     }
 
     @Test
+    fun `matches God of War HD's catalogue name against Sony's single combined PS3 trophy title`() {
+        // Regression test (real account data): the PS3 catalogue lists this bundled remaster as
+        // "God of War® HD", but Sony gives the whole God of War Collection disc one combined
+        // trophy title, "God of War® Trophies" — sharing neither game's own "hd" trailing token,
+        // so Pass 3's containment check can't bridge it, same shape as the MGS2/3 case above.
+        val titles = listOf(title("NPWR00950_00", "God of War® Trophies", platform = "PS3"))
+        val match = TrophyMatcher.findBestMatch("God of War® HD", "ps3", titles)
+        assertEquals("NPWR00950_00", match?.npCommunicationId)
+    }
+
+    @Test
+    fun `matches God of War II HD's catalogue name against the same combined PS3 trophy title`() {
+        val titles = listOf(title("NPWR00950_00", "God of War® Trophies", platform = "PS3"))
+        val match = TrophyMatcher.findBestMatch("God of War® II HD", "ps3", titles)
+        assertEquals("NPWR00950_00", match?.npCommunicationId)
+    }
+
+    @Test
     fun `matches a catalogue title carrying an Ultimate Sith Edition suffix Sony's trophy title omits`() {
         // Regression test: the PS3 catalogue lists this as "...Ultimate Sith Edition", but
         // Sony's own trophy title is the bare "Star Wars: The Force Unleashed" — confirmed
