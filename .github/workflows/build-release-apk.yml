@@ -18,7 +18,7 @@ jobs:
       RELEASE_NOTES: |-
         - Fixed Remote Play Over Internet failing to connect with "failed to create PSN session" due to a missing certificate in the app's trust store.
         - Fixed intermittent ping spikes during Remote Play by keeping the WiFi radio out of power-save mode and prioritizing network packet handling during streaming.
-        - Fixed God of War Collection (PS3) showing no trophies.
+        - Fixed God of War Collection (PS3) trophies not showing, and God of War II now correctly shows its own trophy list instead of God of War's.
         - Fixed manual PS4 registration failing when the console-version selector defaulted to PS5 instead of the actual console — thanks to DrPopcoin for spotting this one!
 
     steps:
