@@ -10,7 +10,9 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
-import android.widget.Toast
+import android.widget.TextView
+import androidx.annotation.StringRes
+import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.browser.customtabs.CustomTabsIntent
@@ -252,7 +254,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		val listCooldown = forceRefresh && repository.catalogRefreshedRecently()
 		listRefreshSkipped = listCooldown
 		if (listCooldown)
-			Toast.makeText(this, R.string.add_game_list_recent, Toast.LENGTH_LONG).show()
+			notify(R.string.add_game_list_recent)
 
 		loadJob = lifecycleScope.launch {
 			when (val result = repository.fetchPs5GamesNotInLibrary(npsso, forceRefresh && !listCooldown))
@@ -294,9 +296,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 					allGames = allGames.taggedWithPsPlus(result.keys)
 					plusState = PlusState.READY
 					if (forceRefresh && result.refreshSkipped && !listRefreshSkipped)
-						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_recent, Toast.LENGTH_LONG).show()
+						notify(R.string.add_game_plus_recent)
 					else if (forceRefresh && !result.isFresh)
-						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_not_refreshed, Toast.LENGTH_LONG).show()
+						notify(R.string.add_game_plus_not_refreshed)
 				}
 				is PsPlusResult.Failed ->
 				{
@@ -402,7 +404,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	{
 		if (game.conceptUrl.isEmpty())
 		{
-			Toast.makeText(this, R.string.cloud_add_to_library_no_url_message, Toast.LENGTH_LONG).show()
+			notify(R.string.cloud_add_to_library_no_url_message)
 			return
 		}
 		if (availabilityJob?.isActive == true) return
@@ -455,17 +457,30 @@ class AddGameToLibraryActivity : AppCompatActivity()
 					hiddenGames = hiddenGames.filter { it.productId != game.productId }
 					allGames = (allGames + restored).sortedBy { it.name.lowercase() }
 					showGames()
-					Toast.makeText(this@AddGameToLibraryActivity, getString(R.string.add_game_available_again, game.name), Toast.LENGTH_LONG).show()
+					notify(getString(R.string.add_game_available_again, game.name))
 					launchStorePage(game)
 				}
 				RecheckOutcome.UNAVAILABLE -> showUnavailableDialog(game)
 				RecheckOutcome.UNKNOWN ->
-					Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_recheck_failed, Toast.LENGTH_LONG).show()
+					notify(R.string.add_game_recheck_failed)
 				RecheckOutcome.LIMIT_REACHED ->
-					Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_recheck_limit, Toast.LENGTH_LONG).show()
+					notify(R.string.add_game_recheck_limit)
 			}
 		}
 	}
+
+	/**
+	 * Short notices for this page. A Snackbar rather than a Toast: Toasts cut longer text off on some
+	 * devices, and these messages ("already refreshed within the last hour…") need a couple of lines.
+	 */
+	private fun notify(message: CharSequence)
+	{
+		Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).also { bar ->
+			bar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)?.maxLines = 4
+		}.show()
+	}
+
+	private fun notify(@StringRes message: Int) = notify(getString(message))
 
 	/** Sony sign-in happens in Chrome (see PsnLoginActivity), so a Custom Tab reuses that session. */
 	private fun launchStorePage(game: CloudGame)
@@ -486,7 +501,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			catch (e2: Exception)
 			{
 				Log.e(TAG, "Failed to open ${game.conceptUrl}", e2)
-				Toast.makeText(this, R.string.cloud_failed_to_open_browser_toast, Toast.LENGTH_SHORT).show()
+				notify(R.string.cloud_failed_to_open_browser_toast)
 			}
 		}
 	}
