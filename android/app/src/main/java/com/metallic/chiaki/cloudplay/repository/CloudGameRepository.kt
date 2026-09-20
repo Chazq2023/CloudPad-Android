@@ -55,6 +55,12 @@ class CloudGameRepository(
 		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
 		private const val PS_PLUS_FAILURE_FILE = "last_failure.txt"
 
+		/** The Add Game page's Refresh reloads the game list from Sony at most this often. */
+		internal const val CATALOG_REFRESH_COOLDOWN_MS = 60L * 60 * 1000
+
+		internal fun isCatalogRefreshCooldownActive(catalogLastModifiedMs: Long, nowMs: Long): Boolean =
+			catalogLastModifiedMs > 0 && nowMs - catalogLastModifiedMs in 0 until CATALOG_REFRESH_COOLDOWN_MS
+
 		/** After a failed PS Plus lookup, don't try Sony's store API again for this long, however
 		 *  often the page is opened or Refresh is tapped — a broken or blocking API shouldn't be
 		 *  retried on every visit. */
@@ -151,6 +157,14 @@ class CloudGameRepository(
 			}
 		}
 	}
+
+	/**
+	 * True when the full PS5 catalog was fetched from Sony less than an hour ago (the saved copy's
+	 * age), so a forced refresh of it would repeat ~14 requests for nothing. Callers use the saved
+	 * list instead — see AddGameToLibraryActivity's Refresh button.
+	 */
+	fun catalogRefreshedRecently(nowMs: Long = System.currentTimeMillis()): Boolean =
+		isCatalogRefreshCooldownActive(File(cacheDir, PSCLOUD_CACHE_FILE).lastModified(), nowMs)
 
 	/**
 	 * Every known streamable PS5 game the user has NOT added to their library — backs the

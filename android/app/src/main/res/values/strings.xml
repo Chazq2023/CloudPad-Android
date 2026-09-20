@@ -63,6 +63,7 @@
     <string name="add_game_recheck_failed">Couldn\'t check the store right now. Try again in a moment.</string>
     <string name="add_game_recheck_limit">You\'ve checked a lot of games recently. Try again in a little while.</string>
     <string name="add_game_plus_loading">Loading PS Plus information…</string>
+    <string name="add_game_list_recent">The game list was already refreshed within the last hour, so this is the saved list.</string>
     <string name="add_game_plus_recent">PS Plus information was already refreshed within the last hour.</string>
     <string name="add_game_unavailable_title">Not available</string>
     <string name="add_game_unavailable_message">%1$s can\'t currently be bought or added to your library on the PlayStation Store, so it has been removed from this list.</string>

@@ -77,6 +77,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private var plusState = PlusState.LOADING
 	private var plusKeys: Set<String>? = null
 	private var plusJob: Job? = null
+	/** The last Refresh tap was answered from the saved list (inside the hour); its toast says so, so
+	 *  the PS Plus lookup doesn't add a second one. */
+	private var listRefreshSkipped = false
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
@@ -244,8 +247,15 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		binding.emptyStateText.visibility = View.GONE
 		binding.refreshButton.isEnabled = false
 
+		// Refresh reloads the list from Sony at most once an hour (like the PS Plus lookup); inside
+		// that hour the saved list is shown again with no requests.
+		val listCooldown = forceRefresh && repository.catalogRefreshedRecently()
+		listRefreshSkipped = listCooldown
+		if (listCooldown)
+			Toast.makeText(this, R.string.add_game_list_recent, Toast.LENGTH_LONG).show()
+
 		loadJob = lifecycleScope.launch {
-			when (val result = repository.fetchPs5GamesNotInLibrary(npsso, forceRefresh))
+			when (val result = repository.fetchPs5GamesNotInLibrary(npsso, forceRefresh && !listCooldown))
 			{
 				is PsnResult.Success ->
 				{
@@ -283,7 +293,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 					plusKeys = result.keys
 					allGames = allGames.taggedWithPsPlus(result.keys)
 					plusState = PlusState.READY
-					if (forceRefresh && result.refreshSkipped)
+					if (forceRefresh && result.refreshSkipped && !listRefreshSkipped)
 						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_recent, Toast.LENGTH_LONG).show()
 					else if (forceRefresh && !result.isFresh)
 						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_not_refreshed, Toast.LENGTH_LONG).show()

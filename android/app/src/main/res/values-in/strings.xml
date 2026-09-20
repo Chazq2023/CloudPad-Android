@@ -61,6 +61,7 @@
     <string name="add_game_recheck_failed">Tidak dapat memeriksa toko saat ini. Coba lagi sebentar lagi.</string>
     <string name="add_game_recheck_limit">Anda baru saja memeriksa banyak game. Coba lagi beberapa saat lagi.</string>
     <string name="add_game_plus_loading">Memuat informasi PS Plus…</string>
+    <string name="add_game_list_recent">Daftar game sudah disegarkan dalam satu jam terakhir, jadi ini adalah daftar tersimpan.</string>
     <string name="add_game_plus_recent">Informasi PS Plus sudah disegarkan dalam satu jam terakhir.</string>
     <string name="add_game_unavailable_title">Tidak tersedia</string>
     <string name="add_game_unavailable_message">%1$s saat ini tidak dapat dibeli atau ditambahkan ke pustaka Anda di PlayStation Store, jadi telah dihapus dari daftar ini.</string>

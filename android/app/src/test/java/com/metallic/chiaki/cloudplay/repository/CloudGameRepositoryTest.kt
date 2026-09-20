@@ -450,6 +450,38 @@ class CloudGameRepositoryTest {
         assertEquals(listOf("en-US"), fetcher.locales)
     }
 
+    // --- Add Game Refresh limit (game list) ---
+
+    @Test
+    fun `the game list counts as refreshed recently for an hour after it was fetched`() {
+        val now = 10_000_000_000L
+        val hour = CloudGameRepository.CATALOG_REFRESH_COOLDOWN_MS
+
+        assertTrue(CloudGameRepository.isCatalogRefreshCooldownActive(now - 1_000, now))
+        assertTrue(CloudGameRepository.isCatalogRefreshCooldownActive(now - hour + 1, now))
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(now - hour, now))
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(now - 5 * hour, now))
+    }
+
+    @Test
+    fun `no saved game list, or a clock set before it, is never a cooldown`() {
+        val now = 10_000_000_000L
+
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(0L, now))          // file missing
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(now + 5_000, now)) // clock went back
+    }
+
+    @Test
+    fun `the repository reads the saved catalog's age from disk`() {
+        assertTrue("nothing saved yet", !repository.catalogRefreshedRecently())
+
+        val file = writeCacheFile("pscloud_catalog.json", PSNOW_CACHE_GAME_JSON)
+        assertTrue("just written", repository.catalogRefreshedRecently())
+
+        file.setLastModified(System.currentTimeMillis() - 2L * 60 * 60 * 1000)
+        assertTrue("two hours old", !repository.catalogRefreshedRecently())
+    }
+
     // --- Helpers ---
 
     private fun writeCacheFile(filename: String, json: String, ageMs: Long = 0): File {
