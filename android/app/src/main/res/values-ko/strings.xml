@@ -259,16 +259,10 @@
     <string name="action_account">계정</string>
     <string name="account_menu_log_out">로그아웃</string>
     <string name="friends_empty_state">이 PSN 계정에서 친구를 찾을 수 없습니다.</string>
-    <string name="friend_chat_empty_state">아직 메시지가 없습니다 — 인사해 보세요!</string>
-    <string name="friend_chat_input_hint">메시지</string>
-    <string name="friend_chat_send">보내기</string>
     <string name="quick_settings_friends_tab_description">친구</string>
     <string name="quick_settings_friends_header_label">친구</string>
     <string name="quick_settings_friends_refresh">친구 목록 새로고침</string>
     <string name="quick_settings_friends_empty">이 PSN 계정에서 친구를 찾을 수 없습니다.</string>
-    <string name="quick_settings_friend_chat_back">친구 목록으로 돌아가기</string>
-    <string name="quick_settings_friend_chat_refresh">대화 새로고침</string>
-    <string name="friend_chat_refresh">대화 새로고침</string>
     <string name="friends_refresh">친구 목록 새로고침</string>
     <string name="trophy_compare_content_description">트로피 비교</string>
     <string name="trophy_compare_title">트로피 비교 · %1$s</string>
@@ -628,12 +622,6 @@
     <string name="friend_status_offline">오프라인</string>
     <string name="friends_error_auth_failed">친구 데이터를 위한 PSN 인증에 실패했습니다</string>
     <string name="friends_error_fetch_failed">친구 목록을 가져오지 못했습니다</string>
-    <string name="friends_error_auth_failed_messaging">메시지를 위한 PSN 인증에 실패했습니다</string>
-    <string name="friends_error_start_conversation_failed">이 친구와 대화를 시작할 수 없습니다</string>
-    <string name="friends_error_load_history_failed">대화 기록을 불러올 수 없습니다</string>
-    <string name="friends_error_open_conversation_failed">대화를 열지 못했습니다</string>
-    <string name="friends_error_refresh_conversation_failed">대화를 새로고침할 수 없습니다</string>
-    <string name="friends_error_refresh_conversation_failed_generic">대화 새로고침에 실패했습니다</string>
 
     <string name="psn_login_status_instructions">1. \'계정으로 로그인\'을 눌러 Sony 계정으로 로그인하세요.\n2. \'NPSSO 토큰 받기\'를 누르면 Chrome에 {\"npsso\":\"...\"}와 같은 페이지가 표시됩니다.\n3. npsso 값을 복사하여 아래에 붙여넣으세요.\n4. \'로그인 완료\'를 누르세요.</string>
 

@@ -84,11 +84,6 @@
             android:exported="false" />
 
         <activity
-            android:name="com.metallic.chiaki.friends.FriendChatActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize" />
-
-        <activity
             android:name="com.metallic.chiaki.friends.TrophyCompareActivity"
             android:exported="false" />
 

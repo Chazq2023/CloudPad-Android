@@ -38,7 +38,6 @@ class FriendsActivity : AppCompatActivity()
 	private lateinit var binding: ActivityFriendsBinding
 	private lateinit var repository: FriendsRepository
 	private val adapter = FriendAdapter(
-		onFriendClick = { friend -> FriendChatActivity.start(this, friend) },
 		onCompareTrophiesClick = { friend -> TrophyCompareActivity.start(this, friend) },
 		onTopBoundary = {
 			binding.backButton.isFocusableInTouchMode = true
@@ -77,7 +76,7 @@ class FriendsActivity : AppCompatActivity()
 	{
 		super.onResume()
 		// Presence can go stale quickly while this screen is backgrounded (e.g. returning from a
-		// chat) — cheap to just re-fetch (short TTL cache absorbs a same-instant re-entry).
+		// trophy comparison) — cheap to just re-fetch (short TTL cache absorbs a same-instant re-entry).
 		loadFriends()
 	}
 

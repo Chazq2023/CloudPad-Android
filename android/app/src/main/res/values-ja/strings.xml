@@ -259,16 +259,10 @@
     <string name="action_account">アカウント</string>
     <string name="account_menu_log_out">ログアウト</string>
     <string name="friends_empty_state">このPSNアカウントにはフレンドが見つかりません。</string>
-    <string name="friend_chat_empty_state">まだメッセージがありません — 挨拶してみましょう!</string>
-    <string name="friend_chat_input_hint">メッセージ</string>
-    <string name="friend_chat_send">送信</string>
     <string name="quick_settings_friends_tab_description">フレンド</string>
     <string name="quick_settings_friends_header_label">フレンド</string>
     <string name="quick_settings_friends_refresh">フレンドリストを更新</string>
     <string name="quick_settings_friends_empty">このPSNアカウントにはフレンドが見つかりません。</string>
-    <string name="quick_settings_friend_chat_back">フレンドリストに戻る</string>
-    <string name="quick_settings_friend_chat_refresh">会話を更新</string>
-    <string name="friend_chat_refresh">会話を更新</string>
     <string name="friends_refresh">フレンドリストを更新</string>
     <string name="trophy_compare_content_description">トロフィーを比較</string>
     <string name="trophy_compare_title">トロフィー比較 · %1$s</string>
@@ -591,12 +585,6 @@
     <string name="friend_status_offline">オフライン</string>
     <string name="friends_error_auth_failed">フレンドデータ取得のためのPSN認証に失敗しました</string>
     <string name="friends_error_fetch_failed">フレンドの取得に失敗しました</string>
-    <string name="friends_error_auth_failed_messaging">メッセージ機能のためのPSN認証に失敗しました</string>
-    <string name="friends_error_start_conversation_failed">このフレンドとの会話を開始できませんでした</string>
-    <string name="friends_error_load_history_failed">会話履歴を読み込めませんでした</string>
-    <string name="friends_error_open_conversation_failed">会話を開けませんでした</string>
-    <string name="friends_error_refresh_conversation_failed">会話を更新できませんでした</string>
-    <string name="friends_error_refresh_conversation_failed_generic">会話の更新に失敗しました</string>
 
     <string name="psn_login_status_instructions">1. 「アカウントにサインイン」をタップしてSonyでサインインします。\n2. 「NPSSOトークンを取得」をタップすると、Chromeに{\"npsso\":\"...\"}のようなページが表示されます。\n3. npssoの値をコピーし、下に貼り付けます。\n4. 「ログインを完了」をタップします。</string>
 

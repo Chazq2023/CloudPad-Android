@@ -16,24 +16,8 @@ data class Friend(
 	val lastOnlineDateMs: Long?
 )
 
-data class ChatMessage(
-	val body: String,
-	val senderAccountId: String,
-	val isMine: Boolean,
-	val timestampMs: Long
-)
-
 sealed class FriendsResult
 {
 	data class Success(val friends: List<Friend>) : FriendsResult()
 	data class Error(val message: String) : FriendsResult()
-}
-
-sealed class ConversationResult
-{
-	data class Success(val groupId: String, val messages: List<ChatMessage>) : ConversationResult()
-	/** [groupId] is non-null when the DM group itself was created/resolved fine and only the
-	 *  history fetch failed — callers should still capture it so sending can proceed even though
-	 *  history couldn't be loaded, rather than losing the group entirely. */
-	data class Error(val message: String, val groupId: String? = null) : ConversationResult()
 }

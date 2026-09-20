@@ -19,7 +19,6 @@ import com.pylux.stream.databinding.ItemFriendBinding
 /** Shared by [FriendsActivity] and [com.metallic.chiaki.stream.QuickSettingsPanel]'s in-stream
  *  Friends tab so both present an identical friends list from the same fetched data. */
 class FriendAdapter(
-	private val onFriendClick: (Friend) -> Unit,
 	private val onCompareTrophiesClick: (Friend) -> Unit,
 	/** Only supplied by [FriendsActivity] — its toolbar back button is otherwise unreachable by
 	 *  D-pad from the first row, since RecyclerView.focusSearch() contains arrow-key search to its
@@ -64,9 +63,6 @@ class FriendAdapter(
 		val accent = tv.data
 		binding.friendItemContent.applyFocusHighlight(accent)
 		binding.friendItemCompareTrophiesButton.applyFocusHighlight(accent, useForeground = true, shape = GradientDrawable.OVAL)
-		binding.friendItemContent.setOnClickListener {
-			holder.items()?.let { onFriendClick(it) }
-		}
 		binding.friendItemCompareTrophiesButton.setOnClickListener {
 			holder.items()?.let { onCompareTrophiesClick(it) }
 		}

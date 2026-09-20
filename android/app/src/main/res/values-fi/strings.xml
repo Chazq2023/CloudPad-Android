@@ -259,16 +259,10 @@
     <string name="action_account">Tili</string>
     <string name="account_menu_log_out">Kirjaudu ulos</string>
     <string name="friends_empty_state">Tältä PSN-tililtä ei löytynyt kavereita.</string>
-    <string name="friend_chat_empty_state">Ei vielä viestejä — sano hei!</string>
-    <string name="friend_chat_input_hint">Viesti</string>
-    <string name="friend_chat_send">Lähetä</string>
     <string name="quick_settings_friends_tab_description">Kaverit</string>
     <string name="quick_settings_friends_header_label">Kaverit</string>
     <string name="quick_settings_friends_refresh">Päivitä kaveriluettelo</string>
     <string name="quick_settings_friends_empty">Tältä PSN-tililtä ei löytynyt kavereita.</string>
-    <string name="quick_settings_friend_chat_back">Takaisin kaveriluetteloon</string>
-    <string name="quick_settings_friend_chat_refresh">Päivitä keskustelu</string>
-    <string name="friend_chat_refresh">Päivitä keskustelu</string>
     <string name="friends_refresh">Päivitä kaveriluettelo</string>
     <string name="trophy_compare_content_description">Vertaa pokaaleja</string>
     <string name="trophy_compare_title">Vertaa pokaaleja · %1$s</string>
@@ -592,12 +586,6 @@
     <string name="friend_status_offline">Poissa</string>
     <string name="friends_error_auth_failed">PSN-todennus epäonnistui kaveritietojen hakemiseksi</string>
     <string name="friends_error_fetch_failed">Kavereiden hakeminen epäonnistui</string>
-    <string name="friends_error_auth_failed_messaging">PSN-todennus epäonnistui viestitoimintoa varten</string>
-    <string name="friends_error_start_conversation_failed">Keskustelun aloittaminen tämän kaverin kanssa epäonnistui</string>
-    <string name="friends_error_load_history_failed">Keskusteluhistorian lataaminen epäonnistui</string>
-    <string name="friends_error_open_conversation_failed">Keskustelun avaaminen epäonnistui</string>
-    <string name="friends_error_refresh_conversation_failed">Keskustelun päivittäminen epäonnistui</string>
-    <string name="friends_error_refresh_conversation_failed_generic">Keskustelun päivittäminen epäonnistui</string>
 
     <string name="psn_login_status_instructions">1. Napauta Kirjaudu tilille ja kirjaudu sisään Sonyn tunnuksilla.\n2. Napauta Hae NPSSO-tunnus – Chrome näyttää sivun, jolla lukee esimerkiksi {\"npsso\":\"...\"}.\n3. Kopioi npsso-arvo ja liitä se alle.\n4. Napauta Viimeistele kirjautuminen.</string>
 
