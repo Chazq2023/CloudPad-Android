@@ -9,6 +9,7 @@ import com.metallic.chiaki.cloudplay.api.PsnCatalogService
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
+import com.metallic.chiaki.cloudplay.model.excludingLibrary
 import com.metallic.chiaki.cloudplay.model.notInLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -123,14 +124,19 @@ class CloudGameRepository(
 
 	/**
 	 * Every known streamable PS5 game the user has NOT added to their library — backs the
-	 * "add a game to library" page. Reuses the full-catalog fetch (which cross-references the
-	 * user's entitlements for isOwned) and keeps only the unowned entries.
+	 * "add a game to library" page. Takes the full-catalog fetch (which cross-references the
+	 * user's entitlements for isOwned) and additionally removes anything matching the library
+	 * list itself, since the catalog flag misses titles whose names differ between the sources.
+	 * The library is read first (cache unless it has to be fetched — a network fetch also drops
+	 * the catalog cache, so the catalog below is then rebuilt with fresh ownership); if it can't
+	 * be loaded, the catalog's own isOwned flag is all that's applied.
 	 */
 	suspend fun fetchPs5GamesNotInLibrary(npssoToken: String, forceRefresh: Boolean = false): PsnResult<List<CloudGame>>
 	{
+		val library = (fetchOwnedPs5Games(npssoToken, forceRefresh = false) as? PsnResult.Success)?.data ?: emptyList()
 		return when (val result = fetchPs5CloudCatalog(npssoToken, forceRefresh))
 		{
-			is PsnResult.Success -> PsnResult.Success(result.data.notInLibrary())
+			is PsnResult.Success -> PsnResult.Success(result.data.notInLibrary().excludingLibrary(library))
 			is PsnResult.Error -> result
 		}
 	}
