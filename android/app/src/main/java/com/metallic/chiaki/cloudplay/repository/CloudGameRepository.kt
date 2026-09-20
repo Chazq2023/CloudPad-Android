@@ -9,6 +9,7 @@ import com.metallic.chiaki.cloudplay.api.PsnCatalogService
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
+import com.metallic.chiaki.cloudplay.model.notInLibrary
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -121,6 +122,20 @@ class CloudGameRepository(
 	}
 
 	/**
+	 * Every known streamable PS5 game the user has NOT added to their library — backs the
+	 * "add a game to library" page. Reuses the full-catalog fetch (which cross-references the
+	 * user's entitlements for isOwned) and keeps only the unowned entries.
+	 */
+	suspend fun fetchPs5GamesNotInLibrary(npssoToken: String, forceRefresh: Boolean = false): PsnResult<List<CloudGame>>
+	{
+		return when (val result = fetchPs5CloudCatalog(npssoToken, forceRefresh))
+		{
+			is PsnResult.Success -> PsnResult.Success(result.data.notInLibrary())
+			is PsnResult.Error -> result
+		}
+	}
+
+	/**
 	 * Fetch owned PS5 games (user's library) — only games the user can stream.
 	 */
 	suspend fun fetchOwnedPs5Games(npssoToken: String, forceRefresh: Boolean = false): PsnResult<List<CloudGame>>
@@ -154,6 +169,10 @@ class CloudGameRepository(
 				val overrides = preferences.getConfirmedStreamableOverrides()
 				val games = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale, overrides)
 				cacheGames(games, OWNED_CACHE_FILE)
+				// Ownership just changed (e.g. a game was added on Sony's site), so the full-catalog
+				// cache's isOwned flags are stale — drop it so the add-a-game list rebuilds from
+				// fresh entitlements instead of still offering a game that's now in the library.
+				File(cacheDir, PSCLOUD_CACHE_FILE).delete()
 				PsnResult.Success(games)
 			}
 			catch (e: Exception)

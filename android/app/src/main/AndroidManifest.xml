@@ -76,6 +76,10 @@
             android:exported="false" />
 
         <activity
+            android:name="com.metallic.chiaki.main.AddGameToLibraryActivity"
+            android:exported="false" />
+
+        <activity
             android:name="com.metallic.chiaki.friends.FriendsActivity"
             android:exported="false" />
 

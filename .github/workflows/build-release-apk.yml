@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed God of War Collection (PS3) trophies not showing, and God of War II now correctly shows its own trophy list instead of God of War's.
+        - Added a + button next to the filter icon on the PS5 Library tab that opens an Add Game to Library page listing every streamable PS5 game not in your library yet, with search and refresh. Tapping a game opens its PlayStation page so you can add it; refresh your library afterwards and the game appears (and drops off the add list).
 
     steps:
       - name: Checkout repo
