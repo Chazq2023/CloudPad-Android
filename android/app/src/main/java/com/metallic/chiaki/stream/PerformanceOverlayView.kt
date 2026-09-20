@@ -6,6 +6,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -22,8 +25,8 @@ class PerformanceOverlayView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     /** FULL is every metric (the original view); MINIMAL is just the numbers most people
-     *  actually glance at mid-session — FPS, Bitrate, Resolution, Video Loss, Drops, Ping and
-     *  Adaptive Frame Pacing status. */
+     *  actually glance at mid-session — FPS, Bitrate, Resolution, Session time, Video Loss, Drops,
+     *  Ping and Video Pacing status. */
     enum class OverlayMode { FULL, MINIMAL }
 
     private val headerView: TextView
@@ -42,7 +45,13 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelDT = metricRow("DT")
     private val labelVL = metricRow("VL")
     private val labelDrops = metricRow("Drops")
-    private val labelAfp = metricRow("AFP")
+    private val labelPace = metricRow("Pace")
+
+    // Session time sits under "Visual" in Full mode (latencyCol) but under "Res" in Minimal mode,
+    // where latencyCol is hidden — one TextView can't live in both columns, so there are two,
+    // showing the same text; setMode() picks which is visible.
+    private val labelSessionFull = metricRow("Session")
+    private val labelSessionMinimal = metricRow("Session")
 
     init {
         orientation = VERTICAL
@@ -69,6 +78,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         latencyCol.addView(labelTotal)
         latencyCol.addView(labelNet)
         latencyCol.addView(labelVisual)
+        latencyCol.addView(labelSessionFull)
 
         val streamCol = buildColumn()
         sparklineView = SparklineView(context)
@@ -80,6 +90,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         )
         streamCol.addView(labelBT)
         streamCol.addView(labelRes)
+        streamCol.addView(labelSessionMinimal)
 
         val qualityCol = buildColumn()
         qualityCol.addView(labelRTT)
@@ -87,7 +98,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         qualityCol.addView(labelDT)
         qualityCol.addView(labelVL)
         qualityCol.addView(labelDrops)
-        qualityCol.addView(labelAfp)
+        qualityCol.addView(labelPace)
 
         columns.addView(
             latencyCol,
@@ -123,6 +134,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
             )
         )
 
+        labelSessionMinimal.visibility = View.GONE // starts in Full mode; see setMode
         setOpacityPercent(50)
         visibility = View.GONE
     }
@@ -157,6 +169,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         sparklineView.visibility = if (minimal) View.GONE else View.VISIBLE
         labelJit.visibility = if (minimal) View.GONE else View.VISIBLE
         labelDT.visibility = if (minimal) View.GONE else View.VISIBLE
+        labelSessionMinimal.visibility = if (minimal) View.VISIBLE else View.GONE
         // On-device: after a mode switch (and especially after the freeze/hardware-layer window
         // move mode puts this view through — see StreamActivity.overlayMoveModeActive), this
         // view's own rendered width could get stuck narrower than its actual content, clipping
@@ -278,13 +291,22 @@ class PerformanceOverlayView @JvmOverloads constructor(
 
         labelDrops.text = String.format(Locale.US, "%-5s %-5d", "Drops", m.drops)
 
-        labelAfp.text = String.format(
-            Locale.US, "%-5s %-5s", "AFP",
-            if (data.adaptiveFramePacingEnabled) "Enabled" else "Disabled"
+        // Plain (default-coloured) text in both modes — the mode name says it all, no traffic light.
+        labelPace.text = String.format(
+            Locale.US, "%-5s %-5s", "Pace",
+            if (data.smoothPacing) "Smooth" else "Standard"
         )
-        labelAfp.setTextColor(
-            if (data.adaptiveFramePacingEnabled) Color.rgb(0, 220, 100) else Color.argb(180, 255, 255, 255)
-        )
+
+        // Label keeps the row's default colour; only the time itself is green.
+        val sessionLabel = "Session "
+        val sessionText = SpannableString(sessionLabel + SessionClock.format(data.sessionSeconds)).apply {
+            setSpan(
+                ForegroundColorSpan(Color.rgb(0, 220, 100)),
+                sessionLabel.length, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        labelSessionFull.text = sessionText
+        labelSessionMinimal.text = sessionText
 
         sparklineView.setData(data.fpsHistory)
     }

@@ -284,15 +284,13 @@ class QuickSettingsPanel(
 		val resolution: Preferences.Resolution,
 		val fps: Preferences.FPS,
 		val bitrate: Int?,
-		val codec: Preferences.Codec,
-		val adaptiveFramePacingEnabled: Boolean
+		val codec: Preferences.Codec
 	)
 
 	private data class CloudSettingsSnapshot(
 		val resolution: Int,
 		val datacenter: String,
-		val bitrateKbps: Int,
-		val adaptiveFramePacingEnabled: Boolean
+		val bitrateKbps: Int
 	)
 
 	/** Snapshot of the settings the live stream actually last (re)started with, i.e. what's
@@ -654,6 +652,20 @@ class QuickSettingsPanel(
 			updateProcessingVisibility(mode)
 			onCasSharpeningChanged(mode == "cas", preferences.casSharpeningLevel); applyFsr()
 		}
+		// Video Pacing only changes how the decoder schedules frames, so like the image-quality
+		// options it's saved and pushed to the running session immediately — no restart.
+		panel.quickSettingsVideoPacingRow.quickSettingsDropdownLabel.text = activity.getString(R.string.preferences_video_pacing_title)
+		val videoPacingOptions = Preferences.VideoPacing.values()
+		bindSpinner(
+			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
+			videoPacingOptions.map { activity.getString(it.title) }, videoPacingOptions.map { it.value },
+			preferences.videoPacing.value
+		) { value ->
+			val pacing = videoPacingOptions.firstOrNull { it.value == value } ?: return@bindSpinner
+			if(pacing == preferences.videoPacing) return@bindSpinner
+			preferences.videoPacing = pacing
+			viewModel.session.setVideoPacing(pacing.isSmooth)
+		}
 		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
 			preferences.fsrUpscalingEnabled = enabled
 			applyFsr()
@@ -779,6 +791,7 @@ class QuickSettingsPanel(
 			panel.quickSettingsPipRow.quickSettingsRowSwitch,
 			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
 			panel.quickSettingsTrophiesSortButton, panel.quickSettingsTrophiesFilterButton,
+			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
 			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
 			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
@@ -1256,14 +1269,6 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
-		sessionRowControls += addSwitchRow(
-			container, R.string.preferences_adaptive_frame_pacing_title,
-			currentValue = preferences.adaptiveFramePacingEnabled
-		) { isChecked ->
-			pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(adaptiveFramePacingEnabled = isChecked)
-			updateSessionApplyVisibility()
-		}
-
 		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_codec_title,
 			entries = Preferences.codecAll.map { activity.getString(it.title) },
@@ -1327,13 +1332,6 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
-		sessionRowControls += addSwitchRow(
-			container, R.string.preferences_adaptive_frame_pacing_title,
-			currentValue = preferences.adaptiveFramePacingEnabled
-		) { isChecked ->
-			pendingCloudSettings = pendingCloudSettings?.copy(adaptiveFramePacingEnabled = isChecked)
-			updateSessionApplyVisibility()
-		}
 	}
 
 	/** Writes this tab's pending, not-yet-persisted edits into [preferences] — see
@@ -1349,7 +1347,6 @@ class QuickSettingsPanel(
 				preferences.fps = pending.fps
 				preferences.bitrate = pending.bitrate
 				preferences.codec = pending.codec
-				preferences.adaptiveFramePacingEnabled = pending.adaptiveFramePacingEnabled
 			}
 			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
 				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
@@ -1364,7 +1361,6 @@ class QuickSettingsPanel(
 					preferences.setCloudDatacenterPsnow(pending.datacenter)
 					preferences.setCloudBitratePsnow(pending.bitrateKbps)
 				}
-				preferences.adaptiveFramePacingEnabled = pending.adaptiveFramePacingEnabled
 			}
 		}
 	}
@@ -1373,8 +1369,7 @@ class QuickSettingsPanel(
 		resolution = preferences.resolution,
 		fps = preferences.fps,
 		bitrate = preferences.bitrate,
-		codec = preferences.codec,
-		adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
+		codec = preferences.codec
 	)
 
 	/** Reads whichever of the Catalog (PSNow)/Library (PSCloud) preference keys applies to this
@@ -1386,8 +1381,7 @@ class QuickSettingsPanel(
 		return CloudSettingsSnapshot(
 			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
 			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
-			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow(),
-			adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
+			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
 		)
 	}
 
@@ -1603,6 +1597,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.isChecked = preferences.motionEnabled
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
+		panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner.setSelection(preferences.videoPacing.ordinal)
 
 		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.imageProcessing == "cas") View.VISIBLE else View.GONE
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN

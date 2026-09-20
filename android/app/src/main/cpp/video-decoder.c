@@ -162,7 +162,7 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 	}
 #endif
 
-	CHIAKI_LOGI(decoder->log, "Adaptive Frame Pacing: %s", decoder->adaptive_frame_pacing_enabled ? "enabled" : "disabled");
+	CHIAKI_LOGI(decoder->log, "Video Pacing: %s", decoder->adaptive_frame_pacing_enabled ? "smooth" : "standard");
 
 	const char *mime = chiaki_codec_is_h265(decoder->target_codec) ? "video/hevc" : "video/avc";
 	CHIAKI_LOGI(decoder->log, "Initializing decoder with mime %s", mime);
@@ -344,6 +344,13 @@ static void *android_chiaki_video_decoder_input_thread_func(void *user)
 	return NULL;
 }
 
+void android_chiaki_video_decoder_set_smooth_pacing(AndroidChiakiVideoDecoder *decoder, bool smooth)
+{
+	// Read once per frame by the output thread, which also restarts its schedule when it sees the
+	// change — a plain flag is enough (no other state is shared).
+	decoder->adaptive_frame_pacing_enabled = smooth;
+}
+
 static void *android_chiaki_video_decoder_output_thread_func(void *user)
 {
 	AndroidChiakiVideoDecoder *decoder = user;
@@ -352,13 +359,22 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	// decoded frame is ready — at 60fps there is only 16ms per vsync window.
 	setpriority(PRIO_PROCESS, 0, -8);
 
-	// Vsync grid period in nanoseconds (e.g. 16666667 ns at 60fps, 8333333 ns at 120fps).
+	// Presentation grid period in nanoseconds: one frame at the stream's target fps (16666667 ns
+	// at 60fps, 33333333 ns at 30fps). This is the unit the presentation cushion is sized in,
+	// not the display's own refresh period — a 120Hz panel still gets frames scheduled on this
+	// grid and SurfaceFlinger picks the matching refresh.
 	const int64_t vsync_period_ns = 1000000000LL / decoder->target_fps;
 
-	// Short/long thresholds scaled to vsync_period so they work at any target fps.
-	// At 60fps: short < 10ms, long > 25ms. At 120fps: short < 5ms, long > 12.5ms.
-	const int64_t short_threshold_us = vsync_period_ns * 6 / 10000LL;  // 0.6 × vsync in µs
-	const int64_t long_threshold_us  = vsync_period_ns * 15 / 10000LL; // 1.5 × vsync in µs
+	// Source cadence: how often frames actually arrive. Starts at the target rate and is
+	// re-detected from decode spacing, because the server can deliver half the target rate
+	// (e.g. a 30fps game on a 60fps cloud stream). Measuring a steady 30fps arrival against a
+	// 60fps grid made every frame look like a stall and every gap look like ~16ms of jitter.
+	// It is only used to judge intervals and step the schedule — the cushion size stays in
+	// grid periods above, so switching the cadence never changes how much latency is added.
+	int64_t source_period_ns = vsync_period_ns;
+	const int cadence_detect_streak = 8; // consecutive frames before flipping, to debounce
+	int cadence_full_streak = 0;
+	int cadence_half_streak = 0;
 
 	// Per-second diagnostics
 	int64_t bucket_start_ns   = 0;
@@ -378,6 +394,8 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int     adaptive_dropped = 0; // frames dropped this second to thin a burst
 
 	decoder->next_render_ns = 0;
+	bool last_smooth = decoder->adaptive_frame_pacing_enabled;
+	int64_t last_baseline_ns = 2 * vsync_period_ns; // for the per-second log only
 
 	while(1)
 	{
@@ -389,21 +407,60 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 			{
 				int64_t now_ns = now_us() * 1000LL;
 
+				// Video Pacing mode can change mid-stream (quick menu). Re-read it once per frame
+				// and, on a change, restart the schedule so the new cushion takes effect right away
+				// instead of waiting for the old one to drain (one brief timestamp reset, same as a
+				// stall recovery).
+				const bool smooth = decoder->adaptive_frame_pacing_enabled;
+				if(smooth != last_smooth)
+				{
+					last_smooth = smooth;
+					decoder->next_render_ns = 0;
+					CHIAKI_LOGI(decoder->log, "Video pacing switched to %s", smooth ? "smooth" : "standard");
+				}
+
 				// Track wall-clock interval between consecutive output frames.
-				// EMA of normal intervals (10-25ms) tracks actual server FPS so the
-				// vsync grid advances at the real rate, preventing headroom drain.
+				// EMA of normal intervals tracks the actual source rate so the schedule
+				// advances at the real rate, preventing headroom drain.
 				if(last_frame_ns > 0)
 				{
 					int64_t delta_ns = now_ns - last_frame_ns;
-					int64_t delta_us = delta_ns / 1000LL;
-					if(delta_us < short_threshold_us)
+
+					// Cadence detection, relative to the grid period so it holds for a 30 or 60fps
+					// target: gaps under 1.5 grid periods are a full-rate source, 1.5-3.3 periods a
+					// half-rate one, anything longer is a stall and says nothing about the cadence.
+					int64_t detected_period_ns = 0;
+					if(delta_ns < vsync_period_ns * 3 / 2)
+					{
+						cadence_full_streak++;
+						cadence_half_streak = 0;
+						if(cadence_full_streak >= cadence_detect_streak)
+							detected_period_ns = vsync_period_ns;
+					}
+					else if(delta_ns < vsync_period_ns * 33 / 10)
+					{
+						cadence_half_streak++;
+						cadence_full_streak = 0;
+						if(cadence_half_streak >= cadence_detect_streak)
+							detected_period_ns = vsync_period_ns * 2;
+					}
+					if(detected_period_ns != 0 && detected_period_ns != source_period_ns)
+					{
+						source_period_ns = detected_period_ns;
+						ema_inter_frame_ns = source_period_ns;
+						CHIAKI_LOGI(decoder->log, "Video pacing: source cadence %.1f ms (%.0f fps)",
+							(double)source_period_ns / 1000000.0, 1e9 / (double)source_period_ns);
+					}
+
+					// Short/long relative to the source cadence: bunching (<0.6x) or a stall (>1.5x).
+					if(delta_ns < source_period_ns * 6 / 10)
 						short_intervals++;
-					else if(delta_us > long_threshold_us)
+					else if(delta_ns > source_period_ns * 15 / 10)
 						long_intervals++;
 					else
 						ema_inter_frame_ns = (ema_inter_frame_ns * 7 + delta_ns) / 8;
 
-					int64_t deviation_ns = delta_ns > vsync_period_ns ? delta_ns - vsync_period_ns : vsync_period_ns - delta_ns;
+					int64_t deviation_ns = delta_ns > source_period_ns ? delta_ns - source_period_ns : source_period_ns - delta_ns;
 					ema_jitter_ns = (ema_jitter_ns * 7 + deviation_ns) / 8;
 				}
 				last_frame_ns = now_ns;
@@ -418,10 +475,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int32_t new_timeouts = cur_timeouts - last_input_timeouts;
 					last_input_timeouts = cur_timeouts;
 					int min_hdm_ms = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
-					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d",
+					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d src_ms=%.1f buf_ms=%d mode=%s",
 						bucket_frames * 1e9f / (float)elapsed_ns,
-						short_intervals, long_intervals, new_timeouts, min_hdm_ms);
-					if(decoder->adaptive_frame_pacing_enabled)
+						short_intervals, long_intervals, new_timeouts, min_hdm_ms,
+						(double)source_period_ns / 1000000.0, (int)(last_baseline_ns / 1000000LL),
+						smooth ? "smooth" : "standard");
+					if(smooth)
 					{
 						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f dropped=%d",
 							(double)ema_jitter_ns / 1000000.0, adaptive_dropped);
@@ -438,20 +497,21 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// (one period after the previous frame) so SurfaceFlinger never receives two
 				// frames in the same window.
 				//
-				// 2x vsync (33ms at 60fps) baseline minimises display-side input latency.
-				// Cap at 8x vsync (133ms at 60fps) as a safety net for extreme jitter bursts.
-				// Adaptive Frame Pacing (when enabled) scales the baseline up with recently
-				// observed jitter (ema_jitter_ns above) instead of using the fixed value, and
-				// proactively drops frames that arrive well ahead of schedule during a burst —
-				// see below — rather than queueing them further into the future and letting
-				// latency creep up until a hard cap-reset is needed.
+				// Standard: a fixed 2x grid period (33ms at 60fps) baseline minimises display-side
+				// input latency.
+				// Smooth scales the baseline up with recently observed jitter (ema_jitter_ns above)
+				// instead of using the fixed value, up to 5x (83ms at 60fps) so a bad connection
+				// can't pile latency on indefinitely, and proactively drops frames that arrive well
+				// ahead of schedule during a burst — see below — rather than queueing them further
+				// into the future and letting latency creep up until a hard cap-reset is needed.
 				int64_t baseline_ns = 2 * vsync_period_ns;
-				if(decoder->adaptive_frame_pacing_enabled)
+				if(smooth)
 				{
-					const int64_t adaptive_max_ns = 8 * vsync_period_ns;
-					int64_t adaptive_baseline_ns = baseline_ns + ema_jitter_ns * 2;
-					baseline_ns = adaptive_baseline_ns > adaptive_max_ns ? adaptive_max_ns : adaptive_baseline_ns;
+					const int64_t smooth_max_ns = 5 * vsync_period_ns;
+					int64_t smooth_baseline_ns = baseline_ns + ema_jitter_ns * 2;
+					baseline_ns = smooth_baseline_ns > smooth_max_ns ? smooth_max_ns : smooth_baseline_ns;
 				}
+				last_baseline_ns = baseline_ns;
 				const int64_t cap_ns = 4 * baseline_ns;
 				int64_t render_ns = decoder->next_render_ns;
 				int64_t headroom_ns = render_ns - now_ns;
@@ -460,12 +520,12 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				if(decoder->next_render_ns > 0 && headroom_ns < min_headroom_ns)
 					min_headroom_ns = headroom_ns;
 
-				// Adaptive Frame Pacing: this frame arrived as part of a burst and the
+				// Smooth pacing: this frame arrived as part of a burst and the
 				// schedule is already comfortably ahead — drop it instead of queueing yet
 				// another vsync_period_ns onto next_render_ns, which would otherwise let
 				// presentation latency creep up through the whole burst until the cap-reset
 				// below eventually fires (itself a visible stutter).
-				if(decoder->adaptive_frame_pacing_enabled && decoder->next_render_ns > 0
+				if(smooth && decoder->next_render_ns > 0
 					&& headroom_ns > baseline_ns + 2 * vsync_period_ns)
 				{
 					AMediaCodec_releaseOutputBuffer(decoder->codec, (size_t)status, false);
@@ -485,7 +545,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					// SurfaceFlinger queue → visible stutter every ~13s).
 					int64_t advance_ns = (headroom_ns > baseline_ns)
 						? vsync_period_ns
-						: (ema_inter_frame_ns > vsync_period_ns ? ema_inter_frame_ns : vsync_period_ns);
+						: (ema_inter_frame_ns > source_period_ns ? ema_inter_frame_ns : source_period_ns);
 					decoder->next_render_ns = render_ns + advance_ns;
 					decoder->output_frames_total++;
 				}

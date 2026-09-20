@@ -158,9 +158,34 @@ class CloudPlayFragment : Fragment() {
         // Shortcut launches are handled by MainActivity via handleNewShortcutIntent().
         if (savedInstanceState == null) {
             checkLoginStatus()
+        } else {
+            restoreSelectedTab()
         }
 
         observeViewModel()
+    }
+
+    /** After this view is recreated (switching the app language recreates MainActivity, as does
+     *  any config change) the activity-scoped view model still holds the games and the current
+     *  section, but the freshly inflated layout is back at its XML defaults: no tab highlighted,
+     *  the PS5-only filter and + buttons hidden, streamability badges off. Only the tab-select
+     *  functions set those, and they otherwise only run on a fresh start or a tab tap — so
+     *  re-apply the selected tab's UI here, without refetching. */
+    private fun restoreSelectedTab() {
+        val restore = CloudTabRestore.decide(
+            hasToken = preferences.hasNpssoToken(),
+            hasGames = !viewModel.games.value.isNullOrEmpty(),
+            isLoading = viewModel.loading.value == true
+        )
+        when (restore) {
+            CloudTabRestore.NONE -> Unit
+            CloudTabRestore.LOAD -> checkLoginStatus()
+            CloudTabRestore.REAPPLY -> when (viewModel.getCurrentSection()) {
+                "pscloud" -> selectLibraryTab(fetchGames = false)
+                "psnow_ps4" -> selectPs4Tab(fetchGames = false)
+                else -> selectPs3Tab(fetchGames = false)
+            }
+        }
     }
 
     private fun readShortcutIntent(intent: Intent? = requireActivity().intent): Boolean {
@@ -655,7 +680,7 @@ class CloudPlayFragment : Fragment() {
         if (fetchGames) viewModel.fetchPsnowCatalog() else viewModel.reapplyCurrentGames()
     }
 
-    private fun selectLibraryTab() {
+    private fun selectLibraryTab(fetchGames: Boolean = true) {
         setTabSelected(binding.libraryTabButton)
         setTabUnselected(binding.ps3TabButton)
         setTabUnselected(binding.ps4TabButton)
@@ -681,7 +706,11 @@ class CloudPlayFragment : Fragment() {
         // already serves the on-disk cache instantly when present; the header refresh button
         // (refreshCurrentSectionInternal) and the settings FAB's refresh action still force one
         // explicitly, which is the manual mechanism this is meant to defer to.
-        viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = false)
+        if (fetchGames) {
+            viewModel.fetchPs5CloudCatalog(showOnlyOwned = true, forceRefresh = false)
+        } else {
+            viewModel.reapplyCurrentGames()
+        }
     }
 
     private fun updateOwnedToggleButton() {

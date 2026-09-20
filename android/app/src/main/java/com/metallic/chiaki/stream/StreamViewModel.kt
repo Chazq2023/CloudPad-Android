@@ -29,7 +29,8 @@ data class OverlayData(
 	val smoothedPing: Double,
 	val header: String,
 	val fpsHistory: List<Float>,
-	val adaptiveFramePacingEnabled: Boolean
+	val smoothPacing: Boolean,
+	val sessionSeconds: Long
 )
 
 /** State of an in-stream settings-driven session restart (Quick Settings panel's Apply button).
@@ -76,6 +77,9 @@ class StreamViewModel(
 	val sessionRestartState: LiveData<SessionRestartState> get() = _sessionRestartState
 
 	private var metricsDisposable: Disposable? = null
+
+	/** Backs the overlay's Session row; see [SessionClock]. */
+	private val sessionClock = SessionClock()
 
 	private val rttSamples = ArrayDeque<Double>()
 	private val fpsHistory = ArrayDeque<Float>()
@@ -146,7 +150,8 @@ class StreamViewModel(
 							// pending Quick Settings change is applied. See
 							// StreamSession.restartWithNewConnectInfo, which reassigns connectInfo
 							// right before the new session is actually created.
-							adaptiveFramePacingEnabled = session.connectInfo.adaptiveFramePacingEnabled
+							smoothPacing = session.connectInfo.adaptiveFramePacingEnabled,
+							sessionSeconds = sessionClock.elapsedSeconds()
 						)
 					)
 				}
@@ -172,6 +177,7 @@ class StreamViewModel(
 	init {
 		session.state.observeForever { state ->
 			if (state is StreamStateConnected) {
+				sessionClock.markConnected()
 				startMetricsPolling()
 			}
 		}
@@ -223,7 +229,7 @@ class StreamViewModel(
 		_sessionRestartState.value = SessionRestartState.InProgress(application.getString(R.string.quick_settings_session_restarting))
 		val newConnectInfo = session.connectInfo.copy(
 			videoProfile = preferences.videoProfile,
-			adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
+			adaptiveFramePacingEnabled = preferences.videoPacing.isSmooth
 		)
 		session.restartWithNewConnectInfo(newConnectInfo, onResuming = {
 			_sessionRestartState.value = SessionRestartState.Idle

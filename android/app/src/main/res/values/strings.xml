@@ -46,11 +46,27 @@
     <string name="cloud_tab_ps4_catalog">PS4 Catalog</string>
     <string name="cloud_tab_ps5_library">PS5 Library</string>
     <string name="cloud_add_game_button_content_description">Add a game to library</string>
-    <string name="add_game_title">Add Game to Library</string>
+    <string name="add_game_title">Add Game to PS5 Library</string>
+    <string name="add_game_filter_content_description">Filter games</string>
+    <string name="add_game_filter_all">All</string>
+    <string name="add_game_filter_purchasable">Purchasable</string>
+    <string name="add_game_filter_ps_catalog">PS Catalog</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Free to Play</string>
+    <string name="add_game_plus_loading">Loading PS Plus information…</string>
+    <string name="add_game_plus_not_refreshed">Couldn\'t refresh PS Plus information. Showing the last saved list.</string>
+    <string name="add_game_plus_failed">Couldn\'t load PS Plus information. Tap Refresh to try again.</string>
+    <string name="add_game_plus_note_loading">PS Plus info still loading</string>
+    <string name="add_game_plus_note_unavailable">PS Plus info unavailable</string>
+    <!-- Quantity follows the total, so it reads "1 out of 1 game displayed" but "5 out of 3,666 games displayed". -->
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s out of %2$s game displayed</item>
+        <item quantity="other">%1$s out of %2$s games displayed</item>
+    </plurals>
     <string name="add_game_search_hint">Search games…</string>
     <string name="add_game_refresh_content_description">Refresh game list</string>
     <string name="add_game_empty">Every known streamable game is already in your library.</string>
-    <string name="add_game_no_matches">No games match your search.</string>
+    <string name="add_game_no_matches">No games match your search or filter.</string>
     <string name="add_game_login_required">Sign in to PlayStation from the PS5 Library tab to see games you can add.</string>
     <string name="add_game_load_failed">Couldn\'t load games: %1$s</string>
     <string name="cloud_no_games_found">No games found</string>
@@ -237,9 +253,11 @@
     <string name="preferences_codec_title_h264">H264</string>
     <string name="preferences_codec_title_h265">H265 (Gen 5 only)</string>
     <string name="preferences_pip_enabled_title">Picture-in-Picture</string>
+    <string name="preferences_video_pacing_title">Video Pacing</string>
+    <string name="preferences_video_pacing_summary">Standard keeps a small fixed buffer for the lowest latency. Smooth grows the buffer with network jitter and skips frames that arrive bunched together, for steadier motion at the cost of some extra latency on unstable connections. Applies to Remote Play, Game Library and Game Catalog.</string>
+    <string name="preferences_video_pacing_standard">Standard</string>
+    <string name="preferences_video_pacing_smooth">Smooth</string>
     <string name="preferences_pip_enabled_summary">Enable PiP mode when minimizing during streaming (Android 8.0+)</string>
-    <string name="preferences_adaptive_frame_pacing_title">Adaptive Frame Pacing</string>
-    <string name="preferences_adaptive_frame_pacing_summary">Smooths out uneven frame delivery by adjusting how far ahead frames are buffered and occasionally dropping bunched frames when the network jitters. Adds a little latency in exchange for steadier motion on unstable connections. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_swap_cross_moon_title">Swap Cross/Moon and Box/Pyramid Buttons</string>
     <string name="preferences_swap_cross_moon_summary">Swap face buttons if default mapping is incorrect (e.g. for 8BitDo controllers)</string>
     <string name="preferences_microphone_enabled_title">Microphone (Remote Play only)</string>
@@ -628,7 +646,9 @@
     <string name="preferences_cloud_resolution_psnow_key">cloud_resolution_psnow</string>
     <string name="preferences_cloud_resolution_pscloud_key">cloud_resolution_pscloud</string>
     <string name="preferences_pip_enabled_key">pip_enabled</string>
+    <!-- Legacy Adaptive Frame Pacing switch: read only to migrate to preferences_video_pacing_key -->
     <string name="preferences_adaptive_frame_pacing_key">adaptive_frame_pacing_enabled</string>
+    <string name="preferences_video_pacing_key">video_pacing</string>
     <string name="preferences_app_language_key">app_language</string>
     <string name="preferences_cas_sharpening_enabled_key">cas_sharpening_enabled</string>
     <string name="preferences_cas_sharpening_level_key">cas_sharpening_level</string>

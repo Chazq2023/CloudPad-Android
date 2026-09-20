@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
@@ -16,7 +17,12 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.widget.PopupMenu
+import com.metallic.chiaki.cloudplay.model.AddGameFilter
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.matchingFilter
+import com.metallic.chiaki.cloudplay.model.taggedWithPsPlus
+import com.metallic.chiaki.cloudplay.repository.PsPlusResult
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.matchingQuery
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
@@ -26,6 +32,7 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityAddGameBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 
 /**
  * Lists every known streamable PS5 game that isn't in the user's library yet. Tapping one opens
@@ -37,6 +44,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	companion object
 	{
 		private const val TAG = "AddGameToLibrary"
+		private const val STATE_FILTER = "filter"
 
 		fun start(context: Context) =
 			context.startActivity(Intent(context, AddGameToLibraryActivity::class.java))
@@ -52,6 +60,14 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 	private var allGames: List<CloudGame> = emptyList()
 	private var loadJob: Job? = null
+	private var filter = AddGameFilter.ALL
+
+	/** Where the PS Plus lookup (which games are included with PS Plus) stands. It loads after
+	 *  the game list, separately, since it can be a big first-time download. */
+	private enum class PlusState { LOADING, READY, FAILED }
+	private var plusState = PlusState.LOADING
+	private var plusKeys: Set<String>? = null
+	private var plusJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
@@ -63,13 +79,22 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		setContentView(binding.root)
 		setSupportActionBar(binding.toolbar)
 
+		savedInstanceState?.getString(STATE_FILTER)?.let { saved ->
+			filter = AddGameFilter.values().firstOrNull { it.name == saved } ?: AddGameFilter.ALL
+		}
+
 		repository = CloudGameRepository(applicationContext, preferences)
 
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 		binding.refreshButton.setOnClickListener { loadGames(forceRefresh = true) }
+		binding.filterButton.setOnClickListener { showFilterMenu(it) }
+		updateFilterButton()
 
 		binding.gamesRecyclerView.layoutManager = InstantScrollGridLayoutManager(this, calculateSpanCount())
 		binding.gamesRecyclerView.adapter = adapter
+		// No add/remove animations: the library tabs swap their list in instantly, and animating a
+		// search being cleared would also leave the grid part-way through the old layout.
+		binding.gamesRecyclerView.itemAnimator = null
 
 		binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener
 		{
@@ -81,13 +106,81 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 			override fun onQueryTextChange(newText: String?): Boolean
 			{
-				showGames()
+				showGames(scrollToTop = true)
 				return true
 			}
 		})
 
+		// AppCompat's default clear (X) button empties the text but then requests focus and
+		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
+		// only happen when the user taps into the field themselves (same fix as the library search).
+		binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
+			?.setOnClickListener {
+				binding.searchView.setQuery("", false)
+				binding.searchView.clearFocus()
+				val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+			}
+
+		// AppCompat's default clear (X) button empties the text but then requests focus and
+		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
+		// only happen when the user taps into the field themselves (same fix as the library search).
+		binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
+			?.setOnClickListener {
+				binding.searchView.setQuery("", false)
+				binding.searchView.clearFocus()
+				val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+			}
+
 		setupDpadNavigation()
 		loadGames(forceRefresh = false)
+	}
+
+	override fun onSaveInstanceState(outState: Bundle)
+	{
+		super.onSaveInstanceState(outState)
+		outState.putString(STATE_FILTER, filter.name)
+	}
+
+	private fun filterLabel(option: AddGameFilter) = getString(
+		when(option)
+		{
+			AddGameFilter.ALL -> R.string.add_game_filter_all
+			AddGameFilter.PURCHASABLE -> R.string.add_game_filter_purchasable
+			AddGameFilter.PS_CATALOG -> R.string.add_game_filter_ps_catalog
+			AddGameFilter.PS_PLUS -> R.string.add_game_filter_ps_plus
+			AddGameFilter.FREE_TO_PLAY -> R.string.add_game_filter_free_to_play
+		}
+	)
+
+	private fun showFilterMenu(anchor: View)
+	{
+		val popup = PopupMenu(this, anchor)
+		AddGameFilter.values().forEach { option ->
+			popup.menu.add(0, option.ordinal, option.ordinal, filterLabel(option))
+		}
+		popup.menu.setGroupCheckable(0, true, true)
+		popup.menu.findItem(filter.ordinal)?.isChecked = true
+		popup.setOnMenuItemClickListener { item ->
+			filter = AddGameFilter.values()[item.itemId]
+			updateFilterButton()
+			showGames(scrollToTop = true)
+			true
+		}
+		popup.show()
+	}
+
+	/** Tints the icon with the theme accent while a filter other than All is active, so it's
+	 *  visible at a glance that the list is being narrowed. */
+	private fun updateFilterButton()
+	{
+		val tint = TypedValue()
+		theme.resolveAttribute(
+			if(filter == AddGameFilter.ALL) com.google.android.material.R.attr.colorOnPrimary else R.attr.pyluxAccentLight,
+			tint, true
+		)
+		binding.filterButton.setColorFilter(tint.data)
 	}
 
 	private fun searchInput(): View =
@@ -108,6 +201,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private fun setupDpadNavigation()
 	{
 		binding.backButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
+		binding.filterButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
 		binding.refreshButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
 
 		searchInput().setOnKeyListener { _, keyCode, event ->
@@ -155,8 +249,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			{
 				is PsnResult.Success ->
 				{
-					allGames = result.data
+					allGames = result.data.let { games -> plusKeys?.let { games.taggedWithPsPlus(it) } ?: games }
 					showGames()
+					loadPsPlus(forceRefresh)
 				}
 				is PsnResult.Error ->
 				{
@@ -170,10 +265,66 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		}
 	}
 
-	private fun showGames()
+	/** Loads which games are included with PS Plus and tags them. Normally served from a week-long
+	 *  cache; the page's refresh button passes [forceRefresh] to fetch a new one. */
+	private fun loadPsPlus(forceRefresh: Boolean = false)
 	{
-		val visible = allGames.matchingQuery(binding.searchView.query?.toString() ?: "")
-		adapter.submitList(visible)
+		if (plusJob?.isActive == true) return
+		if (plusState != PlusState.READY) plusState = PlusState.LOADING
+		plusJob = lifecycleScope.launch {
+			when (val result = repository.loadPsPlusKeys(forceRefresh))
+			{
+				is PsPlusResult.Ready ->
+				{
+					plusKeys = result.keys
+					allGames = allGames.taggedWithPsPlus(result.keys)
+					plusState = PlusState.READY
+					if (forceRefresh && !result.isFresh)
+						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_not_refreshed, Toast.LENGTH_LONG).show()
+				}
+				is PsPlusResult.Failed ->
+				{
+					Log.w(TAG, "PS Plus lookup failed: ${result.message}")
+					plusState = PlusState.FAILED
+				}
+			}
+			showGames()
+		}
+	}
+
+	private fun plusStatusMessage(): String = getString(
+		when (plusState)
+		{
+			PlusState.LOADING -> R.string.add_game_plus_loading
+			else -> R.string.add_game_plus_failed
+		}
+	)
+
+	/** [scrollToTop] is for changes the user made to what's shown (search text, filter): the list
+	 *  starts again from the first game, like the library tabs. Data arriving in the background
+	 *  (PS Plus tags landing) leaves the scroll position alone. */
+	private fun showGames(scrollToTop: Boolean = false)
+	{
+		// The PS Plus filter has nothing to show until the lookup is in — say why instead of "no matches".
+		if (filter == AddGameFilter.PS_PLUS && plusState != PlusState.READY && allGames.isNotEmpty())
+		{
+			showMessage(plusStatusMessage())
+			return
+		}
+
+		val visible = allGames
+			.matchingFilter(filter)
+			.matchingQuery(binding.searchView.query?.toString() ?: "")
+		// The callback runs once the diff has been applied, so the jump lands on the new list.
+		adapter.submitList(visible) { if (scrollToTop) binding.gamesRecyclerView.scrollToPosition(0) }
+		updateGameCount(shown = visible.size, total = allGames.size)
+		if (filter == AddGameFilter.PURCHASABLE && plusState != PlusState.READY && allGames.isNotEmpty())
+		{
+			// Purchasable leaves out PS Plus titles, which isn't known yet — don't pass a partial list off as complete.
+			binding.gameCountText.text = "${binding.gameCountText.text} · " + getString(
+				if (plusState == PlusState.LOADING) R.string.add_game_plus_note_loading else R.string.add_game_plus_note_unavailable
+			)
+		}
 		if (visible.isEmpty())
 		{
 			binding.emptyStateText.text = getString(
@@ -185,8 +336,25 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			binding.emptyStateText.visibility = View.GONE
 	}
 
+	/** "x out of y games displayed": x is what the current filter (and search) leaves, y is always
+	 *  the full not-in-library list. Hidden while there's no list (not loaded yet, or an error). */
+	private fun updateGameCount(shown: Int, total: Int)
+	{
+		if(total == 0)
+		{
+			binding.gameCountText.visibility = View.GONE
+			return
+		}
+		val format = NumberFormat.getIntegerInstance()
+		binding.gameCountText.text = resources.getQuantityString(
+			R.plurals.add_game_count, total, format.format(shown), format.format(total)
+		)
+		binding.gameCountText.visibility = View.VISIBLE
+	}
+
 	private fun showMessage(message: String)
 	{
+		binding.gameCountText.visibility = View.GONE
 		adapter.submitList(emptyList())
 		binding.emptyStateText.text = message
 		binding.emptyStateText.visibility = View.VISIBLE

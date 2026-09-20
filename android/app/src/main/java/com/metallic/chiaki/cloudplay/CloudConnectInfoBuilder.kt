@@ -51,7 +51,7 @@ object CloudConnectInfoBuilder
 			registKey = ByteArray(0x10), // Empty for cloud (not used)
 			morning = ByteArray(0x10), // Empty for cloud (not used)
 			videoProfile = videoProfile,
-			adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled,
+			adaptiveFramePacingEnabled = preferences.videoPacing.isSmooth,
 			serviceType = session.serviceType,
 			cloudGamePlatform = session.platform,
 			cloudLaunchSpec = session.launchSpec,

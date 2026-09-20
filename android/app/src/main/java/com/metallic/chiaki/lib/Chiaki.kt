@@ -70,8 +70,9 @@ data class ConnectInfo(
 	val registKey: ByteArray,
 	val morning: ByteArray,
 	val videoProfile: ConnectVideoProfile,
-	// Applies to every session type (Remote Play, PS Cloud, Game Catalog) — see
-	// AndroidChiakiVideoDecoder.adaptive_frame_pacing_enabled in video-decoder.c.
+	// Video Pacing: true = Smooth, false = Standard. Applies to every session type (Remote Play,
+	// PS Cloud, Game Catalog) — see AndroidChiakiVideoDecoder.adaptive_frame_pacing_enabled in
+	// video-decoder.c. Read by native code by this exact field name.
 	val adaptiveFramePacingEnabled: Boolean = false,
 	// Cloud streaming fields (optional, null for remote play)
 
@@ -160,6 +161,7 @@ private class ChiakiNative
 		@JvmStatic external fun sessionStop(ptr: Long): Int
 		@JvmStatic external fun sessionJoin(ptr: Long): Int
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
+		@JvmStatic external fun sessionSetVideoPacing(ptr: Long, smooth: Boolean)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
 			@JvmStatic external fun sessionConnectMicrophone(ptr: Long)
@@ -600,6 +602,12 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun setSurface(surface: Surface?)
 	{
 		ChiakiNative.sessionSetSurface(nativePtr, surface)
+	}
+
+	/** Switches Video Pacing (true = Smooth, false = Standard) on the running decoder — no restart. */
+	fun setVideoPacing(smooth: Boolean)
+	{
+		ChiakiNative.sessionSetVideoPacing(nativePtr, smooth)
 	}
 
 	fun setControllerState(controllerState: ControllerState)

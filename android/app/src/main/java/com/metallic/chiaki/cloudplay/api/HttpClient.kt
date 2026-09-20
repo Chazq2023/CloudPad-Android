@@ -32,7 +32,8 @@ internal object HttpClient
 	fun get(
 		url: String,
 		headers: Map<String, String> = emptyMap(),
-		followRedirects: Boolean = true
+		followRedirects: Boolean = true,
+		timeoutMs: Int = TIMEOUT_MS
 	): Response
 	{
 		Log.d(TAG, "GET: $url")
@@ -41,8 +42,8 @@ internal object HttpClient
 		try
 		{
 			connection.requestMethod = "GET"
-			connection.connectTimeout = TIMEOUT_MS
-			connection.readTimeout = TIMEOUT_MS
+			connection.connectTimeout = timeoutMs
+			connection.readTimeout = timeoutMs
 			connection.instanceFollowRedirects = followRedirects
 			
 			// Set headers

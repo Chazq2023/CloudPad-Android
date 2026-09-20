@@ -27,6 +27,16 @@ data class CloudGame(
 	val entitlementId: String = "", // PSCloud: entitlement id from cross-reference (Qt gameData.id)
 	val storeProductId: String = "", // PSCloud: product_id from entitlements API (stream this, not entitlementId)
 	val plusCatalog: Boolean = false, // In the PS Plus subscription catalog (vs full streamable universe)
+	// Add-a-game filter tags, from list membership in Sony's imagic lists (see PsCloudCatalogService).
+	// Separate from plusCatalog, which is tied to streaming/ownership matching and only set for
+	// entries Sony marks streamable — most PS Plus titles are listed with streaming off.
+	val psCatalog: Boolean = false, // Listed in a PS Plus catalog list: can be added via PS Plus, no purchase
+	val freeToPlay: Boolean = false, // Listed in the free-to-play list: nothing to purchase either
+	// Included with a PS Plus subscription (Game Catalog / monthly game) per the PS Store listing — not
+	// merely offered a trial or a member discount.
+	// Not cached with the catalog — tagged on afterwards from a separately cached lookup, see
+	// PsStorePlusService / CloudGameRepository.loadPsPlusKeys.
+	val psPlus: Boolean = false,
 	val featureType: Int = 0, // PSN entitlement feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
 	val streamableStatus: StreamableStatus = StreamableStatus.UNKNOWN // Library tile badge state
 )

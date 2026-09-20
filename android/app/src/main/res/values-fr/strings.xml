@@ -160,8 +160,6 @@
     <string name="preferences_codec_title_h265">H265 (Gen 5 uniquement)</string>
     <string name="preferences_pip_enabled_title">Image dans l\'image</string>
     <string name="preferences_pip_enabled_summary">Activer le mode PiP lors de la réduction pendant la diffusion (Android 8.0+)</string>
-    <string name="preferences_adaptive_frame_pacing_title">Cadencement adaptatif des images</string>
-    <string name="preferences_adaptive_frame_pacing_summary">Atténue les livraisons d\'images irrégulières en ajustant la durée de mise en mémoire tampon des images et en supprimant occasionnellement des images regroupées en cas de gigue réseau. Ajoute un peu de latence en échange d\'un mouvement plus stable sur les connexions instables. S\'applique à Remote Play, à la Bibliothèque de jeux et au Catalogue de jeux.</string>
     <string name="preferences_swap_cross_moon_title">Inverser les boutons Croix/Lune et Carré/Pyramide</string>
     <string name="preferences_swap_cross_moon_summary">Inversez les boutons d\'action si l\'attribution par défaut est incorrecte (p. ex. pour les manettes 8BitDo)</string>
     <string name="preferences_microphone_enabled_title">Microphone (Remote Play uniquement)</string>

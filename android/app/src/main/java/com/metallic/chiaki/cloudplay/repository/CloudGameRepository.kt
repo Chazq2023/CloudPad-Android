@@ -5,6 +5,8 @@ package com.metallic.chiaki.cloudplay.repository
 import android.content.Context
 import android.util.Log
 import com.metallic.chiaki.cloudplay.api.PsCloudCatalogService
+import com.metallic.chiaki.cloudplay.api.PsPlusCache
+import com.metallic.chiaki.cloudplay.api.PsStorePlusService
 import com.metallic.chiaki.cloudplay.api.PsnCatalogService
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
@@ -17,9 +19,20 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
+/** Outcome of [CloudGameRepository.loadPsPlusKeys]. */
+sealed class PsPlusResult
+{
+	/** PPSA numbers of the PS5 titles included with PS Plus. [isFresh] is false when a newer
+	 *  lookup was wanted (expired, or a forced refresh) but failed, so an older saved one is used. */
+	data class Ready(val keys: Set<String>, val isFresh: Boolean = true) : PsPlusResult()
+	data class Failed(val message: String) : PsPlusResult()
+}
+
 class CloudGameRepository(
 	private val context: Context,
-	private val preferences: com.metallic.chiaki.common.Preferences
+	private val preferences: com.metallic.chiaki.common.Preferences,
+	// Fetches the PS Plus lookup for a store locale; swapped out in tests.
+	private val fetchPsPlusKeys: suspend (storeLocale: String) -> Set<String> = PsStorePlusService::fetchPlusKeys
 )
 {
 	companion object
@@ -29,6 +42,15 @@ class CloudGameRepository(
 		private const val PSNOW_CACHE_FILE = "psnow_catalog.json"
 		private const val PSCLOUD_CACHE_FILE = "pscloud_catalog.json"
 		private const val CACHE_DURATION_MS = 24 * 60 * 60 * 1000L // 24 hours
+
+		/** True for a full-catalog cache written before psCatalog/freeToPlay were stored (see
+		 *  loadCachedGames). Other cache files never carry the tags, so they never count as stale. */
+		internal fun lacksCatalogTags(cacheFileName: String, cachedGames: JSONArray): Boolean =
+			cacheFileName == PSCLOUD_CACHE_FILE && cachedGames.length() > 0 &&
+				!cachedGames.getJSONObject(0).has("psCatalog")
+
+		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
+		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
 
 		fun invalidateCatalogCache(context: Context, reason: String = "")
 		{
@@ -142,6 +164,36 @@ class CloudGameRepository(
 	}
 
 	/**
+	 * Which PS5 titles are included with PS Plus (as PPSA numbers), for the Add Game page's PS Plus
+	 * filter. The lookup is a ~25 MB download, so it's cached for a week (per store locale, in its own
+	 * directory so clearing the catalog cache doesn't discard it) unless [forceRefresh] asks for a new
+	 * one. If a new one can't be fetched, the saved lookup is still returned (not fresh) rather than nothing.
+	 */
+	suspend fun loadPsPlusKeys(forceRefresh: Boolean = false): PsPlusResult = withContext(Dispatchers.IO)
+	{
+		val storeLocale = preferences.getCloudStoreLocale()
+		val cacheFile = File(File(context.cacheDir, PS_PLUS_CACHE_DIR).apply { mkdirs() }, PS_PLUS_CACHE_FILE)
+		val cached = try { PsPlusCache.decode(cacheFile.readText()) } catch (e: Exception) { null }
+			?.takeIf { it.storeLocale == storeLocale }
+
+		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, System.currentTimeMillis()))
+			return@withContext PsPlusResult.Ready(cached.keys)
+
+		try
+		{
+			val keys = fetchPsPlusKeys(storeLocale)
+			try { cacheFile.writeText(PsPlusCache.encode(PsPlusCache.Entry(storeLocale, System.currentTimeMillis(), keys))) }
+			catch (e: Exception) { Log.w(TAG, "Could not cache the PS Plus lookup", e) }
+			PsPlusResult.Ready(keys)
+		}
+		catch (e: Exception)
+		{
+			Log.w(TAG, "PS Plus lookup failed", e)
+			cached?.let { PsPlusResult.Ready(it.keys, isFresh = false) } ?: PsPlusResult.Failed(e.message ?: "unknown error")
+		}
+	}
+
+	/**
 	 * Fetch owned PS5 games (user's library) — only games the user can stream.
 	 */
 	suspend fun fetchOwnedPs5Games(npssoToken: String, forceRefresh: Boolean = false): PsnResult<List<CloudGame>>
@@ -211,6 +263,16 @@ class CloudGameRepository(
 
 			val json = cacheFile.readText()
 			val jsonArray = JSONArray(json)
+
+			// A full-catalog cache written before the psCatalog/freeToPlay tags existed would have
+			// every game reading as untagged (so the add-a-game filters would come up empty) —
+			// treat it as missing so it's rebuilt with them. Only the catalog file carries the tags.
+			if(lacksCatalogTags(cacheFileName, jsonArray))
+			{
+				Log.i(TAG, "Discarding pre-psCatalog catalog cache")
+				cacheFile.delete()
+				return null
+			}
 			val games = mutableListOf<CloudGame>()
 
 			for (i in 0 until jsonArray.length())
@@ -237,6 +299,8 @@ class CloudGameRepository(
 					entitlementId = entitlementId,
 					storeProductId = obj.optString("storeProductId", ""),
 					plusCatalog = obj.optBoolean("plusCatalog", false),
+					psCatalog = obj.optBoolean("psCatalog", false),
+					freeToPlay = obj.optBoolean("freeToPlay", false),
 					featureType = obj.optInt("featureType", 0),
 					streamableStatus = try {
 						StreamableStatus.valueOf(obj.optString("streamableStatus", "UNKNOWN"))
@@ -278,6 +342,8 @@ class CloudGameRepository(
 				obj.put("entitlementId", game.entitlementId)
 				obj.put("storeProductId", game.storeProductId)
 				obj.put("plusCatalog", game.plusCatalog)
+				obj.put("psCatalog", game.psCatalog)
+				obj.put("freeToPlay", game.freeToPlay)
 				obj.put("featureType", game.featureType)
 				obj.put("streamableStatus", game.streamableStatus.name)
 				jsonArray.put(obj)

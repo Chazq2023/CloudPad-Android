@@ -133,4 +133,117 @@ class AddableGamesTest {
 
         assertEquals(2, catalog.excludingLibrary(library).size)
     }
+
+    // --- matchingFilter ---
+
+    private fun tagged(id: String, psCatalog: Boolean = false, freeToPlay: Boolean = false) =
+        CloudGame(id, id, "", platform = "ps5", serviceType = "pscloud", psCatalog = psCatalog, freeToPlay = freeToPlay)
+
+    private val mixed = listOf(
+        tagged("bought"),
+        tagged("plus", psCatalog = true),
+        tagged("free", freeToPlay = true),
+        tagged("bought2")
+    )
+
+    @Test
+    fun `filter All keeps everything`() {
+        assertEquals(mixed, mixed.matchingFilter(AddGameFilter.ALL))
+    }
+
+    @Test
+    fun `filter PS Catalog keeps only catalog titles`() {
+        assertEquals(listOf("plus"), mixed.matchingFilter(AddGameFilter.PS_CATALOG).map { it.productId })
+    }
+
+    @Test
+    fun `filter Purchasable drops catalog and free-to-play titles`() {
+        assertEquals(listOf("bought", "bought2"), mixed.matchingFilter(AddGameFilter.PURCHASABLE).map { it.productId })
+    }
+
+    @Test
+    fun `Purchasable and PS Catalog never overlap and All is their union plus free-to-play`() {
+        val purchasable = mixed.matchingFilter(AddGameFilter.PURCHASABLE)
+        val catalog = mixed.matchingFilter(AddGameFilter.PS_CATALOG)
+        assertTrue(purchasable.none { it in catalog })
+        assertEquals(mixed.size, purchasable.size + catalog.size + mixed.count { it.freeToPlay })
+    }
+
+    @Test
+    fun `a title tagged both PS Catalog and free-to-play counts as PS Catalog only`() {
+        val both = listOf(tagged("both", psCatalog = true, freeToPlay = true))
+
+        assertEquals(1, both.matchingFilter(AddGameFilter.PS_CATALOG).size)
+        assertTrue(both.matchingFilter(AddGameFilter.PURCHASABLE).isEmpty())
+    }
+
+    @Test
+    fun `filter and search combine`() {
+        val games = listOf(
+            tagged("Astro Bot", psCatalog = true), tagged("Astro Runner"), tagged("Returnal", psCatalog = true)
+        )
+
+        assertEquals(
+            listOf("Astro Bot"),
+            games.matchingFilter(AddGameFilter.PS_CATALOG).matchingQuery("astro").map { it.productId }
+        )
+    }
+
+    // --- PS Plus, Free to Play, and coverage ---
+
+    private fun full(id: String, psCatalog: Boolean = false, psPlus: Boolean = false, freeToPlay: Boolean = false) =
+        CloudGame(id, id, "", platform = "ps5", serviceType = "pscloud", psCatalog = psCatalog, psPlus = psPlus, freeToPlay = freeToPlay)
+
+    private val everyKind = listOf(
+        full("plain-buy"), full("plus", psPlus = true), full("catalog", psCatalog = true),
+        full("catalog+plus", psCatalog = true, psPlus = true), full("free", freeToPlay = true)
+    )
+
+    @Test
+    fun `Purchasable leaves out PS Plus titles as well as catalog and free ones`() {
+        assertEquals(listOf("plain-buy"), everyKind.matchingFilter(AddGameFilter.PURCHASABLE).map { it.productId })
+    }
+
+    @Test
+    fun `PS Plus and Free to Play filters pick out their own titles`() {
+        assertEquals(listOf("plus", "catalog+plus"), everyKind.matchingFilter(AddGameFilter.PS_PLUS).map { it.productId })
+        assertEquals(listOf("free"), everyKind.matchingFilter(AddGameFilter.FREE_TO_PLAY).map { it.productId })
+    }
+
+    @Test
+    fun `every game shows under at least one specific filter, so nothing is only reachable through All`() {
+        val specific = AddGameFilter.values().filter { it != AddGameFilter.ALL }
+        everyKind.forEach { game ->
+            assertTrue("${game.productId} is in no specific filter", specific.any { game in listOf(game).matchingFilter(it) })
+        }
+    }
+
+    @Test
+    fun `Purchasable is exactly what the other specific filters leave out`() {
+        val others = listOf(AddGameFilter.PS_CATALOG, AddGameFilter.PS_PLUS, AddGameFilter.FREE_TO_PLAY)
+            .flatMap { everyKind.matchingFilter(it) }.toSet()
+        val purchasable = everyKind.matchingFilter(AddGameFilter.PURCHASABLE).toSet()
+
+        assertEquals(everyKind.toSet(), others + purchasable)
+        assertTrue(others.intersect(purchasable).isEmpty())
+    }
+
+    @Test
+    fun `taggedWithPsPlus marks games by their PPSA number and clears others`() {
+        val games = listOf(
+            game("EP3643-PPSA16786_00-0950123183894118", "Neva"),
+            game("EP0000-PPSA00001_00-OTHER", "Other").copy(psPlus = true)
+        )
+
+        val tagged = games.taggedWithPsPlus(setOf("PPSA16786"))
+
+        assertEquals(listOf(true, false), tagged.map { it.psPlus })
+    }
+
+    @Test
+    fun `productStableKey reads the PPSA or CUSA number`() {
+        assertEquals("PPSA16786", productStableKey("EP3643-PPSA16786_00-0950123183894118"))
+        assertEquals("CUSA01234", productStableKey("UP0001-CUSA01234_00-X"))
+        assertEquals(null, productStableKey("no-number-here"))
+    }
 }

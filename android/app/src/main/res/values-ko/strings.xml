@@ -160,8 +160,6 @@
     <string name="preferences_codec_title_h265">H265 (5세대 전용)</string>
     <string name="preferences_pip_enabled_title">화면 속 화면(PiP)</string>
     <string name="preferences_pip_enabled_summary">스트리밍 중 최소화 시 PiP 모드를 사용합니다(Android 8.0 이상)</string>
-    <string name="preferences_adaptive_frame_pacing_title">적응형 프레임 페이싱</string>
-    <string name="preferences_adaptive_frame_pacing_summary">프레임이 미리 버퍼링되는 정도를 조정하고 네트워크가 불안정할 때 몰린 프레임을 가끔 드롭하여 고르지 않은 프레임 전달을 완화합니다. 불안정한 연결에서 더 안정적인 움직임을 위해 약간의 지연이 추가됩니다. 리모트 플레이, 게임 라이브러리, 게임 카탈로그에 적용됩니다.</string>
     <string name="preferences_swap_cross_moon_title">엑스/동그라미 및 네모/세모 버튼 바꾸기</string>
     <string name="preferences_swap_cross_moon_summary">기본 매핑이 올바르지 않을 경우 전면 버튼을 바꿉니다(예: 8BitDo 컨트롤러)</string>
     <string name="preferences_microphone_enabled_title">마이크(리모트 플레이 전용)</string>

@@ -39,6 +39,26 @@ class Preferences(context: Context)
 		FPS_60("60", R.string.preferences_fps_title_60, VideoFPSPreset.FPS_60)
 	}
 
+	/** How decoded frames are presented. Standard = fixed small buffer, lowest latency. Smooth =
+	 *  buffer sized to network jitter plus burst thinning, steadier motion for some added latency.
+	 *  See android_chiaki_video_decoder_output_thread_func in video-decoder.c. */
+	enum class VideoPacing(val value: String, @StringRes val title: Int)
+	{
+		STANDARD("standard", R.string.preferences_video_pacing_standard),
+		SMOOTH("smooth", R.string.preferences_video_pacing_smooth);
+
+		val isSmooth: Boolean get() = this == SMOOTH
+
+		companion object
+		{
+			/** [stored] is the current setting; [legacyAdaptiveEnabled] is the old Adaptive Frame
+			 *  Pacing switch, consulted only until the new setting has been written once, so anyone
+			 *  who had it on keeps Smooth after updating. */
+			fun fromStored(stored: String?, legacyAdaptiveEnabled: Boolean): VideoPacing =
+				values().firstOrNull { it.value == stored } ?: if(legacyAdaptiveEnabled) SMOOTH else STANDARD
+		}
+	}
+
 	enum class Codec(val value: String, @StringRes val title: Int, val codec: com.metallic.chiaki.lib.Codec)
 	{
 		CODEC_H264("h264", R.string.preferences_codec_title_h264, com.metallic.chiaki.lib.Codec.CODEC_H264),
@@ -223,11 +243,16 @@ class Preferences(context: Context)
 		set(value) { sharedPreferences.edit().putBoolean(pipEnabledKey, value).apply() }
 
 	// Applies to every session type (Remote Play, PS Cloud, Game Catalog) - see
-	// AndroidChiakiVideoDecoder's adaptive_frame_pacing_enabled in video-decoder.c.
-	val adaptiveFramePacingEnabledKey get() = resources.getString(R.string.preferences_adaptive_frame_pacing_key)
-	var adaptiveFramePacingEnabled
-		get() = sharedPreferences.getBoolean(adaptiveFramePacingEnabledKey, false)
-		set(value) { sharedPreferences.edit().putBoolean(adaptiveFramePacingEnabledKey, value).apply() }
+	// AndroidChiakiVideoDecoder's adaptive_frame_pacing_enabled in video-decoder.c. Replaces the
+	// old Adaptive Frame Pacing on/off switch, whose stored value is only read for migration.
+	val videoPacingKey get() = resources.getString(R.string.preferences_video_pacing_key)
+	private val legacyAdaptiveFramePacingKey get() = resources.getString(R.string.preferences_adaptive_frame_pacing_key)
+	var videoPacing: VideoPacing
+		get() = VideoPacing.fromStored(
+			sharedPreferences.getString(videoPacingKey, null),
+			sharedPreferences.getBoolean(legacyAdaptiveFramePacingKey, false)
+		)
+		set(value) { sharedPreferences.edit().putString(videoPacingKey, value.value).apply() }
 
 	val casSharpeningEnabledKey get() = resources.getString(R.string.preferences_cas_sharpening_enabled_key)
 	var casSharpeningEnabled

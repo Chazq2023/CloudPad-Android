@@ -160,8 +160,6 @@
     <string name="preferences_codec_title_h265">H265 (somente Gen 5)</string>
     <string name="preferences_pip_enabled_title">Picture-in-Picture</string>
     <string name="preferences_pip_enabled_summary">Ativar o modo PiP ao minimizar durante a transmissão (Android 8.0+)</string>
-    <string name="preferences_adaptive_frame_pacing_title">Ritmo Adaptativo de Quadros</string>
-    <string name="preferences_adaptive_frame_pacing_summary">Suaviza a entrega irregular de quadros ajustando o quanto os quadros são armazenados em buffer antecipadamente e descartando quadros acumulados quando a rede apresenta instabilidade. Adiciona uma pequena latência em troca de um movimento mais estável em conexões instáveis. Aplica-se ao Remote Play, à Biblioteca de Jogos e ao Catálogo de Jogos.</string>
     <string name="preferences_swap_cross_moon_title">Trocar Botões X/Círculo e Quadrado/Triângulo</string>
     <string name="preferences_swap_cross_moon_summary">Troca os botões de ação se o mapeamento padrão estiver incorreto (por exemplo, para controles 8BitDo)</string>
     <string name="preferences_microphone_enabled_title">Microfone (somente Remote Play)</string>

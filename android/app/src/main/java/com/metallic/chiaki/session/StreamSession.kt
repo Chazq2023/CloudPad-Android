@@ -40,6 +40,14 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 	var session: Session? = null
 		private set
 
+	/** Live Video Pacing change (true = Smooth): applied to the running decoder without a restart,
+	 *  and recorded in [connectInfo] so a later reconnect/resume keeps the new mode. */
+	fun setVideoPacing(smooth: Boolean)
+	{
+		connectInfo = connectInfo.copy(adaptiveFramePacingEnabled = smooth)
+		session?.setVideoPacing(smooth)
+	}
+
 	private val _state = MutableLiveData<StreamState>(StreamStateIdle)
 	val state: LiveData<StreamState> get() = _state
 

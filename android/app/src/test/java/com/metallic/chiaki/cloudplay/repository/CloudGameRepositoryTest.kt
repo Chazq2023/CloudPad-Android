@@ -69,12 +69,12 @@ class CloudGameRepositoryTest {
         private val CATALOG_WITH_OWNERSHIP_JSON = """
             [{"productId":"PPSA0003","name":"Returnal","imageUrl":"https://img.com/r.jpg",
               "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/returnal",
-              "isOwned":false},
+              "isOwned":false,"psCatalog":false},
              {"productId":"PPSA0001","name":"Demon's Souls","imageUrl":"https://img.com/ds.jpg",
-              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true},
+              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true,"psCatalog":false},
              {"productId":"PPSA0002","name":"Astro Bot","imageUrl":"https://img.com/ab.jpg",
               "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/astro-bot",
-              "isOwned":false}]
+              "isOwned":false,"psCatalog":true,"freeToPlay":false}]
         """.trimIndent()
 
         private val MS_25_HOURS = 25L * 60 * 60 * 1000
@@ -279,12 +279,121 @@ class CloudGameRepositoryTest {
 
     @Test
     fun `fetchPs5GamesNotInLibrary is empty when every catalog game is owned`() = runTest {
-        writeCacheFile("pscloud_catalog.json", OWNED_PS5_CACHE_JSON)
+        writeCacheFile("pscloud_catalog.json", OWNED_PS5_CACHE_JSON.replace("\"isOwned\":true", "\"isOwned\":true,\"psCatalog\":false"))
 
         val result = repository.fetchPs5GamesNotInLibrary("", forceRefresh = false)
 
         assertTrue(result is PsnResult.Success)
         assertTrue((result as PsnResult.Success).data.isEmpty())
+    }
+
+    @Test
+    fun `catalog cache keeps the psCatalog and freeToPlay tags`() = runTest {
+        writeCacheFile("pscloud_catalog.json", CATALOG_WITH_OWNERSHIP_JSON)
+
+        val games = (repository.fetchPs5CloudCatalog("", forceRefresh = false) as PsnResult.Success).data
+        val astro = games.first { it.name == "Astro Bot" }
+
+        assertTrue(astro.psCatalog)
+        assertTrue(!games.first { it.name == "Returnal" }.psCatalog)
+    }
+
+    @Test
+    fun `a full-catalog cache without the tags counts as stale`() {
+        val old = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false}]""")
+        val current = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false,"psCatalog":false}]""")
+
+        assertTrue(CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", old))
+        assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", current))
+    }
+
+    @Test
+    fun `other cache files and empty caches are never treated as stale`() {
+        val old = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false}]""")
+
+        assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_owned.json", old))
+        assertTrue(!CloudGameRepository.lacksCatalogTags("psnow_catalog.json", old))
+        assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", org.json.JSONArray("[]")))
+    }
+
+    // --- PS Plus lookup (fetcher injected, so no network) ---
+
+    private class FakeFetcher(private val result: () -> Set<String>) {
+        var calls = 0
+        val locales = mutableListOf<String>()
+        suspend fun fetch(locale: String): Set<String> { calls++; locales += locale; return result() }
+    }
+
+    private fun plusRepo(fetcher: FakeFetcher) = CloudGameRepository(context, preferences, fetcher::fetch)
+
+    private fun writePlusCache(locale: String, ageMs: Long, keys: Set<String>) {
+        val dir = File(tempDir, "ps_plus_cache").apply { mkdirs() }
+        File(dir, "ps_plus_keys.json").writeText(
+            com.metallic.chiaki.cloudplay.api.PsPlusCache.encode(
+                com.metallic.chiaki.cloudplay.api.PsPlusCache.Entry(locale, System.currentTimeMillis() - ageMs, keys)
+            )
+        )
+    }
+
+    private val weekAndMore = 8L * 24 * 60 * 60 * 1000
+
+    @Test
+    fun `a fresh PS Plus lookup is served from cache without fetching`() = runTest {
+        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+        val fetcher = FakeFetcher { setOf("PPSA9") }
+
+        val result = plusRepo(fetcher).loadPsPlusKeys()
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA1")), result)
+        assertEquals(0, fetcher.calls)
+    }
+
+    @Test
+    fun `refresh fetches a new lookup even when the cache is fresh, and saves it`() = runTest {
+        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+        val fetcher = FakeFetcher { setOf("PPSA9") }
+
+        val forced = plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true)
+        val afterwards = plusRepo(FakeFetcher { error("should be served from the new cache") }).loadPsPlusKeys()
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA9")), forced)
+        assertEquals(1, fetcher.calls)
+        assertEquals(PsPlusResult.Ready(setOf("PPSA9")), afterwards)
+    }
+
+    @Test
+    fun `an expired lookup is refetched`() = runTest {
+        writePlusCache("en-US", ageMs = weekAndMore, keys = setOf("PPSA2"))
+        val fetcher = FakeFetcher { setOf("PPSA3") }
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA3")), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(1, fetcher.calls)
+    }
+
+    @Test
+    fun `a failed refresh falls back to the saved lookup and says it is not fresh`() = runTest {
+        writePlusCache("en-US", ageMs = weekAndMore, keys = setOf("PPSA2"))
+        val fetcher = FakeFetcher { throw java.io.IOException("offline") }
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA2"), isFresh = false), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(PsPlusResult.Ready(setOf("PPSA2"), isFresh = false), plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true))
+    }
+
+    @Test
+    fun `nothing saved and a failed fetch reports the failure`() = runTest {
+        val result = plusRepo(FakeFetcher { throw java.io.IOException("offline") }).loadPsPlusKeys()
+
+        assertTrue(result is PsPlusResult.Failed)
+        assertEquals("offline", (result as PsPlusResult.Failed).message)
+    }
+
+    @Test
+    fun `a lookup saved for another store locale is not reused`() = runTest {
+        writePlusCache("de-DE", ageMs = 60_000, keys = setOf("PPSA3"))
+        val fetcher = FakeFetcher { setOf("PPSA4") }
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA4")), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(listOf("en-US"), fetcher.locales)
     }
 
     // --- Helpers ---

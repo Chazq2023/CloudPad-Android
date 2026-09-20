@@ -99,11 +99,10 @@
             app:defaultValue="true"
             app:icon="@drawable/ic_resolution"/>
 
-        <SwitchPreference
-            app:key="@string/preferences_adaptive_frame_pacing_key"
-            app:title="@string/preferences_adaptive_frame_pacing_title"
-            app:summary="@string/preferences_adaptive_frame_pacing_summary"
-            app:defaultValue="false"
+        <ListPreference
+            app:key="@string/preferences_video_pacing_key"
+            app:title="@string/preferences_video_pacing_title"
+            app:summary="@string/preferences_video_pacing_summary"
             app:icon="@drawable/ic_fps"/>
 
         <SwitchPreference
