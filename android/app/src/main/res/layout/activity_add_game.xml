@@ -22,7 +22,7 @@
                 android:layout_gravity="center_vertical"
                 android:gravity="center"
                 android:paddingStart="56dp"
-                android:paddingEnd="56dp"
+                android:paddingEnd="104dp"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:fontFamily="sans-serif-condensed"
@@ -32,7 +32,7 @@
 
             <ImageButton
                 android:id="@+id/backButton"
-                android:nextFocusRight="@id/refreshButton"
+                android:nextFocusRight="@id/filterButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|center_vertical"
@@ -44,19 +44,40 @@
                 android:src="@drawable/ic_arrow_back"
                 android:tint="?attr/colorOnPrimary"/>
 
-            <ImageButton
-                android:id="@+id/refreshButton"
-                android:nextFocusLeft="@id/backButton"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical"
-                android:padding="12dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:foreground="@drawable/bg_focus_highlight"
-                android:focusable="true"
-                android:contentDescription="@string/add_game_refresh_content_description"
-                android:src="@drawable/ic_refresh"
-                android:tint="?attr/colorOnPrimary"/>
+                android:orientation="horizontal">
+
+                <ImageButton
+                    android:id="@+id/filterButton"
+                    android:nextFocusLeft="@id/backButton"
+                    android:nextFocusRight="@id/refreshButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:foreground="@drawable/bg_focus_highlight"
+                    android:focusable="true"
+                    android:contentDescription="@string/add_game_filter_content_description"
+                    android:src="@drawable/ic_filter"
+                    android:tint="?attr/colorOnPrimary"/>
+
+                <ImageButton
+                    android:id="@+id/refreshButton"
+                    android:nextFocusLeft="@id/filterButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:foreground="@drawable/bg_focus_highlight"
+                    android:focusable="true"
+                    android:contentDescription="@string/add_game_refresh_content_description"
+                    android:src="@drawable/ic_refresh"
+                    android:tint="?attr/colorOnPrimary"/>
+
+            </LinearLayout>
 
         </FrameLayout>
     </com.google.android.material.appbar.MaterialToolbar>

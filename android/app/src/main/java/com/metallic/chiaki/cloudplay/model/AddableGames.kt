@@ -66,3 +66,21 @@ fun List<CloudGame>.matchingQuery(query: String): List<CloudGame>
 	if (q.isEmpty()) return this
 	return filter { it.name.contains(q, ignoreCase = true) || it.productId.contains(q, ignoreCase = true) }
 }
+
+/** The Add Game to PS5 Library page's filter. */
+enum class AddGameFilter
+{
+	/** Everything not in the library. */
+	ALL,
+	/** Titles that have to be bought: not in a PS Plus catalog and not free to play. */
+	PURCHASABLE,
+	/** Titles that can be added through the PS Plus catalog, no purchase needed. */
+	PS_CATALOG
+}
+
+fun List<CloudGame>.matchingFilter(filter: AddGameFilter): List<CloudGame> = when(filter)
+{
+	AddGameFilter.ALL -> this
+	AddGameFilter.PURCHASABLE -> filter { !it.psCatalog && !it.freeToPlay }
+	AddGameFilter.PS_CATALOG -> filter { it.psCatalog }
+}

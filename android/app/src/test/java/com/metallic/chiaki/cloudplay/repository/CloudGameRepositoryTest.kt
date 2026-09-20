@@ -69,12 +69,12 @@ class CloudGameRepositoryTest {
         private val CATALOG_WITH_OWNERSHIP_JSON = """
             [{"productId":"PPSA0003","name":"Returnal","imageUrl":"https://img.com/r.jpg",
               "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/returnal",
-              "isOwned":false},
+              "isOwned":false,"psCatalog":false},
              {"productId":"PPSA0001","name":"Demon's Souls","imageUrl":"https://img.com/ds.jpg",
-              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true},
+              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true,"psCatalog":false},
              {"productId":"PPSA0002","name":"Astro Bot","imageUrl":"https://img.com/ab.jpg",
               "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/astro-bot",
-              "isOwned":false}]
+              "isOwned":false,"psCatalog":true,"freeToPlay":false}]
         """.trimIndent()
 
         private val MS_25_HOURS = 25L * 60 * 60 * 1000
@@ -279,12 +279,41 @@ class CloudGameRepositoryTest {
 
     @Test
     fun `fetchPs5GamesNotInLibrary is empty when every catalog game is owned`() = runTest {
-        writeCacheFile("pscloud_catalog.json", OWNED_PS5_CACHE_JSON)
+        writeCacheFile("pscloud_catalog.json", OWNED_PS5_CACHE_JSON.replace("\"isOwned\":true", "\"isOwned\":true,\"psCatalog\":false"))
 
         val result = repository.fetchPs5GamesNotInLibrary("", forceRefresh = false)
 
         assertTrue(result is PsnResult.Success)
         assertTrue((result as PsnResult.Success).data.isEmpty())
+    }
+
+    @Test
+    fun `catalog cache keeps the psCatalog and freeToPlay tags`() = runTest {
+        writeCacheFile("pscloud_catalog.json", CATALOG_WITH_OWNERSHIP_JSON)
+
+        val games = (repository.fetchPs5CloudCatalog("", forceRefresh = false) as PsnResult.Success).data
+        val astro = games.first { it.name == "Astro Bot" }
+
+        assertTrue(astro.psCatalog)
+        assertTrue(!games.first { it.name == "Returnal" }.psCatalog)
+    }
+
+    @Test
+    fun `a full-catalog cache without the tags counts as stale`() {
+        val old = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false}]""")
+        val current = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false,"psCatalog":false}]""")
+
+        assertTrue(CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", old))
+        assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", current))
+    }
+
+    @Test
+    fun `other cache files and empty caches are never treated as stale`() {
+        val old = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false}]""")
+
+        assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_owned.json", old))
+        assertTrue(!CloudGameRepository.lacksCatalogTags("psnow_catalog.json", old))
+        assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", org.json.JSONArray("[]")))
     }
 
     // --- Helpers ---

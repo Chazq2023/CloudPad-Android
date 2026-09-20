@@ -47,7 +47,8 @@ private val APP_LANGUAGES = listOf(
 	"nl-NL" to "Netherlands — Nederlands",
 	"pt-BR" to "Brazil — Português",
 	"ja-JP" to "Japan — 日本語",
-	"ko-KR" to "Korea — 한국어"
+	"ko-KR" to "Korea — 한국어",
+	"id-ID" to "Indonesia — Bahasa Indonesia"
 )
 
 class DataStore(val preferences: Preferences): PreferenceDataStore()

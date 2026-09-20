@@ -11,6 +11,21 @@ import kotlinx.coroutines.coroutineScope
 import org.json.JSONArray
 import org.json.JSONObject
 
+/**
+ * Games seen in a group of imagic lists, keyed two ways so a catalog entry still matches when the
+ * list carries a different SKU of the same game (subscription SKUs often differ from the retail
+ * one): the edition key (concept + platform + title) and the PPSA/CUSA number.
+ */
+internal class ListMembership
+{
+	val editionKeys = HashSet<String>()
+	val stableKeys = HashSet<String>()
+
+	fun matches(editionKey: String, stableKey: String?): Boolean =
+		(editionKey.isNotEmpty() && editionKey in editionKeys) ||
+			(stableKey != null && stableKey in stableKeys)
+}
+
 data class Ps5CloudCatalogResult(
 	val browseGames: List<CloudGame>,
 	val plusLibrarySupplement: List<CloudGame>,
@@ -30,6 +45,7 @@ class PsCloudCatalogService
 		private const val TAG = "PsCloudCatalogService"
 		private const val ACCOUNT_BASE = "https://ca.account.sony.com/api"
 		private const val IMAGIC_GAMESLIST_BASE = "https://www.playstation.com/bin/imagic/gameslist"
+		private const val FREE_TO_PLAY_LIST = "free-to-play-list"
 
 		// Lists fetched in parallel. all-ps5-list is processed first so its productId wins
 		// when a game appears in both the subscription lists and the full streaming catalog.
@@ -41,7 +57,7 @@ class PsCloudCatalogService
 			"ubisoft-classics-list",
 			"plus-classics-list",
 			"plus-monthly-games-list",
-			"free-to-play-list",
+			FREE_TO_PLAY_LIST,
 		)
 	}
 
@@ -58,6 +74,10 @@ class PsCloudCatalogService
 		// (e.g. PS Plus Monthly claims not in all-ps5-list) are excluded — they are not
 		// streamable via PS Cloud even when the user has featureType=3.
 		val allPs5ListStableKeys = mutableSetOf<String>()
+		// Which games appear in the PS Plus catalog lists / the free-to-play list, whatever their
+		// streamingSupported flag says — collected before the streaming gate below discards entries.
+		val psCatalogMembers = ListMembership()
+		val freeToPlayMembers = ListMembership()
 		var totalGames = 0
 		val failedLists = mutableListOf<String>()
 
@@ -81,13 +101,14 @@ class PsCloudCatalogService
 			}
 			totalGames += mergeImagicCategoryIntoMap(
 				categoryList, jsonArray, byEditionKey, plusSupplementByProductId,
-				productIdAliases, allPs5ListStableKeys
+				productIdAliases, allPs5ListStableKeys, psCatalogMembers, freeToPlayMembers
 			)
 		}
 
 		if (failedLists.size == IMAGIC_CATEGORY_LISTS.size)
 			throw Exception("All imagic category lists failed to load")
 
+		flagListMembership(byEditionKey.values, psCatalogMembers, freeToPlayMembers)
 		val browseGames = byEditionKey.values.mapNotNull { jsonToCloudGame(it) }
 		val plusLibrarySupplement = plusSupplementByProductId.values.mapNotNull { jsonToCloudGame(it) }
 
@@ -132,6 +153,8 @@ class PsCloudCatalogService
 		plusSupplementByProductId: LinkedHashMap<String, JSONObject>,
 		productIdAliases: LinkedHashMap<String, String>,
 		allPs5ListStableKeys: MutableSet<String>,
+		psCatalogMembers: ListMembership,
+		freeToPlayMembers: ListMembership,
 	): Int
 	{
 		val plusCatalog = isPlusCatalogList(categoryList)
@@ -147,6 +170,9 @@ class PsCloudCatalogService
 				// Accept PS4 and PS5 — the old PS5-only gate dropped PS4-only PS Plus titles
 				if (!isCloudDeviceGame(gameObj))
 					continue
+
+				if (plusCatalog) recordMembership(psCatalogMembers, gameObj)
+				if (categoryList == FREE_TO_PLAY_LIST) recordMembership(freeToPlayMembers, gameObj)
 
 				// Track every PPSA/CUSA stable key present in all-ps5-list (regardless of
 				// streamingSupported) so supplement entries can be gated on presence in this list.
@@ -203,6 +229,32 @@ class PsCloudCatalogService
 			}
 		}
 		return rows
+	}
+
+	private fun stableKeyOf(productId: String): String? =
+		Regex("(?:PPSA|CUSA)\\d+").find(productId)?.value
+
+	private fun recordMembership(members: ListMembership, gameObj: JSONObject)
+	{
+		val key = editionKey(gameObj)
+		if (key.isNotEmpty()) members.editionKeys.add(key)
+		stableKeyOf(gameObj.optString("productId", ""))?.let { members.stableKeys.add(it) }
+	}
+
+	/** Tags each browse-catalog entry with psCatalog / freeToPlay (read back by [jsonToCloudGame]). */
+	internal fun flagListMembership(
+		browse: Collection<JSONObject>,
+		psCatalogMembers: ListMembership,
+		freeToPlayMembers: ListMembership
+	)
+	{
+		for (gameObj in browse)
+		{
+			val key = editionKey(gameObj)
+			val stable = stableKeyOf(gameObj.optString("productId", ""))
+			if (psCatalogMembers.matches(key, stable)) gameObj.put("psCatalog", true)
+			if (freeToPlayMembers.matches(key, stable)) gameObj.put("freeToPlay", true)
+		}
 	}
 
 	// Subscription catalog lists — NOT the full streamable universe (all-ps5-list is)
@@ -312,7 +364,9 @@ class PsCloudCatalogService
 			conceptUrl = conceptUrl,
 			conceptId = conceptKey(gameObj),
 			isOwned = false,
-			plusCatalog = gameObj.optBoolean("plusCatalog", false)
+			plusCatalog = gameObj.optBoolean("plusCatalog", false),
+			psCatalog = gameObj.optBoolean("psCatalog", false),
+			freeToPlay = gameObj.optBoolean("freeToPlay", false)
 		)
 	}
 

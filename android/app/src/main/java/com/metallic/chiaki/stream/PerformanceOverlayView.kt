@@ -6,6 +6,9 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
@@ -288,17 +291,22 @@ class PerformanceOverlayView @JvmOverloads constructor(
 
         labelDrops.text = String.format(Locale.US, "%-5s %-5d", "Drops", m.drops)
 
+        // Plain (default-coloured) text in both modes — the mode name says it all, no traffic light.
         labelPace.text = String.format(
             Locale.US, "%-5s %-5s", "Pace",
             if (data.smoothPacing) "Smooth" else "Standard"
         )
-        labelPace.setTextColor(
-            if (data.smoothPacing) Color.rgb(0, 220, 100) else Color.argb(180, 255, 255, 255)
-        )
 
-        val sessionText = "Session " + SessionClock.format(data.sessionSeconds)
-        labelValue(labelSessionFull, sessionText)
-        labelValue(labelSessionMinimal, sessionText)
+        // Label keeps the row's default colour; only the time itself is green.
+        val sessionLabel = "Session "
+        val sessionText = SpannableString(sessionLabel + SessionClock.format(data.sessionSeconds)).apply {
+            setSpan(
+                ForegroundColorSpan(Color.rgb(0, 220, 100)),
+                sessionLabel.length, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+        labelSessionFull.text = sessionText
+        labelSessionMinimal.text = sessionText
 
         sparklineView.setData(data.fpsHistory)
     }

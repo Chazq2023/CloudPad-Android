@@ -133,4 +133,59 @@ class AddableGamesTest {
 
         assertEquals(2, catalog.excludingLibrary(library).size)
     }
+
+    // --- matchingFilter ---
+
+    private fun tagged(id: String, psCatalog: Boolean = false, freeToPlay: Boolean = false) =
+        CloudGame(id, id, "", platform = "ps5", serviceType = "pscloud", psCatalog = psCatalog, freeToPlay = freeToPlay)
+
+    private val mixed = listOf(
+        tagged("bought"),
+        tagged("plus", psCatalog = true),
+        tagged("free", freeToPlay = true),
+        tagged("bought2")
+    )
+
+    @Test
+    fun `filter All keeps everything`() {
+        assertEquals(mixed, mixed.matchingFilter(AddGameFilter.ALL))
+    }
+
+    @Test
+    fun `filter PS Catalog keeps only catalog titles`() {
+        assertEquals(listOf("plus"), mixed.matchingFilter(AddGameFilter.PS_CATALOG).map { it.productId })
+    }
+
+    @Test
+    fun `filter Purchasable drops catalog and free-to-play titles`() {
+        assertEquals(listOf("bought", "bought2"), mixed.matchingFilter(AddGameFilter.PURCHASABLE).map { it.productId })
+    }
+
+    @Test
+    fun `Purchasable and PS Catalog never overlap and All is their union plus free-to-play`() {
+        val purchasable = mixed.matchingFilter(AddGameFilter.PURCHASABLE)
+        val catalog = mixed.matchingFilter(AddGameFilter.PS_CATALOG)
+        assertTrue(purchasable.none { it in catalog })
+        assertEquals(mixed.size, purchasable.size + catalog.size + mixed.count { it.freeToPlay })
+    }
+
+    @Test
+    fun `a title tagged both PS Catalog and free-to-play counts as PS Catalog only`() {
+        val both = listOf(tagged("both", psCatalog = true, freeToPlay = true))
+
+        assertEquals(1, both.matchingFilter(AddGameFilter.PS_CATALOG).size)
+        assertTrue(both.matchingFilter(AddGameFilter.PURCHASABLE).isEmpty())
+    }
+
+    @Test
+    fun `filter and search combine`() {
+        val games = listOf(
+            tagged("Astro Bot", psCatalog = true), tagged("Astro Runner"), tagged("Returnal", psCatalog = true)
+        )
+
+        assertEquals(
+            listOf("Astro Bot"),
+            games.matchingFilter(AddGameFilter.PS_CATALOG).matchingQuery("astro").map { it.productId }
+        )
+    }
 }

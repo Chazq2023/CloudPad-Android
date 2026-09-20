@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
@@ -16,7 +17,10 @@ import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.appcompat.widget.PopupMenu
+import com.metallic.chiaki.cloudplay.model.AddGameFilter
 import com.metallic.chiaki.cloudplay.model.CloudGame
+import com.metallic.chiaki.cloudplay.model.matchingFilter
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.matchingQuery
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
@@ -37,6 +41,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	companion object
 	{
 		private const val TAG = "AddGameToLibrary"
+		private const val STATE_FILTER = "filter"
 
 		fun start(context: Context) =
 			context.startActivity(Intent(context, AddGameToLibraryActivity::class.java))
@@ -52,6 +57,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 	private var allGames: List<CloudGame> = emptyList()
 	private var loadJob: Job? = null
+	private var filter = AddGameFilter.ALL
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
@@ -63,10 +69,16 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		setContentView(binding.root)
 		setSupportActionBar(binding.toolbar)
 
+		savedInstanceState?.getString(STATE_FILTER)?.let { saved ->
+			filter = AddGameFilter.values().firstOrNull { it.name == saved } ?: AddGameFilter.ALL
+		}
+
 		repository = CloudGameRepository(applicationContext, preferences)
 
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 		binding.refreshButton.setOnClickListener { loadGames(forceRefresh = true) }
+		binding.filterButton.setOnClickListener { showFilterMenu(it) }
+		updateFilterButton()
 
 		binding.gamesRecyclerView.layoutManager = InstantScrollGridLayoutManager(this, calculateSpanCount())
 		binding.gamesRecyclerView.adapter = adapter
@@ -90,6 +102,50 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		loadGames(forceRefresh = false)
 	}
 
+	override fun onSaveInstanceState(outState: Bundle)
+	{
+		super.onSaveInstanceState(outState)
+		outState.putString(STATE_FILTER, filter.name)
+	}
+
+	private fun filterLabel(option: AddGameFilter) = getString(
+		when(option)
+		{
+			AddGameFilter.ALL -> R.string.add_game_filter_all
+			AddGameFilter.PURCHASABLE -> R.string.add_game_filter_purchasable
+			AddGameFilter.PS_CATALOG -> R.string.add_game_filter_ps_catalog
+		}
+	)
+
+	private fun showFilterMenu(anchor: View)
+	{
+		val popup = PopupMenu(this, anchor)
+		AddGameFilter.values().forEach { option ->
+			popup.menu.add(0, option.ordinal, option.ordinal, filterLabel(option))
+		}
+		popup.menu.setGroupCheckable(0, true, true)
+		popup.menu.findItem(filter.ordinal)?.isChecked = true
+		popup.setOnMenuItemClickListener { item ->
+			filter = AddGameFilter.values()[item.itemId]
+			updateFilterButton()
+			showGames()
+			true
+		}
+		popup.show()
+	}
+
+	/** Tints the icon with the theme accent while a filter other than All is active, so it's
+	 *  visible at a glance that the list is being narrowed. */
+	private fun updateFilterButton()
+	{
+		val tint = TypedValue()
+		theme.resolveAttribute(
+			if(filter == AddGameFilter.ALL) com.google.android.material.R.attr.colorOnPrimary else R.attr.pyluxAccentLight,
+			tint, true
+		)
+		binding.filterButton.setColorFilter(tint.data)
+	}
+
 	private fun searchInput(): View =
 		binding.searchView.findViewById(androidx.appcompat.R.id.search_src_text) ?: binding.searchView
 
@@ -108,6 +164,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private fun setupDpadNavigation()
 	{
 		binding.backButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
+		binding.filterButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
 		binding.refreshButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
 
 		searchInput().setOnKeyListener { _, keyCode, event ->
@@ -172,7 +229,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 	private fun showGames()
 	{
-		val visible = allGames.matchingQuery(binding.searchView.query?.toString() ?: "")
+		val visible = allGames
+			.matchingFilter(filter)
+			.matchingQuery(binding.searchView.query?.toString() ?: "")
 		adapter.submitList(visible)
 		if (visible.isEmpty())
 		{

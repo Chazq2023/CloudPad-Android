@@ -14,4 +14,5 @@
     <locale android:name="pt-BR"/>
     <locale android:name="ja-JP"/>
     <locale android:name="ko-KR"/>
+    <locale android:name="id-ID"/>
 </locale-config>

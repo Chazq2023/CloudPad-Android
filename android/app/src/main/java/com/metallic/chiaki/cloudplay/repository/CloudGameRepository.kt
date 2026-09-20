@@ -30,6 +30,12 @@ class CloudGameRepository(
 		private const val PSCLOUD_CACHE_FILE = "pscloud_catalog.json"
 		private const val CACHE_DURATION_MS = 24 * 60 * 60 * 1000L // 24 hours
 
+		/** True for a full-catalog cache written before psCatalog/freeToPlay were stored (see
+		 *  loadCachedGames). Other cache files never carry the tags, so they never count as stale. */
+		internal fun lacksCatalogTags(cacheFileName: String, cachedGames: JSONArray): Boolean =
+			cacheFileName == PSCLOUD_CACHE_FILE && cachedGames.length() > 0 &&
+				!cachedGames.getJSONObject(0).has("psCatalog")
+
 		fun invalidateCatalogCache(context: Context, reason: String = "")
 		{
 			try
@@ -211,6 +217,16 @@ class CloudGameRepository(
 
 			val json = cacheFile.readText()
 			val jsonArray = JSONArray(json)
+
+			// A full-catalog cache written before the psCatalog/freeToPlay tags existed would have
+			// every game reading as untagged (so the add-a-game filters would come up empty) —
+			// treat it as missing so it's rebuilt with them. Only the catalog file carries the tags.
+			if(lacksCatalogTags(cacheFileName, jsonArray))
+			{
+				Log.i(TAG, "Discarding pre-psCatalog catalog cache")
+				cacheFile.delete()
+				return null
+			}
 			val games = mutableListOf<CloudGame>()
 
 			for (i in 0 until jsonArray.length())
@@ -237,6 +253,8 @@ class CloudGameRepository(
 					entitlementId = entitlementId,
 					storeProductId = obj.optString("storeProductId", ""),
 					plusCatalog = obj.optBoolean("plusCatalog", false),
+					psCatalog = obj.optBoolean("psCatalog", false),
+					freeToPlay = obj.optBoolean("freeToPlay", false),
 					featureType = obj.optInt("featureType", 0),
 					streamableStatus = try {
 						StreamableStatus.valueOf(obj.optString("streamableStatus", "UNKNOWN"))
@@ -278,6 +296,8 @@ class CloudGameRepository(
 				obj.put("entitlementId", game.entitlementId)
 				obj.put("storeProductId", game.storeProductId)
 				obj.put("plusCatalog", game.plusCatalog)
+				obj.put("psCatalog", game.psCatalog)
+				obj.put("freeToPlay", game.freeToPlay)
 				obj.put("featureType", game.featureType)
 				obj.put("streamableStatus", game.streamableStatus.name)
 				jsonArray.put(obj)
