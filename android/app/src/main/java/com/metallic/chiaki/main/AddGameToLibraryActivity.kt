@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.KeyEvent
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -20,6 +21,7 @@ import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.matchingQuery
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.ext.redirectDpadDownTo
 import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityAddGameBinding
 import kotlinx.coroutines.Job
@@ -43,7 +45,10 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private lateinit var binding: ActivityAddGameBinding
 	private lateinit var preferences: Preferences
 	private lateinit var repository: CloudGameRepository
-	private val adapter = AddGameAdapter(onGameClick = ::openGamePage)
+	private val adapter = AddGameAdapter(
+		onGameClick = ::openGamePage,
+		onTopBoundary = { focusView(searchInput()) }
+	)
 
 	private var allGames: List<CloudGame> = emptyList()
 	private var loadJob: Job? = null
@@ -81,7 +86,47 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			}
 		})
 
+		setupDpadNavigation()
 		loadGames(forceRefresh = false)
+	}
+
+	private fun searchInput(): View =
+		binding.searchView.findViewById(androidx.appcompat.R.id.search_src_text) ?: binding.searchView
+
+	/** Touch mode is still active until the first D-pad press, and requestFocus() silently
+	 *  fails on a target that isn't focusable in touch mode (see redirectDpadDownTo's doc). */
+	private fun focusView(view: View?)
+	{
+		view ?: return
+		view.isFocusableInTouchMode = true
+		view.requestFocus()
+	}
+
+	/** The platform's focus search doesn't cross between the toolbar, the search field and the
+	 *  grid on this screen, so each hop is wired explicitly: toolbar buttons DOWN -> search,
+	 *  search UP -> back button, search DOWN -> first tile, first-row tile UP -> search. */
+	private fun setupDpadNavigation()
+	{
+		binding.backButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
+		binding.refreshButton.redirectDpadDownTo { searchInput().also { it.isFocusableInTouchMode = true } }
+
+		searchInput().setOnKeyListener { _, keyCode, event ->
+			if (event.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+			when (keyCode)
+			{
+				KeyEvent.KEYCODE_DPAD_UP ->
+				{
+					focusView(binding.backButton)
+					true
+				}
+				KeyEvent.KEYCODE_DPAD_DOWN ->
+				{
+					val firstTile = binding.gamesRecyclerView.findViewHolderForAdapterPosition(0)?.itemView
+					if (firstTile == null) false else { focusView(firstTile); true }
+				}
+				else -> false
+			}
+		}
 	}
 
 	private fun calculateSpanCount(): Int

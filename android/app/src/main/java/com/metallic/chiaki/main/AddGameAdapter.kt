@@ -10,12 +10,13 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.dispose
 import coil.load
 import com.metallic.chiaki.cloudplay.model.CloudGame
-import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
+import com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary
 import com.pylux.stream.databinding.ItemAddGameBinding
 
 /** Plain cover-art tiles for the add-a-game-to-library page (no favourite/trophy/playtime icons). */
 class AddGameAdapter(
-	private val onGameClick: (CloudGame) -> Unit
+	private val onGameClick: (CloudGame) -> Unit,
+	private val onTopBoundary: () -> Unit
 ) : ListAdapter<CloudGame, AddGameAdapter.ViewHolder>(DIFF)
 {
 	companion object
@@ -31,7 +32,8 @@ class AddGameAdapter(
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder
 	{
 		val binding = ItemAddGameBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-		binding.root.enableFocusableInTouchModeForTv(parent.context)
+		binding.root.isFocusableInTouchMode = true
+		binding.root.redirectDpadUpAtListBoundary(onTopBoundary)
 		return ViewHolder(binding)
 	}
 

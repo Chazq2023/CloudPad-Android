@@ -32,6 +32,7 @@
 
             <ImageButton
                 android:id="@+id/backButton"
+                android:nextFocusRight="@id/refreshButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start|center_vertical"
@@ -45,6 +46,7 @@
 
             <ImageButton
                 android:id="@+id/refreshButton"
+                android:nextFocusLeft="@id/backButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end|center_vertical"
