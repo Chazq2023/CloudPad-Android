@@ -26,6 +26,9 @@ jobs:
         - Added Indonesian (Bahasa Indonesia) as an app language.
         - Fixed the selected tab (PS3 Catalog, PS4 Catalog or PS5 Library) losing its highlight after changing the app language, which also hid the PS5 Library filter, + button and streamability icons until the tab was tapped again.
         - Fixed the focus highlight on the back, filter, refresh and other toolbar buttons (Add Game, Trophies, Friends, Settings and more) staying pink when a different theme colour is selected.
+        - Tapping a game on the Add Game page now checks its PlayStation Store page first. If the store offers no way to buy or add it (for example Tennis World Tour 2), you get a message and it is removed from the list. Answers are remembered so each game is only checked occasionally.
+        - Tapping refresh on the Add Game page now refreshes PS Plus information at most once an hour, to avoid repeated large downloads.
+        - Trophy unlock checks during a stream now slow down when the trophy lookup keeps failing, instead of retrying every 30 seconds.
 
     steps:
       - name: Checkout repo

@@ -350,7 +350,7 @@ class CloudGameRepositoryTest {
 
     @Test
     fun `refresh fetches a new lookup even when the cache is fresh, and saves it`() = runTest {
-        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+        writePlusCache("en-US", ageMs = 2L * 60 * 60 * 1000, keys = setOf("PPSA1")) // past the 1-hour cooldown
         val fetcher = FakeFetcher { setOf("PPSA9") }
 
         val forced = plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true)
@@ -359,6 +359,17 @@ class CloudGameRepositoryTest {
         assertEquals(PsPlusResult.Ready(setOf("PPSA9")), forced)
         assertEquals(1, fetcher.calls)
         assertEquals(PsPlusResult.Ready(setOf("PPSA9")), afterwards)
+    }
+
+    @Test
+    fun `refresh within an hour of the last lookup is ignored and says so`() = runTest {
+        writePlusCache("en-US", ageMs = 10 * 60 * 1000, keys = setOf("PPSA1"))
+        val fetcher = FakeFetcher { setOf("PPSA9") }
+
+        val result = plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true)
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA1"), isFresh = true, refreshSkipped = true), result)
+        assertEquals(0, fetcher.calls)
     }
 
     @Test

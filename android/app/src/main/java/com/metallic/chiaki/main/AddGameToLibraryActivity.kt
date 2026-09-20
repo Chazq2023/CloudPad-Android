@@ -22,7 +22,10 @@ import com.metallic.chiaki.cloudplay.model.AddGameFilter
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.matchingFilter
 import com.metallic.chiaki.cloudplay.model.taggedWithPsPlus
+import com.metallic.chiaki.cloudplay.api.StoreVerdict
 import com.metallic.chiaki.cloudplay.repository.PsPlusResult
+import com.metallic.chiaki.cloudplay.repository.StoreAvailabilityRepository
+import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.matchingQuery
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
@@ -53,6 +56,8 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private lateinit var binding: ActivityAddGameBinding
 	private lateinit var preferences: Preferences
 	private lateinit var repository: CloudGameRepository
+	private lateinit var availability: StoreAvailabilityRepository
+	private var availabilityJob: Job? = null
 	private val adapter = AddGameAdapter(
 		onGameClick = ::openGamePage,
 		onTopBoundary = { focusView(searchInput()) }
@@ -84,6 +89,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		}
 
 		repository = CloudGameRepository(applicationContext, preferences)
+		availability = StoreAvailabilityRepository(applicationContext)
 
 		binding.backButton.setOnClickListener { onBackPressedDispatcher.onBackPressed() }
 		binding.refreshButton.setOnClickListener { loadGames(forceRefresh = true) }
@@ -249,7 +255,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			{
 				is PsnResult.Success ->
 				{
-					allGames = result.data.let { games -> plusKeys?.let { games.taggedWithPsPlus(it) } ?: games }
+					// Games already known to have no buy/add option on the store are left out.
+					val listed = availability.withoutUnavailable(result.data)
+					allGames = plusKeys?.let { listed.taggedWithPsPlus(it) } ?: listed
 					showGames()
 					loadPsPlus(forceRefresh)
 				}
@@ -279,7 +287,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 					plusKeys = result.keys
 					allGames = allGames.taggedWithPsPlus(result.keys)
 					plusState = PlusState.READY
-					if (forceRefresh && !result.isFresh)
+					if (forceRefresh && result.refreshSkipped)
+						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_recent, Toast.LENGTH_LONG).show()
+					else if (forceRefresh && !result.isFresh)
 						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_not_refreshed, Toast.LENGTH_LONG).show()
 				}
 				is PsPlusResult.Failed ->
@@ -360,7 +370,12 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		binding.emptyStateText.visibility = View.VISIBLE
 	}
 
-	/** Sony sign-in happens in Chrome (see PsnLoginActivity), so a Custom Tab reuses that session. */
+	/**
+	 * Before opening the store, one check of that game's page (usually cached, at most a handful
+	 * an hour) for whether it can actually be bought or added. If the store offers no way to get
+	 * it, say so, remember it and drop it from the list; if the check can't tell, open the page
+	 * anyway so a good game is never blocked.
+	 */
 	private fun openGamePage(game: CloudGame)
 	{
 		if (game.conceptUrl.isEmpty())
@@ -368,6 +383,29 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			Toast.makeText(this, R.string.cloud_add_to_library_no_url_message, Toast.LENGTH_LONG).show()
 			return
 		}
+		if (availabilityJob?.isActive == true) return
+
+		availabilityJob = lifecycleScope.launch {
+			binding.progressBar.visibility = View.VISIBLE
+			val verdict = try { availability.check(game) } finally { binding.progressBar.visibility = View.GONE }
+			if (verdict == StoreVerdict.UNAVAILABLE)
+			{
+				allGames = allGames.filter { it.productId != game.productId }
+				showGames()
+				alertDialogBuilder()
+					.setTitle(R.string.add_game_unavailable_title)
+					.setMessage(getString(R.string.add_game_unavailable_message, game.name))
+					.setPositiveButton(R.string.action_ok, null)
+					.show()
+			}
+			else
+				launchStorePage(game)
+		}
+	}
+
+	/** Sony sign-in happens in Chrome (see PsnLoginActivity), so a Custom Tab reuses that session. */
+	private fun launchStorePage(game: CloudGame)
+	{
 
 		val uri = Uri.parse(game.conceptUrl)
 		try

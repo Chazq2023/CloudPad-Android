@@ -169,6 +169,10 @@ internal object PsPlusCache
 
 	const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
 
+	/** A forced refresh is ignored while the saved lookup is younger than this, so repeated taps on
+	 *  Refresh can't repeat the ~25 MB / ~35-request download against Sony's servers. */
+	const val REFRESH_COOLDOWN_MS = 60L * 60 * 1000
+
 	/** Bumped whenever the rule for what counts as included changes, so a lookup saved under an
 	 *  older rule (which would tag the wrong games) is discarded and fetched again. */
 	const val RULE_VERSION = 2
@@ -196,4 +200,6 @@ internal object PsPlusCache
 	}
 
 	fun isFresh(entry: Entry, nowMs: Long): Boolean = nowMs - entry.fetchedAtMs in 0 until MAX_AGE_MS
+
+	fun isInRefreshCooldown(entry: Entry, nowMs: Long): Boolean = nowMs - entry.fetchedAtMs in 0 until REFRESH_COOLDOWN_MS
 }

@@ -23,8 +23,10 @@ import java.io.File
 sealed class PsPlusResult
 {
 	/** PPSA numbers of the PS5 titles included with PS Plus. [isFresh] is false when a newer
-	 *  lookup was wanted (expired, or a forced refresh) but failed, so an older saved one is used. */
-	data class Ready(val keys: Set<String>, val isFresh: Boolean = true) : PsPlusResult()
+	 *  lookup was wanted (expired, or a forced refresh) but failed, so an older saved one is used.
+	 *  [refreshSkipped] is true when a forced refresh was ignored because the lookup was refreshed
+	 *  within the last hour (see [PsPlusCache.REFRESH_COOLDOWN_MS]). */
+	data class Ready(val keys: Set<String>, val isFresh: Boolean = true, val refreshSkipped: Boolean = false) : PsPlusResult()
 	data class Failed(val message: String) : PsPlusResult()
 }
 
@@ -167,7 +169,7 @@ class CloudGameRepository(
 	 * Which PS5 titles are included with PS Plus (as PPSA numbers), for the Add Game page's PS Plus
 	 * filter. The lookup is a ~25 MB download, so it's cached for a week (per store locale, in its own
 	 * directory so clearing the catalog cache doesn't discard it) unless [forceRefresh] asks for a new
-	 * one. If a new one can't be fetched, the saved lookup is still returned (not fresh) rather than nothing.
+	 * one (at most once an hour). If a new one can't be fetched, the saved lookup is still returned (not fresh) rather than nothing.
 	 */
 	suspend fun loadPsPlusKeys(forceRefresh: Boolean = false): PsPlusResult = withContext(Dispatchers.IO)
 	{
@@ -176,7 +178,10 @@ class CloudGameRepository(
 		val cached = try { PsPlusCache.decode(cacheFile.readText()) } catch (e: Exception) { null }
 			?.takeIf { it.storeLocale == storeLocale }
 
-		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, System.currentTimeMillis()))
+		val nowMs = System.currentTimeMillis()
+		if (cached != null && forceRefresh && PsPlusCache.isInRefreshCooldown(cached, nowMs))
+			return@withContext PsPlusResult.Ready(cached.keys, refreshSkipped = true)
+		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, nowMs))
 			return@withContext PsPlusResult.Ready(cached.keys)
 
 		try

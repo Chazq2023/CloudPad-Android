@@ -31,10 +31,13 @@ class TrophyUnlockWatcher(
 	{
 		private const val TAG = "TrophyUnlockWatcher"
 		private const val POLL_INTERVAL_MS = 30_000L
+		/** Longest wait between polls while they keep failing (30s, 1m, 2m, 4m, then 5m). */
+		private const val MAX_BACKOFF_MS = 5 * 60_000L
 	}
 
 	private var job: Job? = null
 	private var baselineEarnedIds: Set<String>? = null
+	private val backoff = PollBackoff(POLL_INTERVAL_MS, MAX_BACKOFF_MS)
 
 	fun start(scope: CoroutineScope)
 	{
@@ -43,8 +46,8 @@ class TrophyUnlockWatcher(
 		job = scope.launch {
 			while (isActive)
 			{
-				poll()
-				delay(POLL_INTERVAL_MS)
+				if (poll()) backoff.onSuccess() else backoff.onFailure()
+				delay(backoff.nextDelayMs())
 			}
 		}
 	}
@@ -56,14 +59,16 @@ class TrophyUnlockWatcher(
 		job = null
 	}
 
-	private suspend fun poll()
+	/** Returns false only when the lookup itself failed (sign-in or request error) — a game Sony has
+	 *  no trophy list for yet is a normal, cheap "nothing yet", not a failure to back off from. */
+	private suspend fun poll(): Boolean
 	{
 		val result = trophyRepository.fetchTrophiesForGame(gameName, platform, forceRefresh = false)
 		val detail = (result as? TrophyResult.Success)?.detail
 		if (detail == null)
 		{
 			Log.i(TAG, "Poll skipped: no trophy detail available yet for \"$gameName\" ($result)")
-			return
+			return result !is TrophyResult.Error
 		}
 
 		val (updatedBaseline, newlyUnlocked) = TrophyUnlockDiff.diff(baselineEarnedIds, detail.trophies)
@@ -79,5 +84,6 @@ class TrophyUnlockWatcher(
 			Log.i(TAG, "Newly unlocked: ${newlyUnlocked.joinToString { it.name }}")
 			onTrophiesUnlocked(newlyUnlocked)
 		}
+		return true
 	}
 }
