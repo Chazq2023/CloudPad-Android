@@ -653,4 +653,36 @@
     <string name="controller_action_touchpad_swipe_down">Scorrimento touchpad giù</string>
     <string name="controller_action_touchpad_swipe_left">Scorrimento touchpad sinistra</string>
     <string name="controller_action_touchpad_swipe_right">Scorrimento touchpad destra</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">Aggiungi un gioco alla libreria</string>
+    <string name="add_game_title">Aggiungi gioco alla libreria PS5</string>
+    <string name="add_game_filter_content_description">Filtra giochi</string>
+    <string name="add_game_filter_all">Tutti</string>
+    <string name="add_game_filter_purchasable">A pagamento</string>
+    <string name="add_game_filter_ps_catalog">Catalogo PS</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Gratuiti</string>
+    <string name="add_game_plus_loading">Caricamento delle informazioni PS Plus…</string>
+    <string name="add_game_list_recent">L\'elenco dei giochi è già stato aggiornato nell\'ultima ora, quindi vedi l\'elenco salvato.</string>
+    <string name="add_game_plus_recent">Le informazioni PS Plus sono già state aggiornate nell\'ultima ora.</string>
+    <string name="add_game_plus_not_refreshed">Impossibile aggiornare le informazioni PS Plus. Viene mostrato l\'ultimo elenco salvato.</string>
+    <string name="add_game_plus_failed">Impossibile caricare le informazioni PS Plus. Tocca Aggiorna per riprovare.</string>
+    <string name="add_game_plus_note_loading">Info PS Plus ancora in caricamento</string>
+    <string name="add_game_plus_note_unavailable">Info PS Plus non disponibili</string>
+    <string name="add_game_search_hint">Cerca giochi…</string>
+    <string name="add_game_refresh_content_description">Aggiorna elenco giochi</string>
+    <string name="add_game_empty">Tutti i giochi in streaming conosciuti sono già nella tua libreria.</string>
+    <string name="add_game_no_matches">Nessun gioco corrisponde alla tua ricerca o al tuo filtro.</string>
+    <string name="add_game_login_required">Accedi a PlayStation dalla scheda Libreria PS5 per vedere i giochi che puoi aggiungere.</string>
+    <string name="add_game_load_failed">Impossibile caricare i giochi: %1$s</string>
+    <string name="preferences_video_pacing_title">Ritmo video</string>
+    <string name="preferences_video_pacing_summary">Standard mantiene un piccolo buffer fisso per la latenza più bassa. Fluido aumenta il buffer in base al jitter di rete e salta i fotogrammi che arrivano tutti insieme, per un movimento più regolare a costo di un po\' di latenza in più sulle connessioni instabili. Vale per Remote Play, Libreria giochi e Catalogo giochi.</string>
+    <string name="preferences_video_pacing_standard">Standard</string>
+    <string name="preferences_video_pacing_smooth">Fluido</string>
+    <string name="trophy_refresh_content_description">Aggiorna trofei</string>
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s di %2$s gioco mostrato</item>
+        <item quantity="other">%1$s di %2$s giochi mostrati</item>
+    </plurals>
 </resources>

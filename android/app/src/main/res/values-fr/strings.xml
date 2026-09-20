@@ -653,4 +653,36 @@
     <string name="controller_action_touchpad_swipe_down">Glissement du pavé tactile vers le bas</string>
     <string name="controller_action_touchpad_swipe_left">Glissement du pavé tactile vers la gauche</string>
     <string name="controller_action_touchpad_swipe_right">Glissement du pavé tactile vers la droite</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">Ajouter un jeu à la bibliothèque</string>
+    <string name="add_game_title">Ajouter un jeu à la bibliothèque PS5</string>
+    <string name="add_game_filter_content_description">Filtrer les jeux</string>
+    <string name="add_game_filter_all">Tous</string>
+    <string name="add_game_filter_purchasable">Payants</string>
+    <string name="add_game_filter_ps_catalog">Catalogue PS</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Gratuits</string>
+    <string name="add_game_plus_loading">Chargement des informations PS Plus…</string>
+    <string name="add_game_list_recent">La liste des jeux a déjà été actualisée au cours de la dernière heure ; voici la liste enregistrée.</string>
+    <string name="add_game_plus_recent">Les informations PS Plus ont déjà été actualisées au cours de la dernière heure.</string>
+    <string name="add_game_plus_not_refreshed">Impossible d’actualiser les informations PS Plus. Affichage de la dernière liste enregistrée.</string>
+    <string name="add_game_plus_failed">Impossible de charger les informations PS Plus. Appuyez sur Actualiser pour réessayer.</string>
+    <string name="add_game_plus_note_loading">Infos PS Plus en cours de chargement</string>
+    <string name="add_game_plus_note_unavailable">Infos PS Plus indisponibles</string>
+    <string name="add_game_search_hint">Rechercher des jeux…</string>
+    <string name="add_game_refresh_content_description">Actualiser la liste des jeux</string>
+    <string name="add_game_empty">Tous les jeux connus compatibles avec le streaming sont déjà dans votre bibliothèque.</string>
+    <string name="add_game_no_matches">Aucun jeu ne correspond à votre recherche ou à votre filtre.</string>
+    <string name="add_game_login_required">Connectez-vous à PlayStation depuis l’onglet Bibliothèque PS5 pour voir les jeux que vous pouvez ajouter.</string>
+    <string name="add_game_load_failed">Impossible de charger les jeux : %1$s</string>
+    <string name="preferences_video_pacing_title">Cadence vidéo</string>
+    <string name="preferences_video_pacing_summary">Standard conserve un petit tampon fixe pour la latence la plus faible. Fluide agrandit le tampon selon la gigue du réseau et ignore les images qui arrivent en rafale, pour un mouvement plus régulier au prix d’un peu de latence supplémentaire sur les connexions instables. S’applique à Remote Play, à la Bibliothèque de jeux et au Catalogue de jeux.</string>
+    <string name="preferences_video_pacing_standard">Standard</string>
+    <string name="preferences_video_pacing_smooth">Fluide</string>
+    <string name="trophy_refresh_content_description">Actualiser les trophées</string>
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s sur %2$s jeu affiché</item>
+        <item quantity="other">%1$s sur %2$s jeux affichés</item>
+    </plurals>
 </resources>

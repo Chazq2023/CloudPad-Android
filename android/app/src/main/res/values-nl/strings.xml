@@ -655,4 +655,36 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad omlaag vegen</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad naar links vegen</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad naar rechts vegen</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">Game aan bibliotheek toevoegen</string>
+    <string name="add_game_title">Game aan PS5-bibliotheek toevoegen</string>
+    <string name="add_game_filter_content_description">Games filteren</string>
+    <string name="add_game_filter_all">Alle</string>
+    <string name="add_game_filter_purchasable">Betaald</string>
+    <string name="add_game_filter_ps_catalog">PS-catalogus</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Gratis</string>
+    <string name="add_game_plus_loading">PS Plus-informatie laden…</string>
+    <string name="add_game_list_recent">De gamelijst is het afgelopen uur al vernieuwd, dus dit is de opgeslagen lijst.</string>
+    <string name="add_game_plus_recent">De PS Plus-informatie is het afgelopen uur al vernieuwd.</string>
+    <string name="add_game_plus_not_refreshed">Kan de PS Plus-informatie niet vernieuwen. De laatst opgeslagen lijst wordt getoond.</string>
+    <string name="add_game_plus_failed">Kan de PS Plus-informatie niet laden. Tik op Vernieuwen om het opnieuw te proberen.</string>
+    <string name="add_game_plus_note_loading">PS Plus-info wordt nog geladen</string>
+    <string name="add_game_plus_note_unavailable">PS Plus-info niet beschikbaar</string>
+    <string name="add_game_search_hint">Games zoeken…</string>
+    <string name="add_game_refresh_content_description">Gamelijst vernieuwen</string>
+    <string name="add_game_empty">Alle bekende streambare games staan al in je bibliotheek.</string>
+    <string name="add_game_no_matches">Geen games komen overeen met je zoekopdracht of filter.</string>
+    <string name="add_game_login_required">Log in bij PlayStation via het tabblad PS5-bibliotheek om games te zien die je kunt toevoegen.</string>
+    <string name="add_game_load_failed">Kan games niet laden: %1$s</string>
+    <string name="preferences_video_pacing_title">Video-pacing</string>
+    <string name="preferences_video_pacing_summary">Standaard houdt een kleine vaste buffer aan voor de laagste latentie. Vloeiend vergroot de buffer bij netwerkjitter en slaat frames over die gebundeld binnenkomen, voor rustigere beweging ten koste van wat extra latentie bij onstabiele verbindingen. Geldt voor Remote Play, Spelbibliotheek en Spelcatalogus.</string>
+    <string name="preferences_video_pacing_standard">Standaard</string>
+    <string name="preferences_video_pacing_smooth">Vloeiend</string>
+    <string name="trophy_refresh_content_description">Trofeeën vernieuwen</string>
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s van %2$s game weergegeven</item>
+        <item quantity="other">%1$s van %2$s games weergegeven</item>
+    </plurals>
 </resources>

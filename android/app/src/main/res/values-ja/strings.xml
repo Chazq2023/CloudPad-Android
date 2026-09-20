@@ -652,4 +652,35 @@
     <string name="controller_action_touchpad_swipe_down">タッチパッド下スワイプ</string>
     <string name="controller_action_touchpad_swipe_left">タッチパッド左スワイプ</string>
     <string name="controller_action_touchpad_swipe_right">タッチパッド右スワイプ</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">ゲームをライブラリに追加</string>
+    <string name="add_game_title">PS5ライブラリにゲームを追加</string>
+    <string name="add_game_filter_content_description">ゲームを絞り込む</string>
+    <string name="add_game_filter_all">すべて</string>
+    <string name="add_game_filter_purchasable">有料</string>
+    <string name="add_game_filter_ps_catalog">PSカタログ</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">基本プレイ無料</string>
+    <string name="add_game_plus_loading">PS Plus情報を読み込み中…</string>
+    <string name="add_game_list_recent">ゲームリストは過去1時間以内にすでに更新されているため、保存済みのリストを表示しています。</string>
+    <string name="add_game_plus_recent">PS Plus情報は過去1時間以内にすでに更新されています。</string>
+    <string name="add_game_plus_not_refreshed">PS Plus情報を更新できませんでした。最後に保存したリストを表示しています。</string>
+    <string name="add_game_plus_failed">PS Plus情報を読み込めませんでした。「更新」をタップして再試行してください。</string>
+    <string name="add_game_plus_note_loading">PS Plus情報を読み込み中</string>
+    <string name="add_game_plus_note_unavailable">PS Plus情報は利用できません</string>
+    <string name="add_game_search_hint">ゲームを検索…</string>
+    <string name="add_game_refresh_content_description">ゲームリストを更新</string>
+    <string name="add_game_empty">ストリーミング可能な既知のゲームはすべてライブラリに追加済みです。</string>
+    <string name="add_game_no_matches">検索または絞り込みに一致するゲームはありません。</string>
+    <string name="add_game_login_required">PS5ライブラリタブからPlayStationにログインすると、追加できるゲームが表示されます。</string>
+    <string name="add_game_load_failed">ゲームを読み込めませんでした: %1$s</string>
+    <string name="preferences_video_pacing_title">ビデオペーシング</string>
+    <string name="preferences_video_pacing_summary">「標準」は、遅延を最小限にするために小さな固定バッファを使用します。「スムーズ」は、ネットワークのジッターに応じてバッファを拡大し、まとまって届いたフレームをスキップして、動きをより安定させます（不安定な接続ではやや遅延が増えます）。リモートプレイ、ゲームライブラリ、ゲームカタログに適用されます。</string>
+    <string name="preferences_video_pacing_standard">標準</string>
+    <string name="preferences_video_pacing_smooth">スムーズ</string>
+    <string name="trophy_refresh_content_description">トロフィーを更新</string>
+    <plurals name="add_game_count">
+        <item quantity="other">%2$s 件中 %1$s 件のゲームを表示中</item>
+    </plurals>
 </resources>
