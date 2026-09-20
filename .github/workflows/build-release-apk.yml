@@ -24,6 +24,7 @@ jobs:
         - The Add Game page is now titled Add Game to PS5 Library and has a filter: All, Purchasable (games you need to buy) or PS Catalog (games you can add through PS Plus).
         - Added Indonesian (Bahasa Indonesia) as an app language.
         - Fixed the selected tab (PS3 Catalog, PS4 Catalog or PS5 Library) losing its highlight after changing the app language, which also hid the PS5 Library filter, + button and streamability icons until the tab was tapped again.
+        - Fixed the focus highlight on the back, filter, refresh and other toolbar buttons (Add Game, Trophies, Friends, Settings and more) staying pink when a different theme colour is selected.
 
     steps:
       - name: Checkout repo
