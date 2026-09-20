@@ -9,6 +9,7 @@ import com.metallic.chiaki.trophy.PsnTrophyTokenManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 
 /**
@@ -23,6 +24,8 @@ class FriendsRepository(private val preferences: Preferences)
 	companion object
 	{
 		private const val TAG = "FriendsRepository"
+		/** At most this many profile requests in flight at once. */
+		private const val PROFILE_CONCURRENCY = 5
 	}
 
 	private val tokenManager = PsnTrophyTokenManager(preferences)
@@ -55,7 +58,19 @@ class FriendsRepository(private val preferences: Preferences)
 				return@withContext FriendsResult.Success(emptyList())
 			}
 
-			val profiles = accountIds.map { id -> async { id to FriendsService.fetchProfile(token, id) } }.awaitAll()
+			// Reuse saved profiles; download only friends we haven't seen (or all, once a day), and
+			// never more than a few at a time.
+			val savedProfiles = preferences.getCachedFriendsJson()
+				?.let { FriendsService.deserializeFriends(it) }.orEmpty()
+				.associate { it.accountId to (it.onlineId to it.avatarUrl) }
+			val nowMs = System.currentTimeMillis()
+			val toFetch = FriendProfilePlan.idsToFetch(accountIds, savedProfiles.keys, preferences.friendsProfilesFetchedAtMs, nowMs)
+			val gate = kotlinx.coroutines.sync.Semaphore(PROFILE_CONCURRENCY)
+			val fetchedProfiles = toFetch.map { id ->
+				async { gate.withPermit { id to FriendsService.fetchProfile(token, id) } }
+			}.awaitAll().toMap()
+			if (FriendProfilePlan.isFullRefetch(toFetch, accountIds)) preferences.friendsProfilesFetchedAtMs = nowMs
+			val profiles = accountIds.map { id -> id to (fetchedProfiles[id] ?: savedProfiles[id]) }
 			val presences = FriendsService.fetchPresences(token, accountIds)
 
 			val friends = profiles.mapNotNull { (accountId, profile) ->

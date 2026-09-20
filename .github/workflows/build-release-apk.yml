@@ -29,6 +29,7 @@ jobs:
         - Tapping a game on the Add Game page now checks its PlayStation Store page first. If the store offers no way to buy or add it (for example Tennis World Tour 2), you get a message and it is removed from the list. Answers are remembered so each game is only checked occasionally.
         - Tapping refresh on the Add Game page now refreshes PS Plus information at most once an hour, to avoid repeated large downloads.
         - Trophy unlock checks during a stream now slow down when the trophy lookup keeps failing, instead of retrying every 30 seconds.
+        - Fewer requests to PlayStation servers: trophy unlock checks no longer re-download unchanging trophy details every 30 seconds, the friends list reuses saved profiles instead of fetching every friend each time, and returning to the Remote Play tab refreshes the console list at most once a minute.
 
     steps:
       - name: Checkout repo

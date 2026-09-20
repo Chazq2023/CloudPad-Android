@@ -507,6 +507,13 @@ class Preferences(context: Context)
 
 	fun getCachedFriendsJson(): String? = sharedPreferences.getString(FRIENDS_CACHE_KEY, null)
 
+	// When every friend's profile (username/avatar) was last fetched. Profiles change rarely, so
+	// the friends list reuses the saved ones and only refetches them daily, or for new friends.
+	private val FRIENDS_PROFILES_FETCHED_AT_KEY = "friends_profiles_fetched_at"
+	var friendsProfilesFetchedAtMs: Long
+		get() = sharedPreferences.getLong(FRIENDS_PROFILES_FETCHED_AT_KEY, 0L)
+		set(value) { sharedPreferences.edit().putLong(FRIENDS_PROFILES_FETCHED_AT_KEY, value).apply() }
+
 	val isFriendsCacheFresh: Boolean
 		get()
 		{
