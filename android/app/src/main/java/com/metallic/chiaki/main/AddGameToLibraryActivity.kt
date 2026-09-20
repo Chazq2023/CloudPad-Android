@@ -108,6 +108,28 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			}
 		})
 
+		// AppCompat's default clear (X) button empties the text but then requests focus and
+		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
+		// only happen when the user taps into the field themselves (same fix as the library search).
+		binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
+			?.setOnClickListener {
+				binding.searchView.setQuery("", false)
+				binding.searchView.clearFocus()
+				val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+			}
+
+		// AppCompat's default clear (X) button empties the text but then requests focus and
+		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
+		// only happen when the user taps into the field themselves (same fix as the library search).
+		binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
+			?.setOnClickListener {
+				binding.searchView.setQuery("", false)
+				binding.searchView.clearFocus()
+				val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
+			}
+
 		setupDpadNavigation()
 		loadGames(forceRefresh = false)
 	}
