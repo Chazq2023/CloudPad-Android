@@ -64,7 +64,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 	/** Where the PS Plus lookup (which games are included with PS Plus) stands. It loads after
 	 *  the game list, separately, since it can be a big first-time download. */
-	private enum class PlusState { LOADING, READY, NEEDS_WIFI, FAILED }
+	private enum class PlusState { LOADING, READY, FAILED }
 	private var plusState = PlusState.LOADING
 	private var plusKeys: Set<String>? = null
 	private var plusJob: Job? = null
@@ -226,7 +226,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 				{
 					allGames = result.data.let { games -> plusKeys?.let { games.taggedWithPsPlus(it) } ?: games }
 					showGames()
-					loadPsPlus()
+					loadPsPlus(forceRefresh)
 				}
 				is PsnResult.Error ->
 				{
@@ -240,22 +240,23 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		}
 	}
 
-	/** Loads which games are included with PS Plus and tags them. Never forced: the lookup is cached
-	 *  for a week and is a large download, so the page's refresh button doesn't repeat it. */
-	private fun loadPsPlus()
+	/** Loads which games are included with PS Plus and tags them. Normally served from a week-long
+	 *  cache; the page's refresh button passes [forceRefresh] to fetch a new one. */
+	private fun loadPsPlus(forceRefresh: Boolean = false)
 	{
 		if (plusJob?.isActive == true) return
 		if (plusState != PlusState.READY) plusState = PlusState.LOADING
 		plusJob = lifecycleScope.launch {
-			when (val result = repository.loadPsPlusKeys())
+			when (val result = repository.loadPsPlusKeys(forceRefresh))
 			{
 				is PsPlusResult.Ready ->
 				{
 					plusKeys = result.keys
 					allGames = allGames.taggedWithPsPlus(result.keys)
 					plusState = PlusState.READY
+					if (forceRefresh && !result.isFresh)
+						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_not_refreshed, Toast.LENGTH_LONG).show()
 				}
-				is PsPlusResult.NeedsUnmetered -> plusState = PlusState.NEEDS_WIFI
 				is PsPlusResult.Failed ->
 				{
 					Log.w(TAG, "PS Plus lookup failed: ${result.message}")
@@ -270,7 +271,6 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		when (plusState)
 		{
 			PlusState.LOADING -> R.string.add_game_plus_loading
-			PlusState.NEEDS_WIFI -> R.string.add_game_plus_needs_wifi
 			else -> R.string.add_game_plus_failed
 		}
 	)

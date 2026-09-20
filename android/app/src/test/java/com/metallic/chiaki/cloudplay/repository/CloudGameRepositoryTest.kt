@@ -316,9 +316,15 @@ class CloudGameRepositoryTest {
         assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", org.json.JSONArray("[]")))
     }
 
-    // --- PS Plus lookup (hermetic: a metered connection never reaches the network) ---
+    // --- PS Plus lookup (fetcher injected, so no network) ---
 
-    private fun plusRepo(metered: Boolean) = CloudGameRepository(context, preferences, isNetworkMetered = { metered })
+    private class FakeFetcher(private val result: () -> Set<String>) {
+        var calls = 0
+        val locales = mutableListOf<String>()
+        suspend fun fetch(locale: String): Set<String> { calls++; locales += locale; return result() }
+    }
+
+    private fun plusRepo(fetcher: FakeFetcher) = CloudGameRepository(context, preferences, fetcher::fetch)
 
     private fun writePlusCache(locale: String, ageMs: Long, keys: Set<String>) {
         val dir = File(tempDir, "ps_plus_cache").apply { mkdirs() }
@@ -329,33 +335,65 @@ class CloudGameRepositoryTest {
         )
     }
 
-    @Test
-    fun `a fresh PS Plus lookup is served from cache even on a metered connection`() = runTest {
-        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+    private val weekAndMore = 8L * 24 * 60 * 60 * 1000
 
-        val result = plusRepo(metered = true).loadPsPlusKeys()
+    @Test
+    fun `a fresh PS Plus lookup is served from cache without fetching`() = runTest {
+        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+        val fetcher = FakeFetcher { setOf("PPSA9") }
+
+        val result = plusRepo(fetcher).loadPsPlusKeys()
 
         assertEquals(PsPlusResult.Ready(setOf("PPSA1")), result)
+        assertEquals(0, fetcher.calls)
     }
 
     @Test
-    fun `a stale lookup is still used rather than downloading on a metered connection`() = runTest {
-        writePlusCache("en-US", ageMs = 30L * 24 * 60 * 60 * 1000, keys = setOf("PPSA2"))
+    fun `refresh fetches a new lookup even when the cache is fresh, and saves it`() = runTest {
+        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+        val fetcher = FakeFetcher { setOf("PPSA9") }
 
-        assertEquals(PsPlusResult.Ready(setOf("PPSA2")), plusRepo(metered = true).loadPsPlusKeys())
-        assertEquals(PsPlusResult.Ready(setOf("PPSA2")), plusRepo(metered = true).loadPsPlusKeys(forceRefresh = true))
+        val forced = plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true)
+        val afterwards = plusRepo(FakeFetcher { error("should be served from the new cache") }).loadPsPlusKeys()
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA9")), forced)
+        assertEquals(1, fetcher.calls)
+        assertEquals(PsPlusResult.Ready(setOf("PPSA9")), afterwards)
     }
 
     @Test
-    fun `nothing cached on a metered connection waits for Wi-Fi`() = runTest {
-        assertEquals(PsPlusResult.NeedsUnmetered, plusRepo(metered = true).loadPsPlusKeys())
+    fun `an expired lookup is refetched`() = runTest {
+        writePlusCache("en-US", ageMs = weekAndMore, keys = setOf("PPSA2"))
+        val fetcher = FakeFetcher { setOf("PPSA3") }
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA3")), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(1, fetcher.calls)
     }
 
     @Test
-    fun `a lookup cached for another store locale is not reused`() = runTest {
+    fun `a failed refresh falls back to the saved lookup and says it is not fresh`() = runTest {
+        writePlusCache("en-US", ageMs = weekAndMore, keys = setOf("PPSA2"))
+        val fetcher = FakeFetcher { throw java.io.IOException("offline") }
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA2"), isFresh = false), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(PsPlusResult.Ready(setOf("PPSA2"), isFresh = false), plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true))
+    }
+
+    @Test
+    fun `nothing saved and a failed fetch reports the failure`() = runTest {
+        val result = plusRepo(FakeFetcher { throw java.io.IOException("offline") }).loadPsPlusKeys()
+
+        assertTrue(result is PsPlusResult.Failed)
+        assertEquals("offline", (result as PsPlusResult.Failed).message)
+    }
+
+    @Test
+    fun `a lookup saved for another store locale is not reused`() = runTest {
         writePlusCache("de-DE", ageMs = 60_000, keys = setOf("PPSA3"))
+        val fetcher = FakeFetcher { setOf("PPSA4") }
 
-        assertEquals(PsPlusResult.NeedsUnmetered, plusRepo(metered = true).loadPsPlusKeys())
+        assertEquals(PsPlusResult.Ready(setOf("PPSA4")), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(listOf("en-US"), fetcher.locales)
     }
 
     // --- Helpers ---

@@ -25,7 +25,8 @@ import java.net.URLEncoder
  * TAG games the app already knows are streamable; nothing from the listing is added to the catalog.
  *
  * The listing is big (~3.6 KB a title, ~25 MB for all of PS5 full games, uncompressed), so
- * CloudGameRepository fetches it rarely and only on unmetered networks. It goes through the same
+ * CloudGameRepository caches the result for a week and only refetches it when that expires or the
+ * user refreshes. It goes through the same
  * unauthenticated web API the store website uses; the persisted-query hash below is that site's,
  * and if Sony rotates it the fetch fails and the filter reports the data as unavailable.
  */

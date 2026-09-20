@@ -22,17 +22,17 @@ import java.io.File
 /** Outcome of [CloudGameRepository.loadPsPlusKeys]. */
 sealed class PsPlusResult
 {
-	/** PPSA numbers of the PS5 titles included with PS Plus. May be an older lookup if a fresh one wasn't possible. */
-	data class Ready(val keys: Set<String>) : PsPlusResult()
-	/** Nothing cached and the connection is metered — the download is large, so it waits for Wi-Fi. */
-	object NeedsUnmetered : PsPlusResult()
+	/** PPSA numbers of the PS5 titles included with PS Plus. [isFresh] is false when a newer
+	 *  lookup was wanted (expired, or a forced refresh) but failed, so an older saved one is used. */
+	data class Ready(val keys: Set<String>, val isFresh: Boolean = true) : PsPlusResult()
 	data class Failed(val message: String) : PsPlusResult()
 }
 
 class CloudGameRepository(
 	private val context: Context,
 	private val preferences: com.metallic.chiaki.common.Preferences,
-	private val isNetworkMetered: () -> Boolean = { defaultIsNetworkMetered(context) }
+	// Fetches the PS Plus lookup for a store locale; swapped out in tests.
+	private val fetchPsPlusKeys: suspend (storeLocale: String) -> Set<String> = PsStorePlusService::fetchPlusKeys
 )
 {
 	companion object
@@ -51,12 +51,6 @@ class CloudGameRepository(
 
 		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
 		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
-
-		private fun defaultIsNetworkMetered(context: Context): Boolean = try
-		{
-			(context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager).isActiveNetworkMetered
-		}
-		catch (e: Exception) { true } // can't tell -> assume metered rather than risk a large download
 
 		fun invalidateCatalogCache(context: Context, reason: String = "")
 		{
@@ -172,8 +166,8 @@ class CloudGameRepository(
 	/**
 	 * Which PS5 titles are included with PS Plus (as PPSA numbers), for the Add Game page's PS Plus
 	 * filter. The lookup is a ~25 MB download, so it's cached for a week (per store locale, in its own
-	 * directory so clearing the catalog cache doesn't discard it) and only fetched on an unmetered
-	 * connection. A stale lookup is still returned rather than nothing when a refresh isn't possible.
+	 * directory so clearing the catalog cache doesn't discard it) unless [forceRefresh] asks for a new
+	 * one. If a new one can't be fetched, the saved lookup is still returned (not fresh) rather than nothing.
 	 */
 	suspend fun loadPsPlusKeys(forceRefresh: Boolean = false): PsPlusResult = withContext(Dispatchers.IO)
 	{
@@ -185,12 +179,9 @@ class CloudGameRepository(
 		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, System.currentTimeMillis()))
 			return@withContext PsPlusResult.Ready(cached.keys)
 
-		if (isNetworkMetered())
-			return@withContext cached?.let { PsPlusResult.Ready(it.keys) } ?: PsPlusResult.NeedsUnmetered
-
 		try
 		{
-			val keys = PsStorePlusService.fetchPlusKeys(storeLocale)
+			val keys = fetchPsPlusKeys(storeLocale)
 			try { cacheFile.writeText(PsPlusCache.encode(PsPlusCache.Entry(storeLocale, System.currentTimeMillis(), keys))) }
 			catch (e: Exception) { Log.w(TAG, "Could not cache the PS Plus lookup", e) }
 			PsPlusResult.Ready(keys)
@@ -198,7 +189,7 @@ class CloudGameRepository(
 		catch (e: Exception)
 		{
 			Log.w(TAG, "PS Plus lookup failed", e)
-			cached?.let { PsPlusResult.Ready(it.keys) } ?: PsPlusResult.Failed(e.message ?: "unknown error")
+			cached?.let { PsPlusResult.Ready(it.keys, isFresh = false) } ?: PsPlusResult.Failed(e.message ?: "unknown error")
 		}
 	}
 

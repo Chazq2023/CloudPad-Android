@@ -54,7 +54,7 @@
     <string name="add_game_filter_ps_plus">PS Plus</string>
     <string name="add_game_filter_free_to_play">Free to Play</string>
     <string name="add_game_plus_loading">Loading PS Plus information…</string>
-    <string name="add_game_plus_needs_wifi">PS Plus information (about 25 MB) is only downloaded on Wi-Fi or another unmetered connection. Connect, then tap Refresh.</string>
+    <string name="add_game_plus_not_refreshed">Couldn\'t refresh PS Plus information. Showing the last saved list.</string>
     <string name="add_game_plus_failed">Couldn\'t load PS Plus information. Tap Refresh to try again.</string>
     <string name="add_game_plus_note_loading">PS Plus info still loading</string>
     <string name="add_game_plus_note_unavailable">PS Plus info unavailable</string>

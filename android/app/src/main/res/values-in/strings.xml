@@ -53,7 +53,7 @@
     <string name="add_game_filter_ps_plus">PS Plus</string>
     <string name="add_game_filter_free_to_play">Gratis</string>
     <string name="add_game_plus_loading">Memuat informasi PS Plus…</string>
-    <string name="add_game_plus_needs_wifi">Informasi PS Plus (sekitar 25 MB) hanya diunduh melalui Wi-Fi atau koneksi tanpa batas kuota. Hubungkan, lalu ketuk Segarkan.</string>
+    <string name="add_game_plus_not_refreshed">Tidak dapat menyegarkan informasi PS Plus. Menampilkan daftar tersimpan terakhir.</string>
     <string name="add_game_plus_failed">Tidak dapat memuat informasi PS Plus. Ketuk Segarkan untuk mencoba lagi.</string>
     <string name="add_game_plus_note_loading">info PS Plus masih dimuat</string>
     <string name="add_game_plus_note_unavailable">info PS Plus tidak tersedia</string>
