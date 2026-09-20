@@ -259,16 +259,10 @@
     <string name="action_account">Compte</string>
     <string name="account_menu_log_out">Se déconnecter</string>
     <string name="friends_empty_state">Aucun ami trouvé sur ce compte PSN.</string>
-    <string name="friend_chat_empty_state">Aucun message pour l\'instant — dites bonjour !</string>
-    <string name="friend_chat_input_hint">Message</string>
-    <string name="friend_chat_send">Envoyer</string>
     <string name="quick_settings_friends_tab_description">Amis</string>
     <string name="quick_settings_friends_header_label">Amis</string>
     <string name="quick_settings_friends_refresh">Actualiser la liste d\'amis</string>
     <string name="quick_settings_friends_empty">Aucun ami trouvé sur ce compte PSN.</string>
-    <string name="quick_settings_friend_chat_back">Retour à la liste d\'amis</string>
-    <string name="quick_settings_friend_chat_refresh">Actualiser la conversation</string>
-    <string name="friend_chat_refresh">Actualiser la conversation</string>
     <string name="friends_refresh">Actualiser la liste d\'amis</string>
     <string name="trophy_compare_content_description">Comparer les trophées</string>
     <string name="trophy_compare_title">Comparer les trophées · %1$s</string>
@@ -592,12 +586,6 @@
     <string name="friend_status_offline">Hors ligne</string>
     <string name="friends_error_auth_failed">Authentification PSN impossible pour les données d\'amis</string>
     <string name="friends_error_fetch_failed">Échec de la récupération des amis</string>
-    <string name="friends_error_auth_failed_messaging">Authentification PSN impossible pour la messagerie</string>
-    <string name="friends_error_start_conversation_failed">Impossible de démarrer une conversation avec cet ami</string>
-    <string name="friends_error_load_history_failed">Impossible de charger l\'historique de la conversation</string>
-    <string name="friends_error_open_conversation_failed">Échec de l\'ouverture de la conversation</string>
-    <string name="friends_error_refresh_conversation_failed">Impossible d\'actualiser la conversation</string>
-    <string name="friends_error_refresh_conversation_failed_generic">Échec de l\'actualisation de la conversation</string>
 
     <string name="psn_login_status_instructions">1. Appuyez sur Se connecter au compte et connectez-vous avec Sony.\n2. Appuyez sur Obtenir le jeton NPSSO — Chrome affichera une page du type {\"npsso\":\"...\"}.\n3. Copiez la valeur npsso et collez-la ci-dessous.\n4. Appuyez sur Finaliser la connexion.</string>
 

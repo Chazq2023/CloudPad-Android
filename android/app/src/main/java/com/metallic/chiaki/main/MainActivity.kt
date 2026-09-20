@@ -439,7 +439,7 @@ class MainActivity : AppCompatActivity() {
 
         // requestFocusFromTouch() can still silently fail here even though this only ever runs
         // from a real KeyEvent (confirmed on-device — same gotcha documented on
-        // redirectDpadUpAtListBoundary/chatHistoryTarget: the device can still read as "in touch
+        // redirectDpadUpAtListBoundary: the device can still read as "in touch
         // mode" at this exact point), so isFocusableInTouchMode has to be flipped on for the call
         // to reliably land. It's flipped back off immediately after, rather than left standing —
         // leaving it permanently true is what caused the ps3TabButton "needs two touches" bug

@@ -41,13 +41,13 @@ CloudPad streams your PlayStation games to Android — either straight from Sony
 
 ### In-stream Quick Menu
 * Trophy list, trophy details, and trophy comparison against friends — without leaving your stream
-* Friends list and direct messaging mid-session
+* Friends list mid-session
 * On-the-fly controller remapping, with one-tap reset to defaults
 * Resize, reposition, and adjust the opacity of on-screen touch controls
 * Toggle motion controls, touch haptics, Picture-in-Picture, and image sharpening mid-session
 
 ### Social & Trophies
-* Browse your PSN friends list and message friends
+* Browse your PSN friends list
 * Full trophy list per game with progress and rarity, including an achieved (X/Y) counter, sort by earned date, and filter by rarity — both in the Trophies screen and the in-stream Quick Menu
 * Trophy comparison against friends
 * Per-game playtime tracking — total time, last played, longest session
@@ -188,7 +188,7 @@ Console tiles reflect an accurate, live state — Ready, Asleep, Waking, or Offl
 <img src="readme%20assets/Remote%20Play/Remote%20Play.png" width="600">
 
 ### Quick Settings Panel (In-Stream)
-Live stream settings, performance stats, controller remapping, trophies, friends, and messaging — all without ever leaving your stream.
+Live stream settings, performance stats, controller remapping, trophies, and friends — all without ever leaving your stream.
 
 <table>
 <tr>
@@ -205,7 +205,6 @@ Live stream settings, performance stats, controller remapping, trophies, friends
 </tr>
 <tr>
 <td align="center"><b>Friends List</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20List.jpeg" width="380"></td>
-<td align="center"><b>Friend Messaging</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20Friends%20Messaging.jpeg" width="380"></td>
 </tr>
 <tr>
 <td align="center"><b>On-Screen Controls</b><br><img src="readme%20assets/Quick%20menu%20features/Quick%20Settings%20On%20Screen%20Controller.png" width="380"></td>
@@ -223,13 +222,12 @@ Compare your trophy progress against a friend, game by game, from the main menu.
 
 <img src="readme%20assets/Trophy%20Comparison/Trophy%20Comparison.png" width="600">
 
-### Friends List & Messaging
-Browse your PSN friends list and message them directly from the main menu.
+### Friends List
+Browse your PSN friends list from the main menu.
 
 <table>
 <tr>
 <td align="center"><img src="readme%20assets/Friends%20List/Friends%20List.jpeg" width="400"></td>
-<td align="center"><img src="readme%20assets/Messaging/Friend%20Messaging.jpeg" width="400"></td>
 </tr>
 </table>
 

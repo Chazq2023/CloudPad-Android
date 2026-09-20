@@ -31,8 +31,8 @@ import kotlinx.coroutines.launch
 /** Full-screen trophy comparison against one friend — account level, badge counts, and every
  *  shared game's completion side by side. Reachable from the trophy icon on a friend row in
  *  [FriendsActivity]; the Quick Settings copy of this same view lives inline in
- *  [com.metallic.chiaki.stream.QuickSettingsPanel] instead, for the same reason its chat is
- *  inline rather than a separate Activity. */
+ *  [com.metallic.chiaki.stream.QuickSettingsPanel] instead, for the same reason: inline rather
+ *  than a separate Activity that would background StreamActivity. */
 class TrophyCompareActivity : AppCompatActivity()
 {
 	companion object
@@ -175,7 +175,7 @@ class TrophyCompareActivity : AppCompatActivity()
 	}
 
 	/** Triangle/Y as a controller shortcut for the refresh button — same convention as the
-	 *  Friends list and chat screens. Circle/B mirrors the back button, same equivalence
+	 *  Friends list screen. Circle/B mirrors the back button, same equivalence
 	 *  QuickSettingsPanel already treats KEYCODE_BACK/KEYCODE_BUTTON_B as. */
 	override fun dispatchKeyEvent(event: KeyEvent): Boolean
 	{

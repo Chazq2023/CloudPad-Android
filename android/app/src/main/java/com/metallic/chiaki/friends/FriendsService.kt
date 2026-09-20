@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
-/** Sony friends/presence/messaging API client — see [PsnFriendsConstants] for host details. */
+/** Sony friends/presence API client — see [PsnFriendsConstants] for host details. */
 object FriendsService
 {
 	private const val TAG = "FriendsService"
@@ -143,117 +143,6 @@ object FriendsService
 		}
 		Log.w(TAG, "Failed to parse presence timestamp: $value")
 		return null
-	}
-
-	/** Resolves our own PSN accountId — a different API family (device-account lookup) from
-	 *  everything else here, used only to tell our own messages apart from the friend's in
-	 *  [fetchConversation]. */
-	suspend fun fetchMyAccountId(accessToken: String): String?
-	{
-		val response = HttpClient.get(
-			url = PsnFriendsConstants.MY_ACCOUNT_URL,
-			headers = mapOf("Authorization" to "Bearer $accessToken", "Accept" to "application/json")
-		)
-		if (response.statusCode != 200)
-		{
-			Log.w(TAG, "fetchMyAccountId failed: ${response.statusCode} - ${response.body}")
-			return null
-		}
-		return JSONObject(response.body).optString("accountId", "").ifEmpty { null }
-	}
-
-	/** Creates a 1:1 DM group with [friendAccountId] — assumed (not confirmed against a live
-	 *  account) to return the same existing groupId if a conversation already exists for this
-	 *  pair, matching how Sony's own apps present a stable 1:1 thread rather than a new one per
-	 *  message. Worth confirming manually the first time this is used. */
-	suspend fun createOrGetDmGroup(accessToken: String, friendAccountId: String): String?
-	{
-		val body = JSONObject().apply {
-			put("invitees", JSONArray().put(JSONObject().put("accountId", friendAccountId)))
-		}.toString()
-
-		val response = HttpClient.post(
-			url = "${PsnFriendsConstants.GAMING_LOUNGE_BASE}/groups",
-			body = body,
-			headers = mapOf(
-				"Authorization" to "Bearer $accessToken",
-				"Content-Type" to "application/json",
-				"Accept" to "application/json",
-				"Accept-Language" to "en-US"
-			)
-		)
-		if (response.statusCode !in 200..299)
-		{
-			Log.e(TAG, "createOrGetDmGroup failed for $friendAccountId: ${response.statusCode} - ${response.body}")
-			return null
-		}
-		return JSONObject(response.body).optString("groupId", "").ifEmpty { null }
-	}
-
-	/** `/groups/{id}/threads/{id}/messages` (no `members/me/` prefix) live-tested as POST-only —
-	 *  GET on that exact path returns 405. Reverted to the `members/me/`-prefixed shape
-	 *  [sendMessage] doesn't use, the only other source-backed candidate; body-logged on failure
-	 *  below so a still-wrong path surfaces Sony's actual error text rather than a bare status.
-	 *  Returns null (not an empty list) on failure — distinguishing "fetch failed" from
-	 *  "genuinely no messages yet" matters to the caller, see [FriendsRepository]. Requires an
-	 *  Accept-Language header — live-tested: Sony rejects this specific call without one. */
-	suspend fun fetchConversation(accessToken: String, groupId: String, myAccountId: String?, limit: Int = 20): List<ChatMessage>?
-	{
-		val encodedGroupId = URLEncoder.encode(groupId, "UTF-8")
-		val url = "${PsnFriendsConstants.GAMING_LOUNGE_BASE}/members/me/groups/$encodedGroupId/threads/$encodedGroupId/messages?limit=$limit"
-		val response = HttpClient.get(
-			url = url,
-			headers = mapOf(
-				"Authorization" to "Bearer $accessToken",
-				"Accept" to "application/json",
-				"Accept-Language" to "en-US"
-			)
-		)
-		if (response.statusCode != 200)
-		{
-			Log.w(TAG, "fetchConversation failed for $groupId: ${response.statusCode} - ${response.body}")
-			return null
-		}
-
-		val json = JSONObject(response.body)
-		val arr = json.optJSONArray("messages") ?: JSONArray()
-		val messages = mutableListOf<ChatMessage>()
-		for (i in 0 until arr.length())
-		{
-			val obj = arr.getJSONObject(i)
-			val text = obj.optString("body", "")
-			if (text.isEmpty()) continue // skip non-text messages (images etc.) for now
-			val senderAccountId = obj.optJSONObject("sender")?.optString("accountId", "") ?: ""
-			val timestampMs = obj.optString("createdTimestamp", "0").toLongOrNull() ?: 0L
-			messages.add(ChatMessage(text, senderAccountId, senderAccountId.isNotEmpty() && senderAccountId == myAccountId, timestampMs))
-		}
-		return messages.sortedBy { it.timestampMs }
-	}
-
-	suspend fun sendMessage(accessToken: String, groupId: String, body: String): Boolean
-	{
-		val payload = JSONObject().apply {
-			put("messageType", 1)
-			put("body", body)
-		}.toString()
-
-		val encodedGroupId = URLEncoder.encode(groupId, "UTF-8")
-		val response = HttpClient.post(
-			url = "${PsnFriendsConstants.GAMING_LOUNGE_BASE}/groups/$encodedGroupId/threads/$encodedGroupId/messages",
-			body = payload,
-			headers = mapOf(
-				"Authorization" to "Bearer $accessToken",
-				"Content-Type" to "application/json",
-				"Accept" to "application/json",
-				"Accept-Language" to "en-US"
-			)
-		)
-		if (response.statusCode !in 200..299)
-		{
-			Log.e(TAG, "sendMessage failed for $groupId: ${response.statusCode} - ${response.body}")
-			return false
-		}
-		return true
 	}
 
 	/** Serializes a friends list for short-TTL caching in [com.metallic.chiaki.common.Preferences]. */

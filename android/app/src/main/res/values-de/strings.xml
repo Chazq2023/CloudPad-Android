@@ -258,16 +258,10 @@
     <string name="action_account">Konto</string>
     <string name="account_menu_log_out">Abmelden</string>
     <string name="friends_empty_state">Keine Freunde für dieses PSN-Konto gefunden.</string>
-    <string name="friend_chat_empty_state">Noch keine Nachrichten — sag Hallo!</string>
-    <string name="friend_chat_input_hint">Nachricht</string>
-    <string name="friend_chat_send">Senden</string>
     <string name="quick_settings_friends_tab_description">Freunde</string>
     <string name="quick_settings_friends_header_label">Freunde</string>
     <string name="quick_settings_friends_refresh">Freundesliste aktualisieren</string>
     <string name="quick_settings_friends_empty">Keine Freunde für dieses PSN-Konto gefunden.</string>
-    <string name="quick_settings_friend_chat_back">Zurück zur Freundesliste</string>
-    <string name="quick_settings_friend_chat_refresh">Unterhaltung aktualisieren</string>
-    <string name="friend_chat_refresh">Unterhaltung aktualisieren</string>
     <string name="friends_refresh">Freundesliste aktualisieren</string>
     <string name="trophy_compare_content_description">Trophäen vergleichen</string>
     <string name="trophy_compare_title">Trophäen vergleichen · %1$s</string>
@@ -618,12 +612,6 @@
     <string name="friend_status_offline">Offline</string>
     <string name="friends_error_auth_failed">PSN-Authentifizierung für Freundesdaten fehlgeschlagen</string>
     <string name="friends_error_fetch_failed">Freunde konnten nicht abgerufen werden</string>
-    <string name="friends_error_auth_failed_messaging">PSN-Authentifizierung für Nachrichten fehlgeschlagen</string>
-    <string name="friends_error_start_conversation_failed">Unterhaltung mit diesem Freund konnte nicht gestartet werden</string>
-    <string name="friends_error_load_history_failed">Der Gesprächsverlauf konnte nicht geladen werden</string>
-    <string name="friends_error_open_conversation_failed">Unterhaltung konnte nicht geöffnet werden</string>
-    <string name="friends_error_refresh_conversation_failed">Unterhaltung konnte nicht aktualisiert werden</string>
-    <string name="friends_error_refresh_conversation_failed_generic">Unterhaltung konnte nicht aktualisiert werden</string>
 
     <string name="psn_login_status_instructions">1. Tippe auf „Beim Konto anmelden“ und melde dich bei Sony an.\n2. Tippe auf „NPSSO-Token abrufen“ — Chrome zeigt eine Seite wie {\"npsso\":\"...\"} an.\n3. Kopiere den npsso-Wert und füge ihn unten ein.\n4. Tippe auf „Anmeldung abschließen“.</string>
 

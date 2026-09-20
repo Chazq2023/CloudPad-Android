@@ -77,7 +77,7 @@ object TrophyService
 
 	/** Overall account-level trophy stats (level + total earned counts) — the same figure PSN
 	 *  shows on a profile. Returns null on failure (including a friend's data being private),
-	 *  distinct from a genuinely empty result, same reasoning as FriendsService.fetchConversation. */
+	 *  distinct from a genuinely empty result. */
 	suspend fun fetchTrophySummary(accessToken: String, accountId: String = "me"): TrophyAccountSummary?
 	{
 		val url = "${PsnTrophyConstants.TROPHY_BASE}/users/$accountId/trophySummary"
@@ -141,8 +141,7 @@ object TrophyService
 		return avatarUrl
 	}
 
-	/** Same device-account lookup FriendsService.fetchMyAccountId already uses to resolve our own
-	 *  accountId — duplicated here for the same "avoid a circular package dependency" reasoning. */
+	/** Device-account lookup that resolves our own accountId. */
 	private suspend fun resolveMyAccountId(accessToken: String): String?
 	{
 		val response = HttpClient.get(

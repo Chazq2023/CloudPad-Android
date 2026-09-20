@@ -259,16 +259,10 @@
     <string name="action_account">Cuenta</string>
     <string name="account_menu_log_out">Cerrar sesión</string>
     <string name="friends_empty_state">No se han encontrado amigos en esta cuenta de PSN.</string>
-    <string name="friend_chat_empty_state">Aún no hay mensajes — ¡saluda!</string>
-    <string name="friend_chat_input_hint">Mensaje</string>
-    <string name="friend_chat_send">Enviar</string>
     <string name="quick_settings_friends_tab_description">Amigos</string>
     <string name="quick_settings_friends_header_label">Amigos</string>
     <string name="quick_settings_friends_refresh">Actualizar lista de amigos</string>
     <string name="quick_settings_friends_empty">No se han encontrado amigos en esta cuenta de PSN.</string>
-    <string name="quick_settings_friend_chat_back">Volver a la lista de amigos</string>
-    <string name="quick_settings_friend_chat_refresh">Actualizar conversación</string>
-    <string name="friend_chat_refresh">Actualizar conversación</string>
     <string name="friends_refresh">Actualizar lista de amigos</string>
     <string name="trophy_compare_content_description">Comparar trofeos</string>
     <string name="trophy_compare_title">Comparar trofeos · %1$s</string>
@@ -593,12 +587,6 @@
     <string name="friend_status_offline">Sin conexión</string>
     <string name="friends_error_auth_failed">No se pudo autenticar con PSN para obtener datos de amigos</string>
     <string name="friends_error_fetch_failed">No se pudieron obtener los amigos</string>
-    <string name="friends_error_auth_failed_messaging">No se pudo autenticar con PSN para la mensajería</string>
-    <string name="friends_error_start_conversation_failed">No se pudo iniciar una conversación con este amigo</string>
-    <string name="friends_error_load_history_failed">No se pudo cargar el historial de la conversación</string>
-    <string name="friends_error_open_conversation_failed">No se pudo abrir la conversación</string>
-    <string name="friends_error_refresh_conversation_failed">No se pudo actualizar la conversación</string>
-    <string name="friends_error_refresh_conversation_failed_generic">Error al actualizar la conversación</string>
 
     <string name="psn_login_status_instructions">1. Toca Iniciar sesión y accede con tu cuenta de Sony.\n2. Toca Obtener token NPSSO — Chrome mostrará una página como {\"npsso\":\"...\"}.\n3. Copia el valor de npsso y pégalo a continuación.\n4. Toca Finalizar inicio de sesión.</string>
 
