@@ -92,6 +92,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 		binding.gamesRecyclerView.layoutManager = InstantScrollGridLayoutManager(this, calculateSpanCount())
 		binding.gamesRecyclerView.adapter = adapter
+		// No add/remove animations: the library tabs swap their list in instantly, and animating a
+		// search being cleared would also leave the grid part-way through the old layout.
+		binding.gamesRecyclerView.itemAnimator = null
 
 		binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener
 		{
@@ -103,7 +106,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 
 			override fun onQueryTextChange(newText: String?): Boolean
 			{
-				showGames()
+				showGames(scrollToTop = true)
 				return true
 			}
 		})
@@ -162,7 +165,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		popup.setOnMenuItemClickListener { item ->
 			filter = AddGameFilter.values()[item.itemId]
 			updateFilterButton()
-			showGames()
+			showGames(scrollToTop = true)
 			true
 		}
 		popup.show()
@@ -297,7 +300,10 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		}
 	)
 
-	private fun showGames()
+	/** [scrollToTop] is for changes the user made to what's shown (search text, filter): the list
+	 *  starts again from the first game, like the library tabs. Data arriving in the background
+	 *  (PS Plus tags landing) leaves the scroll position alone. */
+	private fun showGames(scrollToTop: Boolean = false)
 	{
 		// The PS Plus filter has nothing to show until the lookup is in — say why instead of "no matches".
 		if (filter == AddGameFilter.PS_PLUS && plusState != PlusState.READY && allGames.isNotEmpty())
@@ -309,7 +315,8 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		val visible = allGames
 			.matchingFilter(filter)
 			.matchingQuery(binding.searchView.query?.toString() ?: "")
-		adapter.submitList(visible)
+		// The callback runs once the diff has been applied, so the jump lands on the new list.
+		adapter.submitList(visible) { if (scrollToTop) binding.gamesRecyclerView.scrollToPosition(0) }
 		updateGameCount(shown = visible.size, total = allGames.size)
 		if (filter == AddGameFilter.PURCHASABLE && plusState != PlusState.READY && allGames.isNotEmpty())
 		{
