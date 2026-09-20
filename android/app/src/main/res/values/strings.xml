@@ -45,6 +45,14 @@
     <string name="cloud_tab_ps3_catalog">PS3 Catalog</string>
     <string name="cloud_tab_ps4_catalog">PS4 Catalog</string>
     <string name="cloud_tab_ps5_library">PS5 Library</string>
+    <string name="cloud_add_game_button_content_description">Add a game to library</string>
+    <string name="add_game_title">Add Game to Library</string>
+    <string name="add_game_search_hint">Search games…</string>
+    <string name="add_game_refresh_content_description">Refresh game list</string>
+    <string name="add_game_empty">Every known streamable game is already in your library.</string>
+    <string name="add_game_no_matches">No games match your search.</string>
+    <string name="add_game_login_required">Sign in to PlayStation from the PS5 Library tab to see games you can add.</string>
+    <string name="add_game_load_failed">Couldn\'t load games: %1$s</string>
     <string name="cloud_no_games_found">No games found</string>
     <string name="cloud_refresh_games_list_button">Refresh Games List</string>
     <string name="disclaimer_title">Disclaimer</string>

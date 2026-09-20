@@ -199,6 +199,20 @@
 
                         android:padding="4dp" />
 
+                    <!-- Add a game to the library — PS5 Library only, hidden for PS3/PS4 Catalog -->
+                    <ImageButton
+                        android:id="@+id/headerAddGameButton"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_add"
+                        android:background="@drawable/secondary_header_button_bg"
+                        android:contentDescription="@string/cloud_add_game_button_content_description"
+                        android:scaleType="centerInside"
+                        android:focusable="true"
+                        android:visibility="gone"
+
+                        android:padding="4dp" />
+
                     <!-- Sort menu -->
                     <ImageButton
                         android:id="@+id/headerSortButton"

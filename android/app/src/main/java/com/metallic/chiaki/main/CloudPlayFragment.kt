@@ -472,6 +472,7 @@ class CloudPlayFragment : Fragment() {
 
         binding.headerFavoritesButton.setOnClickListener { toggleFavoritesFilter() }
         binding.headerStreamabilityFilterButton.setOnClickListener { cycleStreamabilityFilter() }
+        binding.headerAddGameButton.setOnClickListener { AddGameToLibraryActivity.start(requireContext()) }
         binding.headerSortButton.setOnClickListener { showSortMenu() }
         binding.headerSearchButton.setOnClickListener { toggleSearch() }
         binding.headerRefreshButton.setOnClickListener { refreshCurrentSectionInternal() }
@@ -497,6 +498,7 @@ class CloudPlayFragment : Fragment() {
         binding.libraryTabButton.onFocusChangeListener = focusHighlight
         binding.headerFavoritesButton.onFocusChangeListener = focusHighlight
         binding.headerStreamabilityFilterButton.onFocusChangeListener = focusHighlight
+        binding.headerAddGameButton.onFocusChangeListener = focusHighlight
         binding.headerSortButton.onFocusChangeListener = focusHighlight
         binding.headerSearchButton.onFocusChangeListener = focusHighlight
         binding.headerRefreshButton.onFocusChangeListener = focusHighlight
@@ -525,6 +527,8 @@ class CloudPlayFragment : Fragment() {
         updateFavoritesIcon()
 
         // Other icons - default white translucent
+        binding.headerAddGameButton.setColorFilter(whiteTranslucent)
+        binding.headerAddGameButton.alpha = 0.45f
         binding.headerSortButton.setColorFilter(whiteTranslucent)
         binding.headerSortButton.alpha = 0.45f
         binding.headerSearchButton.setColorFilter(whiteTranslucent)
@@ -618,6 +622,7 @@ class CloudPlayFragment : Fragment() {
 
         binding.ownedToggleButton.visibility = android.view.View.GONE
         binding.headerStreamabilityFilterButton.visibility = android.view.View.GONE
+        binding.headerAddGameButton.visibility = android.view.View.GONE
 
         viewModel.setCurrentSection("psnow_ps3")
         adapter.showStreamabilityBadge = false
@@ -637,6 +642,7 @@ class CloudPlayFragment : Fragment() {
 
         binding.ownedToggleButton.visibility = android.view.View.GONE
         binding.headerStreamabilityFilterButton.visibility = android.view.View.GONE
+        binding.headerAddGameButton.visibility = android.view.View.GONE
 
         viewModel.setCurrentSection("psnow_ps4")
         adapter.showStreamabilityBadge = false
@@ -662,6 +668,7 @@ class CloudPlayFragment : Fragment() {
         binding.sortOptionLayout.visibility = android.view.View.VISIBLE
         binding.filterOptionLayout.visibility = android.view.View.VISIBLE
         binding.headerStreamabilityFilterButton.visibility = android.view.View.VISIBLE
+        binding.headerAddGameButton.visibility = android.view.View.VISIBLE
         streamabilityFilterState = preferences.getPsCloudStreamabilityFilter()
         updateStreamabilityFilterButton()
         updateSortButtonText()

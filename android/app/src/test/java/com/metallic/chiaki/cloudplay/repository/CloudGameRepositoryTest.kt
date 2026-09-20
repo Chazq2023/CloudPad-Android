@@ -66,6 +66,17 @@ class CloudGameRepositoryTest {
               "isOwned":false,"entitlementId":""}]
         """.trimIndent()
 
+        private val CATALOG_WITH_OWNERSHIP_JSON = """
+            [{"productId":"PPSA0003","name":"Returnal","imageUrl":"https://img.com/r.jpg",
+              "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/returnal",
+              "isOwned":false},
+             {"productId":"PPSA0001","name":"Demon's Souls","imageUrl":"https://img.com/ds.jpg",
+              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true},
+             {"productId":"PPSA0002","name":"Astro Bot","imageUrl":"https://img.com/ab.jpg",
+              "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/astro-bot",
+              "isOwned":false}]
+        """.trimIndent()
+
         private val MS_25_HOURS = 25L * 60 * 60 * 1000
     }
 
@@ -252,6 +263,28 @@ class CloudGameRepositoryTest {
         val probeFile = File(cacheDir, "psnow_catalog.json")
         probeFile.writeText(PSNOW_CACHE_GAME_JSON)
         assertTrue("Writing into the cache dir after invalidation must succeed", probeFile.exists())
+    }
+
+    // --- Add-a-game-to-library list ---
+
+    @Test
+    fun `fetchPs5GamesNotInLibrary returns only unowned catalog games sorted by name`() = runTest {
+        writeCacheFile("pscloud_catalog.json", CATALOG_WITH_OWNERSHIP_JSON)
+
+        val result = repository.fetchPs5GamesNotInLibrary("", forceRefresh = false)
+
+        assertTrue("Expected Success but got: $result", result is PsnResult.Success)
+        assertEquals(listOf("Astro Bot", "Returnal"), (result as PsnResult.Success).data.map { it.name })
+    }
+
+    @Test
+    fun `fetchPs5GamesNotInLibrary is empty when every catalog game is owned`() = runTest {
+        writeCacheFile("pscloud_catalog.json", OWNED_PS5_CACHE_JSON)
+
+        val result = repository.fetchPs5GamesNotInLibrary("", forceRefresh = false)
+
+        assertTrue(result is PsnResult.Success)
+        assertTrue((result as PsnResult.Success).data.isEmpty())
     }
 
     // --- Helpers ---
