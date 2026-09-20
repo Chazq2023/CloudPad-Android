@@ -159,8 +159,6 @@
     <string name="preferences_codec_title_h265">H265 (nur Gen 5)</string>
     <string name="preferences_pip_enabled_title">Bild-im-Bild</string>
     <string name="preferences_pip_enabled_summary">PiP-Modus beim Minimieren während des Streamens aktivieren (Android 8.0+)</string>
-    <string name="preferences_adaptive_frame_pacing_title">Adaptives Frame-Pacing</string>
-    <string name="preferences_adaptive_frame_pacing_summary">Gleicht ungleichmäßige Bildzustellung aus, indem der Vorlaufpuffer für Frames angepasst und gebündelte Frames bei Netzwerk-Jitter gelegentlich verworfen werden. Fügt etwas Latenz hinzu, sorgt dafür aber für ruhigere Bewegung bei instabilen Verbindungen. Gilt für Remote Play, Spielebibliothek und Spielekatalog.</string>
     <string name="preferences_swap_cross_moon_title">Kreuz/Mond- und Kasten/Pyramide-Tasten tauschen</string>
     <string name="preferences_swap_cross_moon_summary">Tausche die Aktionstasten, wenn die Standardbelegung nicht stimmt (z. B. bei 8BitDo-Controllern)</string>
     <string name="preferences_microphone_enabled_title">Mikrofon (nur Remote Play)</string>

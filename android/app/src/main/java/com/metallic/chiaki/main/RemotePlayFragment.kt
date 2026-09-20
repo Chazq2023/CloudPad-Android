@@ -342,7 +342,7 @@ class RemotePlayFragment : Fragment()
 					registKey = registeredHost.rpRegistKey,
 					morning = registeredHost.rpKey,
 					videoProfile = prefs.videoProfile,
-					adaptiveFramePacingEnabled = prefs.adaptiveFramePacingEnabled
+					adaptiveFramePacingEnabled = prefs.videoPacing.isSmooth
 				)
 				Intent(requireContext(), StreamActivity::class.java).let {
 					it.putExtra(StreamActivity.EXTRA_CONNECT_INFO, connectInfo)
@@ -532,7 +532,7 @@ class RemotePlayFragment : Fragment()
 				registKey = registeredHost.rpRegistKey,
 				morning = registeredHost.rpKey,
 				videoProfile = prefs.videoProfile,
-				adaptiveFramePacingEnabled = prefs.adaptiveFramePacingEnabled,
+				adaptiveFramePacingEnabled = prefs.videoPacing.isSmooth,
 				duid = host.duid,
 				psnToken = prefs.psnAuthToken,
 				psnAccountId = prefs.psnAccountId

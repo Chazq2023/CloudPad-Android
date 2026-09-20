@@ -160,8 +160,6 @@
     <string name="preferences_codec_title_h265">H265 (alleen Gen 5)</string>
     <string name="preferences_pip_enabled_title">Beeld-in-beeld</string>
     <string name="preferences_pip_enabled_summary">Schakel PiP-modus in bij het minimaliseren tijdens streamen (Android 8.0+)</string>
-    <string name="preferences_adaptive_frame_pacing_title">Adaptieve framepacing</string>
-    <string name="preferences_adaptive_frame_pacing_summary">Verzacht ongelijkmatige framelevering door aan te passen hoe ver vooruit frames worden gebufferd en incidenteel opgehoopte frames te laten vallen wanneer het netwerk hapert. Voegt wat vertraging toe in ruil voor stabielere beweging bij onstabiele verbindingen. Van toepassing op Remote Play, Spelbibliotheek en Spelcatalogus.</string>
     <string name="preferences_swap_cross_moon_title">Kruis/Maan- en Vierkant/Piramideknoppen omwisselen</string>
     <string name="preferences_swap_cross_moon_summary">Wissel gezichtsknoppen om als de standaardtoewijzing onjuist is (bijv. voor 8BitDo-controllers)</string>
     <string name="preferences_microphone_enabled_title">Microfoon (alleen Remote Play)</string>

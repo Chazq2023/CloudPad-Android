@@ -160,8 +160,6 @@
     <string name="preferences_codec_title_h265">H265 (vain sukupolvi 5)</string>
     <string name="preferences_pip_enabled_title">Kuva kuvassa</string>
     <string name="preferences_pip_enabled_summary">Ota käyttöön kuva kuvassa -tila pienennettäessä suoratoiston aikana (Android 8.0+)</string>
-    <string name="preferences_adaptive_frame_pacing_title">Mukautuva kuvatahdistus</string>
-    <string name="preferences_adaptive_frame_pacing_summary">Tasoittaa epätasaista kuvien toimitusta säätämällä, kuinka pitkälle eteenpäin kuvia puskuroidaan, ja pudottaa ajoittain kasautuneita kuvia verkon nykiessä. Lisää hieman viivettä vakaamman liikkeen saavuttamiseksi epävakailla yhteyksillä. Koskee etäpeliä, pelikirjastoa ja pelikatalogia.</string>
     <string name="preferences_swap_cross_moon_title">Vaihda Cross/Moon- ja Box/Pyramid-painikkeet</string>
     <string name="preferences_swap_cross_moon_summary">Vaihda kasvopainikkeet, jos oletusmääritys on virheellinen (esim. 8BitDo-ohjaimille)</string>
     <string name="preferences_microphone_enabled_title">Mikrofoni (vain etäpeli)</string>

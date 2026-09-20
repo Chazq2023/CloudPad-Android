@@ -16,7 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Added a + button next to the filter icon on the PS5 Library tab that opens an Add Game to Library page listing every streamable PS5 game not in your library yet, with search and refresh. Tapping a game opens its PlayStation page so you can add it; refresh your library afterwards and the game appears (and drops off the add list). Games already in your library (including other editions, e.g. RESIDENT EVIL 7 biohazard vs its Gold Edition) no longer show up in the add list.
+        - Replaced the Adaptive Frame Pacing switch with a Video Pacing setting: Standard (lowest latency) or Smooth (steadier motion, adds a little latency on unstable connections). If you had Adaptive Frame Pacing on, you are moved to Smooth.
+        - You can now change Video Pacing from the in-stream quick menu and it takes effect instantly, without restarting the stream.
+        - Improved frame pacing for 30 fps games on Game Library and Game Catalog: the stream is now paced to the game's real frame rate, which fixes uneven motion and stops Smooth from adding unnecessary delay.
+        - Smooth mode now limits how much delay it can add on poor connections.
 
     steps:
       - name: Checkout repo

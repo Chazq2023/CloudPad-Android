@@ -42,7 +42,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelDT = metricRow("DT")
     private val labelVL = metricRow("VL")
     private val labelDrops = metricRow("Drops")
-    private val labelAfp = metricRow("AFP")
+    private val labelPace = metricRow("Pace")
 
     init {
         orientation = VERTICAL
@@ -87,7 +87,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         qualityCol.addView(labelDT)
         qualityCol.addView(labelVL)
         qualityCol.addView(labelDrops)
-        qualityCol.addView(labelAfp)
+        qualityCol.addView(labelPace)
 
         columns.addView(
             latencyCol,
@@ -278,12 +278,12 @@ class PerformanceOverlayView @JvmOverloads constructor(
 
         labelDrops.text = String.format(Locale.US, "%-5s %-5d", "Drops", m.drops)
 
-        labelAfp.text = String.format(
-            Locale.US, "%-5s %-5s", "AFP",
-            if (data.adaptiveFramePacingEnabled) "Enabled" else "Disabled"
+        labelPace.text = String.format(
+            Locale.US, "%-5s %-5s", "Pace",
+            if (data.smoothPacing) "Smooth" else "Standard"
         )
-        labelAfp.setTextColor(
-            if (data.adaptiveFramePacingEnabled) Color.rgb(0, 220, 100) else Color.argb(180, 255, 255, 255)
+        labelPace.setTextColor(
+            if (data.smoothPacing) Color.rgb(0, 220, 100) else Color.argb(180, 255, 255, 255)
         )
 
         sparklineView.setData(data.fpsHistory)

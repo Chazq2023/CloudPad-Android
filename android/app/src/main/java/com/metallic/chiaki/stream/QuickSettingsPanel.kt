@@ -284,15 +284,13 @@ class QuickSettingsPanel(
 		val resolution: Preferences.Resolution,
 		val fps: Preferences.FPS,
 		val bitrate: Int?,
-		val codec: Preferences.Codec,
-		val adaptiveFramePacingEnabled: Boolean
+		val codec: Preferences.Codec
 	)
 
 	private data class CloudSettingsSnapshot(
 		val resolution: Int,
 		val datacenter: String,
-		val bitrateKbps: Int,
-		val adaptiveFramePacingEnabled: Boolean
+		val bitrateKbps: Int
 	)
 
 	/** Snapshot of the settings the live stream actually last (re)started with, i.e. what's
@@ -1256,13 +1254,7 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
-		sessionRowControls += addSwitchRow(
-			container, R.string.preferences_adaptive_frame_pacing_title,
-			currentValue = preferences.adaptiveFramePacingEnabled
-		) { isChecked ->
-			pendingRemotePlaySettings = pendingRemotePlaySettings?.copy(adaptiveFramePacingEnabled = isChecked)
-			updateSessionApplyVisibility()
-		}
+		addVideoPacingRow(container)
 
 		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_codec_title,
@@ -1327,12 +1319,27 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
-		sessionRowControls += addSwitchRow(
-			container, R.string.preferences_adaptive_frame_pacing_title,
-			currentValue = preferences.adaptiveFramePacingEnabled
-		) { isChecked ->
-			pendingCloudSettings = pendingCloudSettings?.copy(adaptiveFramePacingEnabled = isChecked)
-			updateSessionApplyVisibility()
+		addVideoPacingRow(container)
+	}
+
+	/** Unlike the rest of the Session tab this isn't Apply-gated: Video Pacing only changes how
+	 *  the decoder schedules frames, so it's saved and pushed to the running session straight
+	 *  away, no restart. Deliberately not in [sessionRowControls] — that list is disabled while a
+	 *  restart is in flight, and this row has nothing to do with one. */
+	private fun addVideoPacingRow(container: LinearLayout)
+	{
+		val all = Preferences.VideoPacing.values()
+		addDropdownRow(
+			container, R.string.preferences_video_pacing_title,
+			entries = all.map { activity.getString(it.title) },
+			values = all.map { it.value },
+			currentValue = preferences.videoPacing.value
+		) { value ->
+			val pacing = all.firstOrNull { it.value == value } ?: return@addDropdownRow
+			if(pacing == preferences.videoPacing)
+				return@addDropdownRow
+			preferences.videoPacing = pacing
+			viewModel.session.setVideoPacing(pacing.isSmooth)
 		}
 	}
 
@@ -1349,7 +1356,6 @@ class QuickSettingsPanel(
 				preferences.fps = pending.fps
 				preferences.bitrate = pending.bitrate
 				preferences.codec = pending.codec
-				preferences.adaptiveFramePacingEnabled = pending.adaptiveFramePacingEnabled
 			}
 			StreamSessionType.CATALOG_PSNOW, StreamSessionType.LIBRARY_PSCLOUD -> pendingCloudSettings?.let { pending ->
 				if(sessionType == StreamSessionType.LIBRARY_PSCLOUD)
@@ -1364,7 +1370,6 @@ class QuickSettingsPanel(
 					preferences.setCloudDatacenterPsnow(pending.datacenter)
 					preferences.setCloudBitratePsnow(pending.bitrateKbps)
 				}
-				preferences.adaptiveFramePacingEnabled = pending.adaptiveFramePacingEnabled
 			}
 		}
 	}
@@ -1373,8 +1378,7 @@ class QuickSettingsPanel(
 		resolution = preferences.resolution,
 		fps = preferences.fps,
 		bitrate = preferences.bitrate,
-		codec = preferences.codec,
-		adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
+		codec = preferences.codec
 	)
 
 	/** Reads whichever of the Catalog (PSNow)/Library (PSCloud) preference keys applies to this
@@ -1386,8 +1390,7 @@ class QuickSettingsPanel(
 		return CloudSettingsSnapshot(
 			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
 			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
-			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow(),
-			adaptiveFramePacingEnabled = preferences.adaptiveFramePacingEnabled
+			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
 		)
 	}
 

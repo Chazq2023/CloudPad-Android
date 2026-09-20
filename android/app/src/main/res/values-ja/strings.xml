@@ -160,8 +160,6 @@
     <string name="preferences_codec_title_h265">H265 (第5世代のみ)</string>
     <string name="preferences_pip_enabled_title">ピクチャー イン ピクチャー</string>
     <string name="preferences_pip_enabled_summary">ストリーミング中に最小化した際にPiPモードを有効にする(Android 8.0以降)</string>
-    <string name="preferences_adaptive_frame_pacing_title">アダプティブフレームペーシング</string>
-    <string name="preferences_adaptive_frame_pacing_summary">フレームをバッファリングする先読み量を調整し、ネットワークがジッターする際にまとまったフレームを間引くことで、不均一なフレーム配信を滑らかにします。不安定な接続でより安定した動きを得る代わりに、わずかな遅延が追加されます。リモートプレイ、ゲームライブラリ、ゲームカタログに適用されます。</string>
     <string name="preferences_swap_cross_moon_title">×/○ボタンと□/△ボタンを入れ替え</string>
     <string name="preferences_swap_cross_moon_summary">デフォルトの割り当てが正しくない場合にフェイスボタンを入れ替えます(8BitDoコントローラーなど)</string>
     <string name="preferences_microphone_enabled_title">マイク(リモートプレイのみ)</string>

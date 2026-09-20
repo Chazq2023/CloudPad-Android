@@ -62,7 +62,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
 		preferences.fsrEnabledKey -> preferences.fsrEnabled
 		preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled
-		preferences.adaptiveFramePacingEnabledKey -> preferences.adaptiveFramePacingEnabled
 		else -> defValue
 	}
 
@@ -78,7 +77,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
 			preferences.fsrEnabledKey -> preferences.fsrEnabled = value
 			preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled = value
-			preferences.adaptiveFramePacingEnabledKey -> preferences.adaptiveFramePacingEnabled = value
 		}
 	}
 
@@ -86,6 +84,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 	{
 		preferences.resolutionKey -> preferences.resolution.value
 		preferences.fpsKey -> preferences.fps.value
+		preferences.videoPacingKey -> preferences.videoPacing.value
 		preferences.bitrateKey -> preferences.bitrate?.toString() ?: ""
 		preferences.codecKey -> preferences.codec.value
 		preferences.cloudResolutionPscloudKey -> preferences.getCloudResolutionPscloud().toString()
@@ -112,6 +111,11 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			{
 				val fps = Preferences.FPS.values().firstOrNull { it.value == value } ?: return
 				preferences.fps = fps
+			}
+			preferences.videoPacingKey ->
+			{
+				val pacing = Preferences.VideoPacing.values().firstOrNull { it.value == value } ?: return
+				preferences.videoPacing = pacing
 			}
 			preferences.bitrateKey -> preferences.bitrate = value?.toIntOrNull()
 			preferences.codecKey ->
@@ -225,6 +229,11 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_fps_key))?.let {
 			it.entryValues = Preferences.fpsAll.map { fps -> fps.value }.toTypedArray()
 			it.entries = Preferences.fpsAll.map { fps -> getString(fps.title) }.toTypedArray()
+		}
+
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_video_pacing_key))?.let {
+			it.entryValues = Preferences.VideoPacing.values().map { pacing -> pacing.value }.toTypedArray()
+			it.entries = Preferences.VideoPacing.values().map { pacing -> getString(pacing.title) }.toTypedArray()
 		}
 
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_app_language_key))?.let {

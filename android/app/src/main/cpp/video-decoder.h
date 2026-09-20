@@ -36,11 +36,13 @@ typedef struct android_chiaki_video_decoder_t
 	int64_t next_render_ns;
 	volatile int32_t input_timeouts;
 
-	// Applies to every session type. When true, the output thread scales its presentation
-	// buffer to recently-observed jitter (instead of a fixed baseline) and proactively drops
-	// frames that arrive well ahead of schedule during a burst. See
-	// android_chiaki_video_decoder_output_thread_func in video-decoder.c.
-	bool adaptive_frame_pacing_enabled;
+	// Video Pacing mode; applies to every session type and can change mid-stream (see
+	// android_chiaki_video_decoder_set_smooth_pacing). True = Smooth: the output thread scales its
+	// presentation buffer to recently-observed jitter (up to a capped ceiling, instead of a fixed
+	// baseline) and proactively drops frames that arrive well ahead of schedule during a burst.
+	// False = Standard: fixed baseline. See android_chiaki_video_decoder_output_thread_func in
+	// video-decoder.c. (Name kept from when this was the Adaptive Frame Pacing toggle.)
+	volatile bool adaptive_frame_pacing_enabled;
 
 	// Producer-consumer frame queue: stream thread enqueues, input thread submits to codec
 	AndroidChiakiVideoDecoderFrame frame_queue[ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY];
@@ -56,6 +58,7 @@ typedef struct android_chiaki_video_decoder_t
 
 ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec, bool adaptive_frame_pacing_enabled);
 void android_chiaki_video_decoder_fini(AndroidChiakiVideoDecoder *decoder);
+void android_chiaki_video_decoder_set_smooth_pacing(AndroidChiakiVideoDecoder *decoder, bool smooth);
 void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder, JNIEnv *env, jobject surface);
 bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, int32_t frames_lost, bool frame_recovered, void *user);
 
