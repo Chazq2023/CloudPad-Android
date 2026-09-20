@@ -7,6 +7,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.KeyEvent
 import android.text.TextUtils
+import androidx.core.view.doOnLayout
 import android.view.View
 import android.widget.TextView
 import android.view.ViewGroup
@@ -39,9 +40,27 @@ fun View.enableFocusableInTouchModeForTv(context: Context)
  */
 fun TextView.setTitleMarquee(active: Boolean)
 {
-	ellipsize = if(active) TextUtils.TruncateAt.MARQUEE else TextUtils.TruncateAt.END
+	if(!active)
+	{
+		// Stop first: TextView only stops a running marquee while the ellipsize mode is still MARQUEE.
+		isSelected = false
+		ellipsize = TextUtils.TruncateAt.END
+		return
+	}
+
 	marqueeRepeatLimit = -1 // keep scrolling for as long as the tile stays focused
-	isSelected = active     // TextView only animates a marquee while it is selected
+	ellipsize = TextUtils.TruncateAt.MARQUEE
+	isSelected = true       // TextView only animates a marquee while it is selected
+	// Changing the ellipsize mode throws away the text layout, and a marquee can only start once a
+	// layout exists (it needs the line count and width) — so the select above finds nothing to
+	// scroll and quietly does nothing. Once the layout has been rebuilt, select again to start it.
+	doOnLayout {
+		if(it.isSelected && ellipsize == TextUtils.TruncateAt.MARQUEE)
+		{
+			it.isSelected = false
+			it.isSelected = true
+		}
+	}
 }
 
 /**
