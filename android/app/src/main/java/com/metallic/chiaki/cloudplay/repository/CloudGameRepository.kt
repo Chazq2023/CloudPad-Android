@@ -53,6 +53,12 @@ class CloudGameRepository(
 
 		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
 		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
+		private const val PS_PLUS_FAILURE_FILE = "last_failure.txt"
+
+		/** After a failed PS Plus lookup, don't try Sony's store API again for this long, however
+		 *  often the page is opened or Refresh is tapped — a broken or blocking API shouldn't be
+		 *  retried on every visit. */
+		internal const val PS_PLUS_FAILURE_COOLDOWN_MS = 30L * 60 * 1000
 
 		fun invalidateCatalogCache(context: Context, reason: String = "")
 		{
@@ -184,16 +190,27 @@ class CloudGameRepository(
 		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, nowMs))
 			return@withContext PsPlusResult.Ready(cached.keys)
 
+		val failureFile = File(cacheFile.parentFile, PS_PLUS_FAILURE_FILE)
+		val lastFailureMs = try { failureFile.readText().trim().toLong() } catch (e: Exception) { null }
+		if (lastFailureMs != null && nowMs - lastFailureMs in 0 until PS_PLUS_FAILURE_COOLDOWN_MS)
+		{
+			Log.i(TAG, "PS Plus lookup failed recently; not asking again yet")
+			return@withContext cached?.let { PsPlusResult.Ready(it.keys, isFresh = false) }
+				?: PsPlusResult.Failed("The PlayStation Store didn't respond a moment ago; try again in a few minutes.")
+		}
+
 		try
 		{
 			val keys = fetchPsPlusKeys(storeLocale)
 			try { cacheFile.writeText(PsPlusCache.encode(PsPlusCache.Entry(storeLocale, System.currentTimeMillis(), keys))) }
 			catch (e: Exception) { Log.w(TAG, "Could not cache the PS Plus lookup", e) }
+			failureFile.delete()
 			PsPlusResult.Ready(keys)
 		}
 		catch (e: Exception)
 		{
 			Log.w(TAG, "PS Plus lookup failed", e)
+			try { failureFile.writeText(nowMs.toString()) } catch (io: Exception) { Log.w(TAG, "Could not record the failure time", io) }
 			cached?.let { PsPlusResult.Ready(it.keys, isFresh = false) } ?: PsPlusResult.Failed(e.message ?: "unknown error")
 		}
 	}
