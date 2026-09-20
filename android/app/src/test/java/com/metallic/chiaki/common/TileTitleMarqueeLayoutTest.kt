@@ -10,26 +10,35 @@ import java.io.File
  */
 class TileTitleMarqueeLayoutTest {
 
-    private fun titleBlock(layout: String): String {
-        val xml = File("src/main/res/layout/$layout").readText()
+    /** Every copy of a tile layout — the landscape one (layout-land) is what a handheld in landscape actually uses. */
+    private fun variants(layout: String): List<File> =
+        File("src/main/res").listFiles { f -> f.isDirectory && f.name.startsWith("layout") }!!
+            .map { File(it, layout) }.filter { it.exists() }
+
+    private fun titleBlock(file: File): String {
+        val xml = file.readText()
         val start = xml.indexOf("android:id=\"@+id/gameNameTextView\"")
-        assertTrue("$layout has no gameNameTextView", start >= 0)
+        assertTrue("${file.path} has no gameNameTextView", start >= 0)
         return xml.substring(start, xml.indexOf("/>", start))
     }
 
     @Test
-    fun `library and Add Game tile titles are single-line so their marquee can scroll`() {
+    fun `every version of the library and Add Game tile titles is single-line so the marquee can scroll`() {
         listOf("item_cloud_game.xml", "item_add_game.xml").forEach { layout ->
-            val block = titleBlock(layout)
-            assertTrue("$layout title must be singleLine", block.contains("android:singleLine=\"true\""))
-            assertTrue("$layout title must not be limited by maxLines alone", !block.contains("android:maxLines"))
+            val files = variants(layout)
+            assertTrue("no $layout found", files.isNotEmpty())
+            files.forEach { file ->
+                val block = titleBlock(file)
+                assertTrue("${file.path} title must be singleLine", block.contains("android:singleLine=\"true\""))
+                assertTrue("${file.path} title must not be limited by maxLines alone", !block.contains("android:maxLines"))
+            }
         }
     }
 
     @Test
     fun `tile titles start with a static trailing ellipsis`() {
         listOf("item_cloud_game.xml", "item_add_game.xml").forEach { layout ->
-            assertTrue("$layout", titleBlock(layout).contains("android:ellipsize=\"end\""))
+            variants(layout).forEach { assertTrue(it.path, titleBlock(it).contains("android:ellipsize=\"end\"")) }
         }
     }
 }
