@@ -30,8 +30,8 @@ class TrophyUnlockWatcher(
 	companion object
 	{
 		private const val TAG = "TrophyUnlockWatcher"
-		private const val POLL_INTERVAL_MS = 30_000L
-		/** Longest wait between polls while they keep failing (30s, 1m, 2m, 4m, then 5m). */
+		private const val POLL_INTERVAL_MS = 60_000L
+		/** Longest wait between polls while they keep failing (1m, 2m, 4m, then 5m). */
 		private const val MAX_BACKOFF_MS = 5 * 60_000L
 	}
 
@@ -39,9 +39,13 @@ class TrophyUnlockWatcher(
 	private var baselineEarnedIds: Set<String>? = null
 	private val backoff = PollBackoff(POLL_INTERVAL_MS, MAX_BACKOFF_MS)
 
-	fun start(scope: CoroutineScope)
+	/** [resetBaseline] makes the next poll take a fresh snapshot of already-earned trophies instead
+	 *  of comparing against the last one — used when the user switches popups back on, so trophies
+	 *  earned while they were off aren't announced all at once. */
+	fun start(scope: CoroutineScope, resetBaseline: Boolean = false)
 	{
 		if (job?.isActive == true) return
+		if (resetBaseline) baselineEarnedIds = null
 		Log.i(TAG, "Started polling trophies for \"$gameName\" ($platform) every ${POLL_INTERVAL_MS}ms")
 		job = scope.launch {
 			while (isActive)

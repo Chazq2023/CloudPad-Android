@@ -260,6 +260,8 @@
     <string name="preferences_video_pacing_summary">Standard keeps a small fixed buffer for the lowest latency. Smooth grows the buffer with network jitter and skips frames that arrive bunched together, for steadier motion at the cost of some extra latency on unstable connections. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_video_pacing_standard">Standard</string>
     <string name="preferences_video_pacing_smooth">Smooth</string>
+    <string name="preferences_trophy_popups_enabled_title">Trophy Popups</string>
+    <string name="preferences_trophy_popups_enabled_summary">Show a popup when you earn a trophy while streaming a Game Library or Game Catalog game. Off by default because it checks Sony for new trophies about once a minute during the stream.</string>
     <string name="preferences_pip_enabled_summary">Enable PiP mode when minimizing during streaming (Android 8.0+)</string>
     <string name="preferences_swap_cross_moon_title">Swap Cross/Moon and Box/Pyramid Buttons</string>
     <string name="preferences_swap_cross_moon_summary">Swap face buttons if default mapping is incorrect (e.g. for 8BitDo controllers)</string>
@@ -649,6 +651,7 @@
     <string name="preferences_cloud_resolution_psnow_key">cloud_resolution_psnow</string>
     <string name="preferences_cloud_resolution_pscloud_key">cloud_resolution_pscloud</string>
     <string name="preferences_pip_enabled_key">pip_enabled</string>
+    <string name="preferences_trophy_popups_enabled_key">trophy_popups_enabled</string>
     <!-- Legacy Adaptive Frame Pacing switch: read only to migrate to preferences_video_pacing_key -->
     <string name="preferences_adaptive_frame_pacing_key">adaptive_frame_pacing_enabled</string>
     <string name="preferences_video_pacing_key">video_pacing</string>

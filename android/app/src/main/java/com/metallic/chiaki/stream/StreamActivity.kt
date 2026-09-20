@@ -218,6 +218,18 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 				pendingMicPermissionCallback = onResult
 				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 			},
+			onTrophyPopupsChanged = { enabled ->
+				if(enabled)
+				{
+					if(viewModel.session.state.value == StreamStateConnected)
+						trophyUnlockWatcher?.start(lifecycleScope, resetBaseline = true)
+				}
+				else
+				{
+					trophyUnlockWatcher?.stop()
+					trophyUnlockPopupPresenter.cancel()
+				}
+			},
 			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) },
 			onFsrChanged = { enabled, upscale, sharpening -> binding.surfaceView.setFsr(enabled, upscale, sharpening) },
 			onTouchControlsCustomizationChanged = { defaultTouchControlsFragment?.applyCustomization() },
@@ -777,7 +789,8 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 					connectedAtElapsedRealtime = SystemClock.elapsedRealtime()
 					connectedAtWallClockMs = System.currentTimeMillis()
 				}
-				trophyUnlockWatcher?.start(lifecycleScope)
+				if(viewModel.preferences.trophyPopupsEnabled)
+					trophyUnlockWatcher?.start(lifecycleScope)
 
 				// Re-applied on every connect, not just the first — a Quick Settings "Apply"
 				// restart (see QuickSettingsPanel) can hand StreamSession a new videoProfile, and

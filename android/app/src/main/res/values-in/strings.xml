@@ -238,6 +238,8 @@
     <string name="preferences_video_pacing_summary">Standar menjaga buffer tetap kecil untuk latensi terendah. Halus memperbesar buffer sesuai jitter jaringan dan melewati frame yang datang bersamaan, untuk gerakan yang lebih stabil dengan tambahan latensi pada koneksi yang tidak stabil. Berlaku untuk Remote Play, Pustaka Game, dan Katalog Game.</string>
     <string name="preferences_video_pacing_standard">Standar</string>
     <string name="preferences_video_pacing_smooth">Halus</string>
+    <string name="preferences_trophy_popups_enabled_title">Popup Trofi</string>
+    <string name="preferences_trophy_popups_enabled_summary">Tampilkan popup saat Anda meraih trofi ketika streaming game dari Pustaka Game atau Katalog Game. Nonaktif secara default karena aplikasi memeriksa trofi baru ke Sony sekitar sekali per menit selama stream.</string>
     <string name="preferences_pip_enabled_summary">Aktifkan mode PiP saat diminimalkan ketika streaming (Android 8.0+)</string>
     <string name="preferences_swap_cross_moon_title">Tukar Tombol Silang/Bulan dan Kotak/Piramida</string>
     <string name="preferences_swap_cross_moon_summary">Tukar tombol depan jika pemetaan default salah (mis. untuk kontroler 8BitDo)</string>

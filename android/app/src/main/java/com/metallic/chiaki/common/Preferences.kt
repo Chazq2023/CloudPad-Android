@@ -237,6 +237,13 @@ class Preferences(context: Context)
 		performanceOverlayOffsetYPermille = 0
 	}
 
+	// Trophy unlock popups while streaming a Game Library / Catalog game. Off by default because they
+	// work by asking Sony for the game's trophies about once a minute for the whole session.
+	val trophyPopupsEnabledKey get() = resources.getString(R.string.preferences_trophy_popups_enabled_key)
+	var trophyPopupsEnabled
+		get() = sharedPreferences.getBoolean(trophyPopupsEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(trophyPopupsEnabledKey, value).apply() }
+
 	val pipEnabledKey get() = resources.getString(R.string.preferences_pip_enabled_key)
 	var pipEnabled
 		get() = sharedPreferences.getBoolean(pipEnabledKey, true)
