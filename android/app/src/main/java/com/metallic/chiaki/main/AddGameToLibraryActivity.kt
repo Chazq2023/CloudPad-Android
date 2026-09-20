@@ -21,6 +21,8 @@ import androidx.appcompat.widget.PopupMenu
 import com.metallic.chiaki.cloudplay.model.AddGameFilter
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.matchingFilter
+import com.metallic.chiaki.cloudplay.model.taggedWithPsPlus
+import com.metallic.chiaki.cloudplay.repository.PsPlusResult
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.matchingQuery
 import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
@@ -59,6 +61,13 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private var allGames: List<CloudGame> = emptyList()
 	private var loadJob: Job? = null
 	private var filter = AddGameFilter.ALL
+
+	/** Where the PS Plus lookup (which games are included with PS Plus) stands. It loads after
+	 *  the game list, separately, since it can be a big first-time download. */
+	private enum class PlusState { LOADING, READY, NEEDS_WIFI, FAILED }
+	private var plusState = PlusState.LOADING
+	private var plusKeys: Set<String>? = null
+	private var plusJob: Job? = null
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
@@ -115,6 +124,8 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			AddGameFilter.ALL -> R.string.add_game_filter_all
 			AddGameFilter.PURCHASABLE -> R.string.add_game_filter_purchasable
 			AddGameFilter.PS_CATALOG -> R.string.add_game_filter_ps_catalog
+			AddGameFilter.PS_PLUS -> R.string.add_game_filter_ps_plus
+			AddGameFilter.FREE_TO_PLAY -> R.string.add_game_filter_free_to_play
 		}
 	)
 
@@ -213,8 +224,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			{
 				is PsnResult.Success ->
 				{
-					allGames = result.data
+					allGames = result.data.let { games -> plusKeys?.let { games.taggedWithPsPlus(it) } ?: games }
 					showGames()
+					loadPsPlus()
 				}
 				is PsnResult.Error ->
 				{
@@ -228,13 +240,62 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		}
 	}
 
+	/** Loads which games are included with PS Plus and tags them. Never forced: the lookup is cached
+	 *  for a week and is a large download, so the page's refresh button doesn't repeat it. */
+	private fun loadPsPlus()
+	{
+		if (plusJob?.isActive == true) return
+		if (plusState != PlusState.READY) plusState = PlusState.LOADING
+		plusJob = lifecycleScope.launch {
+			when (val result = repository.loadPsPlusKeys())
+			{
+				is PsPlusResult.Ready ->
+				{
+					plusKeys = result.keys
+					allGames = allGames.taggedWithPsPlus(result.keys)
+					plusState = PlusState.READY
+				}
+				is PsPlusResult.NeedsUnmetered -> plusState = PlusState.NEEDS_WIFI
+				is PsPlusResult.Failed ->
+				{
+					Log.w(TAG, "PS Plus lookup failed: ${result.message}")
+					plusState = PlusState.FAILED
+				}
+			}
+			showGames()
+		}
+	}
+
+	private fun plusStatusMessage(): String = getString(
+		when (plusState)
+		{
+			PlusState.LOADING -> R.string.add_game_plus_loading
+			PlusState.NEEDS_WIFI -> R.string.add_game_plus_needs_wifi
+			else -> R.string.add_game_plus_failed
+		}
+	)
+
 	private fun showGames()
 	{
+		// The PS Plus filter has nothing to show until the lookup is in — say why instead of "no matches".
+		if (filter == AddGameFilter.PS_PLUS && plusState != PlusState.READY && allGames.isNotEmpty())
+		{
+			showMessage(plusStatusMessage())
+			return
+		}
+
 		val visible = allGames
 			.matchingFilter(filter)
 			.matchingQuery(binding.searchView.query?.toString() ?: "")
 		adapter.submitList(visible)
 		updateGameCount(shown = visible.size, total = allGames.size)
+		if (filter == AddGameFilter.PURCHASABLE && plusState != PlusState.READY && allGames.isNotEmpty())
+		{
+			// Purchasable leaves out PS Plus titles, which isn't known yet — don't pass a partial list off as complete.
+			binding.gameCountText.text = "${binding.gameCountText.text} · " + getString(
+				if (plusState == PlusState.LOADING) R.string.add_game_plus_note_loading else R.string.add_game_plus_note_unavailable
+			)
+		}
 		if (visible.isEmpty())
 		{
 			binding.emptyStateText.text = getString(

@@ -316,6 +316,48 @@ class CloudGameRepositoryTest {
         assertTrue(!CloudGameRepository.lacksCatalogTags("pscloud_catalog.json", org.json.JSONArray("[]")))
     }
 
+    // --- PS Plus lookup (hermetic: a metered connection never reaches the network) ---
+
+    private fun plusRepo(metered: Boolean) = CloudGameRepository(context, preferences, isNetworkMetered = { metered })
+
+    private fun writePlusCache(locale: String, ageMs: Long, keys: Set<String>) {
+        val dir = File(tempDir, "ps_plus_cache").apply { mkdirs() }
+        File(dir, "ps_plus_keys.json").writeText(
+            com.metallic.chiaki.cloudplay.api.PsPlusCache.encode(
+                com.metallic.chiaki.cloudplay.api.PsPlusCache.Entry(locale, System.currentTimeMillis() - ageMs, keys)
+            )
+        )
+    }
+
+    @Test
+    fun `a fresh PS Plus lookup is served from cache even on a metered connection`() = runTest {
+        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+
+        val result = plusRepo(metered = true).loadPsPlusKeys()
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA1")), result)
+    }
+
+    @Test
+    fun `a stale lookup is still used rather than downloading on a metered connection`() = runTest {
+        writePlusCache("en-US", ageMs = 30L * 24 * 60 * 60 * 1000, keys = setOf("PPSA2"))
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA2")), plusRepo(metered = true).loadPsPlusKeys())
+        assertEquals(PsPlusResult.Ready(setOf("PPSA2")), plusRepo(metered = true).loadPsPlusKeys(forceRefresh = true))
+    }
+
+    @Test
+    fun `nothing cached on a metered connection waits for Wi-Fi`() = runTest {
+        assertEquals(PsPlusResult.NeedsUnmetered, plusRepo(metered = true).loadPsPlusKeys())
+    }
+
+    @Test
+    fun `a lookup cached for another store locale is not reused`() = runTest {
+        writePlusCache("de-DE", ageMs = 60_000, keys = setOf("PPSA3"))
+
+        assertEquals(PsPlusResult.NeedsUnmetered, plusRepo(metered = true).loadPsPlusKeys())
+    }
+
     // --- Helpers ---
 
     private fun writeCacheFile(filename: String, json: String, ageMs: Long = 0): File {

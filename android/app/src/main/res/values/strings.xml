@@ -51,6 +51,13 @@
     <string name="add_game_filter_all">All</string>
     <string name="add_game_filter_purchasable">Purchasable</string>
     <string name="add_game_filter_ps_catalog">PS Catalog</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Free to Play</string>
+    <string name="add_game_plus_loading">Loading PS Plus information…</string>
+    <string name="add_game_plus_needs_wifi">PS Plus information (about 25 MB) is only downloaded on Wi-Fi or another unmetered connection. Connect, then tap Refresh.</string>
+    <string name="add_game_plus_failed">Couldn\'t load PS Plus information. Tap Refresh to try again.</string>
+    <string name="add_game_plus_note_loading">PS Plus info still loading</string>
+    <string name="add_game_plus_note_unavailable">PS Plus info unavailable</string>
     <!-- Quantity follows the total, so it reads "1 out of 1 game displayed" but "5 out of 3,666 games displayed". -->
     <plurals name="add_game_count">
         <item quantity="one">%1$s out of %2$s game displayed</item>

@@ -32,6 +32,10 @@ data class CloudGame(
 	// entries Sony marks streamable — most PS Plus titles are listed with streaming off.
 	val psCatalog: Boolean = false, // Listed in a PS Plus catalog list: can be added via PS Plus, no purchase
 	val freeToPlay: Boolean = false, // Listed in the free-to-play list: nothing to purchase either
+	// Included with a PS Plus subscription per the PS Store (the "Included" badge on its listing).
+	// Not cached with the catalog — tagged on afterwards from a separately cached lookup, see
+	// PsStorePlusService / CloudGameRepository.loadPsPlusKeys.
+	val psPlus: Boolean = false,
 	val featureType: Int = 0, // PSN entitlement feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
 	val streamableStatus: StreamableStatus = StreamableStatus.UNKNOWN // Library tile badge state
 )

@@ -5,6 +5,8 @@ package com.metallic.chiaki.cloudplay.repository
 import android.content.Context
 import android.util.Log
 import com.metallic.chiaki.cloudplay.api.PsCloudCatalogService
+import com.metallic.chiaki.cloudplay.api.PsPlusCache
+import com.metallic.chiaki.cloudplay.api.PsStorePlusService
 import com.metallic.chiaki.cloudplay.api.PsnCatalogService
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
@@ -17,9 +19,20 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 
+/** Outcome of [CloudGameRepository.loadPsPlusKeys]. */
+sealed class PsPlusResult
+{
+	/** PPSA numbers of the PS5 titles included with PS Plus. May be an older lookup if a fresh one wasn't possible. */
+	data class Ready(val keys: Set<String>) : PsPlusResult()
+	/** Nothing cached and the connection is metered — the download is large, so it waits for Wi-Fi. */
+	object NeedsUnmetered : PsPlusResult()
+	data class Failed(val message: String) : PsPlusResult()
+}
+
 class CloudGameRepository(
 	private val context: Context,
-	private val preferences: com.metallic.chiaki.common.Preferences
+	private val preferences: com.metallic.chiaki.common.Preferences,
+	private val isNetworkMetered: () -> Boolean = { defaultIsNetworkMetered(context) }
 )
 {
 	companion object
@@ -35,6 +48,15 @@ class CloudGameRepository(
 		internal fun lacksCatalogTags(cacheFileName: String, cachedGames: JSONArray): Boolean =
 			cacheFileName == PSCLOUD_CACHE_FILE && cachedGames.length() > 0 &&
 				!cachedGames.getJSONObject(0).has("psCatalog")
+
+		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
+		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
+
+		private fun defaultIsNetworkMetered(context: Context): Boolean = try
+		{
+			(context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager).isActiveNetworkMetered
+		}
+		catch (e: Exception) { true } // can't tell -> assume metered rather than risk a large download
 
 		fun invalidateCatalogCache(context: Context, reason: String = "")
 		{
@@ -144,6 +166,39 @@ class CloudGameRepository(
 		{
 			is PsnResult.Success -> PsnResult.Success(result.data.notInLibrary().excludingLibrary(library))
 			is PsnResult.Error -> result
+		}
+	}
+
+	/**
+	 * Which PS5 titles are included with PS Plus (as PPSA numbers), for the Add Game page's PS Plus
+	 * filter. The lookup is a ~25 MB download, so it's cached for a week (per store locale, in its own
+	 * directory so clearing the catalog cache doesn't discard it) and only fetched on an unmetered
+	 * connection. A stale lookup is still returned rather than nothing when a refresh isn't possible.
+	 */
+	suspend fun loadPsPlusKeys(forceRefresh: Boolean = false): PsPlusResult = withContext(Dispatchers.IO)
+	{
+		val storeLocale = preferences.getCloudStoreLocale()
+		val cacheFile = File(File(context.cacheDir, PS_PLUS_CACHE_DIR).apply { mkdirs() }, PS_PLUS_CACHE_FILE)
+		val cached = try { PsPlusCache.decode(cacheFile.readText()) } catch (e: Exception) { null }
+			?.takeIf { it.storeLocale == storeLocale }
+
+		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, System.currentTimeMillis()))
+			return@withContext PsPlusResult.Ready(cached.keys)
+
+		if (isNetworkMetered())
+			return@withContext cached?.let { PsPlusResult.Ready(it.keys) } ?: PsPlusResult.NeedsUnmetered
+
+		try
+		{
+			val keys = PsStorePlusService.fetchPlusKeys(storeLocale)
+			try { cacheFile.writeText(PsPlusCache.encode(PsPlusCache.Entry(storeLocale, System.currentTimeMillis(), keys))) }
+			catch (e: Exception) { Log.w(TAG, "Could not cache the PS Plus lookup", e) }
+			PsPlusResult.Ready(keys)
+		}
+		catch (e: Exception)
+		{
+			Log.w(TAG, "PS Plus lookup failed", e)
+			cached?.let { PsPlusResult.Ready(it.keys) } ?: PsPlusResult.Failed(e.message ?: "unknown error")
 		}
 	}
 
