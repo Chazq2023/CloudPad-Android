@@ -22,8 +22,8 @@ class PerformanceOverlayView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     /** FULL is every metric (the original view); MINIMAL is just the numbers most people
-     *  actually glance at mid-session — FPS, Bitrate, Resolution, Video Loss, Drops, Ping and
-     *  Adaptive Frame Pacing status. */
+     *  actually glance at mid-session — FPS, Bitrate, Resolution, Session time, Video Loss, Drops,
+     *  Ping and Video Pacing status. */
     enum class OverlayMode { FULL, MINIMAL }
 
     private val headerView: TextView
@@ -43,6 +43,12 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelVL = metricRow("VL")
     private val labelDrops = metricRow("Drops")
     private val labelPace = metricRow("Pace")
+
+    // Session time sits under "Visual" in Full mode (latencyCol) but under "Res" in Minimal mode,
+    // where latencyCol is hidden — one TextView can't live in both columns, so there are two,
+    // showing the same text; setMode() picks which is visible.
+    private val labelSessionFull = metricRow("Session")
+    private val labelSessionMinimal = metricRow("Session")
 
     init {
         orientation = VERTICAL
@@ -69,6 +75,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         latencyCol.addView(labelTotal)
         latencyCol.addView(labelNet)
         latencyCol.addView(labelVisual)
+        latencyCol.addView(labelSessionFull)
 
         val streamCol = buildColumn()
         sparklineView = SparklineView(context)
@@ -80,6 +87,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         )
         streamCol.addView(labelBT)
         streamCol.addView(labelRes)
+        streamCol.addView(labelSessionMinimal)
 
         val qualityCol = buildColumn()
         qualityCol.addView(labelRTT)
@@ -123,6 +131,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
             )
         )
 
+        labelSessionMinimal.visibility = View.GONE // starts in Full mode; see setMode
         setOpacityPercent(50)
         visibility = View.GONE
     }
@@ -157,6 +166,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         sparklineView.visibility = if (minimal) View.GONE else View.VISIBLE
         labelJit.visibility = if (minimal) View.GONE else View.VISIBLE
         labelDT.visibility = if (minimal) View.GONE else View.VISIBLE
+        labelSessionMinimal.visibility = if (minimal) View.VISIBLE else View.GONE
         // On-device: after a mode switch (and especially after the freeze/hardware-layer window
         // move mode puts this view through — see StreamActivity.overlayMoveModeActive), this
         // view's own rendered width could get stuck narrower than its actual content, clipping
@@ -285,6 +295,10 @@ class PerformanceOverlayView @JvmOverloads constructor(
         labelPace.setTextColor(
             if (data.smoothPacing) Color.rgb(0, 220, 100) else Color.argb(180, 255, 255, 255)
         )
+
+        val sessionText = "Session " + SessionClock.format(data.sessionSeconds)
+        labelValue(labelSessionFull, sessionText)
+        labelValue(labelSessionMinimal, sessionText)
 
         sparklineView.setData(data.fpsHistory)
     }

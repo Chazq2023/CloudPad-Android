@@ -652,6 +652,20 @@ class QuickSettingsPanel(
 			updateProcessingVisibility(mode)
 			onCasSharpeningChanged(mode == "cas", preferences.casSharpeningLevel); applyFsr()
 		}
+		// Video Pacing only changes how the decoder schedules frames, so like the image-quality
+		// options it's saved and pushed to the running session immediately — no restart.
+		panel.quickSettingsVideoPacingRow.quickSettingsDropdownLabel.text = activity.getString(R.string.preferences_video_pacing_title)
+		val videoPacingOptions = Preferences.VideoPacing.values()
+		bindSpinner(
+			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
+			videoPacingOptions.map { activity.getString(it.title) }, videoPacingOptions.map { it.value },
+			preferences.videoPacing.value
+		) { value ->
+			val pacing = videoPacingOptions.firstOrNull { it.value == value } ?: return@bindSpinner
+			if(pacing == preferences.videoPacing) return@bindSpinner
+			preferences.videoPacing = pacing
+			viewModel.session.setVideoPacing(pacing.isSmooth)
+		}
 		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
 			preferences.fsrUpscalingEnabled = enabled
 			applyFsr()
@@ -777,6 +791,7 @@ class QuickSettingsPanel(
 			panel.quickSettingsPipRow.quickSettingsRowSwitch,
 			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
 			panel.quickSettingsTrophiesSortButton, panel.quickSettingsTrophiesFilterButton,
+			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
 			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
 			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
@@ -1254,8 +1269,6 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
-		addVideoPacingRow(container)
-
 		sessionRowControls += addDropdownRow(
 			container, R.string.preferences_codec_title,
 			entries = Preferences.codecAll.map { activity.getString(it.title) },
@@ -1319,28 +1332,6 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
-		addVideoPacingRow(container)
-	}
-
-	/** Unlike the rest of the Session tab this isn't Apply-gated: Video Pacing only changes how
-	 *  the decoder schedules frames, so it's saved and pushed to the running session straight
-	 *  away, no restart. Deliberately not in [sessionRowControls] — that list is disabled while a
-	 *  restart is in flight, and this row has nothing to do with one. */
-	private fun addVideoPacingRow(container: LinearLayout)
-	{
-		val all = Preferences.VideoPacing.values()
-		addDropdownRow(
-			container, R.string.preferences_video_pacing_title,
-			entries = all.map { activity.getString(it.title) },
-			values = all.map { it.value },
-			currentValue = preferences.videoPacing.value
-		) { value ->
-			val pacing = all.firstOrNull { it.value == value } ?: return@addDropdownRow
-			if(pacing == preferences.videoPacing)
-				return@addDropdownRow
-			preferences.videoPacing = pacing
-			viewModel.session.setVideoPacing(pacing.isSmooth)
-		}
 	}
 
 	/** Writes this tab's pending, not-yet-persisted edits into [preferences] — see
@@ -1606,6 +1597,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.isChecked = preferences.motionEnabled
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
+		panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner.setSelection(preferences.videoPacing.ordinal)
 
 		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.imageProcessing == "cas") View.VISIBLE else View.GONE
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
