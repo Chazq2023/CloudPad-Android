@@ -62,10 +62,10 @@ class StoreAvailabilityRepositoryTest {
         val bad = game("EP1-PPSA00003_00-C"); val fine = game("EP1-PPSA00004_00-D")
         val r = repo()
 
-        assertEquals(listOf(bad, fine), r.withoutUnavailable(listOf(bad, fine)))
+        assertEquals(listOf(bad, fine) to emptyList<CloudGame>(), r.splitByAvailability(listOf(bad, fine)))
         r.check(bad)
 
-        assertEquals(listOf(fine), repo().withoutUnavailable(listOf(bad, fine)))
+        assertEquals(listOf(fine) to listOf(bad), repo().splitByAvailability(listOf(bad, fine)))
     }
 
     @Test
@@ -74,7 +74,7 @@ class StoreAvailabilityRepositoryTest {
         val byName = game("UP4008-PPSA99999_00-OTHERREGION", name = "Tennis World Tour 2")
         val other = game("EP1-PPSA00005_00-E", name = "Tennis World Tour")
 
-        assertEquals(listOf(other), repo().withoutUnavailable(listOf(byId, byName, other)))
+        assertEquals(listOf(other) to listOf(byId, byName), repo().splitByAvailability(listOf(byId, byName, other)))
         assertEquals(StoreVerdict.UNAVAILABLE, repo().check(byId))
         assertEquals(0, calls)
     }
@@ -91,9 +91,9 @@ class StoreAvailabilityRepositoryTest {
         clock += 2
         next = StoreVerdict.AVAILABLE; repo().check(a); assertEquals(1, calls)
 
-        assertEquals(emptyList<CloudGame>(), repo().withoutUnavailable(listOf(u))) // still within 30 days
+        assertEquals(emptyList<CloudGame>() to listOf(u), repo().splitByAvailability(listOf(u))) // still within 30 days
         clock += StoreAvailabilityRepository.UNAVAILABLE_TTL_MS
-        assertEquals(listOf(u), repo().withoutUnavailable(listOf(u)))
+        assertEquals(listOf(u) to emptyList<CloudGame>(), repo().splitByAvailability(listOf(u)))
     }
 
     @Test
@@ -123,6 +123,82 @@ class StoreAvailabilityRepositoryTest {
     @Test
     fun `a game with no store link is never fetched`() = runTest {
         assertEquals(StoreVerdict.UNKNOWN, repo().check(game("EP1-PPSA00009_00-I", url = "")))
+        assertEquals(0, calls)
+    }
+
+    // --- Unavailable filter: re-checking hidden games ---
+
+    private val twt2 = "EP4008-PPSA02019_00-TWT2SIEE00000000"
+
+    @Test
+    fun `re-checking a hidden game that is available again brings it back, even a seeded one`() = runTest {
+        val seeded = game(twt2, name = "Tennis World Tour 2")
+        assertEquals(emptyList<CloudGame>() to listOf(seeded), repo().splitByAvailability(listOf(seeded)))
+
+        next = StoreVerdict.AVAILABLE
+        assertEquals(RecheckOutcome.AVAILABLE, repo().recheck(seeded))
+
+        assertEquals(listOf(seeded) to emptyList<CloudGame>(), repo().splitByAvailability(listOf(seeded)))
+    }
+
+    @Test
+    fun `a seeded game found available stays listed after that answer expires (the seed does not return)`() = runTest {
+        val seeded = game(twt2, name = "Tennis World Tour 2")
+        next = StoreVerdict.AVAILABLE
+        repo().recheck(seeded)
+
+        clock += StoreAvailabilityRepository.AVAILABLE_TTL_MS + 1
+
+        assertEquals(listOf(seeded) to emptyList<CloudGame>(), repo().splitByAvailability(listOf(seeded)))
+    }
+
+    @Test
+    fun `re-checking a hidden game that is still unavailable keeps it hidden and refreshes its answer`() = runTest {
+        val bad = game("EP1-PPSA00020_00-K")
+        next = StoreVerdict.UNAVAILABLE
+        repo().check(bad)
+        clock += StoreAvailabilityRepository.UNAVAILABLE_TTL_MS - 1000
+
+        assertEquals(RecheckOutcome.UNAVAILABLE, repo().recheck(bad))
+        clock += 5000 // would have expired without the re-check
+
+        assertEquals(emptyList<CloudGame>() to listOf(bad), repo().splitByAvailability(listOf(bad)))
+    }
+
+    @Test
+    fun `re-check ignores the saved answer and always asks the store`() = runTest {
+        val g = game("EP1-PPSA00021_00-L")
+        repo().check(g)
+        calls = 0
+
+        repo().recheck(g); repo().recheck(g)
+
+        assertEquals(2, calls)
+    }
+
+    @Test
+    fun `an unreadable page on re-check changes nothing`() = runTest {
+        val bad = game("EP1-PPSA00022_00-M")
+        next = StoreVerdict.UNAVAILABLE; repo().check(bad)
+        next = StoreVerdict.UNKNOWN
+
+        assertEquals(RecheckOutcome.UNKNOWN, repo().recheck(bad))
+        assertEquals(emptyList<CloudGame>() to listOf(bad), repo().splitByAvailability(listOf(bad)))
+    }
+
+    @Test
+    fun `re-checks count towards the hourly limit and stop when it is used up`() = runTest {
+        val target = game("EP1-PPSA00023_00-N")
+        repeat(StoreAvailabilityRepository.MAX_CHECKS_PER_HOUR) { repo().recheck(game("EP1-PPSA4%04d_00-Z".format(it))) }
+        calls = 0
+
+        assertEquals(RecheckOutcome.LIMIT_REACHED, repo().recheck(target))
+        assertEquals(0, calls)
+    }
+
+    @Test
+    fun `re-checking a game with no store link does nothing`() = runTest {
+        assertEquals(RecheckOutcome.UNKNOWN, repo().recheck(game("EP1-PPSA00024_00-O", url = "")))
         assertEquals(0, calls)
     }
 

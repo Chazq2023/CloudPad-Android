@@ -212,7 +212,8 @@ class AddableGamesTest {
 
     @Test
     fun `every game shows under at least one specific filter, so nothing is only reachable through All`() {
-        val specific = AddGameFilter.values().filter { it != AddGameFilter.ALL }
+        // Unavailable is a separate list of hidden games, not a way to slice the visible one.
+        val specific = AddGameFilter.values().filter { it != AddGameFilter.ALL && it != AddGameFilter.UNAVAILABLE }
         everyKind.forEach { game ->
             assertTrue("${game.productId} is in no specific filter", specific.any { game in listOf(game).matchingFilter(it) })
         }
@@ -245,5 +246,10 @@ class AddableGamesTest {
         assertEquals("PPSA16786", productStableKey("EP3643-PPSA16786_00-0950123183894118"))
         assertEquals("CUSA01234", productStableKey("UP0001-CUSA01234_00-X"))
         assertEquals(null, productStableKey("no-number-here"))
+    }
+
+    @Test
+    fun `the Unavailable filter leaves the list it is given untouched`() {
+        assertEquals(everyKind, everyKind.matchingFilter(AddGameFilter.UNAVAILABLE))
     }
 }

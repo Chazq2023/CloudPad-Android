@@ -49,6 +49,16 @@ internal data class AvailabilityState(
 	}
 }
 
+/** Result of re-checking a hidden game from the Unavailable filter. */
+enum class RecheckOutcome
+{
+	AVAILABLE, UNAVAILABLE,
+	/** The page couldn't be read this time; the game stays as it was. */
+	UNKNOWN,
+	/** The hourly limit on live checks is used up; nothing was requested. */
+	LIMIT_REACHED
+}
+
 /**
  * Answers "can this game actually be bought or added on the PlayStation Store?" for the Add Game
  * page, one game at a time, only when the user taps it (see [StoreAvailabilityService]).
@@ -96,19 +106,50 @@ class StoreAvailabilityRepository internal constructor(
 	private fun isSeededUnavailable(game: CloudGame) =
 		game.productId in KNOWN_UNAVAILABLE_PRODUCT_IDS || normalized(game.name) in KNOWN_UNAVAILABLE_NAMES
 
+	/**
+	 * What is known about [game] without asking the store. A saved answer always wins over the
+	 * built-in list — even an expired one, which just means "unknown, check again" — so a live
+	 * check that finds a seeded game available can't be undone by the seed later.
+	 */
 	private fun freshVerdict(state: AvailabilityState, game: CloudGame): StoreVerdict
 	{
-		if (isSeededUnavailable(game)) return StoreVerdict.UNAVAILABLE
-		val (verdict, at) = state.verdicts[game.productId] ?: return StoreVerdict.UNKNOWN
+		val saved = state.verdicts[game.productId]
+			?: return if (isSeededUnavailable(game)) StoreVerdict.UNAVAILABLE else StoreVerdict.UNKNOWN
+		val (verdict, at) = saved
 		val ttl = if (verdict == StoreVerdict.UNAVAILABLE) UNAVAILABLE_TTL_MS else AVAILABLE_TTL_MS
 		return if (now() - at in 0 until ttl) verdict else StoreVerdict.UNKNOWN
 	}
 
-	/** [games] without those already known to be unavailable. No network. */
-	suspend fun withoutUnavailable(games: List<CloudGame>): List<CloudGame> = withContext(Dispatchers.IO)
+	/** [games] split into (listed, hidden) by what is already known about each. No network. */
+	suspend fun splitByAvailability(games: List<CloudGame>): Pair<List<CloudGame>, List<CloudGame>> = withContext(Dispatchers.IO)
 	{
 		val state = lock.withLock { load() }
-		games.filter { freshVerdict(state, it) != StoreVerdict.UNAVAILABLE }
+		games.partition { freshVerdict(state, it) != StoreVerdict.UNAVAILABLE }
+	}
+
+	/**
+	 * Checks a hidden game against the store now, ignoring what's saved (still capped at
+	 * [MAX_CHECKS_PER_HOUR] an hour). A definite answer replaces the saved one, so a game that is
+	 * back on sale stops being hidden and one that still isn't stays hidden for another 30 days.
+	 */
+	suspend fun recheck(game: CloudGame): RecheckOutcome = withContext(Dispatchers.IO)
+	{
+		lock.withLock {
+			if (game.conceptUrl.isEmpty()) return@withContext RecheckOutcome.UNKNOWN
+			val state = load()
+			val recent = state.checkTimesMs.filter { now() - it in 0 until HOUR_MS }
+			if (recent.size >= MAX_CHECKS_PER_HOUR) return@withContext RecheckOutcome.LIMIT_REACHED
+
+			val verdict = fetchVerdict(game.conceptUrl, game.productId)
+			val verdicts = if (verdict == StoreVerdict.UNKNOWN) state.verdicts else state.verdicts + (game.productId to (verdict to now()))
+			save(AvailabilityState(verdicts, recent + now()))
+			when (verdict)
+			{
+				StoreVerdict.AVAILABLE -> RecheckOutcome.AVAILABLE
+				StoreVerdict.UNAVAILABLE -> RecheckOutcome.UNAVAILABLE
+				StoreVerdict.UNKNOWN -> RecheckOutcome.UNKNOWN
+			}
+		}
 	}
 
 	/**

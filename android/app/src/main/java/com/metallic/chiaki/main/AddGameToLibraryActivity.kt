@@ -24,6 +24,7 @@ import com.metallic.chiaki.cloudplay.model.matchingFilter
 import com.metallic.chiaki.cloudplay.model.taggedWithPsPlus
 import com.metallic.chiaki.cloudplay.api.StoreVerdict
 import com.metallic.chiaki.cloudplay.repository.PsPlusResult
+import com.metallic.chiaki.cloudplay.repository.RecheckOutcome
 import com.metallic.chiaki.cloudplay.repository.StoreAvailabilityRepository
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.metallic.chiaki.cloudplay.model.PsnResult
@@ -64,6 +65,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	)
 
 	private var allGames: List<CloudGame> = emptyList()
+	/** Games hidden because the store offers no way to get them (shown under the Unavailable
+	 *  filter only, and not counted in All). */
+	private var hiddenGames: List<CloudGame> = emptyList()
 	private var loadJob: Job? = null
 	private var filter = AddGameFilter.ALL
 
@@ -128,17 +132,6 @@ class AddGameToLibraryActivity : AppCompatActivity()
 				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
 			}
 
-		// AppCompat's default clear (X) button empties the text but then requests focus and
-		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
-		// only happen when the user taps into the field themselves (same fix as the library search).
-		binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
-			?.setOnClickListener {
-				binding.searchView.setQuery("", false)
-				binding.searchView.clearFocus()
-				val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
-			}
-
 		setupDpadNavigation()
 		loadGames(forceRefresh = false)
 	}
@@ -157,6 +150,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			AddGameFilter.PS_CATALOG -> R.string.add_game_filter_ps_catalog
 			AddGameFilter.PS_PLUS -> R.string.add_game_filter_ps_plus
 			AddGameFilter.FREE_TO_PLAY -> R.string.add_game_filter_free_to_play
+			AddGameFilter.UNAVAILABLE -> R.string.add_game_filter_unavailable
 		}
 	)
 
@@ -255,9 +249,10 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			{
 				is PsnResult.Success ->
 				{
-					// Games already known to have no buy/add option on the store are left out.
-					val listed = availability.withoutUnavailable(result.data)
+					// Games already known to have no buy/add option on the store are set aside.
+					val (listed, hidden) = availability.splitByAvailability(result.data)
 					allGames = plusKeys?.let { listed.taggedWithPsPlus(it) } ?: listed
+					hiddenGames = hidden
 					showGames()
 					loadPsPlus(forceRefresh)
 				}
@@ -265,6 +260,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 				{
 					Log.e(TAG, "Failed to load games: ${result.message}", result.exception)
 					allGames = emptyList()
+					hiddenGames = emptyList()
 					showMessage(getString(R.string.add_game_load_failed, result.message))
 				}
 			}
@@ -322,12 +318,13 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			return
 		}
 
-		val visible = allGames
-			.matchingFilter(filter)
+		val showingHidden = filter == AddGameFilter.UNAVAILABLE
+		val visible = (if (showingHidden) hiddenGames else allGames.matchingFilter(filter))
 			.matchingQuery(binding.searchView.query?.toString() ?: "")
 		// The callback runs once the diff has been applied, so the jump lands on the new list.
 		adapter.submitList(visible) { if (scrollToTop) binding.gamesRecyclerView.scrollToPosition(0) }
-		updateGameCount(shown = visible.size, total = allGames.size)
+		if (showingHidden) updateUnavailableCount(hiddenGames.size)
+		else updateGameCount(shown = visible.size, total = allGames.size)
 		if (filter == AddGameFilter.PURCHASABLE && plusState != PlusState.READY && allGames.isNotEmpty())
 		{
 			// Purchasable leaves out PS Plus titles, which isn't known yet — don't pass a partial list off as complete.
@@ -338,7 +335,13 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		if (visible.isEmpty())
 		{
 			binding.emptyStateText.text = getString(
-				if (allGames.isEmpty()) R.string.add_game_empty else R.string.add_game_no_matches
+				when
+				{
+					showingHidden && hiddenGames.isEmpty() -> R.string.add_game_no_unavailable
+					showingHidden -> R.string.add_game_no_matches
+					allGames.isEmpty() -> R.string.add_game_empty
+					else -> R.string.add_game_no_matches
+				}
 			)
 			binding.emptyStateText.visibility = View.VISIBLE
 		}
@@ -358,6 +361,15 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		val format = NumberFormat.getIntegerInstance()
 		binding.gameCountText.text = resources.getQuantityString(
 			R.plurals.add_game_count, total, format.format(shown), format.format(total)
+		)
+		binding.gameCountText.visibility = View.VISIBLE
+	}
+
+	/** The Unavailable filter's count line: just how many are hidden (they aren't part of the "y" total in All). */
+	private fun updateUnavailableCount(count: Int)
+	{
+		binding.gameCountText.text = resources.getQuantityString(
+			R.plurals.add_game_unavailable_count, count, NumberFormat.getIntegerInstance().format(count)
 		)
 		binding.gameCountText.visibility = View.VISIBLE
 	}
@@ -385,21 +397,63 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		}
 		if (availabilityJob?.isActive == true) return
 
+		// A game under the Unavailable filter is re-checked live, ignoring what was saved.
+		if (filter == AddGameFilter.UNAVAILABLE)
+		{
+			recheckHiddenGame(game)
+			return
+		}
+
 		availabilityJob = lifecycleScope.launch {
 			binding.progressBar.visibility = View.VISIBLE
 			val verdict = try { availability.check(game) } finally { binding.progressBar.visibility = View.GONE }
 			if (verdict == StoreVerdict.UNAVAILABLE)
 			{
 				allGames = allGames.filter { it.productId != game.productId }
+				hiddenGames = (hiddenGames + game).sortedBy { it.name.lowercase() }
 				showGames()
-				alertDialogBuilder()
-					.setTitle(R.string.add_game_unavailable_title)
-					.setMessage(getString(R.string.add_game_unavailable_message, game.name))
-					.setPositiveButton(R.string.action_ok, null)
-					.show()
+				showUnavailableDialog(game)
 			}
 			else
 				launchStorePage(game)
+		}
+	}
+
+	private fun showUnavailableDialog(game: CloudGame)
+	{
+		alertDialogBuilder()
+			.setTitle(R.string.add_game_unavailable_title)
+			.setMessage(getString(R.string.add_game_unavailable_message, game.name))
+			.setPositiveButton(R.string.action_ok, null)
+			.show()
+	}
+
+	/**
+	 * Tapping a hidden game asks the store again. If it can be bought or added now, it rejoins the
+	 * list (and so All and its own filter) and the store page opens; if not, it stays hidden.
+	 */
+	private fun recheckHiddenGame(game: CloudGame)
+	{
+		availabilityJob = lifecycleScope.launch {
+			binding.progressBar.visibility = View.VISIBLE
+			val outcome = try { availability.recheck(game) } finally { binding.progressBar.visibility = View.GONE }
+			when (outcome)
+			{
+				RecheckOutcome.AVAILABLE ->
+				{
+					val restored = plusKeys?.let { listOf(game).taggedWithPsPlus(it) } ?: listOf(game)
+					hiddenGames = hiddenGames.filter { it.productId != game.productId }
+					allGames = (allGames + restored).sortedBy { it.name.lowercase() }
+					showGames()
+					Toast.makeText(this@AddGameToLibraryActivity, getString(R.string.add_game_available_again, game.name), Toast.LENGTH_LONG).show()
+					launchStorePage(game)
+				}
+				RecheckOutcome.UNAVAILABLE -> showUnavailableDialog(game)
+				RecheckOutcome.UNKNOWN ->
+					Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_recheck_failed, Toast.LENGTH_LONG).show()
+				RecheckOutcome.LIMIT_REACHED ->
+					Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_recheck_limit, Toast.LENGTH_LONG).show()
+			}
 		}
 	}
 

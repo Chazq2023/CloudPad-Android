@@ -86,7 +86,10 @@ enum class AddGameFilter
 	/** Titles included with a PS Plus subscription, per the PS Store. Overlaps PS_CATALOG. */
 	PS_PLUS,
 	/** Free-to-play titles: nothing to buy, and not part of PS Plus. */
-	FREE_TO_PLAY
+	FREE_TO_PLAY,
+	/** Games hidden because the store offers no way to get them. They aren't part of All; the page
+	 *  supplies that separate list, so [matchingFilter] leaves it untouched. Tapping one re-checks it. */
+	UNAVAILABLE
 }
 
 fun List<CloudGame>.matchingFilter(filter: AddGameFilter): List<CloudGame> = when(filter)
@@ -96,4 +99,5 @@ fun List<CloudGame>.matchingFilter(filter: AddGameFilter): List<CloudGame> = whe
 	AddGameFilter.PS_CATALOG -> filter { it.psCatalog }
 	AddGameFilter.PS_PLUS -> filter { it.psPlus }
 	AddGameFilter.FREE_TO_PLAY -> filter { it.freeToPlay }
+	AddGameFilter.UNAVAILABLE -> this
 }
