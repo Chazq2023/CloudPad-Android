@@ -19,10 +19,11 @@ import java.net.URLEncoder
  * Finds which PS5 games are included with PS Plus, for the Add Game page's PS Plus filter.
  *
  * Sony's imagic lists (see [PsCloudCatalogService]) only name ~130 PS Plus titles, so they miss
- * most of the Game Catalog. The PS Store's own PS5 games listing tags every title that's included
- * with the subscription (`price.upsellServiceBranding` contains PS_PLUS — the "Included" badge), so
- * this reads that listing and keeps just the PPSA numbers of the tagged ones. It is only used to
- * TAG games the app already knows are streamable; nothing from the listing is added to the catalog.
+ * most of the Game Catalog. The PS Store's own PS5 games listing carries a PS Plus tag on each
+ * title, but the tag covers several different things — see [isIncludedWithPsPlus] — so this reads
+ * that listing, keeps only the titles genuinely included with the subscription, and returns their
+ * PPSA numbers. It is only used to TAG games the app already knows are streamable; nothing from
+ * the listing is added to the catalog.
  *
  * The listing is big (~3.6 KB a title, ~25 MB for all of PS5 full games, uncompressed), so
  * CloudGameRepository caches the result for a week and only refetches it when that expires or the
@@ -43,11 +44,29 @@ internal object PsStorePlusService
 	private const val PAGE_ATTEMPTS = 3
 	private const val PAGE_TIMEOUT_MS = 45_000
 
-	/** Sanity floor: PS5 has several hundred tagged titles; far fewer means Sony changed the
+	/** Sanity floor: PS5 has a couple of hundred included titles; far fewer means Sony changed the
 	 *  data, and an empty PS Plus filter would be worse than reporting it as unavailable. */
-	internal const val MIN_EXPECTED_KEYS = 100
+	internal const val MIN_EXPECTED_KEYS = 80
 
 	internal data class Page(val totalCount: Int, val plusKeys: Set<String>)
+
+	/**
+	 * Whether a listing entry's price says the game is *included* with PS Plus. The PS_PLUS branding
+	 * on its own isn't enough — `upsellText` says what the subscription actually offers:
+	 *  - "Extra": the Game Catalog — included.
+	 *  - "Essential": a monthly game — included.
+	 *  - "Included", or a price tied to the subscription (`serviceBranding` has PS_PLUS): included.
+	 *  - "Premium": a time-limited game trial (or a Classics title), not the full game — NOT included.
+	 *  - "Save 10% more" and similar: a member discount — NOT included.
+	 */
+	internal fun isIncludedWithPsPlus(price: JSONObject): Boolean
+	{
+		if (hasPsPlusBranding(price.optJSONArray("serviceBranding"))) return true
+		return hasPsPlusBranding(price.optJSONArray("upsellServiceBranding")) &&
+			price.optString("upsellText") in INCLUDED_UPSELL_TEXTS
+	}
+
+	private val INCLUDED_UPSELL_TEXTS = setOf("Extra", "Essential", "Included")
 
 	internal fun pageUrl(offset: Int, size: Int = PAGE_SIZE): String
 	{
@@ -80,7 +99,7 @@ internal object PsStorePlusService
 		{
 			val product = products.getJSONObject(i)
 			val price = product.optJSONObject("price") ?: continue
-			if (hasPsPlusBranding(price.optJSONArray("upsellServiceBranding")) || hasPsPlusBranding(price.optJSONArray("serviceBranding")))
+			if (isIncludedWithPsPlus(price))
 				productStableKey(product.optString("id", ""))?.let { keys.add(it) }
 		}
 		return Page(total, keys)
@@ -150,22 +169,31 @@ internal object PsPlusCache
 
 	const val MAX_AGE_MS = 7L * 24 * 60 * 60 * 1000
 
+	/** Bumped whenever the rule for what counts as included changes, so a lookup saved under an
+	 *  older rule (which would tag the wrong games) is discarded and fetched again. */
+	const val RULE_VERSION = 2
+
 	fun encode(entry: Entry): String = JSONObject()
 		.put("storeLocale", entry.storeLocale)
 		.put("fetchedAtMs", entry.fetchedAtMs)
+		.put("ruleVersion", RULE_VERSION)
 		.put("keys", JSONArray(entry.keys.toList()))
 		.toString()
 
-	fun decode(text: String): Entry? = try
+	fun decode(text: String): Entry?
 	{
-		val obj = JSONObject(text)
-		val array = obj.getJSONArray("keys")
-		Entry(
-			obj.getString("storeLocale"), obj.getLong("fetchedAtMs"),
-			(0 until array.length()).mapTo(HashSet()) { array.getString(it) }
-		)
+		return try
+		{
+			val obj = JSONObject(text)
+			if (obj.optInt("ruleVersion", 0) != RULE_VERSION) return null
+			val array = obj.getJSONArray("keys")
+			Entry(
+				obj.getString("storeLocale"), obj.getLong("fetchedAtMs"),
+				(0 until array.length()).mapTo(HashSet()) { array.getString(it) }
+			)
+		}
+		catch (e: Exception) { null }
 	}
-	catch (e: Exception) { null }
 
 	fun isFresh(entry: Entry, nowMs: Long): Boolean = nowMs - entry.fetchedAtMs in 0 until MAX_AGE_MS
 }
