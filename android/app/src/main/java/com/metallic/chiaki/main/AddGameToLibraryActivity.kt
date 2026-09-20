@@ -10,7 +10,9 @@ import android.util.Log
 import android.util.TypedValue
 import android.view.KeyEvent
 import android.view.View
-import android.widget.Toast
+import android.widget.TextView
+import androidx.annotation.StringRes
+import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.browser.customtabs.CustomTabsIntent
@@ -68,6 +70,9 @@ class AddGameToLibraryActivity : AppCompatActivity()
 	private var plusState = PlusState.LOADING
 	private var plusKeys: Set<String>? = null
 	private var plusJob: Job? = null
+	/** The last Refresh tap was answered from the saved list (inside the hour); its toast says so, so
+	 *  the PS Plus lookup doesn't add a second one. */
+	private var listRefreshSkipped = false
 
 	override fun onCreate(savedInstanceState: Bundle?)
 	{
@@ -110,17 +115,6 @@ class AddGameToLibraryActivity : AppCompatActivity()
 				return true
 			}
 		})
-
-		// AppCompat's default clear (X) button empties the text but then requests focus and
-		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
-		// only happen when the user taps into the field themselves (same fix as the library search).
-		binding.searchView.findViewById<View>(androidx.appcompat.R.id.search_close_btn)
-			?.setOnClickListener {
-				binding.searchView.setQuery("", false)
-				binding.searchView.clearFocus()
-				val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-				imm.hideSoftInputFromWindow(binding.searchView.windowToken, 0)
-			}
 
 		// AppCompat's default clear (X) button empties the text but then requests focus and
 		// force-shows the keyboard. Clearing the search shouldn't open the keyboard — that should
@@ -244,12 +238,19 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		binding.emptyStateText.visibility = View.GONE
 		binding.refreshButton.isEnabled = false
 
+		// Refresh reloads the list from Sony at most once an hour (like the PS Plus lookup); inside
+		// that hour the saved list is shown again with no requests.
+		val listCooldown = forceRefresh && repository.catalogRefreshedRecently()
+		listRefreshSkipped = listCooldown
+		if (listCooldown)
+			notify(R.string.add_game_list_recent)
+
 		loadJob = lifecycleScope.launch {
-			when (val result = repository.fetchPs5GamesNotInLibrary(npsso, forceRefresh))
+			when (val result = repository.fetchPs5GamesNotInLibrary(npsso, forceRefresh && !listCooldown))
 			{
 				is PsnResult.Success ->
 				{
-					allGames = result.data.let { games -> plusKeys?.let { games.taggedWithPsPlus(it) } ?: games }
+					allGames = plusKeys?.let { result.data.taggedWithPsPlus(it) } ?: result.data
 					showGames()
 					loadPsPlus(forceRefresh)
 				}
@@ -279,8 +280,10 @@ class AddGameToLibraryActivity : AppCompatActivity()
 					plusKeys = result.keys
 					allGames = allGames.taggedWithPsPlus(result.keys)
 					plusState = PlusState.READY
-					if (forceRefresh && !result.isFresh)
-						Toast.makeText(this@AddGameToLibraryActivity, R.string.add_game_plus_not_refreshed, Toast.LENGTH_LONG).show()
+					if (forceRefresh && result.refreshSkipped && !listRefreshSkipped)
+						notify(R.string.add_game_plus_recent)
+					else if (forceRefresh && !result.isFresh)
+						notify(R.string.add_game_plus_not_refreshed)
 				}
 				is PsPlusResult.Failed ->
 				{
@@ -328,7 +331,11 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		if (visible.isEmpty())
 		{
 			binding.emptyStateText.text = getString(
-				if (allGames.isEmpty()) R.string.add_game_empty else R.string.add_game_no_matches
+				when
+				{
+					allGames.isEmpty() -> R.string.add_game_empty
+					else -> R.string.add_game_no_matches
+				}
 			)
 			binding.emptyStateText.visibility = View.VISIBLE
 		}
@@ -360,14 +367,32 @@ class AddGameToLibraryActivity : AppCompatActivity()
 		binding.emptyStateText.visibility = View.VISIBLE
 	}
 
-	/** Sony sign-in happens in Chrome (see PsnLoginActivity), so a Custom Tab reuses that session. */
 	private fun openGamePage(game: CloudGame)
 	{
 		if (game.conceptUrl.isEmpty())
 		{
-			Toast.makeText(this, R.string.cloud_add_to_library_no_url_message, Toast.LENGTH_LONG).show()
+			notify(R.string.cloud_add_to_library_no_url_message)
 			return
 		}
+		launchStorePage(game)
+	}
+
+	/**
+	 * Short notices for this page. A Snackbar rather than a Toast: Toasts cut longer text off on some
+	 * devices, and these messages ("already refreshed within the last hour…") need a couple of lines.
+	 */
+	private fun notify(message: CharSequence)
+	{
+		Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG).also { bar ->
+			bar.view.findViewById<TextView>(com.google.android.material.R.id.snackbar_text)?.maxLines = 4
+		}.show()
+	}
+
+	private fun notify(@StringRes message: Int) = notify(getString(message))
+
+	/** Sony sign-in happens in Chrome (see PsnLoginActivity), so a Custom Tab reuses that session. */
+	private fun launchStorePage(game: CloudGame)
+	{
 
 		val uri = Uri.parse(game.conceptUrl)
 		try
@@ -384,7 +409,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			catch (e2: Exception)
 			{
 				Log.e(TAG, "Failed to open ${game.conceptUrl}", e2)
-				Toast.makeText(this, R.string.cloud_failed_to_open_browser_toast, Toast.LENGTH_SHORT).show()
+				notify(R.string.cloud_failed_to_open_browser_toast)
 			}
 		}
 	}

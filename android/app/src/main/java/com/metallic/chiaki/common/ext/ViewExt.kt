@@ -6,7 +6,10 @@ import android.content.Context
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.view.KeyEvent
+import android.text.TextUtils
+import androidx.core.view.doOnLayout
 import android.view.View
+import android.widget.TextView
 import android.view.ViewGroup
 
 /**
@@ -25,6 +28,38 @@ fun View.enableFocusableInTouchModeForTv(context: Context)
 	}
 	if (isFocusable) {
 		isFocusableInTouchMode = true
+	}
+}
+
+/**
+ * Game tile titles sit still with a trailing "…" until the tile is focused (controller/D-pad) or
+ * hovered (mouse); then the text scrolls so the whole title can be read, and goes back to the
+ * static, ellipsised form when [active] turns false. The TextView must be single-line
+ * (`android:singleLine="true"`) or it wraps instead of overflowing and never scrolls. Short
+ * titles that already fit aren't affected — a marquee only runs when the text is wider than the view.
+ */
+fun TextView.setTitleMarquee(active: Boolean)
+{
+	if(!active)
+	{
+		// Stop first: TextView only stops a running marquee while the ellipsize mode is still MARQUEE.
+		isSelected = false
+		ellipsize = TextUtils.TruncateAt.END
+		return
+	}
+
+	marqueeRepeatLimit = -1 // keep scrolling for as long as the tile stays focused
+	ellipsize = TextUtils.TruncateAt.MARQUEE
+	isSelected = true       // TextView only animates a marquee while it is selected
+	// Changing the ellipsize mode throws away the text layout, and a marquee can only start once a
+	// layout exists (it needs the line count and width) — so the select above finds nothing to
+	// scroll and quietly does nothing. Once the layout has been rebuilt, select again to start it.
+	doOnLayout {
+		if(it.isSelected && ellipsize == TextUtils.TruncateAt.MARQUEE)
+		{
+			it.isSelected = false
+			it.isSelected = true
+		}
 	}
 }
 

@@ -24,8 +24,13 @@ jobs:
         - The Add Game page is now titled Add Game to PS5 Library. A line under the title shows how many games are displayed out of the total, and a filter narrows the list: All, Purchasable (games you need to buy), PS Catalog, PS Plus (games included with PS Plus through the Game Catalog or as a monthly game, e.g. NEVA; not game trials or member discounts) or Free to Play. Every game shows under at least one filter. PS Plus information is a download of about 25 MB that happens in the background, is saved for a week, and is refreshed whenever you tap the refresh button.
         - Clearing the search box with the X on the Add Game page no longer pops up the keyboard, and searching or changing the filter there now jumps straight back to the top of the list, like the library tabs.
         - Added Indonesian (Bahasa Indonesia) as an app language.
+        - Translated the Add Game to PS5 Library page, the Video Pacing setting and the trophy refresh button into every supported language (German, Spanish, Finnish, French, Italian, Japanese, Korean, Dutch, Portuguese (Brazil)); Indonesian already had them. Also fixed missing closing quotation marks in three German texts.
         - Fixed the selected tab (PS3 Catalog, PS4 Catalog or PS5 Library) losing its highlight after changing the app language, which also hid the PS5 Library filter, + button and streamability icons until the tab was tapped again.
         - Fixed the focus highlight on the back, filter, refresh and other toolbar buttons (Add Game, Trophies, Friends, Settings and more) staying pink when a different theme colour is selected.
+        - Tapping refresh on the Add Game page now reloads the game list from PlayStation and refreshes PS Plus information at most once an hour each, to avoid repeated large downloads. Taps inside that hour show the saved list and say so.
+        - Long game titles on the game tiles (library, catalogs and Add Game) now scroll across when the tile is highlighted with the controller or D-pad, or hovered with a mouse, and stay still with a trailing … otherwise.
+        - Removed the in-stream trophy unlock popups. This also stops the app asking PlayStation for your trophies every 30 seconds during Game Library and Game Catalog streams. Trophies can still be viewed in the Trophies screens.
+        - Fewer requests to PlayStation servers: the friends list reuses saved profiles instead of fetching every friend each time, trophy details are kept for an hour, and returning to the Remote Play tab refreshes the console list at most once a minute. If the PS Plus lookup ever fails, the app waits 30 minutes before asking again.
 
     steps:
       - name: Checkout repo

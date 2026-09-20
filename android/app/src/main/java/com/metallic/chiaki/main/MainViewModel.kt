@@ -376,6 +376,17 @@ class MainViewModel(val database: AppDatabase, val preferences: Preferences): Vi
 		psnDiscoveryManager.refreshAsync()
 	}
 
+	/** Automatic refreshes (returning to the Remote Play tab) are spaced at least a minute apart so
+	 *  switching apps back and forth doesn't ask Sony for the console list every time. The manual
+	 *  refresh button still calls [refreshPsnHosts] directly. */
+	private val autoPsnRefreshGate = com.metallic.chiaki.common.MinIntervalGate(60_000L)
+
+	fun refreshPsnHostsIfStale()
+	{
+		if (autoPsnRefreshGate.tryAcquire()) refreshPsnHosts()
+		else Log.i(TAG, "refreshPsnHostsIfStale(): refreshed under a minute ago, skipping")
+	}
+
 	companion object
 	{
 		private const val TAG = "MainViewModel"

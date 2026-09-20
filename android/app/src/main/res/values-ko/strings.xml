@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">트로피 목록 새로고침</string>
     <string name="quick_settings_trophies_refresh">트로피 새로고침</string>
     <string name="quick_settings_trophies_empty">%1$s의 트로피 데이터를 가져올 수 없습니다. 게임을 실행하여 트로피 데이터가 동기화되도록 하세요.\n\n세션 중 5~10분 정도 걸릴 수 있습니다. 그런 다음 트로피 목록을 새로고침하면 트로피 데이터가 표시됩니다.\n\n트로피 데이터가 계속 표시되지 않으면 CloudPad GitHub 저장소에 이슈를 등록해 주세요</string>
-    <string name="trophy_unlock_popup_header">트로피 획득!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d 트로피 획득</string>
     <string name="trophy_sort_content_description">트로피 정렬</string>
     <string name="trophy_filter_content_description">트로피 필터</string>
@@ -690,4 +689,35 @@
     <string name="controller_action_touchpad_swipe_down">터치패드 아래로 스와이프</string>
     <string name="controller_action_touchpad_swipe_left">터치패드 왼쪽으로 스와이프</string>
     <string name="controller_action_touchpad_swipe_right">터치패드 오른쪽으로 스와이프</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">라이브러리에 게임 추가</string>
+    <string name="add_game_title">PS5 라이브러리에 게임 추가</string>
+    <string name="add_game_filter_content_description">게임 필터</string>
+    <string name="add_game_filter_all">전체</string>
+    <string name="add_game_filter_purchasable">유료</string>
+    <string name="add_game_filter_ps_catalog">PS 카탈로그</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">무료 플레이</string>
+    <string name="add_game_plus_loading">PS Plus 정보를 불러오는 중…</string>
+    <string name="add_game_list_recent">게임 목록이 지난 1시간 이내에 이미 새로 고쳐져 저장된 목록을 표시합니다.</string>
+    <string name="add_game_plus_recent">PS Plus 정보가 지난 1시간 이내에 이미 새로 고쳐졌습니다.</string>
+    <string name="add_game_plus_not_refreshed">PS Plus 정보를 새로 고치지 못했습니다. 마지막으로 저장된 목록을 표시합니다.</string>
+    <string name="add_game_plus_failed">PS Plus 정보를 불러오지 못했습니다. 새로고침을 눌러 다시 시도하세요.</string>
+    <string name="add_game_plus_note_loading">PS Plus 정보 불러오는 중</string>
+    <string name="add_game_plus_note_unavailable">PS Plus 정보를 사용할 수 없음</string>
+    <string name="add_game_search_hint">게임 검색…</string>
+    <string name="add_game_refresh_content_description">게임 목록 새로고침</string>
+    <string name="add_game_empty">스트리밍 가능한 알려진 게임이 모두 이미 라이브러리에 있습니다.</string>
+    <string name="add_game_no_matches">검색 또는 필터와 일치하는 게임이 없습니다.</string>
+    <string name="add_game_login_required">PS5 라이브러리 탭에서 PlayStation에 로그인하면 추가할 수 있는 게임을 볼 수 있습니다.</string>
+    <string name="add_game_load_failed">게임을 불러오지 못했습니다: %1$s</string>
+    <string name="preferences_video_pacing_title">비디오 페이싱</string>
+    <string name="preferences_video_pacing_summary">표준은 가장 낮은 지연을 위해 작고 고정된 버퍼를 유지합니다. 부드럽게는 네트워크 지터에 맞춰 버퍼를 늘리고 몰려서 도착한 프레임을 건너뛰어 더 안정적인 움직임을 제공하지만, 불안정한 연결에서는 지연이 다소 늘어납니다. 리모트 플레이, 게임 라이브러리, 게임 카탈로그에 적용됩니다.</string>
+    <string name="preferences_video_pacing_standard">표준</string>
+    <string name="preferences_video_pacing_smooth">부드럽게</string>
+    <string name="trophy_refresh_content_description">트로피 새로고침</string>
+    <plurals name="add_game_count">
+        <item quantity="other">게임 %2$s개 중 %1$s개 표시</item>
+    </plurals>
 </resources>

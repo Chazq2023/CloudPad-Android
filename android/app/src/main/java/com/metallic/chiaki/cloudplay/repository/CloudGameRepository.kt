@@ -23,8 +23,10 @@ import java.io.File
 sealed class PsPlusResult
 {
 	/** PPSA numbers of the PS5 titles included with PS Plus. [isFresh] is false when a newer
-	 *  lookup was wanted (expired, or a forced refresh) but failed, so an older saved one is used. */
-	data class Ready(val keys: Set<String>, val isFresh: Boolean = true) : PsPlusResult()
+	 *  lookup was wanted (expired, or a forced refresh) but failed, so an older saved one is used.
+	 *  [refreshSkipped] is true when a forced refresh was ignored because the lookup was refreshed
+	 *  within the last hour (see [PsPlusCache.REFRESH_COOLDOWN_MS]). */
+	data class Ready(val keys: Set<String>, val isFresh: Boolean = true, val refreshSkipped: Boolean = false) : PsPlusResult()
 	data class Failed(val message: String) : PsPlusResult()
 }
 
@@ -51,6 +53,18 @@ class CloudGameRepository(
 
 		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
 		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
+		private const val PS_PLUS_FAILURE_FILE = "last_failure.txt"
+
+		/** The Add Game page's Refresh reloads the game list from Sony at most this often. */
+		internal const val CATALOG_REFRESH_COOLDOWN_MS = 60L * 60 * 1000
+
+		internal fun isCatalogRefreshCooldownActive(catalogLastModifiedMs: Long, nowMs: Long): Boolean =
+			catalogLastModifiedMs > 0 && nowMs - catalogLastModifiedMs in 0 until CATALOG_REFRESH_COOLDOWN_MS
+
+		/** After a failed PS Plus lookup, don't try Sony's store API again for this long, however
+		 *  often the page is opened or Refresh is tapped — a broken or blocking API shouldn't be
+		 *  retried on every visit. */
+		internal const val PS_PLUS_FAILURE_COOLDOWN_MS = 30L * 60 * 1000
 
 		fun invalidateCatalogCache(context: Context, reason: String = "")
 		{
@@ -145,6 +159,14 @@ class CloudGameRepository(
 	}
 
 	/**
+	 * True when the full PS5 catalog was fetched from Sony less than an hour ago (the saved copy's
+	 * age), so a forced refresh of it would repeat ~14 requests for nothing. Callers use the saved
+	 * list instead — see AddGameToLibraryActivity's Refresh button.
+	 */
+	fun catalogRefreshedRecently(nowMs: Long = System.currentTimeMillis()): Boolean =
+		isCatalogRefreshCooldownActive(File(cacheDir, PSCLOUD_CACHE_FILE).lastModified(), nowMs)
+
+	/**
 	 * Every known streamable PS5 game the user has NOT added to their library — backs the
 	 * "add a game to library" page. Takes the full-catalog fetch (which cross-references the
 	 * user's entitlements for isOwned) and additionally removes anything matching the library
@@ -167,7 +189,7 @@ class CloudGameRepository(
 	 * Which PS5 titles are included with PS Plus (as PPSA numbers), for the Add Game page's PS Plus
 	 * filter. The lookup is a ~25 MB download, so it's cached for a week (per store locale, in its own
 	 * directory so clearing the catalog cache doesn't discard it) unless [forceRefresh] asks for a new
-	 * one. If a new one can't be fetched, the saved lookup is still returned (not fresh) rather than nothing.
+	 * one (at most once an hour). If a new one can't be fetched, the saved lookup is still returned (not fresh) rather than nothing.
 	 */
 	suspend fun loadPsPlusKeys(forceRefresh: Boolean = false): PsPlusResult = withContext(Dispatchers.IO)
 	{
@@ -176,19 +198,33 @@ class CloudGameRepository(
 		val cached = try { PsPlusCache.decode(cacheFile.readText()) } catch (e: Exception) { null }
 			?.takeIf { it.storeLocale == storeLocale }
 
-		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, System.currentTimeMillis()))
+		val nowMs = System.currentTimeMillis()
+		if (cached != null && forceRefresh && PsPlusCache.isInRefreshCooldown(cached, nowMs))
+			return@withContext PsPlusResult.Ready(cached.keys, refreshSkipped = true)
+		if (cached != null && !forceRefresh && PsPlusCache.isFresh(cached, nowMs))
 			return@withContext PsPlusResult.Ready(cached.keys)
+
+		val failureFile = File(cacheFile.parentFile, PS_PLUS_FAILURE_FILE)
+		val lastFailureMs = try { failureFile.readText().trim().toLong() } catch (e: Exception) { null }
+		if (lastFailureMs != null && nowMs - lastFailureMs in 0 until PS_PLUS_FAILURE_COOLDOWN_MS)
+		{
+			Log.i(TAG, "PS Plus lookup failed recently; not asking again yet")
+			return@withContext cached?.let { PsPlusResult.Ready(it.keys, isFresh = false) }
+				?: PsPlusResult.Failed("The PlayStation Store didn't respond a moment ago; try again in a few minutes.")
+		}
 
 		try
 		{
 			val keys = fetchPsPlusKeys(storeLocale)
 			try { cacheFile.writeText(PsPlusCache.encode(PsPlusCache.Entry(storeLocale, System.currentTimeMillis(), keys))) }
 			catch (e: Exception) { Log.w(TAG, "Could not cache the PS Plus lookup", e) }
+			failureFile.delete()
 			PsPlusResult.Ready(keys)
 		}
 		catch (e: Exception)
 		{
 			Log.w(TAG, "PS Plus lookup failed", e)
+			try { failureFile.writeText(nowMs.toString()) } catch (io: Exception) { Log.w(TAG, "Could not record the failure time", io) }
 			cached?.let { PsPlusResult.Ready(it.keys, isFresh = false) } ?: PsPlusResult.Failed(e.message ?: "unknown error")
 		}
 	}

@@ -92,7 +92,7 @@
     <string name="preferences_donate_no_products">Unterstützungsoptionen sind in dieser Version nicht verfügbar.</string>
     <string name="preferences_donate_billing_unavailable">Google Play Abrechnung ist auf diesem Gerät nicht verfügbar. Installiere oder aktualisiere den Play Store, oder installiere CloudPad über Google Play (z. B. internen Test), damit Unterstützungskäufe funktionieren.</string>
     <string name="donation_paywall_external_title">Unterstützen via PayPal</string>
-    <string name="donation_paywall_external_hint">Google Play Abrechnung ist hier nicht verfügbar. Scanne den QR-Code mit deinem Handy, um PayPal zu öffnen, oder nutze „Link öffnen" unten.</string>
+    <string name="donation_paywall_external_hint">Google Play Abrechnung ist hier nicht verfügbar. Scanne den QR-Code mit deinem Handy, um PayPal zu öffnen, oder nutze „Link öffnen“ unten.</string>
     <string name="donation_paywall_external_open_link">PayPal-Link öffnen</string>
     <string name="donation_paywall_external_no_browser">Keine App auf diesem Gerät kann den Link öffnen.</string>
     <string name="donation_paywall_qr_content_description">QR-Code mit Link zur PayPal-Unterstützungsseite</string>
@@ -136,7 +136,7 @@
     <string name="preferences_controller_shortcut_trophies_title">Quadrat (halten) — während ein Spiel markiert ist</string>
     <string name="preferences_controller_shortcut_trophies_summary">Öffnet die Trophäen des Spiels</string>
     <string name="preferences_controller_shortcut_add_to_home_title">Start (drücken) — während ein Spiel markiert ist</string>
-    <string name="preferences_controller_shortcut_add_to_home_summary">Öffnet die Bestätigung „Zum Startbildschirm hinzufügen"</string>
+    <string name="preferences_controller_shortcut_add_to_home_summary">Öffnet die Bestätigung „Zum Startbildschirm hinzufügen“</string>
     <string name="preferences_controller_shortcut_icon_nav_title">Select (drücken) — während ein Spiel markiert ist</string>
     <string name="preferences_controller_shortcut_icon_nav_summary">Fokussiert das Favoriten-Symbol, von dort kannst du zu Trophäen, Spielzeit und dem Startbildschirm-Shortcut navigieren. Drücke Select erneut, um zur Spielekachel zurückzukehren</string>
     <string name="preferences_controller_shortcut_quick_menu_title">Zurück — während des Streamens</string>
@@ -243,7 +243,6 @@
     <string name="quick_settings_trophies_header_label">Trophäenliste aktualisieren</string>
     <string name="quick_settings_trophies_refresh">Trophäen aktualisieren</string>
     <string name="quick_settings_trophies_empty">Für %1$s konnten keine Trophäendaten abgerufen werden. Bitte starte das Spiel und lasse die Trophäendaten synchronisieren.\n\nDies kann während einer Sitzung etwa 5–10 Minuten dauern. Danach kannst du die Trophäenliste aktualisieren, und die Trophäendaten sollten erscheinen.\n\nFalls die Trophäendaten weiterhin fehlen, melde bitte ein Issue im CloudPad-GitHub-Repository, damit es untersucht werden kann</string>
-    <string name="trophy_unlock_popup_header">Trophäe freigeschaltet!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d Trophäen erhalten</string>
     <string name="trophy_sort_content_description">Trophäen sortieren</string>
     <string name="trophy_filter_content_description">Trophäen filtern</string>
@@ -338,7 +337,7 @@
     <string name="psn_login_connecting">Verbindung zum Server wird hergestellt…</string>
     <string name="psn_login_code_ready">Bereit zur Anmeldung</string>
     <string name="psn_login_checking_status">Es wird geprüft, ob die Anmeldung abgeschlossen ist…</string>
-    <string name="psn_login_browser_opened">Schließe die Sony-Anmeldung ab und tippe dann auf „SSO-Cookie-Wert abrufen"</string>
+    <string name="psn_login_browser_opened">Schließe die Sony-Anmeldung ab und tippe dann auf „SSO-Cookie-Wert abrufen“</string>
     <string name="psn_login_not_complete">Anmeldung noch nicht abgeschlossen. Schließe zuerst die Sony-Anmeldung ab.</string>
     <string name="psn_login_not_complete_toast">Bitte schließe zuerst die Sony-Anmeldung ab</string>
     <string name="psn_login_server_error">Anmeldung konnte nicht abgeschlossen werden</string>
@@ -680,4 +679,36 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad nach unten wischen</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad nach links wischen</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad nach rechts wischen</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">Spiel zur Bibliothek hinzufügen</string>
+    <string name="add_game_title">Spiel zur PS5-Bibliothek hinzufügen</string>
+    <string name="add_game_filter_content_description">Spiele filtern</string>
+    <string name="add_game_filter_all">Alle</string>
+    <string name="add_game_filter_purchasable">Kostenpflichtig</string>
+    <string name="add_game_filter_ps_catalog">PS-Katalog</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Free-to-Play</string>
+    <string name="add_game_plus_loading">PS-Plus-Informationen werden geladen…</string>
+    <string name="add_game_list_recent">Die Spieleliste wurde in der letzten Stunde bereits aktualisiert, daher siehst du die gespeicherte Liste.</string>
+    <string name="add_game_plus_recent">Die PS-Plus-Informationen wurden in der letzten Stunde bereits aktualisiert.</string>
+    <string name="add_game_plus_not_refreshed">PS-Plus-Informationen konnten nicht aktualisiert werden. Die zuletzt gespeicherte Liste wird angezeigt.</string>
+    <string name="add_game_plus_failed">PS-Plus-Informationen konnten nicht geladen werden. Tippe auf Aktualisieren, um es erneut zu versuchen.</string>
+    <string name="add_game_plus_note_loading">PS-Plus-Infos werden noch geladen</string>
+    <string name="add_game_plus_note_unavailable">PS-Plus-Infos nicht verfügbar</string>
+    <string name="add_game_search_hint">Spiele suchen…</string>
+    <string name="add_game_refresh_content_description">Spieleliste aktualisieren</string>
+    <string name="add_game_empty">Alle bekannten streambaren Spiele befinden sich bereits in deiner Bibliothek.</string>
+    <string name="add_game_no_matches">Keine Spiele passen zu deiner Suche oder deinem Filter.</string>
+    <string name="add_game_login_required">Melde dich auf dem Tab „PS5-Bibliothek“ bei PlayStation an, um Spiele zu sehen, die du hinzufügen kannst.</string>
+    <string name="add_game_load_failed">Spiele konnten nicht geladen werden: %1$s</string>
+    <string name="preferences_video_pacing_title">Video-Pacing</string>
+    <string name="preferences_video_pacing_summary">Standard hält einen kleinen, festen Puffer für die niedrigste Latenz. Flüssig vergrößert den Puffer bei Netzwerk-Jitter und überspringt gebündelt eintreffende Frames – für gleichmäßigere Bewegung auf Kosten von etwas mehr Latenz bei instabilen Verbindungen. Gilt für Remote Play, Spielebibliothek und Spielekatalog.</string>
+    <string name="preferences_video_pacing_standard">Standard</string>
+    <string name="preferences_video_pacing_smooth">Flüssig</string>
+    <string name="trophy_refresh_content_description">Trophäen aktualisieren</string>
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s von %2$s Spiel angezeigt</item>
+        <item quantity="other">%1$s von %2$s Spielen angezeigt</item>
+    </plurals>
 </resources>

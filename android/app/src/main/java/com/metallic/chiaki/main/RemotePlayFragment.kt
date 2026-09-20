@@ -203,7 +203,7 @@ class RemotePlayFragment : Fragment()
 		val hasPsnTokens = Preferences(requireContext()).hasPsnRemotePlayTokens
 		Log.i(TAG, "onResume: hasPsnTokens=$hasPsnTokens")
 		if(hasPsnTokens)
-			viewModel.refreshPsnHosts()
+			viewModel.refreshPsnHostsIfStale()
 	}
 
 	override fun onPause()

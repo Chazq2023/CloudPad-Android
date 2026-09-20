@@ -41,7 +41,7 @@
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
-                android:maxLines="1"
+                android:singleLine="true"
                 android:ellipsize="end"
                 android:shadowColor="#000000"
                 android:shadowDx="0"

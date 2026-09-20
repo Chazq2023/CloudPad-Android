@@ -11,6 +11,7 @@ import coil.dispose
 import coil.load
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.common.ext.redirectDpadUpAtListBoundary
+import com.metallic.chiaki.common.ext.setTitleMarquee
 import com.pylux.stream.databinding.ItemAddGameBinding
 
 /** Plain cover-art tiles for the add-a-game-to-library page (no favourite/trophy/playtime icons). */
@@ -65,6 +66,18 @@ class AddGameAdapter(
 					crossfade(false)
 					error(android.R.drawable.ic_menu_gallery)
 				}
+
+			// Same title behaviour as the library tiles: still until focused/hovered, then it scrolls.
+			binding.gameNameTextView.setTitleMarquee(binding.root.isFocused)
+			binding.root.setOnHoverListener { v, event ->
+				when (event.actionMasked)
+				{
+					android.view.MotionEvent.ACTION_HOVER_ENTER -> binding.gameNameTextView.setTitleMarquee(true)
+					android.view.MotionEvent.ACTION_HOVER_EXIT -> binding.gameNameTextView.setTitleMarquee(v.isFocused)
+				}
+				false
+			}
+			binding.root.setOnFocusChangeListener { _, hasFocus -> binding.gameNameTextView.setTitleMarquee(hasFocus) }
 
 			binding.root.setOnClickListener { onGameClick(game) }
 		}

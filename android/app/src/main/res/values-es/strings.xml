@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">Actualizar lista de trofeos</string>
     <string name="quick_settings_trophies_refresh">Actualizar trofeos</string>
     <string name="quick_settings_trophies_empty">No se pudieron obtener datos de trofeos para %1$s; inicia el juego y permite que se sincronicen los datos de trofeos.\n\nEsto puede tardar entre 5 y 10 minutos durante una sesión. Después podrás actualizar la lista de trofeos y los datos deberían aparecer.\n\nSi los datos de trofeos siguen sin aparecer, informa del problema en el repositorio de GitHub de CloudPad para que se pueda revisar</string>
-    <string name="trophy_unlock_popup_header">¡Trofeo desbloqueado!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d trofeos conseguidos</string>
     <string name="trophy_sort_content_description">Ordenar trofeos</string>
     <string name="trophy_filter_content_description">Filtrar trofeos</string>
@@ -655,4 +654,36 @@
     <string name="controller_action_touchpad_swipe_down">Deslizar hacia abajo en el panel táctil</string>
     <string name="controller_action_touchpad_swipe_left">Deslizar hacia la izquierda en el panel táctil</string>
     <string name="controller_action_touchpad_swipe_right">Deslizar hacia la derecha en el panel táctil</string>
+
+    <!-- Add Game to PS5 Library page, Video Pacing setting -->
+    <string name="cloud_add_game_button_content_description">Añadir un juego a la biblioteca</string>
+    <string name="add_game_title">Añadir juego a la biblioteca PS5</string>
+    <string name="add_game_filter_content_description">Filtrar juegos</string>
+    <string name="add_game_filter_all">Todos</string>
+    <string name="add_game_filter_purchasable">De pago</string>
+    <string name="add_game_filter_ps_catalog">Catálogo PS</string>
+    <string name="add_game_filter_ps_plus">PS Plus</string>
+    <string name="add_game_filter_free_to_play">Gratuitos</string>
+    <string name="add_game_plus_loading">Cargando información de PS Plus…</string>
+    <string name="add_game_list_recent">La lista de juegos ya se actualizó en la última hora, así que se muestra la lista guardada.</string>
+    <string name="add_game_plus_recent">La información de PS Plus ya se actualizó en la última hora.</string>
+    <string name="add_game_plus_not_refreshed">No se pudo actualizar la información de PS Plus. Se muestra la última lista guardada.</string>
+    <string name="add_game_plus_failed">No se pudo cargar la información de PS Plus. Toca Actualizar para volver a intentarlo.</string>
+    <string name="add_game_plus_note_loading">Cargando info de PS Plus</string>
+    <string name="add_game_plus_note_unavailable">Info de PS Plus no disponible</string>
+    <string name="add_game_search_hint">Buscar juegos…</string>
+    <string name="add_game_refresh_content_description">Actualizar lista de juegos</string>
+    <string name="add_game_empty">Todos los juegos conocidos que se pueden transmitir ya están en tu biblioteca.</string>
+    <string name="add_game_no_matches">Ningún juego coincide con tu búsqueda o filtro.</string>
+    <string name="add_game_login_required">Inicia sesión en PlayStation desde la pestaña Biblioteca PS5 para ver los juegos que puedes añadir.</string>
+    <string name="add_game_load_failed">No se pudieron cargar los juegos: %1$s</string>
+    <string name="preferences_video_pacing_title">Ritmo de vídeo</string>
+    <string name="preferences_video_pacing_summary">Estándar mantiene un búfer pequeño y fijo para la latencia más baja. Fluido amplía el búfer según el jitter de la red y omite los fotogramas que llegan agrupados, para un movimiento más estable a costa de algo más de latencia en conexiones inestables. Se aplica a Remote Play, Biblioteca de juegos y Catálogo de juegos.</string>
+    <string name="preferences_video_pacing_standard">Estándar</string>
+    <string name="preferences_video_pacing_smooth">Fluido</string>
+    <string name="trophy_refresh_content_description">Actualizar trofeos</string>
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s de %2$s juego mostrado</item>
+        <item quantity="other">%1$s de %2$s juegos mostrados</item>
+    </plurals>
 </resources>

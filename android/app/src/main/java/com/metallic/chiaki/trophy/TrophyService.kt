@@ -220,12 +220,25 @@ object TrophyService
 	 * (id, hidden, type, earned, rarity) — the actual name/description/icon only comes back
 	 * from the un-scoped title-definition endpoint (no `users/{accountId}` prefix).
 	 */
+	/**
+	 * Trophy names/descriptions/icons never change while the app runs, so keep the definitions (the
+	 * large, static half of a game's trophy data) for an hour: reopening the Trophies screen or
+	 * hitting refresh then fetches only the per-account earned status. Failures and empty answers
+	 * are never cached.
+	 */
+	private val definitionsCache = com.metallic.chiaki.common.TtlCache<String, Map<Int, Trophy>>(60 * 60 * 1000L)
+
 	private suspend fun fetchTrophiesForGroup(
 		accessToken: String,
 		summary: TrophyTitleSummary,
 		groupId: String
 	): List<Trophy> = coroutineScope {
-		val definitionsDeferred = async(Dispatchers.IO) { fetchTrophyDefinitions(accessToken, summary, groupId) }
+		val cacheKey = "${summary.npCommunicationId}|${summary.npServiceName}|$groupId"
+		val definitionsDeferred = async(Dispatchers.IO) {
+			definitionsCache.getOrLoad(cacheKey, worthKeeping = { it.isNotEmpty() }) {
+				fetchTrophyDefinitions(accessToken, summary, groupId)
+			}
+		}
 		val earnedStatusDeferred = async(Dispatchers.IO) { fetchTrophyEarnedStatus(accessToken, summary, groupId) }
 		val definitions = definitionsDeferred.await()
 		val earnedStatus = earnedStatusDeferred.await()

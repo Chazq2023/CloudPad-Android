@@ -350,7 +350,7 @@ class CloudGameRepositoryTest {
 
     @Test
     fun `refresh fetches a new lookup even when the cache is fresh, and saves it`() = runTest {
-        writePlusCache("en-US", ageMs = 60_000, keys = setOf("PPSA1"))
+        writePlusCache("en-US", ageMs = 2L * 60 * 60 * 1000, keys = setOf("PPSA1")) // past the 1-hour cooldown
         val fetcher = FakeFetcher { setOf("PPSA9") }
 
         val forced = plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true)
@@ -359,6 +359,17 @@ class CloudGameRepositoryTest {
         assertEquals(PsPlusResult.Ready(setOf("PPSA9")), forced)
         assertEquals(1, fetcher.calls)
         assertEquals(PsPlusResult.Ready(setOf("PPSA9")), afterwards)
+    }
+
+    @Test
+    fun `refresh within an hour of the last lookup is ignored and says so`() = runTest {
+        writePlusCache("en-US", ageMs = 10 * 60 * 1000, keys = setOf("PPSA1"))
+        val fetcher = FakeFetcher { setOf("PPSA9") }
+
+        val result = plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true)
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA1"), isFresh = true, refreshSkipped = true), result)
+        assertEquals(0, fetcher.calls)
     }
 
     @Test
@@ -388,12 +399,87 @@ class CloudGameRepositoryTest {
     }
 
     @Test
+    fun `after a failed lookup the store API is not asked again for 30 minutes`() = runTest {
+        val fetcher = FakeFetcher { throw java.io.IOException("store api down") }
+        val repo = plusRepo(fetcher)
+
+        assertTrue(repo.loadPsPlusKeys() is PsPlusResult.Failed)
+        assertTrue(repo.loadPsPlusKeys() is PsPlusResult.Failed)                    // e.g. reopening the page
+        assertTrue(plusRepo(fetcher).loadPsPlusKeys(forceRefresh = true) is PsPlusResult.Failed) // e.g. tapping Refresh
+
+        assertEquals("only the first attempt reaches Sony", 1, fetcher.calls)
+    }
+
+    @Test
+    fun `once the failure cooldown has passed it tries again`() = runTest {
+        File(File(tempDir, "ps_plus_cache").apply { mkdirs() }, "last_failure.txt")
+            .writeText((System.currentTimeMillis() - 31L * 60 * 1000).toString())
+        val fetcher = FakeFetcher { setOf("PPSA5") }
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA5")), plusRepo(fetcher).loadPsPlusKeys())
+        assertEquals(1, fetcher.calls)
+    }
+
+    @Test
+    fun `a success clears the failure so later refreshes are not held back`() = runTest {
+        val failFile = File(File(tempDir, "ps_plus_cache").apply { mkdirs() }, "last_failure.txt")
+        failFile.writeText((System.currentTimeMillis() - 31L * 60 * 1000).toString())
+
+        plusRepo(FakeFetcher { setOf("PPSA6") }).loadPsPlusKeys()
+
+        assertTrue(!failFile.exists())
+    }
+
+    @Test
+    fun `during the failure cooldown a saved lookup is used and marked not fresh`() = runTest {
+        writePlusCache("en-US", ageMs = weekAndMore, keys = setOf("PPSA7"))
+        val fetcher = FakeFetcher { throw java.io.IOException("down") }
+        val repo = plusRepo(fetcher)
+
+        assertEquals(PsPlusResult.Ready(setOf("PPSA7"), isFresh = false), repo.loadPsPlusKeys())
+        assertEquals(PsPlusResult.Ready(setOf("PPSA7"), isFresh = false), repo.loadPsPlusKeys())
+        assertEquals(1, fetcher.calls)
+    }
+
+    @Test
     fun `a lookup saved for another store locale is not reused`() = runTest {
         writePlusCache("de-DE", ageMs = 60_000, keys = setOf("PPSA3"))
         val fetcher = FakeFetcher { setOf("PPSA4") }
 
         assertEquals(PsPlusResult.Ready(setOf("PPSA4")), plusRepo(fetcher).loadPsPlusKeys())
         assertEquals(listOf("en-US"), fetcher.locales)
+    }
+
+    // --- Add Game Refresh limit (game list) ---
+
+    @Test
+    fun `the game list counts as refreshed recently for an hour after it was fetched`() {
+        val now = 10_000_000_000L
+        val hour = CloudGameRepository.CATALOG_REFRESH_COOLDOWN_MS
+
+        assertTrue(CloudGameRepository.isCatalogRefreshCooldownActive(now - 1_000, now))
+        assertTrue(CloudGameRepository.isCatalogRefreshCooldownActive(now - hour + 1, now))
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(now - hour, now))
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(now - 5 * hour, now))
+    }
+
+    @Test
+    fun `no saved game list, or a clock set before it, is never a cooldown`() {
+        val now = 10_000_000_000L
+
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(0L, now))          // file missing
+        assertTrue(!CloudGameRepository.isCatalogRefreshCooldownActive(now + 5_000, now)) // clock went back
+    }
+
+    @Test
+    fun `the repository reads the saved catalog's age from disk`() {
+        assertTrue("nothing saved yet", !repository.catalogRefreshedRecently())
+
+        val file = writeCacheFile("pscloud_catalog.json", PSNOW_CACHE_GAME_JSON)
+        assertTrue("just written", repository.catalogRefreshedRecently())
+
+        file.setLastModified(System.currentTimeMillis() - 2L * 60 * 60 * 1000)
+        assertTrue("two hours old", !repository.catalogRefreshedRecently())
     }
 
     // --- Helpers ---

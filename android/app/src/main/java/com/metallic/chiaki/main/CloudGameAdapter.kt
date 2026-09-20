@@ -12,6 +12,7 @@ import com.pylux.stream.R
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.common.ext.enableFocusableInTouchModeForTv
+import com.metallic.chiaki.common.ext.setTitleMarquee
 import com.pylux.stream.databinding.ItemCloudGameBinding
 
 /** Shared by every Modern-Grid-Deck-style card's focus highlight (grid tiles, Remote Play host
@@ -249,7 +250,18 @@ class CloudGameAdapter(
                 }
             }
 
+            // Long titles scroll while the tile is focused (D-pad/controller) or hovered (mouse),
+            // and sit still with a trailing "…" otherwise. A recycled holder starts from its real state.
+            binding.gameNameTextView.setTitleMarquee(binding.root.isFocused)
+            binding.root.setOnHoverListener { v, event ->
+                when (event.actionMasked) {
+                    android.view.MotionEvent.ACTION_HOVER_ENTER -> binding.gameNameTextView.setTitleMarquee(true)
+                    android.view.MotionEvent.ACTION_HOVER_EXIT -> binding.gameNameTextView.setTitleMarquee(v.isFocused)
+                }
+                false
+            }
             binding.root.onFocusChangeListener = android.view.View.OnFocusChangeListener { v, hasFocus ->
+                binding.gameNameTextView.setTitleMarquee(hasFocus)
                 val card = v as com.google.android.material.card.MaterialCardView
                 if (hasFocus) {
                     card.strokeColor = resolveThemeColor(v.context, R.attr.pyluxAccent)

@@ -53,6 +53,8 @@
     <string name="add_game_filter_ps_plus">PS Plus</string>
     <string name="add_game_filter_free_to_play">Gratis</string>
     <string name="add_game_plus_loading">Memuat informasi PS Plus…</string>
+    <string name="add_game_list_recent">Daftar game sudah disegarkan dalam satu jam terakhir, jadi ini adalah daftar tersimpan.</string>
+    <string name="add_game_plus_recent">Informasi PS Plus sudah disegarkan dalam satu jam terakhir.</string>
     <string name="add_game_plus_not_refreshed">Tidak dapat menyegarkan informasi PS Plus. Menampilkan daftar tersimpan terakhir.</string>
     <string name="add_game_plus_failed">Tidak dapat memuat informasi PS Plus. Ketuk Segarkan untuk mencoba lagi.</string>
     <string name="add_game_plus_note_loading">info PS Plus masih dimuat</string>
@@ -320,7 +322,6 @@
     <string name="quick_settings_trophies_header_label">Segarkan Daftar Trofi</string>
     <string name="quick_settings_trophies_refresh">Segarkan trofi</string>
     <string name="quick_settings_trophies_empty">Data trofi untuk %1$s tidak dapat diambil. Jalankan game dan biarkan data trofi disinkronkan.\n\nIni dapat memakan waktu sekitar 5-10 menit selama sesi. Setelah itu Anda dapat menyegarkan daftar trofi dan data trofi akan muncul.\n\nJika data trofi masih belum ada, silakan buat isu di repositori GitHub CloudPad agar dapat diperiksa</string>
-    <string name="trophy_unlock_popup_header">Trofi terbuka!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d Trofi Diraih</string>
     <string name="trophy_refresh_content_description">Segarkan trofi</string>
     <string name="trophy_sort_content_description">Urutkan trofi</string>

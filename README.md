@@ -223,11 +223,6 @@ Compare your trophy progress against a friend, game by game, from the main menu.
 
 <img src="readme%20assets/Trophy%20Comparison/Trophy%20Comparison.png" width="600">
 
-### Trophy Unlocked Notification
-An in-stream toast pops up the moment you unlock a trophy, without interrupting gameplay.
-
-<img src="readme%20assets/Trophy%20Unlocked%20Notification/Trophy%20Unlocked%20Notification.jpg" width="600">
-
 ### Friends List & Messaging
 Browse your PSN friends list and message them directly from the main menu.
 
