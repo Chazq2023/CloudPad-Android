@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">Päivitä pokaaliluettelo</string>
     <string name="quick_settings_trophies_refresh">Päivitä pokaalit</string>
     <string name="quick_settings_trophies_empty">Pelin %1$s pokaalitietoja ei löytynyt. Käynnistä peli ja anna pokaalitietojen synkronoitua.\n\nTämä voi kestää noin 5–10 minuuttia istunnon aikana. Voit sitten päivittää pokaaliluettelon, jolloin tietojen pitäisi näkyä.\n\nJos pokaalitiedot puuttuvat edelleen, ilmoita asiasta CloudPadin GitHub-repositoriossa tutkittavaksi</string>
-    <string name="trophy_unlock_popup_header">Pokaali avattu!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d pokaalia saavutettu</string>
     <string name="trophy_sort_content_description">Lajittele pokaalit</string>
     <string name="trophy_filter_content_description">Suodata pokaalit</string>

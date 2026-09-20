@@ -221,10 +221,10 @@ object TrophyService
 	 * from the un-scoped title-definition endpoint (no `users/{accountId}` prefix).
 	 */
 	/**
-	 * Trophy names/descriptions/icons never change while the app runs, but the unlock watcher
-	 * refetches a game's trophies every 30 seconds for a whole session — so keep the definitions
-	 * (the large, static half of the data) for an hour and let each poll fetch only the per-account
-	 * earned status. Failures and empty answers are never cached.
+	 * Trophy names/descriptions/icons never change while the app runs, so keep the definitions (the
+	 * large, static half of a game's trophy data) for an hour: reopening the Trophies screen or
+	 * hitting refresh then fetches only the per-account earned status. Failures and empty answers
+	 * are never cached.
 	 */
 	private val definitionsCache = com.metallic.chiaki.common.TtlCache<String, Map<Int, Trophy>>(60 * 60 * 1000L)
 

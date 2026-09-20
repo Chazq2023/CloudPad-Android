@@ -41,8 +41,6 @@ import com.metallic.chiaki.session.StreamStateIdle
 import com.metallic.chiaki.session.StreamStateLoginPinRequest
 import com.metallic.chiaki.session.StreamStateQuit
 import com.metallic.chiaki.session.StreamState
-import com.metallic.chiaki.trophy.TrophyRepository
-import com.metallic.chiaki.trophy.TrophyUnlockWatcher
 import com.metallic.chiaki.touchcontrols.DefaultTouchControlsFragment
 import com.metallic.chiaki.touchcontrols.TouchControlsFragment
 import com.metallic.chiaki.touchcontrols.TouchpadOnlyFragment
@@ -76,11 +74,9 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 	private lateinit var binding: ActivityStreamBinding
 	private lateinit var quickSettingsPanel: QuickSettingsPanel
 	private var defaultTouchControlsFragment: DefaultTouchControlsFragment? = null
-	private lateinit var trophyUnlockPopupPresenter: TrophyUnlockPopupPresenter
 
 	/** Only created for cloud sessions (Catalog/Library), which are the only ones with a known
 	 *  game name/platform to match trophies against — null for Remote Play. */
-	private var trophyUnlockWatcher: TrophyUnlockWatcher? = null
 
 	/** Result callback for the most recent [micPermissionLauncher] request, invoked with the
 	 *  grant result then cleared. Must be registered before STARTED, hence a class field. */
@@ -179,26 +175,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		setContentView(binding.root)
 		window.decorView.setOnSystemUiVisibilityChangeListener(this)
 
-		trophyUnlockPopupPresenter = TrophyUnlockPopupPresenter(
-			container = binding.trophyUnlockPopup,
-			iconView = binding.trophyUnlockPopupIcon,
-			textView = binding.trophyUnlockPopupText,
-			detailView = binding.trophyUnlockPopupDetail,
-			badgeView = binding.trophyUnlockPopupBadge
-		)
-
-		val cloudGameName = connectInfo.cloudGameName
-		val cloudGamePlatform = connectInfo.cloudGamePlatform
-		if (!cloudGameName.isNullOrBlank() && !cloudGamePlatform.isNullOrBlank())
-		{
-			trophyUnlockWatcher = TrophyUnlockWatcher(
-				trophyRepository = TrophyRepository(viewModel.preferences),
-				gameName = cloudGameName,
-				platform = cloudGamePlatform,
-				onTrophiesUnlocked = { trophies -> trophyUnlockPopupPresenter.enqueue(trophies) }
-			)
-		}
-
 		// Quick Settings panel — replaces the old bottom overlay bar entirely. Disconnect,
 		// Performance Overlay, On-Screen Controls, Touchpad Only and Window Size all live
 		// here now; pressing back opens/closes it. There's no Save button — every control
@@ -217,18 +193,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			requestMicPermission = { onResult ->
 				pendingMicPermissionCallback = onResult
 				micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-			},
-			onTrophyPopupsChanged = { enabled ->
-				if(enabled)
-				{
-					if(viewModel.session.state.value == StreamStateConnected)
-						trophyUnlockWatcher?.start(lifecycleScope, resetBaseline = true)
-				}
-				else
-				{
-					trophyUnlockWatcher?.stop()
-					trophyUnlockPopupPresenter.cancel()
-				}
 			},
 			onCasSharpeningChanged = { enabled, level -> binding.surfaceView.setSharpening(enabled, level) },
 			onFsrChanged = { enabled, upscale, sharpening -> binding.surfaceView.setFsr(enabled, upscale, sharpening) },
@@ -728,9 +692,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 	private fun flushStreamTimeSegment()
 	{
-		trophyUnlockWatcher?.stop()
-		trophyUnlockPopupPresenter.cancel()
-
 		if (connectedAtElapsedRealtime == 0L) return
 		val delta = SystemClock.elapsedRealtime() - connectedAtElapsedRealtime
 		if (delta > 0L)
@@ -789,8 +750,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 					connectedAtElapsedRealtime = SystemClock.elapsedRealtime()
 					connectedAtWallClockMs = System.currentTimeMillis()
 				}
-				if(viewModel.preferences.trophyPopupsEnabled)
-					trophyUnlockWatcher?.start(lifecycleScope)
 
 				// Re-applied on every connect, not just the first — a Quick Settings "Apply"
 				// restart (see QuickSettingsPanel) can hand StreamSession a new videoProfile, and

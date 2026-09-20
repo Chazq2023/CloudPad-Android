@@ -60,7 +60,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.motionEnabledKey -> preferences.motionEnabled
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
 		preferences.pipEnabledKey -> preferences.pipEnabled
-		preferences.trophyPopupsEnabledKey -> preferences.trophyPopupsEnabled
 		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
 		preferences.fsrEnabledKey -> preferences.fsrEnabled
 		preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled
@@ -76,7 +75,6 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.motionEnabledKey -> preferences.motionEnabled = value
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
 			preferences.pipEnabledKey -> preferences.pipEnabled = value
-			preferences.trophyPopupsEnabledKey -> preferences.trophyPopupsEnabled = value
 			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
 			preferences.fsrEnabledKey -> preferences.fsrEnabled = value
 			preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled = value

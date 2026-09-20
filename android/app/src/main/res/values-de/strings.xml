@@ -243,7 +243,6 @@
     <string name="quick_settings_trophies_header_label">Trophäenliste aktualisieren</string>
     <string name="quick_settings_trophies_refresh">Trophäen aktualisieren</string>
     <string name="quick_settings_trophies_empty">Für %1$s konnten keine Trophäendaten abgerufen werden. Bitte starte das Spiel und lasse die Trophäendaten synchronisieren.\n\nDies kann während einer Sitzung etwa 5–10 Minuten dauern. Danach kannst du die Trophäenliste aktualisieren, und die Trophäendaten sollten erscheinen.\n\nFalls die Trophäendaten weiterhin fehlen, melde bitte ein Issue im CloudPad-GitHub-Repository, damit es untersucht werden kann</string>
-    <string name="trophy_unlock_popup_header">Trophäe freigeschaltet!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d Trophäen erhalten</string>
     <string name="trophy_sort_content_description">Trophäen sortieren</string>
     <string name="trophy_filter_content_description">Trophäen filtern</string>

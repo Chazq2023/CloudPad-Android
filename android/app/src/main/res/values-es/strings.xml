@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">Actualizar lista de trofeos</string>
     <string name="quick_settings_trophies_refresh">Actualizar trofeos</string>
     <string name="quick_settings_trophies_empty">No se pudieron obtener datos de trofeos para %1$s; inicia el juego y permite que se sincronicen los datos de trofeos.\n\nEsto puede tardar entre 5 y 10 minutos durante una sesión. Después podrás actualizar la lista de trofeos y los datos deberían aparecer.\n\nSi los datos de trofeos siguen sin aparecer, informa del problema en el repositorio de GitHub de CloudPad para que se pueda revisar</string>
-    <string name="trophy_unlock_popup_header">¡Trofeo desbloqueado!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d trofeos conseguidos</string>
     <string name="trophy_sort_content_description">Ordenar trofeos</string>
     <string name="trophy_filter_content_description">Filtrar trofeos</string>

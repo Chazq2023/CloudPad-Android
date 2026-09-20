@@ -137,7 +137,6 @@ class QuickSettingsPanel(
 	private val getDisplayMode: () -> TransformMode,
 	private val onDisplayModeChanged: (TransformMode) -> Unit,
 	private val requestMicPermission: (onResult: (Boolean) -> Unit) -> Unit,
-	private val onTrophyPopupsChanged: (enabled: Boolean) -> Unit,
 	private val onCasSharpeningChanged: (enabled: Boolean, level: Int) -> Unit,
 	private val onFsrChanged: (enabled: Boolean, upscale: Boolean, sharpening: Int) -> Unit,
 	private val onTouchControlsCustomizationChanged: () -> Unit,
@@ -520,10 +519,6 @@ class QuickSettingsPanel(
 		panel.quickSettingsMotionRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_motion_enabled_title)
 		panel.quickSettingsHapticsRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_button_haptic_enabled_title)
 		panel.quickSettingsPipRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_pip_enabled_title)
-		panel.quickSettingsTrophyPopupsRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_trophy_popups_enabled_title)
-		// Popups only exist for cloud games (Remote Play has no trophy source to watch).
-		panel.quickSettingsTrophyPopupsRow.root.visibility =
-			if(viewModel.session.connectInfo.cloudGameName.isNullOrBlank()) View.GONE else View.VISIBLE
 
 		// Every switch applies immediately — there's no Save button. On-Screen Controls /
 		// Touchpad Only additionally stay mutually exclusive with each other.
@@ -604,11 +599,6 @@ class QuickSettingsPanel(
 		}
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			preferences.pipEnabled = isChecked
-		}
-		panel.quickSettingsTrophyPopupsRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
-			if(preferences.trophyPopupsEnabled == isChecked) return@setOnCheckedChangeListener
-			preferences.trophyPopupsEnabled = isChecked
-			onTrophyPopupsChanged(isChecked) // starts or stops the trophy check right away
 		}
 
 		panel.quickSettingsProcessingRow.quickSettingsDropdownLabel.text = activity.getString(R.string.preferences_image_processing_title)
@@ -798,7 +788,7 @@ class QuickSettingsPanel(
 			panel.quickSettingsOscRow.quickSettingsRowSwitch,
 			panel.quickSettingsTouchpadRow.quickSettingsRowSwitch, panel.quickSettingsMicrophoneRow.quickSettingsRowSwitch,
 			panel.quickSettingsMotionRow.quickSettingsRowSwitch, panel.quickSettingsHapticsRow.quickSettingsRowSwitch,
-			panel.quickSettingsPipRow.quickSettingsRowSwitch, panel.quickSettingsTrophyPopupsRow.quickSettingsRowSwitch,
+			panel.quickSettingsPipRow.quickSettingsRowSwitch,
 			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
 			panel.quickSettingsTrophiesSortButton, panel.quickSettingsTrophiesFilterButton,
 			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
@@ -1607,7 +1597,6 @@ class QuickSettingsPanel(
 		panel.quickSettingsMotionRow.quickSettingsRowSwitch.isChecked = preferences.motionEnabled
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
-		panel.quickSettingsTrophyPopupsRow.quickSettingsRowSwitch.isChecked = preferences.trophyPopupsEnabled
 		panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner.setSelection(preferences.videoPacing.ordinal)
 
 		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.imageProcessing == "cas") View.VISIBLE else View.GONE

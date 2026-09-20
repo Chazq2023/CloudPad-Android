@@ -322,7 +322,6 @@
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsMotionRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
-            <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsTrophyPopupsRow" />
             <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsVideoPacingRow" />
 
             <com.google.android.material.divider.MaterialDivider

@@ -28,8 +28,8 @@ jobs:
         - Fixed the focus highlight on the back, filter, refresh and other toolbar buttons (Add Game, Trophies, Friends, Settings and more) staying pink when a different theme colour is selected.
         - Tapping a game on the Add Game page now checks its PlayStation Store page first. If the store offers no way to buy or add it (for example Tennis World Tour 2), you get a message and it is removed from the list. Answers are remembered so each game is only checked occasionally.
         - Tapping refresh on the Add Game page now refreshes PS Plus information at most once an hour, to avoid repeated large downloads.
-        - Trophy unlock popups are now a setting, off by default, in Settings and in the in-stream settings menu (Game Library and Game Catalog streams). When on, new trophies are checked about once a minute instead of every 30 seconds, and the check slows down if the lookup keeps failing.
-        - Fewer requests to PlayStation servers: trophy unlock checks no longer re-download unchanging trophy details every 30 seconds, the friends list reuses saved profiles instead of fetching every friend each time, and returning to the Remote Play tab refreshes the console list at most once a minute.
+        - Removed the in-stream trophy unlock popups. This also stops the app asking PlayStation for your trophies every 30 seconds during Game Library and Game Catalog streams. Trophies can still be viewed in the Trophies screens.
+        - Fewer requests to PlayStation servers: the friends list reuses saved profiles instead of fetching every friend each time, trophy details are kept for an hour, and returning to the Remote Play tab refreshes the console list at most once a minute.
 
     steps:
       - name: Checkout repo

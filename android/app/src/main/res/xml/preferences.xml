@@ -93,13 +93,6 @@
             app:icon="@drawable/ic_button_haptic" />
 
         <SwitchPreference
-            app:key="@string/preferences_trophy_popups_enabled_key"
-            app:title="@string/preferences_trophy_popups_enabled_title"
-            app:summary="@string/preferences_trophy_popups_enabled_summary"
-            app:defaultValue="false"
-            app:icon="@drawable/ic_trophy_outline"/>
-
-        <SwitchPreference
             app:key="@string/preferences_pip_enabled_key"
             app:title="@string/preferences_pip_enabled_title"
             app:summary="@string/preferences_pip_enabled_summary"

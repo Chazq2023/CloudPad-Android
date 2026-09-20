@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">트로피 목록 새로고침</string>
     <string name="quick_settings_trophies_refresh">트로피 새로고침</string>
     <string name="quick_settings_trophies_empty">%1$s의 트로피 데이터를 가져올 수 없습니다. 게임을 실행하여 트로피 데이터가 동기화되도록 하세요.\n\n세션 중 5~10분 정도 걸릴 수 있습니다. 그런 다음 트로피 목록을 새로고침하면 트로피 데이터가 표시됩니다.\n\n트로피 데이터가 계속 표시되지 않으면 CloudPad GitHub 저장소에 이슈를 등록해 주세요</string>
-    <string name="trophy_unlock_popup_header">트로피 획득!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d 트로피 획득</string>
     <string name="trophy_sort_content_description">트로피 정렬</string>
     <string name="trophy_filter_content_description">트로피 필터</string>

@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">トロフィーリストを更新</string>
     <string name="quick_settings_trophies_refresh">トロフィーを更新</string>
     <string name="quick_settings_trophies_empty">%1$s のトロフィーデータを取得できませんでした。ゲームを起動してトロフィーデータの同期を許可してください。\n\nセッション中に5〜10分ほどかかる場合があります。その後、トロフィーリストを更新するとトロフィーデータが表示されるはずです。\n\nそれでもトロフィーデータが表示されない場合は、CloudPadのGitHubリポジトリで問題を報告してください</string>
-    <string name="trophy_unlock_popup_header">トロフィーを獲得しました!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d トロフィー達成</string>
     <string name="trophy_sort_content_description">トロフィーを並べ替え</string>
     <string name="trophy_filter_content_description">トロフィーをフィルター</string>

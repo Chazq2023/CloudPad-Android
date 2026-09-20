@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">Trofeeënlijst vernieuwen</string>
     <string name="quick_settings_trophies_refresh">Trofeeën vernieuwen</string>
     <string name="quick_settings_trophies_empty">Er konden geen trofeegegevens worden opgehaald voor %1$s. Start het spel en laat de trofeegegevens synchroniseren.\n\nDit kan ongeveer 5-10 minuten duren tijdens een sessie. Daarna kun je de trofeeënlijst vernieuwen en zouden de trofeegegevens moeten verschijnen.\n\nAls de trofeegegevens nog steeds ontbreken, meld dit dan als issue op de CloudPad GitHub-repository</string>
-    <string name="trophy_unlock_popup_header">Trofee ontgrendeld!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d trofeeën behaald</string>
     <string name="trophy_sort_content_description">Trofeeën sorteren</string>
     <string name="trophy_filter_content_description">Trofeeën filteren</string>

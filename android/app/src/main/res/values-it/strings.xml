@@ -244,7 +244,6 @@
     <string name="quick_settings_trophies_header_label">Aggiorna elenco trofei</string>
     <string name="quick_settings_trophies_refresh">Aggiorna trofei</string>
     <string name="quick_settings_trophies_empty">Impossibile recuperare i dati dei trofei per %1$s: avvia il gioco e lascia che i dati dei trofei si sincronizzino.\n\nPuò richiedere circa 5-10 minuti durante una sessione. Poi potrai aggiornare l\'elenco dei trofei e i dati dovrebbero comparire.\n\nSe i dati dei trofei continuano a mancare, apri una segnalazione sul repository GitHub di CloudPad affinché venga esaminata</string>
-    <string name="trophy_unlock_popup_header">Trofeo sbloccato!</string>
     <string name="trophy_achieved_count_format">%1$d/%2$d trofei ottenuti</string>
     <string name="trophy_sort_content_description">Ordina trofei</string>
     <string name="trophy_filter_content_description">Filtra trofei</string>
