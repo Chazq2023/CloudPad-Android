@@ -68,6 +68,23 @@ class IndonesianTranslationTest {
         assertTrue(settings.contains("\"id-ID\" to \"Indonesia"))
     }
 
+    private fun pluralItems(file: File, name: String): List<String> {
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+        val plurals = doc.getElementsByTagName("plurals")
+        val node = (0 until plurals.length).map { plurals.item(it) as Element }.first { it.getAttribute("name") == name }
+        val items = node.getElementsByTagName("item")
+        return (0 until items.length).map { items.item(it).textContent }
+    }
+
+    @Test
+    fun `the games-displayed plural keeps both counts in every form`() {
+        val forms = pluralItems(File(resDir, "values/strings.xml"), "add_game_count") +
+            pluralItems(File(resDir, "values-in/strings.xml"), "add_game_count")
+
+        assertEquals(3, forms.size)
+        forms.forEach { assertEquals(listOf("%1\$s", "%2\$s"), specifiers(it)) }
+    }
+
     @Test
     fun `key UI strings are translated`() {
         assertEquals("Pengaturan", indonesian["title_settings"])

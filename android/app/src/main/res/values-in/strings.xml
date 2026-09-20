@@ -624,6 +624,9 @@
     </string-array>
 
     <!-- Indonesian has no plural forms, so only "other" is needed. -->
+    <plurals name="add_game_count">
+        <item quantity="other">%1$s dari %2$s game ditampilkan</item>
+    </plurals>
     <plurals name="cloud_game_count">
         <item quantity="other">%1$d game</item>
     </plurals>

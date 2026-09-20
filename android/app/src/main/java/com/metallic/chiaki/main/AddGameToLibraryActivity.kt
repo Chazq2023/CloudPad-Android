@@ -30,6 +30,7 @@ import com.pylux.stream.R
 import com.pylux.stream.databinding.ActivityAddGameBinding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.text.NumberFormat
 
 /**
  * Lists every known streamable PS5 game that isn't in the user's library yet. Tapping one opens
@@ -233,6 +234,7 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			.matchingFilter(filter)
 			.matchingQuery(binding.searchView.query?.toString() ?: "")
 		adapter.submitList(visible)
+		updateGameCount(shown = visible.size, total = allGames.size)
 		if (visible.isEmpty())
 		{
 			binding.emptyStateText.text = getString(
@@ -244,8 +246,25 @@ class AddGameToLibraryActivity : AppCompatActivity()
 			binding.emptyStateText.visibility = View.GONE
 	}
 
+	/** "x out of y games displayed": x is what the current filter (and search) leaves, y is always
+	 *  the full not-in-library list. Hidden while there's no list (not loaded yet, or an error). */
+	private fun updateGameCount(shown: Int, total: Int)
+	{
+		if(total == 0)
+		{
+			binding.gameCountText.visibility = View.GONE
+			return
+		}
+		val format = NumberFormat.getIntegerInstance()
+		binding.gameCountText.text = resources.getQuantityString(
+			R.plurals.add_game_count, total, format.format(shown), format.format(total)
+		)
+		binding.gameCountText.visibility = View.VISIBLE
+	}
+
 	private fun showMessage(message: String)
 	{
+		binding.gameCountText.visibility = View.GONE
 		adapter.submitList(emptyList())
 		binding.emptyStateText.text = message
 		binding.emptyStateText.visibility = View.VISIBLE

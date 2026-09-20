@@ -51,6 +51,11 @@
     <string name="add_game_filter_all">All</string>
     <string name="add_game_filter_purchasable">Purchasable</string>
     <string name="add_game_filter_ps_catalog">PS Catalog</string>
+    <!-- Quantity follows the total, so it reads "1 out of 1 game displayed" but "5 out of 3,666 games displayed". -->
+    <plurals name="add_game_count">
+        <item quantity="one">%1$s out of %2$s game displayed</item>
+        <item quantity="other">%1$s out of %2$s games displayed</item>
+    </plurals>
     <string name="add_game_search_hint">Search games…</string>
     <string name="add_game_refresh_content_description">Refresh game list</string>
     <string name="add_game_empty">Every known streamable game is already in your library.</string>
