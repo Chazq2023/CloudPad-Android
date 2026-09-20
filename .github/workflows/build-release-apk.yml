@@ -26,8 +26,6 @@ jobs:
         - Added Indonesian (Bahasa Indonesia) as an app language.
         - Fixed the selected tab (PS3 Catalog, PS4 Catalog or PS5 Library) losing its highlight after changing the app language, which also hid the PS5 Library filter, + button and streamability icons until the tab was tapped again.
         - Fixed the focus highlight on the back, filter, refresh and other toolbar buttons (Add Game, Trophies, Friends, Settings and more) staying pink when a different theme colour is selected.
-        - Tapping a game on the Add Game page now checks its PlayStation Store page first. If the store offers no way to buy or add it (for example Tennis World Tour 2), you get a message and it is removed from the list. Answers are remembered so each game is only checked occasionally.
-        - Games hidden because the store can no longer sell them now appear under a new Unavailable filter on the Add Game page. Tap one there to check it again: if it is available again it rejoins the list and opens the store, otherwise it stays hidden.
         - Tapping refresh on the Add Game page now reloads the game list from PlayStation and refreshes PS Plus information at most once an hour each, to avoid repeated large downloads. Taps inside that hour show the saved list and say so.
         - Long game titles on the game tiles (library, catalogs and Add Game) now scroll across when the tile is highlighted with the controller or D-pad, or hovered with a mouse, and stay still with a trailing … otherwise.
         - Removed the in-stream trophy unlock popups. This also stops the app asking PlayStation for your trophies every 30 seconds during Game Library and Game Catalog streams. Trophies can still be viewed in the Trophies screens.

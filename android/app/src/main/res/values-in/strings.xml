@@ -52,19 +52,9 @@
     <string name="add_game_filter_ps_catalog">Katalog PS</string>
     <string name="add_game_filter_ps_plus">PS Plus</string>
     <string name="add_game_filter_free_to_play">Gratis</string>
-    <string name="add_game_filter_unavailable">Tidak tersedia</string>
-    <plurals name="add_game_unavailable_count">
-        <item quantity="other">%1$s game tidak tersedia · ketuk salah satu untuk memeriksanya lagi</item>
-    </plurals>
-    <string name="add_game_no_unavailable">Tidak ada game yang tidak tersedia.</string>
-    <string name="add_game_available_again">%1$s tersedia lagi.</string>
-    <string name="add_game_recheck_failed">Tidak dapat memeriksa toko saat ini. Coba lagi sebentar lagi.</string>
-    <string name="add_game_recheck_limit">Anda baru saja memeriksa banyak game. Coba lagi beberapa saat lagi.</string>
     <string name="add_game_plus_loading">Memuat informasi PS Plus…</string>
     <string name="add_game_list_recent">Daftar game sudah disegarkan dalam satu jam terakhir, jadi ini adalah daftar tersimpan.</string>
     <string name="add_game_plus_recent">Informasi PS Plus sudah disegarkan dalam satu jam terakhir.</string>
-    <string name="add_game_unavailable_title">Tidak tersedia</string>
-    <string name="add_game_unavailable_message">%1$s saat ini tidak dapat dibeli atau ditambahkan ke pustaka Anda di PlayStation Store, jadi telah dihapus dari daftar ini.</string>
     <string name="add_game_plus_not_refreshed">Tidak dapat menyegarkan informasi PS Plus. Menampilkan daftar tersimpan terakhir.</string>
     <string name="add_game_plus_failed">Tidak dapat memuat informasi PS Plus. Ketuk Segarkan untuk mencoba lagi.</string>
     <string name="add_game_plus_note_loading">info PS Plus masih dimuat</string>
