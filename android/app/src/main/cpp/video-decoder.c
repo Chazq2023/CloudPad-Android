@@ -13,6 +13,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/resource.h>
+#include <dlfcn.h>
 
 #include <time.h>
 #include <inttypes.h>
@@ -27,6 +28,246 @@ static int64_t now_us()
 
 static void *android_chiaki_video_decoder_output_thread_func(void *user);
 static void *android_chiaki_video_decoder_input_thread_func(void *user);
+
+// ---- Stall tracing -------------------------------------------------------------------------
+// Every frame is timestamped at each hand-off on its way to the screen (see
+// AndroidChiakiVideoFrameTrace and ChiakiVideoFrameTiming). When playback stalls, the output
+// thread compares the stalled frame against the previous one stage by stage and logs which stage
+// the delay first appeared in (FRAME_STALL), so a stutter can be pinned on the network/server,
+// a specific thread in this app, the hardware decoder, or the display. Only logs on stalls plus a
+// 5-second summary (PIPELINE_5S), so it costs a few clock reads per frame.
+
+static void trace_record_input(AndroidChiakiVideoDecoder *decoder, const AndroidChiakiVideoDecoderFrame *frame, int64_t in_pop_us, int64_t pts_us)
+{
+	chiaki_mutex_lock(&decoder->trace_mutex);
+	AndroidChiakiVideoFrameTrace *t = &decoder->trace[decoder->trace_next];
+	decoder->trace_next = (decoder->trace_next + 1) % ANDROID_CHIAKI_VIDEO_TRACE_SIZE;
+	memset(t, 0, sizeof(*t));
+	t->used = true;
+	t->pts_us = pts_us;
+	t->net = frame->timing;
+	t->enqueue_us = frame->enqueue_us;
+	t->in_pop_us = in_pop_us;
+	t->queued_us = pts_us; // pts is taken right as the frame is queued to MediaCodec
+	chiaki_mutex_unlock(&decoder->trace_mutex);
+}
+
+static AndroidChiakiVideoFrameTrace *trace_find_locked(AndroidChiakiVideoDecoder *decoder, int64_t pts_us)
+{
+	for(size_t i=0; i<ANDROID_CHIAKI_VIDEO_TRACE_SIZE; i++)
+		if(decoder->trace[i].used && decoder->trace[i].pts_us == pts_us)
+			return &decoder->trace[i];
+	return NULL;
+}
+
+typedef void (*CloudpadOnFrameRendered)(AMediaCodec *codec, void *userdata, int64_t media_time_us, int64_t system_nano);
+typedef media_status_t (*CloudpadSetOnFrameRendered)(AMediaCodec *codec, CloudpadOnFrameRendered callback, void *userdata);
+
+// MediaCodec's frame-rendered callback (Android 13+): when each frame actually reached the screen.
+static void trace_on_frame_rendered(AMediaCodec *codec, void *userdata, int64_t media_time_us, int64_t system_nano)
+{
+	(void)codec;
+	AndroidChiakiVideoDecoder *decoder = userdata;
+	const int64_t period_ns = 1000000000LL / decoder->target_fps;
+	bool log_gap = false;
+	int64_t gap_ns = 0, late_ns = 0, out_to_screen_ns = 0;
+	int32_t frame_index = -1;
+
+	chiaki_mutex_lock(&decoder->trace_mutex);
+	if(decoder->rendered_last_ns > 0)
+	{
+		gap_ns = system_nano - decoder->rendered_last_ns;
+		if(gap_ns > decoder->rendered_max_gap_ns)
+			decoder->rendered_max_gap_ns = gap_ns;
+		if(gap_ns > 2 * period_ns + 8000000LL)
+		{
+			if(system_nano - decoder->display_gap_log_window_ns > 5000000000LL)
+			{
+				decoder->display_gap_log_window_ns = system_nano;
+				decoder->display_gap_logs = 0;
+			}
+			if(decoder->display_gap_logs < 10)
+			{
+				decoder->display_gap_logs++;
+				log_gap = true;
+				AndroidChiakiVideoFrameTrace *t = trace_find_locked(decoder, media_time_us);
+				if(t)
+				{
+					frame_index = t->net.flush_us ? t->net.frame_index : -1;
+					if(t->render_target_ns > 0)
+						late_ns = system_nano - t->render_target_ns;
+					if(t->out_us > 0)
+						out_to_screen_ns = system_nano - t->out_us * 1000LL;
+				}
+			}
+		}
+	}
+	decoder->rendered_last_ns = system_nano;
+	decoder->rendered_count++;
+	chiaki_mutex_unlock(&decoder->trace_mutex);
+
+	// late_ms ~0 means the frame was shown when it was scheduled, so the gap came from earlier in
+	// the pipeline (see the matching FRAME_STALL); a large late_ms means the display/compositor
+	// held a frame that was ready on time.
+	if(log_gap)
+		CHIAKI_LOGW(decoder->log, "DISPLAY_GAP gap_ms=%.1f frame=%d late_vs_schedule_ms=%.1f decoded_to_screen_ms=%.1f",
+			gap_ns / 1e6, (int)frame_index, late_ns / 1e6, out_to_screen_ns / 1e6);
+}
+
+static void trace_register_render_callback(AndroidChiakiVideoDecoder *decoder)
+{
+	decoder->render_callback_enabled = false;
+	// Looked up at runtime: the API only exists on Android 13+ and minSdk is lower.
+	void *lib = dlopen("libmediandk.so", RTLD_NOW);
+	CloudpadSetOnFrameRendered set_cb = lib ? (CloudpadSetOnFrameRendered)dlsym(lib, "AMediaCodec_setOnFrameRenderedCallback") : NULL;
+	if(!set_cb)
+	{
+		CHIAKI_LOGI(decoder->log, "STALL_TRACE display timing unavailable (needs Android 13+)");
+		return;
+	}
+	media_status_t r = set_cb(decoder->codec, trace_on_frame_rendered, decoder);
+	decoder->render_callback_enabled = r == AMEDIA_OK;
+	CHIAKI_LOGI(decoder->log, "STALL_TRACE display timing %s (%d)", decoder->render_callback_enabled ? "enabled" : "failed", (int)r);
+}
+
+static void trace_reset(AndroidChiakiVideoDecoder *decoder)
+{
+	chiaki_mutex_lock(&decoder->trace_mutex);
+	memset(decoder->trace, 0, sizeof(decoder->trace));
+	decoder->trace_next = 0;
+	decoder->rendered_last_ns = 0;
+	decoder->rendered_count = 0;
+	decoder->rendered_max_gap_ns = 0;
+	chiaki_mutex_unlock(&decoder->trace_mutex);
+}
+
+// Per-stage latencies of one frame, in µs. "read" needs kernel timestamps (0 otherwise).
+typedef struct
+{
+	int64_t read; // reached device -> read by recv thread
+	int64_t takq; // read -> picked up by takion thread
+	int64_t assemble; // picked up -> frame complete and handed off (decrypt/FEC/reassembly)
+	int64_t queue; // handed off -> taken by decoder input thread
+	int64_t codec_in; // taken -> accepted by MediaCodec (waiting for an input buffer)
+	int64_t decode; // accepted -> decoded frame out of MediaCodec
+	int64_t span; // first packet -> last packet of the frame arriving
+} TraceStages;
+
+static void trace_stages(const AndroidChiakiVideoFrameTrace *t, TraceStages *s)
+{
+	const ChiakiVideoFrameTiming *n = &t->net;
+	bool kernel = n->last_kernel_us != 0 && n->first_kernel_us != 0;
+	s->read = kernel ? (int64_t)n->last_recv_us - (int64_t)n->last_kernel_us : 0;
+	s->takq = (int64_t)n->last_pop_us - (int64_t)n->last_recv_us;
+	s->assemble = (int64_t)n->flush_us - (int64_t)n->last_pop_us;
+	s->queue = t->in_pop_us - (int64_t)n->flush_us;
+	s->codec_in = t->queued_us - t->in_pop_us;
+	s->decode = t->out_us - t->queued_us;
+	s->span = kernel ? (int64_t)n->last_kernel_us - (int64_t)n->first_kernel_us : (int64_t)n->last_recv_us - (int64_t)n->first_recv_us;
+}
+
+static int64_t trace_arrival_us(const ChiakiVideoFrameTiming *n, bool use_kernel)
+{
+	return use_kernel ? (int64_t)n->last_kernel_us : (int64_t)n->last_recv_us;
+}
+
+typedef struct
+{
+	int frames, stalls, untraced, scheduled;
+	int64_t sum[6], max[6];
+	int64_t span_max;
+	size_t size_max;
+	int64_t window_start_us;
+	int stall_logs;
+} TraceSummary;
+
+static void trace_log_stall(AndroidChiakiVideoDecoder *decoder, const AndroidChiakiVideoFrameTrace *prev, const AndroidChiakiVideoFrameTrace *cur,
+	int64_t source_period_us, int64_t headroom_ns, int64_t buffer_ns, int64_t prev_output_busy_us)
+{
+	TraceStages p, c;
+	trace_stages(prev, &p);
+	trace_stages(cur, &c);
+	bool use_kernel = prev->net.last_kernel_us != 0 && cur->net.last_kernel_us != 0;
+	int frames_between = (int16_t)(cur->net.frame_index - prev->net.frame_index);
+	int64_t arrival_gap = trace_arrival_us(&cur->net, use_kernel) - trace_arrival_us(&prev->net, use_kernel);
+	int64_t expected_gap = frames_between * source_period_us;
+
+	// Output gap = arrival gap + how much each stage's latency grew versus the previous frame, so
+	// whichever term is largest is where the stall came from.
+	const char *names[] = { use_kernel ? "network_or_server" : "network_or_device_read", "device_read", "takion_thread", "frame_assembly", "decoder_queue", "decoder_input_wait", "hardware_decoder" };
+	int64_t growth[] = {
+		arrival_gap - expected_gap,
+		c.read - p.read,
+		c.takq - p.takq,
+		c.assemble - p.assemble,
+		c.queue - p.queue,
+		c.codec_in - p.codec_in,
+		c.decode - p.decode
+	};
+	int origin = 0;
+	for(int i=1; i<7; i++)
+		if(growth[i] > growth[origin])
+			origin = i;
+	const char *origin_name = growth[origin] < 5000 ? "no_single_stage" : names[origin];
+
+	// "decode" growth is measured up to when the output thread picked the frame up, so it would also
+	// include time the output thread itself spent busy on the previous frame — shown separately.
+	if(origin == 6 && prev_output_busy_us > growth[6] / 2)
+		origin_name = "output_thread";
+
+	CHIAKI_LOGW(decoder->log, "FRAME_STALL origin=%s frame=%d skipped=%d out_gap_ms=%.1f headroom_ms=%.1f buffer_ms=%.1f output_thread_busy_ms=%.1f"
+		" | arrival_gap_ms=%.1f expected_ms=%.1f frame_arrival_span_ms=%.1f size_kb=%.1f units=%u/%u"
+		" | growth_ms net=%.1f read=%.1f takion=%.1f assemble=%.1f queue=%.1f codec_in=%.1f decode=%.1f"
+		" | now_ms read=%.1f takion=%.1f assemble=%.1f queue=%.1f codec_in=%.1f decode=%.1f",
+		origin_name, (int)cur->net.frame_index, frames_between - 1,
+		(cur->out_us - prev->out_us) / 1000.0, headroom_ns / 1e6, buffer_ns / 1e6, prev_output_busy_us / 1000.0,
+		arrival_gap / 1000.0, expected_gap / 1000.0, c.span / 1000.0, cur->net.frame_size / 1024.0,
+		(unsigned int)cur->net.units_total, (unsigned int)cur->net.units_fec,
+		growth[0] / 1000.0, growth[1] / 1000.0, growth[2] / 1000.0, growth[3] / 1000.0, growth[4] / 1000.0, growth[5] / 1000.0, growth[6] / 1000.0,
+		c.read / 1000.0, c.takq / 1000.0, c.assemble / 1000.0, c.queue / 1000.0, c.codec_in / 1000.0, c.decode / 1000.0);
+}
+
+static void trace_summary_add(TraceSummary *s, const AndroidChiakiVideoFrameTrace *t)
+{
+	TraceStages st;
+	trace_stages(t, &st);
+	int64_t v[6] = { st.read, st.takq, st.assemble, st.queue, st.codec_in, st.decode };
+	for(int i=0; i<6; i++)
+	{
+		s->sum[i] += v[i];
+		if(v[i] > s->max[i])
+			s->max[i] = v[i];
+	}
+	if(st.span > s->span_max)
+		s->span_max = st.span;
+	if(t->net.frame_size > s->size_max)
+		s->size_max = t->net.frame_size;
+	s->frames++;
+}
+
+static void trace_summary_flush(AndroidChiakiVideoDecoder *decoder, TraceSummary *s, int64_t now_us_val)
+{
+	chiaki_mutex_lock(&decoder->trace_mutex);
+	int32_t evictions = decoder->queue_evictions;
+	decoder->queue_evictions = 0;
+	int32_t rendered = decoder->render_callback_enabled ? decoder->rendered_count : -1;
+	decoder->rendered_count = 0;
+	int64_t disp_max_gap = decoder->rendered_max_gap_ns;
+	decoder->rendered_max_gap_ns = 0;
+	chiaki_mutex_unlock(&decoder->trace_mutex);
+
+	int n = s->frames > 0 ? s->frames : 1;
+	CHIAKI_LOGI(decoder->log, "PIPELINE_5S frames=%d scheduled=%d shown=%d display_max_gap_ms=%.1f stalls=%d queue_evictions=%d untraced=%d"
+		" | avg/max_ms read=%.1f/%.1f takion=%.1f/%.1f assemble=%.1f/%.1f queue=%.1f/%.1f codec_in=%.1f/%.1f decode=%.1f/%.1f"
+		" | arrival_span_max_ms=%.1f size_max_kb=%.1f",
+		s->frames, s->scheduled, (int)rendered, disp_max_gap / 1e6, s->stalls, (int)evictions, s->untraced,
+		s->sum[0] / 1000.0 / n, s->max[0] / 1000.0, s->sum[1] / 1000.0 / n, s->max[1] / 1000.0,
+		s->sum[2] / 1000.0 / n, s->max[2] / 1000.0, s->sum[3] / 1000.0 / n, s->max[3] / 1000.0,
+		s->sum[4] / 1000.0 / n, s->max[4] / 1000.0, s->sum[5] / 1000.0 / n, s->max[5] / 1000.0,
+		s->span_max / 1000.0, s->size_max / 1024.0);
+	memset(s, 0, sizeof(*s));
+	s->window_start_us = now_us_val;
+}
 
 ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *decoder, ChiakiLog *log, int32_t target_width, int32_t target_height, int32_t target_fps, ChiakiCodec codec, bool adaptive_frame_pacing_enabled)
 {
@@ -48,14 +289,32 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	decoder->frame_queue_shutdown = true;
 	decoder->input_thread_running = false;
 
-	ChiakiErrorCode err = chiaki_mutex_init(&decoder->codec_mutex, false);
+	memset(decoder->trace, 0, sizeof(decoder->trace));
+	decoder->trace_next = 0;
+	decoder->queue_evictions = 0;
+	decoder->render_callback_enabled = false;
+	decoder->rendered_last_ns = 0;
+	decoder->rendered_count = 0;
+	decoder->rendered_max_gap_ns = 0;
+	decoder->display_gap_logs = 0;
+	decoder->display_gap_log_window_ns = 0;
+
+	ChiakiErrorCode err = chiaki_mutex_init(&decoder->trace_mutex, false);
 	if(err != CHIAKI_ERR_SUCCESS)
 		return err;
+
+	err = chiaki_mutex_init(&decoder->codec_mutex, false);
+	if(err != CHIAKI_ERR_SUCCESS)
+	{
+		chiaki_mutex_fini(&decoder->trace_mutex);
+		return err;
+	}
 
 	err = chiaki_mutex_init(&decoder->frame_queue_mutex, false);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		chiaki_mutex_fini(&decoder->codec_mutex);
+		chiaki_mutex_fini(&decoder->trace_mutex);
 		return err;
 	}
 
@@ -64,6 +323,7 @@ ChiakiErrorCode android_chiaki_video_decoder_init(AndroidChiakiVideoDecoder *dec
 	{
 		chiaki_mutex_fini(&decoder->frame_queue_mutex);
 		chiaki_mutex_fini(&decoder->codec_mutex);
+		chiaki_mutex_fini(&decoder->trace_mutex);
 		return err;
 	}
 
@@ -113,6 +373,7 @@ void android_chiaki_video_decoder_fini(AndroidChiakiVideoDecoder *decoder)
 	chiaki_cond_fini(&decoder->frame_queue_cond);
 	chiaki_mutex_fini(&decoder->frame_queue_mutex);
 	chiaki_mutex_fini(&decoder->codec_mutex);
+	chiaki_mutex_fini(&decoder->trace_mutex);
 }
 
 void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder, JNIEnv *env, jobject surface)
@@ -191,6 +452,9 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 		goto error_codec;
 	}
 
+	trace_reset(decoder);
+	trace_register_render_callback(decoder);
+
 	r = AMediaCodec_start(decoder->codec);
 	AMediaFormat_delete(format);
 	if(r != AMEDIA_OK)
@@ -239,10 +503,14 @@ beach:
 // waiting for MediaCodec input buffers.
 bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, int32_t frames_lost, bool frame_recovered, void *user)
 {
-	AndroidChiakiVideoDecoder *decoder = user;
 	(void)frames_lost;
 	(void)frame_recovered;
+	return android_chiaki_video_decoder_video_sample_timed(buf, buf_size, NULL, user);
+}
 
+bool android_chiaki_video_decoder_video_sample_timed(uint8_t *buf, size_t buf_size, const ChiakiVideoFrameTiming *timing, AndroidChiakiVideoDecoder *decoder)
+{
+	int64_t enqueue_us = now_us();
 	chiaki_mutex_lock(&decoder->frame_queue_mutex);
 
 	if(decoder->frame_queue_shutdown)
@@ -261,7 +529,15 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 
 	if(decoder->frame_queue_count == ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY)
 	{
-		// Queue full: evict the oldest frame so the stream thread never stalls
+		// Queue full: evict the oldest frame so the stream thread never stalls. This throws away a
+		// frame that arrived fine (and breaks the frames that reference it), so make it visible.
+		AndroidChiakiVideoDecoderFrame *evicted = &decoder->frame_queue[decoder->frame_queue_head];
+		chiaki_mutex_lock(&decoder->trace_mutex);
+		int32_t evictions = ++decoder->queue_evictions;
+		chiaki_mutex_unlock(&decoder->trace_mutex);
+		if(evictions <= 5)
+			CHIAKI_LOGW(decoder->log, "VIDEO_QUEUE_EVICT frame=%d waited_ms=%.1f — decoder input is not keeping up, frame discarded",
+				evicted->timing.flush_us ? (int)evicted->timing.frame_index : -1, (enqueue_us - evicted->enqueue_us) / 1000.0);
 		free(decoder->frame_queue[decoder->frame_queue_head].data);
 		decoder->frame_queue_head = (decoder->frame_queue_head + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
 		decoder->frame_queue_count--;
@@ -269,6 +545,11 @@ bool android_chiaki_video_decoder_video_sample(uint8_t *buf, size_t buf_size, in
 
 	decoder->frame_queue[decoder->frame_queue_tail].data = data;
 	decoder->frame_queue[decoder->frame_queue_tail].size = buf_size;
+	if(timing)
+		decoder->frame_queue[decoder->frame_queue_tail].timing = *timing;
+	else
+		memset(&decoder->frame_queue[decoder->frame_queue_tail].timing, 0, sizeof(ChiakiVideoFrameTiming));
+	decoder->frame_queue[decoder->frame_queue_tail].enqueue_us = enqueue_us;
 	decoder->frame_queue_tail = (decoder->frame_queue_tail + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
 	decoder->frame_queue_count++;
 
@@ -311,12 +592,14 @@ static void *android_chiaki_video_decoder_input_thread_func(void *user)
 		decoder->frame_queue_head = (decoder->frame_queue_head + 1) % ANDROID_CHIAKI_VIDEO_DECODER_FRAME_QUEUE_CAPACITY;
 		decoder->frame_queue_count--;
 		chiaki_mutex_unlock(&decoder->frame_queue_mutex);
+		int64_t in_pop_us = now_us();
 
 		chiaki_mutex_lock(&decoder->codec_mutex);
 		if(decoder->codec)
 		{
 			uint8_t *buf = frame.data;
 			size_t buf_size = frame.size;
+			bool first_chunk = true;
 			while(buf_size > 0)
 			{
 				ssize_t codec_buf_index = AMediaCodec_dequeueInputBuffer(decoder->codec, 10000);
@@ -330,7 +613,13 @@ static void *android_chiaki_video_decoder_input_thread_func(void *user)
 				uint8_t *codec_buf = AMediaCodec_getInputBuffer(decoder->codec, (size_t)codec_buf_index, &codec_buf_size);
 				size_t chunk = buf_size < codec_buf_size ? buf_size : codec_buf_size;
 				memcpy(codec_buf, buf, chunk);
-				AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, chunk, now_us(), 0);
+				int64_t pts_us = now_us();
+				AMediaCodec_queueInputBuffer(decoder->codec, (size_t)codec_buf_index, 0, chunk, pts_us, 0);
+				if(first_chunk)
+				{
+					trace_record_input(decoder, &frame, in_pop_us, pts_us);
+					first_chunk = false;
+				}
 				buf += chunk;
 				buf_size -= chunk;
 			}
@@ -397,6 +686,13 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	bool last_smooth = decoder->adaptive_frame_pacing_enabled;
 	int64_t last_baseline_ns = 2 * vsync_period_ns; // for the per-second log only
 
+	// Stall tracing (see trace_log_stall): the previous output frame, to compare each frame against.
+	AndroidChiakiVideoFrameTrace trace_prev;
+	bool trace_have_prev = false;
+	TraceSummary trace_summary;
+	memset(&trace_summary, 0, sizeof(trace_summary));
+	int64_t trace_output_busy_us = 0; // how long this thread spent handling the previous frame
+
 	while(1)
 	{
 		AMediaCodecBufferInfo info;
@@ -406,6 +702,17 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 			if(info.size != 0)
 			{
 				int64_t now_ns = now_us() * 1000LL;
+
+				AndroidChiakiVideoFrameTrace trace_cur;
+				chiaki_mutex_lock(&decoder->trace_mutex);
+				AndroidChiakiVideoFrameTrace *trace_entry = trace_find_locked(decoder, info.presentationTimeUs);
+				bool trace_have_cur = trace_entry != NULL;
+				if(trace_entry)
+				{
+					trace_entry->out_us = now_ns / 1000;
+					trace_cur = *trace_entry;
+				}
+				chiaki_mutex_unlock(&decoder->trace_mutex);
 
 				// Video Pacing mode can change mid-stream (quick menu). Re-read it once per frame
 				// and, on a change, restart the schedule so the new cushion takes effect right away
@@ -519,6 +826,8 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				// gives a boot-time-sized negative that pollutes the min_hdm log).
 				if(decoder->next_render_ns > 0 && headroom_ns < min_headroom_ns)
 					min_headroom_ns = headroom_ns;
+				const bool trace_scheduled = decoder->next_render_ns > 0;
+				int64_t trace_render_ns = 0;
 
 				// Smooth pacing: this frame arrived as part of a burst and the
 				// schedule is already comfortably ahead — drop it instead of queueing yet
@@ -537,6 +846,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 						render_ns = now_ns + baseline_ns;
 
 					AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
+					trace_render_ns = render_ns;
 					// Target baseline headroom: when above baseline use vsync_period so excess
 					// bleeds off naturally; when at/below baseline use EMA (>= vsync_period) to
 					// counteract systematic drain if server delivers slightly below 60fps.
@@ -549,6 +859,50 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					decoder->next_render_ns = render_ns + advance_ns;
 					decoder->output_frames_total++;
 				}
+
+				// Stall tracing: a frame is a stall when it came out of the decoder much later than
+				// the previous one, or too late for its display slot.
+				int64_t now_trace_us = now_ns / 1000;
+				if(trace_summary.window_start_us == 0)
+					trace_summary.window_start_us = now_trace_us;
+				if(trace_have_cur)
+				{
+					trace_cur.render_target_ns = trace_render_ns;
+					chiaki_mutex_lock(&decoder->trace_mutex);
+					AndroidChiakiVideoFrameTrace *entry = trace_find_locked(decoder, info.presentationTimeUs);
+					if(entry)
+						entry->render_target_ns = trace_render_ns;
+					chiaki_mutex_unlock(&decoder->trace_mutex);
+
+					if(trace_render_ns)
+						trace_summary.scheduled++;
+					if(trace_cur.net.flush_us != 0)
+					{
+						trace_summary_add(&trace_summary, &trace_cur);
+						if(trace_have_prev)
+						{
+							const int64_t source_period_us = source_period_ns / 1000;
+							int64_t out_gap_us = trace_cur.out_us - trace_prev.out_us;
+							bool late = trace_scheduled && headroom_ns < 0;
+							if(out_gap_us > 2 * source_period_us + 8000 || late)
+							{
+								trace_summary.stalls++;
+								if(trace_summary.stall_logs < 10)
+								{
+									trace_summary.stall_logs++;
+									trace_log_stall(decoder, &trace_prev, &trace_cur, source_period_us, trace_scheduled ? headroom_ns : 0, baseline_ns, trace_output_busy_us);
+								}
+							}
+						}
+						trace_prev = trace_cur;
+						trace_have_prev = true;
+					}
+				}
+				else
+					trace_summary.untraced++;
+				if(now_trace_us - trace_summary.window_start_us >= 5000000)
+					trace_summary_flush(decoder, &trace_summary, now_trace_us);
+				trace_output_busy_us = now_us() - now_trace_us;
 			}
 			else
 			{

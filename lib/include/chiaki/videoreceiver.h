@@ -16,6 +16,23 @@ extern "C" {
 
 #define CHIAKI_VIDEO_PROFILES_MAX 8
 
+/**
+ * Stall tracing for one video frame (CLOCK_MONOTONIC µs, see ChiakiTakion.cur_packet_*_us): when
+ * its first packet and the packet that completed it reached the device (kernel), were read by the
+ * recv thread, and were picked up by the takion thread, plus when the whole frame was handed to the
+ * video sample callback. flush_us == 0 means no timing (e.g. the codec header).
+ */
+typedef struct chiaki_video_frame_timing_t
+{
+	int32_t frame_index;
+	size_t frame_size;
+	uint16_t units_total;
+	uint16_t units_fec;
+	uint64_t first_kernel_us, first_recv_us, first_pop_us;
+	uint64_t last_kernel_us, last_recv_us, last_pop_us;
+	uint64_t flush_us;
+} ChiakiVideoFrameTiming;
+
 typedef struct chiaki_video_receiver_t
 {
 	struct chiaki_session_t *session;
@@ -33,6 +50,9 @@ typedef struct chiaki_video_receiver_t
 	int32_t frames_lost;
 	int32_t reference_frames[16];
 	ChiakiBitstream bitstream;
+
+	ChiakiVideoFrameTiming frame_timing_cur; // frame currently being filled
+	ChiakiVideoFrameTiming frame_timing_flushed; // valid inside video_sample_cb for the frame being passed
 } ChiakiVideoReceiver;
 
 CHIAKI_EXPORT void chiaki_video_receiver_init(ChiakiVideoReceiver *video_receiver, struct chiaki_session_t *session, ChiakiPacketStats *packet_stats);

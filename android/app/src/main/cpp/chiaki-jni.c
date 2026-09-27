@@ -349,11 +349,14 @@ static bool android_chiaki_video_sample_with_metrics(
 	if(frames_lost > 0)
 		session->metrics_drops += (uint64_t)frames_lost;
 
-	return android_chiaki_video_decoder_video_sample(
+	// Stall tracing: this runs synchronously inside the video receiver's flush, so its timing for
+	// the frame being handed over is current here.
+	ChiakiVideoReceiver *video_receiver = session->session.stream_connection.video_receiver;
+	(void)frame_recovered;
+	return android_chiaki_video_decoder_video_sample_timed(
 			buf,
 			buf_size,
-			frames_lost,
-			frame_recovered,
+			video_receiver ? &video_receiver->frame_timing_flushed : NULL,
 			&session->video_decoder
 	);
 }

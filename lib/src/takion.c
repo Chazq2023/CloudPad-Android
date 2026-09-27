@@ -31,6 +31,7 @@
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <sys/socket.h>
+#include <time.h>
 #endif
 
 #if defined(__ANDROID__)
@@ -195,12 +196,14 @@ typedef struct chiaki_takion_recv_queue_entry_t
 {
 	uint8_t *buf;
 	size_t buf_size;
+	uint64_t kernel_us; // see ChiakiTakion.cur_packet_kernel_us
+	uint64_t recv_us;
 	struct chiaki_takion_recv_queue_entry_t *next;
 } TakionRecvQueueEntry;
 
 static void *takion_thread_func(void *user);
 static void *takion_recv_thread_func(void *user);
-static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t buf_size);
+static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t buf_size, uint64_t kernel_us, uint64_t recv_us);
 static TakionRecvQueueEntry *takion_recv_queue_pop(ChiakiTakion *takion);
 static void takion_recv_queue_fini(ChiakiTakion *takion);
 static void takion_handle_packet(ChiakiTakion *takion, uint8_t *buf, size_t buf_size);
@@ -213,7 +216,7 @@ static void takion_write_message_header(uint8_t *buf, uint32_t tag, uint64_t key
 static ChiakiErrorCode takion_send_message_init(ChiakiTakion *takion, TakionMessagePayloadInit *payload);
 static ChiakiErrorCode takion_send_message_cookie(ChiakiTakion *takion, uint8_t *cookie);
 static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *buf_size, uint64_t timeout_ms);
-static void takion_enable_rxq_ovfl(ChiakiTakion *takion);
+static void takion_enable_rx_diagnostics(ChiakiTakion *takion);
 static ChiakiErrorCode takion_recv_message_init_ack(ChiakiTakion *takion, TakionMessagePayloadInitAck *payload);
 static ChiakiErrorCode takion_recv_message_cookie_ack(ChiakiTakion *takion);
 static void takion_handle_packet_av(ChiakiTakion *takion, uint8_t base_type, uint8_t *buf, size_t buf_size);
@@ -257,6 +260,10 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 	takion->cb_user = info->cb_user;
 	takion->a_rwnd = TAKION_A_RWND;
 	takion->rx_dropped_total = 0;
+	takion->cur_packet_kernel_us = 0;
+	takion->cur_packet_recv_us = 0;
+	takion->cur_packet_pop_us = 0;
+	takion->last_recv_kernel_us = 0;
 
 	takion->tag_local = chiaki_random_32();
 	takion->seq_num_local = takion->tag_local;
@@ -336,7 +343,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 		{
 			CHIAKI_LOGW(takion->log, "TAKION_RCVBUF_DETAIL getsockopt failed");
 		}
-		takion_enable_rxq_ovfl(takion);
+		takion_enable_rx_diagnostics(takion);
 
 #if defined(__APPLE__) && TARGET_OS_OSX
 		// macOS < 11 doesn't support IP_DONTFRAG
@@ -449,7 +456,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 		{
 			CHIAKI_LOGW(takion->log, "TAKION_RCVBUF_DETAIL getsockopt failed");
 		}
-		takion_enable_rxq_ovfl(takion);
+		takion_enable_rx_diagnostics(takion);
 		if(info->ip_dontfrag)
 		{
 #if defined(__APPLE__) && TARGET_OS_OSX
@@ -1218,8 +1225,23 @@ static void *takion_thread_func(void *user)
 
 		// CHIAKI_LOGV(takion->log, "Takion received packet: %zu bytes, type=%#x", entry->buf_size, entry->buf[0]);
 
+		// Stall tracing: expose this packet's arrival/read/pickup times to the handlers below, and
+		// flag any packet whose handling (decrypt, FEC, frame hand-off, audio...) holds this thread
+		// long enough to delay every packet queued behind it.
+		takion->cur_packet_kernel_us = entry->kernel_us;
+		takion->cur_packet_recv_us = entry->recv_us;
+		takion->cur_packet_pop_us = chiaki_time_now_monotonic_us();
+		uint8_t packet_type = entry->buf_size > 0 ? entry->buf[0] : 0;
+		size_t packet_size = entry->buf_size;
+
 		takion_handle_packet(takion, entry->buf, entry->buf_size); // takes ownership of entry->buf
 		free(entry);
+
+		uint64_t handle_us = chiaki_time_now_monotonic_us() - takion->cur_packet_pop_us;
+		if(handle_us > 8000)
+			CHIAKI_LOGW(takion->log, "TAKION_SLOW_HANDLE type=%#x size=%zu handle_ms=%.1f queued_ms=%.1f",
+				(unsigned int)(packet_type & TAKION_PACKET_BASE_TYPE_MASK), packet_size, handle_us / 1000.0,
+				(takion->cur_packet_pop_us - takion->cur_packet_recv_us) / 1000.0);
 	}
 
 	takion_recv_queue_fini(takion);
@@ -1279,6 +1301,8 @@ static void *takion_recv_thread_func(void *user)
 			free(buf);
 			break;
 		}
+		uint64_t recv_us = chiaki_time_now_monotonic_us();
+		uint64_t kernel_us = takion->last_recv_kernel_us;
 
 		uint8_t *resized_buf = realloc(buf, received_size);
 		if(!resized_buf)
@@ -1286,7 +1310,7 @@ static void *takion_recv_thread_func(void *user)
 			free(buf);
 			continue;
 		}
-		takion_recv_queue_push(takion, resized_buf, received_size);
+		takion_recv_queue_push(takion, resized_buf, received_size, kernel_us, recv_us);
 	}
 
 	chiaki_mutex_lock(&takion->recv_queue_mutex);
@@ -1298,7 +1322,7 @@ static void *takion_recv_thread_func(void *user)
 }
 
 /** Takes ownership of buf. */
-static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t buf_size)
+static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t buf_size, uint64_t kernel_us, uint64_t recv_us)
 {
 	TakionRecvQueueEntry *entry = malloc(sizeof(TakionRecvQueueEntry));
 	if(!entry)
@@ -1308,6 +1332,8 @@ static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t bu
 	}
 	entry->buf = buf;
 	entry->buf_size = buf_size;
+	entry->kernel_us = kernel_us;
+	entry->recv_us = recv_us;
 	entry->next = NULL;
 
 	chiaki_mutex_lock(&takion->recv_queue_mutex);
@@ -1369,15 +1395,23 @@ static void takion_recv_queue_fini(ChiakiTakion *takion)
 }
 
 /**
- * Ask the kernel to report how many datagrams it dropped because the receive buffer was full
- * (read back in takion_recv()). Purely diagnostic, so failure only logs a warning.
+ * Ask the kernel to report how many datagrams it dropped because the receive buffer was full, and
+ * when each datagram actually reached the device (both read back in takion_recv()). Purely
+ * diagnostic, so failure only logs a warning.
  */
-static void takion_enable_rxq_ovfl(ChiakiTakion *takion)
+static void takion_enable_rx_diagnostics(ChiakiTakion *takion)
 {
 #ifdef SO_RXQ_OVFL
 	const int rxq_ovfl_val = 1;
 	if(setsockopt(takion->sock, SOL_SOCKET, SO_RXQ_OVFL, (const CHIAKI_SOCKET_BUF_TYPE)&rxq_ovfl_val, sizeof(rxq_ovfl_val)) < 0)
 		CHIAKI_LOGW(takion->log, "Takion failed to setsockopt SO_RXQ_OVFL, local drop counting disabled: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
+#ifdef SO_TIMESTAMPNS
+	// Kernel receive timestamps separate "the packet reached the device late" (network/server)
+	// from "it arrived on time but this app was slow to read it".
+	const int timestamp_val = 1;
+	if(setsockopt(takion->sock, SOL_SOCKET, SO_TIMESTAMPNS, (const CHIAKI_SOCKET_BUF_TYPE)&timestamp_val, sizeof(timestamp_val)) < 0)
+		CHIAKI_LOGW(takion->log, "Takion failed to setsockopt SO_TIMESTAMPNS, arrival timestamps disabled: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
+#endif
 #else
 	(void)takion;
 #endif
@@ -1401,7 +1435,7 @@ static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *b
 	struct iovec iov = { .iov_base = buf, .iov_len = *buf_size };
 	union
 	{
-		char buf[CMSG_SPACE(sizeof(uint32_t))];
+		char buf[CMSG_SPACE(sizeof(uint32_t)) + CMSG_SPACE(sizeof(struct timespec))];
 		struct cmsghdr align;
 	} control;
 	struct msghdr msg = { 0 };
@@ -1410,10 +1444,27 @@ static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *b
 	msg.msg_control = control.buf;
 	msg.msg_controllen = sizeof(control.buf);
 	CHIAKI_SSIZET_TYPE received_sz = recvmsg(takion->sock, &msg, 0);
+	takion->last_recv_kernel_us = 0;
 	if(received_sz > 0)
 	{
 		for(struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
 		{
+#ifdef SO_TIMESTAMPNS
+			if(cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SO_TIMESTAMPNS)
+			{
+				// The kernel stamps CLOCK_REALTIME; convert to the monotonic clock every other
+				// stall-trace timestamp uses by measuring how long ago it was.
+				struct timespec kernel_ts, real_now;
+				memcpy(&kernel_ts, CMSG_DATA(cmsg), sizeof(kernel_ts));
+				clock_gettime(CLOCK_REALTIME, &real_now);
+				int64_t age_us = ((int64_t)real_now.tv_sec - (int64_t)kernel_ts.tv_sec) * 1000000
+					+ ((int64_t)real_now.tv_nsec - (int64_t)kernel_ts.tv_nsec) / 1000;
+				if(age_us < 0)
+					age_us = 0;
+				takion->last_recv_kernel_us = chiaki_time_now_monotonic_us() - (uint64_t)age_us;
+				continue;
+			}
+#endif
 			if(cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SO_RXQ_OVFL)
 				continue;
 			uint32_t dropped_total;

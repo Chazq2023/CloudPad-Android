@@ -192,6 +192,18 @@ typedef struct chiaki_takion_t
 	 *  them, so it tells an in-device bottleneck apart from real network loss. Written by
 	 *  recv_thread, read for the stats overlay. */
 	uint32_t rx_dropped_total;
+
+	/** Stall tracing (CLOCK_MONOTONIC µs, see chiaki_time_now_monotonic_us): when the packet that
+	 *  takion_thread_func is currently handling reached the device (kernel receive timestamp via
+	 *  SO_TIMESTAMPNS, 0 where unavailable), when recv_thread read it, and when takion_thread_func
+	 *  picked it up from recv_queue. Only valid inside takion callbacks on the takion thread — the
+	 *  video receiver snapshots them per frame so a playback stall can be traced to the stage that
+	 *  caused it (network vs. each thread in this app). last_recv_kernel_us is takion_recv's own
+	 *  output for the packet it just returned. */
+	uint64_t cur_packet_kernel_us;
+	uint64_t cur_packet_recv_us;
+	uint64_t cur_packet_pop_us;
+	uint64_t last_recv_kernel_us;
 	uint32_t tag_local;
 	uint32_t tag_remote;
 	bool close_socket;
