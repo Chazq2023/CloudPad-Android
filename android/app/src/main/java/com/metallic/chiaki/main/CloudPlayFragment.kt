@@ -1318,10 +1318,18 @@ class CloudPlayFragment : Fragment() {
         // Show login required state
         showLoginRequiredState()
 
-        // Then show authentication error dialog
+        // Then show authentication error dialog. Appends the real error text below the friendly
+        // explanation (rather than showing only one or the other) so whatever actually caused
+        // this classification is visible and screenshot-able on screen — unlike handleNetworkError
+        // and handleGeneralError just below, this dialog used to show only the fixed, generic
+        // string and silently discard error.message entirely, which meant a message enriched with
+        // real diagnostic detail (see PsnCatalogService.fetchStores(), which embeds Sony's actual
+        // response) would still vanish the moment CloudError's keyword classifier happened to
+        // route it here — the one case where getting logs from an affected person isn't always
+        // possible had its most useful detail thrown away regardless.
         requireContext().alertDialogBuilder()
             .setTitle(getString(R.string.psn_login_required_title))
-            .setMessage(getString(R.string.psn_login_session_expired_message))
+            .setMessage(getString(R.string.psn_login_session_expired_message) + "\n\n" + error.message)
             .setPositiveButton(R.string.psn_login_button) { _, _ ->
                 launchPsnLogin()
             }

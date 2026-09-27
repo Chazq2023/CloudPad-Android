@@ -57,10 +57,9 @@ class PsnCatalogService(
 			jsessionId = sessionId
 			
 			// Step 3: Fetch stores to get base URL
-			val storesBaseUrl = fetchStores()
-				?: return@withContext PsnResult.Error("Failed to fetch stores")
-			
-			baseUrl = storesBaseUrl
+			val storesResult = fetchStores()
+			if (storesResult is PsnResult.Error) return@withContext storesResult
+			baseUrl = (storesResult as PsnResult.Success).data
 			
 			// Step 4: Fetch root container to get category links
 			val categoryUrls = fetchRootContainer()
@@ -249,63 +248,69 @@ class PsnCatalogService(
 	 * Step 3: Fetch stores to get base URL
 	 * Matches: CloudCatalogBackend::fetchPsnowStores()
 	 */
-	private fun fetchStores(): String?
+	private fun fetchStores(): PsnResult<String>
 	{
 		try
 		{
 			val url = "${PsnApiConstants.KAMAJI_BASE}/user/stores"
-			
+
 			Log.i(TAG, "=== Fetching Stores ===")
 			Log.d(TAG, "GET $url")
 			Log.d(TAG, "Using JSESSIONID: ${jsessionId?.take(10)}...")
-			
+
 			val headers = mapOf(
 				"Cookie" to "JSESSIONID=$jsessionId",
 				"Origin" to PsnApiConstants.ORIGIN,
 				"Referer" to PsnApiConstants.REFERER,
 				"Accept" to "application/json"
 			)
-			
+
 			val response = HttpClient.get(url, headers)
-			
+
 			Log.i(TAG, "=== Stores Response ===")
 			Log.d(TAG, "Status: ${response.statusCode}")
 			Log.d(TAG, "Full Body: ${response.body}")
-			
+
+			// Every failure below folds a snippet of Sony's actual response into the returned
+			// message (not just the log) so it shows up in the on-screen error dialog itself —
+			// this whole flow talks to legacy PS Now infrastructure we don't control, and past
+			// reports of it failing have needed a log capture we couldn't always get from the
+			// affected person's device. A screenshot of the dialog now carries the same detail.
 			if (response.statusCode != 200)
 			{
 				Log.e(TAG, "Stores fetch failed: ${response.statusCode}")
-				return null
+				return PsnResult.Error("Failed to fetch stores: HTTP ${response.statusCode}\n${response.body.take(200)}")
 			}
-			
+
 			// Parse JSON - match Qt structure: {header: {...}, data: {base_url: "..."}}
 			val json = JSONObject(response.body)
 			val header = json.optJSONObject("header")
 			val data = json.optJSONObject("data")
-			
-			if (header?.optString("status_code") != "0x0000")
+			val statusCode = header?.optString("status_code")
+
+			if (statusCode != "0x0000")
 			{
-				Log.e(TAG, "Stores failed with status: ${header?.optString("status_code")}")
-				return null
+				Log.e(TAG, "Stores failed with status: $statusCode")
+				return PsnResult.Error("Failed to fetch stores: status $statusCode\n${response.body.take(200)}")
 			}
-			
+
 			val baseUrl = data?.optString("base_url")
-			
+
 			if (baseUrl.isNullOrEmpty())
 			{
 				Log.e(TAG, "No base_url in stores response data")
-				return null
+				return PsnResult.Error("Failed to fetch stores: no base_url in response\n${response.body.take(200)}")
 			}
-			
+
 			Log.i(TAG, "[PSNOW] Stores fetched successfully")
 			Log.i(TAG, "Base URL from response: $baseUrl")
 			saveResolvedStoreLocaleFromBaseUrl(baseUrl)
-			return baseUrl
+			return PsnResult.Success(baseUrl)
 		}
 		catch (e: Exception)
 		{
 			Log.e(TAG, "Stores fetch error", e)
-			return null
+			return PsnResult.Error("Failed to fetch stores: ${e.message}", e)
 		}
 	}
 	
