@@ -278,7 +278,7 @@
     <string name="preferences_fsr_enabled_title">Enable FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Enable AMD FidelityFX upscaling and sharpening</string>
     <string name="preferences_fsr_upscaling_title">Upscaling</string>
-    <string name="preferences_fsr_upscaling_summary">If the stream is set to 720p and Upscaling is enabled, it will upscale to 1080p. If the stream is set to 1080p and Upscaling is enabled, it will upscale to 1440p. Please note: if your device’s maximum resolution is 1080p, Android will downsample the 1440p output to 1080p, which can cause a blurry image. In this situation, leave Upscaling disabled.</string>
+    <string name="preferences_fsr_upscaling_summary">If the stream is set to 720p and Upscaling is enabled, it will upscale to 1080p. If the stream is set to 1080p, it will upscale to 1440p. If the stream is set to 1440p, it will upscale to 2160p (4K). Please note: if your device’s maximum resolution is lower than that upscale target, Android will downsample the output back down, which can cause a blurry image. In this situation, leave Upscaling disabled.</string>
     <string name="preferences_fsr_sharpening_title">Sharpening</string>
     <string name="quick_settings_fsr_sharpening">Sharpening: %d%%</string>
     <string name="preferences_category_title_image_quality">Image Quality</string>
@@ -294,7 +294,8 @@
     <string name="preferences_restarts_stream">Applied after restarting the stream</string>
     <string name="preferences_fsr_output_720">720p stream → 1080p output</string>
     <string name="preferences_fsr_output_1080">1080p stream → 1440p output</string>
-    <string name="preferences_fsr_output_downsample">1080p stream → 1440p output; this %1$dp display will downsample it and may look softer. If this is the case, please leave Upscaling disabled.</string>
+    <string name="preferences_fsr_output_1440">1440p stream → 2160p (4K) output</string>
+    <string name="preferences_fsr_output_downsample">%1$dp stream → %2$dp output; this %3$dp display will downsample it and may look softer. If this is the case, please leave Upscaling disabled.</string>
     <string name="preferences_fsr_output_unchanged">%1$dp stream; no FSR upscale applied</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nGame Library: %2$s\nGame Catalog: %3$s</string>
     <string name="quick_settings_image_quality">Image Quality · Applies immediately</string>
@@ -579,24 +580,28 @@
         <item>Auto</item>
     </string-array>
     
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
     <string-array name="cloud_resolution_psnow_values">
         <item>720</item>
         <item>1080</item>
+        <item>1440</item>
     </string-array>
-    
-    <!-- Resolution options for Game Library (PSCloud) -->
+
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
     <string-array name="cloud_resolution_pscloud_values">
         <item>720</item>
         <item>1080</item>
+        <item>1440</item>
     </string-array>
 
     <!-- Don't localize these -->
@@ -727,6 +732,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">System</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">App</string>
 
     <string name="controller_action_left_stick_up">Left Stick Up</string>
     <string name="controller_action_left_stick_down">Left Stick Down</string>
@@ -761,4 +767,5 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad Swipe Down</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad Swipe Left</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad Swipe Right</string>
+    <string name="controller_action_open_quick_settings">Open Quick Settings</string>
 </resources>

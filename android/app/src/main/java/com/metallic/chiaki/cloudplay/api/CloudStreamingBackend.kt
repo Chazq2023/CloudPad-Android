@@ -84,9 +84,28 @@ class CloudStreamingBackend(
 				return@withContext Result.failure(Exception("Invalid serviceType: $normalizedServiceType"))
 			}
 			
-			// Generate DUID once - shared between authorization check and session creation
-			val sharedDuid = DuidUtil.generateDuid()
-			Log.i(TAG, "Using DUID: ${sharedDuid.take(20)}...")
+			// Generated once ever (persisted) and reused for every subsequent Cloud Play
+			// authorization check and session creation from this install — not regenerated per
+			// attempt. A DUID is supposed to be a *device* identifier: sending Sony a brand-new
+			// random one on every single session-start call made the same account look like it
+			// was authorizing from a different device each time, which is exactly the pattern
+			// anti-fraud systems are built to flag and eventually reject outright — a rejection
+			// that then surfaces to the user as "your NPSSO token is likely expired, please
+			// re-login" even though the token was fine, and that no amount of reinstalling the
+			// app can fix, since the account-side flag lives on Sony's servers, not on the
+			// device. Mirrors psnDuid's existing generate-once-and-persist pattern for the
+			// separate Remote Play auth flow.
+			var sharedDuid = preferences.cloudDuid
+			if (sharedDuid.isEmpty())
+			{
+				sharedDuid = DuidUtil.generateDuid()
+				preferences.cloudDuid = sharedDuid
+				Log.i(TAG, "Generated new Cloud DUID: ${sharedDuid.take(20)}...")
+			}
+			else
+			{
+				Log.i(TAG, "Using persisted DUID: ${sharedDuid.take(20)}...")
+			}
 			
 			// Centralized authorization check for both PSNOW and PSCLOUD (Qt lines 91-119)
 			val authSuccess = checkAuthorization(normalizedServiceType, npssoToken, sharedDuid)

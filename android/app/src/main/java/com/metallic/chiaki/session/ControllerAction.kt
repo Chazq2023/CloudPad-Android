@@ -37,4 +37,10 @@ enum class ControllerAction(@StringRes val displayNameRes: Int, @StringRes val g
     TOUCHPAD_SWIPE_DOWN(R.string.controller_action_touchpad_swipe_down, R.string.controller_group_touchpad),
     TOUCHPAD_SWIPE_LEFT(R.string.controller_action_touchpad_swipe_left, R.string.controller_group_touchpad),
     TOUCHPAD_SWIPE_RIGHT(R.string.controller_action_touchpad_swipe_right, R.string.controller_group_touchpad),
+
+    /** Toggles the in-stream Quick Settings panel — a local UI action with no console-facing
+     *  button of its own (see actionToButtonMask/pressAction in StreamInput.kt), unlike every
+     *  other entry above. Exists so TV, where there's no touch gesture to open the panel, has a
+     *  way to reach it at all; see StreamActivity's back-press handling. */
+    OPEN_QUICK_SETTINGS(R.string.controller_action_open_quick_settings, R.string.controller_group_app),
 }

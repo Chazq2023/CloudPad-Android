@@ -87,6 +87,10 @@ sealed class PhysicalInput {
             ControllerAction.TOUCHPAD_SWIPE_RIGHT to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_B)),
             // PS Home: hold SELECT + press START
             ControllerAction.HOME to Combo(KeyEvent.KEYCODE_BUTTON_SELECT, Button(KeyEvent.KEYCODE_BUTTON_START)),
+            // Defaults to the back button/key — the one input every remote, gamepad and phone
+            // already has — but is a normal remappable action like any other, combo included, so
+            // it can be moved off back (e.g. onto SELECT + something) if that's wanted instead.
+            ControllerAction.OPEN_QUICK_SETTINGS to Button(KeyEvent.KEYCODE_BACK),
         )
 
         fun mappingToJson(mapping: Map<ControllerAction, PhysicalInput>): String {

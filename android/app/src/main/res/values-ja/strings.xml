@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">FSR 1を有効にする</string>
     <string name="preferences_fsr_enabled_summary">AMD FidelityFXのアップスケーリングとシャープニングを有効にする</string>
     <string name="preferences_fsr_upscaling_title">アップスケーリング</string>
-    <string name="preferences_fsr_upscaling_summary">ストリームが720pに設定されアップスケーリングが有効な場合、1080pにアップスケールされます。ストリームが1080pに設定されアップスケーリングが有効な場合、1440pにアップスケールされます。注意: デバイスの最大解像度が1080pの場合、Androidは1440pの出力を1080pにダウンサンプルするため、画像がぼやけることがあります。この場合はアップスケーリングを無効のままにしてください。</string>
+    <string name="preferences_fsr_upscaling_summary">ストリームが720pに設定されアップスケーリングが有効な場合、1080pにアップスケールされます。ストリームが1080pに設定されている場合、1440pにアップスケールされます。ストリームが1440pに設定されている場合、2160p(4K)にアップスケールされます。注意: デバイスの最大解像度がこのアップスケール目標より低い場合、Androidは出力をダウンサンプルするため、画像がぼやけることがあります。この場合はアップスケーリングを無効のままにしてください。</string>
     <string name="preferences_fsr_sharpening_title">シャープニング</string>
     <string name="quick_settings_fsr_sharpening">シャープニング: %d%%</string>
     <string name="preferences_category_title_image_quality">画質</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">ストリームの再起動後に適用されます</string>
     <string name="preferences_fsr_output_720">720pストリーム → 1080p出力</string>
     <string name="preferences_fsr_output_1080">1080pストリーム → 1440p出力</string>
-    <string name="preferences_fsr_output_downsample">1080pストリーム → 1440p出力。この%1$dpディスプレイはダウンサンプルされ、画質が甘くなる場合があります。この場合はアップスケーリングを無効のままにしてください。</string>
+    <string name="preferences_fsr_output_1440">1440pストリーム → 2160p(4K)出力</string>
+    <string name="preferences_fsr_output_downsample">%1$dpストリーム → %2$dp出力。この%3$dpディスプレイはダウンサンプルされ、画質が甘くなる場合があります。この場合はアップスケーリングを無効のままにしてください。</string>
     <string name="preferences_fsr_output_unchanged">%1$dpストリーム。FSRアップスケールは適用されません</string>
     <string name="preferences_fsr_output_all">リモートプレイ: %1$s\nゲームライブラリ: %2$s\nゲームカタログ: %3$s</string>
     <string name="quick_settings_image_quality">画質 · すぐに適用</string>
@@ -354,16 +355,18 @@
         <item>自動(最適なping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">フル</string>
@@ -606,6 +609,7 @@
     <string name="controller_group_menu">メニュー</string>
     <string name="controller_group_system">システム</string>
     <string name="controller_group_touchpad">タッチパッド</string>
+    <string name="controller_group_app">アプリ</string>
 
     <string name="controller_action_left_stick_up">左スティック上</string>
     <string name="controller_action_left_stick_down">左スティック下</string>
@@ -640,6 +644,7 @@
     <string name="controller_action_touchpad_swipe_down">タッチパッド下スワイプ</string>
     <string name="controller_action_touchpad_swipe_left">タッチパッド左スワイプ</string>
     <string name="controller_action_touchpad_swipe_right">タッチパッド右スワイプ</string>
+    <string name="controller_action_open_quick_settings">クイック設定を開く</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">ゲームをライブラリに追加</string>

@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">FSR 1 사용</string>
     <string name="preferences_fsr_enabled_summary">AMD FidelityFX 업스케일링 및 샤프닝을 사용합니다</string>
     <string name="preferences_fsr_upscaling_title">업스케일링</string>
-    <string name="preferences_fsr_upscaling_summary">스트림이 720p로 설정되고 업스케일링이 활성화되면 1080p로 업스케일됩니다. 스트림이 1080p로 설정되고 업스케일링이 활성화되면 1440p로 업스케일됩니다. 참고: 기기의 최대 해상도가 1080p인 경우 Android가 1440p 출력을 1080p로 다운샘플링하여 화면이 흐릿해질 수 있습니다. 이런 경우 업스케일링을 비활성화하세요.</string>
+    <string name="preferences_fsr_upscaling_summary">스트림이 720p로 설정되고 업스케일링이 활성화되면 1080p로 업스케일됩니다. 스트림이 1080p로 설정되면 1440p로 업스케일됩니다. 스트림이 1440p로 설정되면 2160p(4K)로 업스케일됩니다. 참고: 기기의 최대 해상도가 이 업스케일 목표보다 낮은 경우 Android가 출력을 다운샘플링하여 화면이 흐릿해질 수 있습니다. 이런 경우 업스케일링을 비활성화하세요.</string>
     <string name="preferences_fsr_sharpening_title">샤프닝</string>
     <string name="quick_settings_fsr_sharpening">샤프닝: %d%%</string>
     <string name="preferences_category_title_image_quality">화질</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">스트림을 다시 시작한 후 적용됨</string>
     <string name="preferences_fsr_output_720">720p 스트림 → 1080p 출력</string>
     <string name="preferences_fsr_output_1080">1080p 스트림 → 1440p 출력</string>
-    <string name="preferences_fsr_output_downsample">1080p 스트림 → 1440p 출력; 이 %1$dp 디스플레이는 이를 다운샘플링하여 화면이 흐릿해질 수 있습니다. 이런 경우 업스케일링을 비활성화하세요.</string>
+    <string name="preferences_fsr_output_1440">1440p 스트림 → 2160p(4K) 출력</string>
+    <string name="preferences_fsr_output_downsample">%1$dp 스트림 → %2$dp 출력; 이 %3$dp 디스플레이는 이를 다운샘플링하여 화면이 흐릿해질 수 있습니다. 이런 경우 업스케일링을 비활성화하세요.</string>
     <string name="preferences_fsr_output_unchanged">%1$dp 스트림; FSR 업스케일이 적용되지 않음</string>
     <string name="preferences_fsr_output_all">리모트 플레이: %1$s\n게임 라이브러리: %2$s\n게임 카탈로그: %3$s</string>
     <string name="quick_settings_image_quality">화질 · 즉시 적용됨</string>
@@ -354,16 +355,18 @@
         <item>자동 (최적의 핑)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">전체</string>
@@ -643,6 +646,7 @@
     <string name="controller_group_menu">메뉴</string>
     <string name="controller_group_system">시스템</string>
     <string name="controller_group_touchpad">터치패드</string>
+    <string name="controller_group_app">앱</string>
 
     <string name="controller_action_left_stick_up">왼쪽 스틱 위</string>
     <string name="controller_action_left_stick_down">왼쪽 스틱 아래</string>
@@ -677,6 +681,7 @@
     <string name="controller_action_touchpad_swipe_down">터치패드 아래로 스와이프</string>
     <string name="controller_action_touchpad_swipe_left">터치패드 왼쪽으로 스와이프</string>
     <string name="controller_action_touchpad_swipe_right">터치패드 오른쪽으로 스와이프</string>
+    <string name="controller_action_open_quick_settings">퀵 설정 열기</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">라이브러리에 게임 추가</string>

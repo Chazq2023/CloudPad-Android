@@ -382,6 +382,7 @@ class Preferences(context: Context)
 	private val PSN_AUTH_TOKEN_EXPIRY_KEY = "psn_rp_auth_token_expiry"
 	private val PSN_ACCOUNT_ID_KEY = "psn_rp_account_id"
 	private val PSN_DUID_KEY = "psn_rp_duid"
+	private val CLOUD_DUID_KEY = "cloud_duid"
 	private val PSN_AVATAR_URL_KEY = "psn_avatar_url"
 
 	var psnAuthToken: String
@@ -405,6 +406,19 @@ class Preferences(context: Context)
 	var psnDuid: String
 		get() = sharedPreferences.getString(PSN_DUID_KEY, "") ?: ""
 		set(value) { sharedPreferences.edit().putString(PSN_DUID_KEY, value).apply() }
+
+	/** Client device DUID for Cloud Play (PSNOW/PSCLOUD) auth — separate value from [psnDuid]
+	 *  since Sony treats Remote Play and Cloud Play as distinct auth contexts, but must be
+	 *  generated once per install and reused the same way: Sony's authorization/session endpoints
+	 *  see this as a stable per-device identifier, and a value that changes on every single
+	 *  session-start attempt looks like the same account being accessed from a new "device" each
+	 *  time — a pattern anti-fraud systems are specifically built to flag and eventually reject,
+	 *  regardless of how valid the NPSSO/subscription actually is. (Was previously regenerated
+	 *  fresh on every call in CloudStreamingBackend instead of being persisted here — see git
+	 *  history for the fix.) */
+	var cloudDuid: String
+		get() = sharedPreferences.getString(CLOUD_DUID_KEY, "") ?: ""
+		set(value) { sharedPreferences.edit().putString(CLOUD_DUID_KEY, value).apply() }
 
 	/** Cached signed-in profile picture URL, shown as the main screen's account icon — fetched
 	 *  lazily (see MainActivity) rather than at login time, so login itself doesn't grow another

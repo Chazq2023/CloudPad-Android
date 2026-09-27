@@ -2,10 +2,13 @@
 
 Join our discord for all of the latest CloudPad news and updates!  
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/KvFaS4f8pk)
+[![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?logo=youtube&logoColor=white)](https://youtube.com/@cloudpaddev?si=nLK2s43MTzsx_Nlv)
 
 # CloudPad
 
 CloudPad streams your PlayStation games to Android — either straight from Sony's cloud catalog, or from your own console over Remote Play — with an interface built for touchscreens, handhelds, and TV-style devices.
+
+<video src="https://github.com/user-attachments/assets/a61e061c-3658-4bf9-84ce-a7ad82f64578" controls width="600"></video>
 
 ## Table of Contents
 

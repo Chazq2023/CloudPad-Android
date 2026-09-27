@@ -23,6 +23,10 @@ class StreamInput(
 ) {
 	var controllerStateChangedCallback: ((ControllerState) -> Unit)? = null
 
+	/** Fired on a press of whatever is mapped to [ControllerAction.OPEN_QUICK_SETTINGS] — see
+	 *  that action's own doc comment. Set by StreamActivity to toggle its Quick Settings panel. */
+	var onOpenQuickSettings: (() -> Unit)? = null
+
 	val controllerState: ControllerState get() =
 		mergeControllerStates(sensorControllerState, keyControllerState, motionControllerState, touchControllerState, cachedRotation)
 
@@ -104,6 +108,28 @@ class StreamInput(
 		keyControllerState.l2State = 0U
 		keyControllerState.r2State = 0U
 		controllerStateUpdated()
+	}
+
+	/** Whether [keyCode] matches whatever is currently mapped to
+	 *  [ControllerAction.OPEN_QUICK_SETTINGS] — a plain button binding, or just the trigger half
+	 *  of a combo (the modifier isn't required to still be held: by the time anything could call
+	 *  this, the panel that action opens is already showing, so the accidental-trigger concern a
+	 *  combo modifier normally guards against no longer applies — closing should just be easy).
+	 *
+	 *  QuickSettingsPanel's own Dialog window takes input ahead of this class's own
+	 *  dispatchKeyEvent while it's showing (see that Dialog's doc comment), so a press that would
+	 *  otherwise close the panel by re-triggering OPEN_QUICK_SETTINGS the normal way never reaches
+	 *  dispatchKeyEvent at all — only KEYCODE_BACK/BUTTON_B do, via that Dialog's own hardcoded
+	 *  close handling. This lets it also honour whatever the user actually remapped the action to
+	 *  instead of only ever closing via those two fixed keys. */
+	fun isOpenQuickSettingsKeyCode(keyCode: Int): Boolean
+	{
+		return when(val input = activeMapping[ControllerAction.OPEN_QUICK_SETTINGS])
+		{
+			is PhysicalInput.Button -> input.keyCode == keyCode
+			is PhysicalInput.Combo -> (input.trigger as? PhysicalInput.Button)?.keyCode == keyCode
+			else -> false
+		}
 	}
 
 	// ---- Sensor / lifecycle ----
@@ -378,6 +404,7 @@ class StreamInput(
 			ControllerAction.TOUCHPAD_SWIPE_DOWN -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_DOWN)
 			ControllerAction.TOUCHPAD_SWIPE_LEFT -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_LEFT)
 			ControllerAction.TOUCHPAD_SWIPE_RIGHT -> quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_RIGHT)
+			ControllerAction.OPEN_QUICK_SETTINGS -> onOpenQuickSettings?.invoke()
 			else -> {
 				val mask = actionToButtonMask(action) ?: return
 				keyControllerState.buttons = keyControllerState.buttons or mask
@@ -393,11 +420,12 @@ class StreamInput(
 			ControllerAction.L2 -> { keyControllerState.l2State = 0U; controllerStateUpdated() }
 			ControllerAction.R2 -> { keyControllerState.r2State = 0U; controllerStateUpdated() }
 			ControllerAction.TOUCHPAD_HOLD -> stopTouchpadHold()
-			// Tap/swipe actions are fire-and-forget; quickTouchpadTap/Swipe handle their own cleanup
+			// Tap/swipe/quick-settings actions are fire-and-forget; pressAction already did
+			// everything they do, and there's no console-side button bit to clear on release.
 			ControllerAction.TOUCHPAD_CLICK, ControllerAction.TOUCHPAD_LEFT_CLICK,
 			ControllerAction.TOUCHPAD_RIGHT_CLICK, ControllerAction.TOUCHPAD_SWIPE_UP,
 			ControllerAction.TOUCHPAD_SWIPE_DOWN, ControllerAction.TOUCHPAD_SWIPE_LEFT,
-			ControllerAction.TOUCHPAD_SWIPE_RIGHT -> {}
+			ControllerAction.TOUCHPAD_SWIPE_RIGHT, ControllerAction.OPEN_QUICK_SETTINGS -> {}
 			else -> {
 				val mask = actionToButtonMask(action) ?: return
 				keyControllerState.buttons = keyControllerState.buttons and mask.inv()
@@ -414,7 +442,7 @@ class StreamInput(
 			ControllerAction.TOUCHPAD_CLICK, ControllerAction.TOUCHPAD_LEFT_CLICK,
 			ControllerAction.TOUCHPAD_RIGHT_CLICK, ControllerAction.TOUCHPAD_SWIPE_UP,
 			ControllerAction.TOUCHPAD_SWIPE_DOWN, ControllerAction.TOUCHPAD_SWIPE_LEFT,
-			ControllerAction.TOUCHPAD_SWIPE_RIGHT -> {}
+			ControllerAction.TOUCHPAD_SWIPE_RIGHT, ControllerAction.OPEN_QUICK_SETTINGS -> {}
 			else -> handler.postDelayed({ releaseAction(action) }, 80)
 		}
 	}
@@ -424,6 +452,8 @@ class StreamInput(
 	// Actions that fire as a momentary pulse rather than being held for the key duration.
 	// TOUCHPAD_CLICK is included so it never overlaps with BUTTON_SHARE when both are on
 	// the same physical key — the brief BUTTON_TOUCHPAD pulse fires then clears independently.
+	// OPEN_QUICK_SETTINGS has no held state to speak of at all — it's a local UI toggle, not a
+	// button sent to the console — so it belongs here for the same "fire once, don't hold" reason.
 	private fun isQuickPressAction(action: ControllerAction) =
 		action == ControllerAction.TOUCHPAD_CLICK
 		|| action == ControllerAction.TOUCHPAD_LEFT_CLICK
@@ -432,6 +462,7 @@ class StreamInput(
 		|| action == ControllerAction.TOUCHPAD_SWIPE_DOWN
 		|| action == ControllerAction.TOUCHPAD_SWIPE_LEFT
 		|| action == ControllerAction.TOUCHPAD_SWIPE_RIGHT
+		|| action == ControllerAction.OPEN_QUICK_SETTINGS
 
 	private fun onComboModifierDown(keyCode: Int)
 	{
@@ -591,6 +622,7 @@ class StreamInput(
 				ControllerAction.TOUCHPAD_SWIPE_DOWN -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_DOWN) }
 				ControllerAction.TOUCHPAD_SWIPE_LEFT -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_LEFT) }
 				ControllerAction.TOUCHPAD_SWIPE_RIGHT -> { if(isDown) quickTouchpadSwipe(KeyEvent.KEYCODE_DPAD_RIGHT) }
+				ControllerAction.OPEN_QUICK_SETTINGS -> { if(isDown) onOpenQuickSettings?.invoke() }
 				else -> {
 					val buttonMask = actionToButtonMask(action) ?: continue
 					keyControllerState.buttons = if(isDown) keyControllerState.buttons or buttonMask

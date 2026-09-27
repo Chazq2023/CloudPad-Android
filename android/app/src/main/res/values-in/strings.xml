@@ -256,7 +256,7 @@
     <string name="preferences_fsr_enabled_title">Aktifkan FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Aktifkan upscaling dan penajaman AMD FidelityFX</string>
     <string name="preferences_fsr_upscaling_title">Upscaling</string>
-    <string name="preferences_fsr_upscaling_summary">Jika stream diatur ke 720p dan Upscaling diaktifkan, gambar akan di-upscale ke 1080p. Jika stream diatur ke 1080p dan Upscaling diaktifkan, gambar akan di-upscale ke 1440p. Perlu diperhatikan: jika resolusi maksimum perangkat Anda adalah 1080p, Android akan menurunkan output 1440p ke 1080p, yang dapat membuat gambar buram. Dalam situasi ini, biarkan Upscaling dinonaktifkan.</string>
+    <string name="preferences_fsr_upscaling_summary">Jika stream diatur ke 720p dan Upscaling diaktifkan, gambar akan di-upscale ke 1080p. Jika stream diatur ke 1080p, gambar akan di-upscale ke 1440p. Jika stream diatur ke 1440p, gambar akan di-upscale ke 2160p (4K). Perlu diperhatikan: jika resolusi maksimum perangkat Anda lebih rendah dari target upscale tersebut, Android akan menurunkan output tersebut, yang dapat membuat gambar buram. Dalam situasi ini, biarkan Upscaling dinonaktifkan.</string>
     <string name="preferences_fsr_sharpening_title">Penajaman</string>
     <string name="quick_settings_fsr_sharpening">Penajaman: %d%%</string>
     <string name="preferences_category_title_image_quality">Kualitas Gambar</string>
@@ -272,7 +272,8 @@
     <string name="preferences_restarts_stream">Diterapkan setelah stream dimulai ulang</string>
     <string name="preferences_fsr_output_720">Stream 720p → output 1080p</string>
     <string name="preferences_fsr_output_1080">Stream 1080p → output 1440p</string>
-    <string name="preferences_fsr_output_downsample">Stream 1080p → output 1440p; layar %1$dp ini akan menurunkannya dan gambar mungkin terlihat lebih lembut. Jika demikian, biarkan Upscaling dinonaktifkan.</string>
+    <string name="preferences_fsr_output_1440">Stream 1440p → output 2160p (4K)</string>
+    <string name="preferences_fsr_output_downsample">Stream %1$dp → output %2$dp; layar %3$dp ini akan menurunkannya dan gambar mungkin terlihat lebih lembut. Jika demikian, biarkan Upscaling dinonaktifkan.</string>
     <string name="preferences_fsr_output_unchanged">Stream %1$dp; tanpa upscale FSR</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nPustaka Game: %2$s\nKatalog Game: %3$s</string>
     <string name="quick_settings_image_quality">Kualitas Gambar · Berlaku segera</string>
@@ -577,6 +578,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">Sistem</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">Aplikasi</string>
     <string name="controller_action_left_stick_up">Stik Kiri Atas</string>
     <string name="controller_action_left_stick_down">Stik Kiri Bawah</string>
     <string name="controller_action_left_stick_left">Stik Kiri Kiri</string>
@@ -610,6 +612,7 @@
     <string name="controller_action_touchpad_swipe_down">Usap Touchpad ke Bawah</string>
     <string name="controller_action_touchpad_swipe_left">Usap Touchpad ke Kiri</string>
     <string name="controller_action_touchpad_swipe_right">Usap Touchpad ke Kanan</string>
+    <string name="controller_action_open_quick_settings">Buka Pengaturan Cepat</string>
 
     <string-array name="theme_colour_entries">
         <item>Neon Merah Muda</item>

@@ -191,7 +191,18 @@ typedef struct chiaki_takion_postponed_packet_t
 	size_t buf_size;
 } ChiakiTakionPostponedPacket;
 
+typedef struct chiaki_takion_recv_queue_entry_t
+{
+	uint8_t *buf;
+	size_t buf_size;
+	struct chiaki_takion_recv_queue_entry_t *next;
+} TakionRecvQueueEntry;
+
 static void *takion_thread_func(void *user);
+static void *takion_recv_thread_func(void *user);
+static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t buf_size);
+static TakionRecvQueueEntry *takion_recv_queue_pop(ChiakiTakion *takion);
+static void takion_recv_queue_fini(ChiakiTakion *takion);
 static void takion_handle_packet(ChiakiTakion *takion, uint8_t *buf, size_t buf_size);
 static ChiakiErrorCode takion_handle_packet_mac(ChiakiTakion *takion, uint8_t base_type, uint8_t *buf, size_t buf_size);
 static void takion_handle_packet_message(ChiakiTakion *takion, uint8_t *buf, size_t buf_size);
@@ -258,6 +269,18 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 	takion->postponed_packets_count = 0;
 	takion->enable_dualsense = info->enable_dualsense;
 
+	takion->recv_thread_started = false;
+	takion->recv_thread_should_stop = false;
+	takion->recv_queue_head = NULL;
+	takion->recv_queue_tail = NULL;
+	takion->recv_queue_count = 0;
+	ret = chiaki_mutex_init(&takion->recv_queue_mutex, false);
+	if(ret != CHIAKI_ERR_SUCCESS)
+		goto error_seq_num_local_mutex;
+	ret = chiaki_cond_init(&takion->recv_queue_cond);
+	if(ret != CHIAKI_ERR_SUCCESS)
+		goto error_recv_queue_mutex;
+
 	CHIAKI_LOGI(takion->log, "Takion connecting (version %u, service_type: %s)", (unsigned int)info->protocol_version,
 		chiaki_service_type_string(takion->service_type));
 	bool mac_dontfrag = true;
@@ -266,7 +289,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		CHIAKI_LOGE(takion->log, "Takion failed to create stop pipe");
-		goto error_seq_num_local_mutex;
+		ret = err;
+		goto error_recv_queue_cond;
 	}
 
 	if(sock)
@@ -297,6 +321,14 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 				rcvbuf_val,
 				actual_rcvbuf
 			);
+			// Linux (and Android) doubles whatever it accepts for bookkeeping overhead, so actual
+			// is normally ~2x requested. If it instead comes back *below* what we asked for, the
+			// OS (net.core.rmem_max or an Android-imposed cap) silently capped us rather than
+			// granting the request: the buffer meant to absorb bursts under load is smaller than
+			// intended, so packets get dropped inside the phone once it fills — a drop that's
+			// indistinguishable from real network packet loss unless this is called out.
+			if(actual_rcvbuf < rcvbuf_val)
+				CHIAKI_LOGW(takion->log, "Takion SO_RCVBUF was capped below the requested size (requested=%d actual=%d) — burst tolerance is reduced, some packet loss may be an internal buffer overflow rather than network loss", rcvbuf_val, actual_rcvbuf);
 		}
 		else
 		{
@@ -404,6 +436,11 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 				rcvbuf_val,
 				actual_rcvbuf
 			);
+			// See the matching comment in the other chiaki_takion_connect socket-setup branch
+			// above: actual coming back below requested means the OS capped the buffer instead
+			// of granting it, so bursts can overflow it and get dropped internally.
+			if(actual_rcvbuf < rcvbuf_val)
+				CHIAKI_LOGW(takion->log, "Takion SO_RCVBUF was capped below the requested size (requested=%d actual=%d) — burst tolerance is reduced, some packet loss may be an internal buffer overflow rather than network loss", rcvbuf_val, actual_rcvbuf);
 		}
 		else
 		{
@@ -511,6 +548,10 @@ error_sock:
 	}
 error_pipe:
 	chiaki_stop_pipe_fini(&takion->stop_pipe);
+error_recv_queue_cond:
+	chiaki_cond_fini(&takion->recv_queue_cond);
+error_recv_queue_mutex:
+	chiaki_mutex_fini(&takion->recv_queue_mutex);
 error_seq_num_local_mutex:
 	chiaki_mutex_fini(&takion->seq_num_local_mutex);
 error_gkcrypt_local_mutex:
@@ -521,8 +562,16 @@ error_gkcrypt_local_mutex:
 CHIAKI_EXPORT void chiaki_takion_close(ChiakiTakion *takion)
 {
 	chiaki_stop_pipe_stop(&takion->stop_pipe);
+	// recv_thread is blocked in select() on takion->sock via the stop pipe; stopping the pipe
+	// wakes it with an error, which makes it signal recv_thread_should_stop and exit. Join it
+	// before takion->thread, which drains any packets recv_thread queued up right up to that
+	// point and then exits itself once it observes recv_thread_should_stop on an empty queue.
+	if(takion->recv_thread_started)
+		chiaki_thread_join(&takion->recv_thread, NULL);
 	chiaki_thread_join(&takion->thread, NULL);
 	chiaki_stop_pipe_fini(&takion->stop_pipe);
+	chiaki_cond_fini(&takion->recv_queue_cond);
+	chiaki_mutex_fini(&takion->recv_queue_mutex);
 	chiaki_mutex_fini(&takion->seq_num_local_mutex);
 	chiaki_mutex_fini(&takion->gkcrypt_local_mutex);
 }
@@ -1098,6 +1147,16 @@ static void *takion_thread_func(void *user)
 	if(chiaki_takion_send_buffer_init(&takion->send_buffer, takion, TAKION_SEND_BUFFER_SIZE) != CHIAKI_ERR_SUCCESS)
 		goto error_reoder_queue;
 
+	// See the recv_thread field comment in takion.h: recv_thread does nothing but recv() off the
+	// socket and hand packets to this thread through recv_queue_*, so this thread's own
+	// processing time (MAC check, decrypt, frame reassembly below) never delays the next recv().
+	if(chiaki_thread_create(&takion->recv_thread, takion_recv_thread_func, takion) != CHIAKI_ERR_SUCCESS)
+	{
+		CHIAKI_LOGE(takion->log, "Takion failed to create recv thread");
+		goto error_recv_thread;
+	}
+	takion->recv_thread_started = true;
+	chiaki_thread_set_name(&takion->recv_thread, "Chiaki Takion Recv");
 
 	if(takion->cb)
 	{
@@ -1149,28 +1208,19 @@ static void *takion_thread_func(void *user)
 			takion->postponed_packets_count = 0;
 		}
 
-		size_t received_size = 1500;
-		uint8_t *buf = malloc(received_size); // TODO: no malloc?
-		if(!buf)
-			break;
-		ChiakiErrorCode err = takion_recv(takion, buf, &received_size, UINT64_MAX);
-		if(err != CHIAKI_ERR_SUCCESS)
-		{
-			free(buf);
-			break;
-		}
-		
-		// CHIAKI_LOGV(takion->log, "Takion received packet: %zu bytes, type=%#x", received_size, buf[0]);
-		
-		uint8_t *resized_buf = realloc(buf, received_size);
-		if(!resized_buf)
-		{
-		    free(buf);
-		    continue;
-		}
-		takion_handle_packet(takion, resized_buf, received_size);
+		TakionRecvQueueEntry *entry = takion_recv_queue_pop(takion);
+		if(!entry)
+			break; // recv_thread stopped (socket closed/canceled) and the queue is fully drained
+
+		// CHIAKI_LOGV(takion->log, "Takion received packet: %zu bytes, type=%#x", entry->buf_size, entry->buf[0]);
+
+		takion_handle_packet(takion, entry->buf, entry->buf_size); // takes ownership of entry->buf
+		free(entry);
 	}
 
+	takion_recv_queue_fini(takion);
+
+error_recv_thread:
 	chiaki_takion_send_buffer_fini(&takion->send_buffer);
 
 error_reoder_queue:
@@ -1192,6 +1242,126 @@ beach:
 		}
 	}
 	return NULL;
+}
+
+/**
+ * Runs on takion->recv_thread. Does nothing but recv() off the socket and hand each packet to
+ * takion_thread_func through the recv_queue, so the socket is drained as fast as the OS can
+ * deliver regardless of how long packet processing (MAC check, decrypt, frame reassembly) takes
+ * on the other thread. Exits once takion_recv reports the connection is closed/canceled (e.g.
+ * chiaki_takion_close calling chiaki_stop_pipe_stop), and signals takion_thread_func to stop via
+ * recv_thread_should_stop once it does.
+ */
+static void *takion_recv_thread_func(void *user)
+{
+	ChiakiTakion *takion = user;
+
+#if defined(__ANDROID__)
+	// Same reasoning as the priority boost in takion_thread_func: this is now the thread that
+	// actually calls recv(), so it's the one that must be scheduled promptly to keep draining the
+	// kernel socket buffer before it fills and the OS starts silently dropping packets.
+	setpriority(PRIO_PROCESS, 0, -8);
+#endif
+
+	while(true)
+	{
+		size_t received_size = 1500;
+		uint8_t *buf = malloc(received_size); // TODO: no malloc?
+		if(!buf)
+			break;
+		ChiakiErrorCode err = takion_recv(takion, buf, &received_size, UINT64_MAX);
+		if(err != CHIAKI_ERR_SUCCESS)
+		{
+			free(buf);
+			break;
+		}
+
+		uint8_t *resized_buf = realloc(buf, received_size);
+		if(!resized_buf)
+		{
+			free(buf);
+			continue;
+		}
+		takion_recv_queue_push(takion, resized_buf, received_size);
+	}
+
+	chiaki_mutex_lock(&takion->recv_queue_mutex);
+	takion->recv_thread_should_stop = true;
+	chiaki_mutex_unlock(&takion->recv_queue_mutex);
+	chiaki_cond_signal(&takion->recv_queue_cond);
+
+	return NULL;
+}
+
+/** Takes ownership of buf. */
+static void takion_recv_queue_push(ChiakiTakion *takion, uint8_t *buf, size_t buf_size)
+{
+	TakionRecvQueueEntry *entry = malloc(sizeof(TakionRecvQueueEntry));
+	if(!entry)
+	{
+		free(buf);
+		return;
+	}
+	entry->buf = buf;
+	entry->buf_size = buf_size;
+	entry->next = NULL;
+
+	chiaki_mutex_lock(&takion->recv_queue_mutex);
+	if(takion->recv_queue_tail)
+		takion->recv_queue_tail->next = entry;
+	else
+		takion->recv_queue_head = entry;
+	takion->recv_queue_tail = entry;
+	takion->recv_queue_count++;
+	size_t count = takion->recv_queue_count;
+	chiaki_mutex_unlock(&takion->recv_queue_mutex);
+
+	chiaki_cond_signal(&takion->recv_queue_cond);
+
+	// A backlog here means packet processing can't keep up with what the network is delivering —
+	// worth surfacing distinctly from network-side packet loss, since it still shows up as the
+	// same stutter/frame-gap symptoms downstream.
+	if(count > 0 && count % 256 == 0)
+		CHIAKI_LOGW(takion->log, "Takion recv queue backlog at %llu packet(s) — packet processing is falling behind the network", (unsigned long long)count);
+}
+
+/** Blocks until a packet is available or recv_thread has stopped and the queue is empty (returns
+ *  NULL in that case). Caller takes ownership of the returned entry (and its buf) and must free()
+ *  it. */
+static TakionRecvQueueEntry *takion_recv_queue_pop(ChiakiTakion *takion)
+{
+	chiaki_mutex_lock(&takion->recv_queue_mutex);
+	while(!takion->recv_queue_head && !takion->recv_thread_should_stop)
+		chiaki_cond_wait(&takion->recv_queue_cond, &takion->recv_queue_mutex);
+
+	TakionRecvQueueEntry *entry = takion->recv_queue_head;
+	if(entry)
+	{
+		takion->recv_queue_head = entry->next;
+		if(!takion->recv_queue_head)
+			takion->recv_queue_tail = NULL;
+		takion->recv_queue_count--;
+	}
+	chiaki_mutex_unlock(&takion->recv_queue_mutex);
+
+	return entry;
+}
+
+/** Frees any packets left in the queue without processing them. Only has real work to do if
+ *  takion_thread_func exits some way other than draining the queue via takion_recv_queue_pop(). */
+static void takion_recv_queue_fini(ChiakiTakion *takion)
+{
+	TakionRecvQueueEntry *entry = takion->recv_queue_head;
+	while(entry)
+	{
+		TakionRecvQueueEntry *next = entry->next;
+		free(entry->buf);
+		free(entry);
+		entry = next;
+	}
+	takion->recv_queue_head = NULL;
+	takion->recv_queue_tail = NULL;
+	takion->recv_queue_count = 0;
 }
 
 static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *buf_size, uint64_t timeout_ms)

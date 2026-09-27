@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">Activar FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Activa el escalado y la nitidez AMD FidelityFX</string>
     <string name="preferences_fsr_upscaling_title">Escalado</string>
-    <string name="preferences_fsr_upscaling_summary">Si la transmisión está configurada a 720p y el escalado está activado, se escalará a 1080p. Si está configurada a 1080p y el escalado está activado, se escalará a 1440p. Ten en cuenta: si la resolución máxima de tu dispositivo es 1080p, Android reducirá la salida de 1440p a 1080p, lo que puede hacer que la imagen se vea borrosa. En ese caso, deja el escalado desactivado.</string>
+    <string name="preferences_fsr_upscaling_summary">Si la transmisión está configurada a 720p y el escalado está activado, se escalará a 1080p. Si está configurada a 1080p, se escalará a 1440p. Si está configurada a 1440p, se escalará a 2160p (4K). Ten en cuenta: si la resolución máxima de tu dispositivo es menor que ese objetivo de escalado, Android reducirá la salida, lo que puede hacer que la imagen se vea borrosa. En ese caso, deja el escalado desactivado.</string>
     <string name="preferences_fsr_sharpening_title">Nitidez</string>
     <string name="quick_settings_fsr_sharpening">Nitidez: %d%%</string>
     <string name="preferences_category_title_image_quality">Calidad de imagen</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">Se aplica al reiniciar la transmisión</string>
     <string name="preferences_fsr_output_720">Transmisión a 720p → salida a 1080p</string>
     <string name="preferences_fsr_output_1080">Transmisión a 1080p → salida a 1440p</string>
-    <string name="preferences_fsr_output_downsample">Transmisión a 1080p → salida a 1440p; esta pantalla de %1$dp la reducirá y puede verse menos nítida. Si es el caso, deja el escalado desactivado.</string>
+    <string name="preferences_fsr_output_1440">Transmisión a 1440p → salida a 2160p (4K)</string>
+    <string name="preferences_fsr_output_downsample">Transmisión a %1$dp → salida a %2$dp; esta pantalla de %3$dp la reducirá y puede verse menos nítida. Si es el caso, deja el escalado desactivado.</string>
     <string name="preferences_fsr_output_unchanged">Transmisión a %1$dp; sin escalado FSR aplicado</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nBiblioteca de juegos: %2$s\nCatálogo de juegos: %3$s</string>
     <string name="quick_settings_image_quality">Calidad de imagen · Se aplica inmediatamente</string>
@@ -354,16 +355,18 @@
         <item>Automático (mejor ping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">Completo</string>
@@ -608,6 +611,7 @@
     <string name="controller_group_menu">Menú</string>
     <string name="controller_group_system">Sistema</string>
     <string name="controller_group_touchpad">Panel táctil</string>
+    <string name="controller_group_app">Aplicación</string>
 
     <string name="controller_action_left_stick_up">Stick izquierdo arriba</string>
     <string name="controller_action_left_stick_down">Stick izquierdo abajo</string>
@@ -642,6 +646,7 @@
     <string name="controller_action_touchpad_swipe_down">Deslizar hacia abajo en el panel táctil</string>
     <string name="controller_action_touchpad_swipe_left">Deslizar hacia la izquierda en el panel táctil</string>
     <string name="controller_action_touchpad_swipe_right">Deslizar hacia la derecha en el panel táctil</string>
+    <string name="controller_action_open_quick_settings">Abrir ajustes rápidos</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Añadir un juego a la biblioteca</string>

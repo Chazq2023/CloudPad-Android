@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">Attiva FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Attiva l\'upscaling e la nitidezza AMD FidelityFX</string>
     <string name="preferences_fsr_upscaling_title">Upscaling</string>
-    <string name="preferences_fsr_upscaling_summary">Se lo stream è impostato su 720p e l\'Upscaling è attivo, verrà portato a 1080p. Se lo stream è impostato su 1080p e l\'Upscaling è attivo, verrà portato a 1440p. Nota: se la risoluzione massima del tuo dispositivo è 1080p, Android eseguirà il downsampling dell\'output a 1440p riportandolo a 1080p, il che può causare un\'immagine sfocata. In questo caso, lascia l\'Upscaling disattivato.</string>
+    <string name="preferences_fsr_upscaling_summary">Se lo stream è impostato su 720p e l\'Upscaling è attivo, verrà portato a 1080p. Se è impostato su 1080p, verrà portato a 1440p. Se è impostato su 1440p, verrà portato a 2160p (4K). Nota: se la risoluzione massima del tuo dispositivo è inferiore a questo obiettivo di upscaling, Android eseguirà il downsampling dell\'output, il che può causare un\'immagine sfocata. In questo caso, lascia l\'Upscaling disattivato.</string>
     <string name="preferences_fsr_sharpening_title">Nitidezza</string>
     <string name="quick_settings_fsr_sharpening">Nitidezza: %d%%</string>
     <string name="preferences_category_title_image_quality">Qualità immagine</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">Applicato dopo il riavvio dello stream</string>
     <string name="preferences_fsr_output_720">Stream 720p → output 1080p</string>
     <string name="preferences_fsr_output_1080">Stream 1080p → output 1440p</string>
-    <string name="preferences_fsr_output_downsample">Stream 1080p → output 1440p; questo display da %1$dp eseguirà il downsampling e l\'immagine potrebbe risultare più sfocata. In questo caso, lascia l\'Upscaling disattivato.</string>
+    <string name="preferences_fsr_output_1440">Stream 1440p → output 2160p (4K)</string>
+    <string name="preferences_fsr_output_downsample">Stream %1$dp → output %2$dp; questo display da %3$dp eseguirà il downsampling e l\'immagine potrebbe risultare più sfocata. In questo caso, lascia l\'Upscaling disattivato.</string>
     <string name="preferences_fsr_output_unchanged">Stream a %1$dp; nessun upscaling FSR applicato</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nLibreria giochi: %2$s\nCatalogo giochi: %3$s</string>
     <string name="quick_settings_image_quality">Qualità immagine · Si applica immediatamente</string>
@@ -354,16 +355,18 @@
         <item>Automatico (miglior ping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">Completo</string>
@@ -607,6 +610,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">Sistema</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">App</string>
 
     <string name="controller_action_left_stick_up">Levetta sinistra su</string>
     <string name="controller_action_left_stick_down">Levetta sinistra giù</string>
@@ -641,6 +645,7 @@
     <string name="controller_action_touchpad_swipe_down">Scorrimento touchpad giù</string>
     <string name="controller_action_touchpad_swipe_left">Scorrimento touchpad sinistra</string>
     <string name="controller_action_touchpad_swipe_right">Scorrimento touchpad destra</string>
+    <string name="controller_action_open_quick_settings">Apri Impostazioni rapide</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Aggiungi un gioco alla libreria</string>

@@ -189,14 +189,41 @@ class QuickSettingsPanel(
 		setOnKeyListener { _, keyCode, event ->
 			when
 			{
+				// The press that opens this dialog fires OPEN_QUICK_SETTINGS on its ACTION_DOWN,
+				// while the Activity still owns input and this Dialog isn't showing yet (see
+				// isOpenQuickSettingsKeyCode's doc comment) — dialog.show() only takes over
+				// input starting with the *next* event, which is that same press's trailing
+				// ACTION_UP. Without tracking this, that leftover release looked identical to a
+				// genuine second press once it arrived here and closed the panel immediately
+				// after opening it. Requiring both halves to have been seen here (not just the
+				// UP) filters that leftover release out, since its ACTION_DOWN went to the
+				// Activity instead and this Dialog never saw it.
+				event.action == KeyEvent.ACTION_DOWN && streamInput.isOpenQuickSettingsKeyCode(keyCode) ->
+				{
+					openQuickSettingsKeyDownSeen = true
+					false
+				}
 				event.action != KeyEvent.ACTION_UP -> false
 				keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B ->
 				{
-					when
+					// This branch's own step-back-then-close is otherwise unconditional (Circle's
+					// dedicated close shortcut always was, regardless of what opens the panel) —
+					// except when this exact key is ALSO the current Open Quick Settings trigger
+					// (its default, but back specifically can be remapped anywhere, including
+					// right back onto itself) and this dialog never saw its ACTION_DOWN, meaning
+					// this is the same leftover opening-press release the branch above exists to
+					// filter out for every other key mapped to the action — this hardcoded branch
+					// runs first in this `when` and would otherwise close on it regardless.
+					val isLeftoverOpenRelease = streamInput.isOpenQuickSettingsKeyCode(keyCode) && !openQuickSettingsKeyDownSeen
+					if(!isLeftoverOpenRelease)
 					{
-						inTrophyCompare -> backFromTrophyCompare()
-						inTabContent -> exitToRailScope()
-						else -> close()
+						openQuickSettingsKeyDownSeen = false
+						when
+						{
+							inTrophyCompare -> backFromTrophyCompare()
+							inTabContent -> exitToRailScope()
+							else -> close()
+						}
 					}
 					true
 				}
@@ -208,6 +235,15 @@ class QuickSettingsPanel(
 					if(wasTabButton) enterContentScope()
 					true
 				}
+				// Whatever the user has ControllerAction.OPEN_QUICK_SETTINGS remapped to (if
+				// anything other than back/circle, already handled above) should also close the
+				// panel it opens — see isOpenQuickSettingsKeyCode's own doc comment for why this
+				// Dialog needs to check for it explicitly rather than that remap just working.
+				streamInput.isOpenQuickSettingsKeyCode(keyCode) ->
+				{
+					if(openQuickSettingsKeyDownSeen) { openQuickSettingsKeyDownSeen = false; close() }
+					true
+				}
 				else -> false
 			}
 		}
@@ -216,6 +252,10 @@ class QuickSettingsPanel(
 	/** True while D-pad focus is inside the currently selected tab's content rather than on the
 	 *  rail — see enterContentScope()/exitToRailScope(). */
 	private var inTabContent = false
+	/** See the matching ACTION_DOWN/ACTION_UP branches in the Dialog's setOnKeyListener above —
+	 *  distinguishes a genuine second press of the Open Quick Settings binding from the trailing
+	 *  release of the press that opened this dialog in the first place. */
+	private var openQuickSettingsKeyDownSeen = false
 	private var customizationView: View? = null
 	private var customizationFirstFocus: View? = null
 	private var customizationFocusables: List<View> = emptyList()
@@ -261,8 +301,11 @@ class QuickSettingsPanel(
 		{
 			720 -> activity.getString(R.string.preferences_fsr_output_720)
 			1080 -> if(displayShortEdge < 1440)
-				activity.getString(R.string.preferences_fsr_output_downsample, displayShortEdge)
+				activity.getString(R.string.preferences_fsr_output_downsample, 1080, 1440, displayShortEdge)
 				else activity.getString(R.string.preferences_fsr_output_1080)
+			1440 -> if(displayShortEdge < 2160)
+				activity.getString(R.string.preferences_fsr_output_downsample, 1440, 2160, displayShortEdge)
+				else activity.getString(R.string.preferences_fsr_output_1440)
 			else -> activity.getString(R.string.preferences_fsr_output_unchanged, sourceHeight)
 		}
 	}
@@ -1393,6 +1436,11 @@ class QuickSettingsPanel(
 	{
 		if(isOpen) return
 		isOpen = true
+		// Defensive: this dialog hasn't taken over input yet at this point (see the field's own
+		// doc comment), so it should always already be false here — but starting every open from
+		// a known-clean state costs nothing and rules out a stale true surviving some path that
+		// closes the dialog other than the setOnKeyListener branch that normally resets it.
+		openQuickSettingsKeyDownSeen = false
 
 		// Re-sync every switch/toggle to the current live value each time the panel opens —
 		// state can change elsewhere while it's closed (e.g. PiP forces On-Screen Controls

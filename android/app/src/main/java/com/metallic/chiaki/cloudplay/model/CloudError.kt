@@ -34,28 +34,34 @@ sealed class CloudError(val message: String, val exception: Exception? = null) {
 		}
 		
 		private fun isAuthenticationError(message: String): Boolean {
+			// Deliberately narrow: handleAuthenticationError() reacts to this by wiping the
+			// stored NPSSO token and forcing the user back through the login flow, so a false
+			// positive here doesn't just show the wrong dialog — it destroys a perfectly valid
+			// login. The previous list included "failed", "login", "token" and "oauth", which are
+			// so generic they match most ordinary network/timeout/parsing failures too (almost
+			// any exception message contains "failed" somewhere), so a plain network hiccup while
+			// loading the catalog could get misdiagnosed as an expired login, clear a working
+			// token, and re-prompt — repeatedly, on every subsequent transient failure, with
+			// nothing actually wrong with the user's login. Kept to specific, low-false-positive
+			// signals: "npsso" alone already matches AuthorizationFailedException's real message
+			// ("Your NPSSO token is likely expired...") without needing the broad ones above.
 			val authKeywords = listOf(
 				"npsso",
-				"expired",
 				"authorization",
-				"oauth",
 				"authentication",
-				"login",
 				"unauthorized",
 				"forbidden",
-				"failed",
-				"token",
 				"401",
 				"403"
 			)
-			
+
 			val lowerMessage = message.lowercase()
 			// Check if message contains any auth keyword
 			val hasAuthKeyword = authKeywords.any { lowerMessage.contains(it) }
-			
+
 			// Log for debugging
 			android.util.Log.d("CloudError", "Checking auth error: '$message' -> hasAuthKeyword=$hasAuthKeyword")
-			
+
 			return hasAuthKeyword
 		}
 		

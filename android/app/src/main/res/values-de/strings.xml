@@ -177,7 +177,7 @@
     <string name="preferences_fsr_enabled_title">FSR 1 aktivieren</string>
     <string name="preferences_fsr_enabled_summary">AMD FidelityFX-Hochskalierung und -Schärfung aktivieren</string>
     <string name="preferences_fsr_upscaling_title">Hochskalierung</string>
-    <string name="preferences_fsr_upscaling_summary">Wenn der Stream auf 720p eingestellt und Hochskalierung aktiviert ist, wird auf 1080p hochskaliert. Wenn der Stream auf 1080p eingestellt und Hochskalierung aktiviert ist, wird auf 1440p hochskaliert. Bitte beachte: Wenn die maximale Auflösung deines Geräts 1080p beträgt, wird Android die 1440p-Ausgabe auf 1080p herunterrechnen, was zu einem unscharfen Bild führen kann. Lasse in diesem Fall die Hochskalierung deaktiviert.</string>
+    <string name="preferences_fsr_upscaling_summary">Wenn der Stream auf 720p eingestellt und Hochskalierung aktiviert ist, wird auf 1080p hochskaliert. Wenn der Stream auf 1080p eingestellt ist, wird auf 1440p hochskaliert. Wenn der Stream auf 1440p eingestellt ist, wird auf 2160p (4K) hochskaliert. Bitte beachte: Wenn die maximale Auflösung deines Geräts niedriger als dieses Hochskalierungsziel ist, wird Android die Ausgabe herunterrechnen, was zu einem unscharfen Bild führen kann. Lasse in diesem Fall die Hochskalierung deaktiviert.</string>
     <string name="preferences_fsr_sharpening_title">Schärfung</string>
     <string name="quick_settings_fsr_sharpening">Schärfung: %d%%</string>
     <string name="preferences_category_title_image_quality">Bildqualität</string>
@@ -193,7 +193,8 @@
     <string name="preferences_restarts_stream">Wird nach einem Neustart des Streams angewendet</string>
     <string name="preferences_fsr_output_720">720p-Stream → 1080p-Ausgabe</string>
     <string name="preferences_fsr_output_1080">1080p-Stream → 1440p-Ausgabe</string>
-    <string name="preferences_fsr_output_downsample">1080p-Stream → 1440p-Ausgabe; dieses %1$dp-Display wird die Ausgabe herunterrechnen, was unschärfer wirken kann. Lasse in diesem Fall die Hochskalierung deaktiviert.</string>
+    <string name="preferences_fsr_output_1440">1440p-Stream → 2160p-Ausgabe (4K)</string>
+    <string name="preferences_fsr_output_downsample">%1$dp-Stream → %2$dp-Ausgabe; dieses %3$dp-Display wird die Ausgabe herunterrechnen, was unschärfer wirken kann. Lasse in diesem Fall die Hochskalierung deaktiviert.</string>
     <string name="preferences_fsr_output_unchanged">%1$dp-Stream; keine FSR-Hochskalierung angewendet</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nSpielebibliothek: %2$s\nSpielekatalog: %3$s</string>
     <string name="quick_settings_image_quality">Bildqualität · Wird sofort angewendet</string>
@@ -351,11 +352,13 @@
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">Vollständig</string>
@@ -633,6 +636,7 @@
     <string name="controller_group_menu">Menü</string>
     <string name="controller_group_system">System</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">App</string>
 
     <string name="controller_action_left_stick_up">Linker Stick nach oben</string>
     <string name="controller_action_left_stick_down">Linker Stick nach unten</string>
@@ -667,6 +671,7 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad nach unten wischen</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad nach links wischen</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad nach rechts wischen</string>
+    <string name="controller_action_open_quick_settings">Schnelleinstellungen öffnen</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Spiel zur Bibliothek hinzufügen</string>

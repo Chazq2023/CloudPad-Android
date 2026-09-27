@@ -85,6 +85,7 @@ class CasVideoSurfaceView @JvmOverloads constructor(
 			{
 				fsrOutputEnabled && sourceHeight == 720 -> holder.setFixedSize(1920, 1080)
 				fsrOutputEnabled && sourceHeight == 1080 -> holder.setFixedSize(2560, 1440)
+				fsrOutputEnabled && sourceHeight == 1440 -> holder.setFixedSize(3840, 2160)
 				else -> holder.setSizeFromLayout()
 			}
 		}
