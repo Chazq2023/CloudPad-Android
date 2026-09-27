@@ -91,7 +91,11 @@ class Preferences(context: Context)
 		val codecAll = Codec.values()
 
 		const val CLOUD_BITRATE_MIN_KBPS = 2000
-		const val CLOUD_BITRATE_MAX_KBPS = 200000
+		// Kept well below what a 1Gbps line could carry: Sony's own clients never ask for anywhere
+		// near 200Mbps, and a request that far out of line risks drawing attention to accounts.
+		// 50Mbps already covers 1440p graphics-mode frames (see the stall tracing in
+		// video-decoder.c). Enforced on read too, so previously saved higher values are clamped.
+		const val CLOUD_BITRATE_MAX_KBPS = 50000
 		const val CLOUD_BITRATE_DEFAULT_KBPS = 20000
 
 		const val CAS_SHARPENING_LEVEL_MIN = 1

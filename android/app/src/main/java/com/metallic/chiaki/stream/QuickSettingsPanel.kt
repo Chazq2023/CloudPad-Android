@@ -1196,7 +1196,8 @@ class QuickSettingsPanel(
 		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
 		sessionRowControls += addSeekBarRow(
 			container, bitrateSummaryRes,
-			min = 2, max = 200, currentValue = currentBitrateMbps
+			min = Preferences.CLOUD_BITRATE_MIN_KBPS / 1000, max = Preferences.CLOUD_BITRATE_MAX_KBPS / 1000,
+			currentValue = currentBitrateMbps
 		) { valueMbps ->
 			pendingCloudSettings = pendingCloudSettings?.copy(bitrateKbps = valueMbps * 1000)
 			updateSessionApplyVisibility()
