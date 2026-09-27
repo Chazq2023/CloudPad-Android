@@ -237,6 +237,11 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 			it.entries = Preferences.VideoPacing.values().map { pacing -> getString(pacing.title) }.toTypedArray()
 		}
 
+		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_congestion_mode_key))?.let {
+			it.entryValues = Preferences.CongestionMode.values().map { mode -> mode.value }.toTypedArray()
+			it.entries = Preferences.CongestionMode.values().map { mode -> getString(mode.title) }.toTypedArray()
+		}
+
 		preferenceScreen.findPreference<ListPreference>(getString(R.string.preferences_app_language_key))?.let {
 			it.entryValues = APP_LANGUAGES.map { (tag, _) -> tag }.toTypedArray()
 			it.entries = APP_LANGUAGES.map { (_, label) -> label }.toTypedArray()

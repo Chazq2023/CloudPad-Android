@@ -48,6 +48,15 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		session?.setVideoPacing(smooth)
 	}
 
+	/** Live Bitrate Adaptation change: congestion control re-reads the limit on every report
+	 *  (~200ms), so it takes effect on the running session without a restart, and is recorded in
+	 *  [connectInfo] for later reconnects. */
+	fun setPacketLossMax(packetLossMax: Float)
+	{
+		connectInfo = connectInfo.copy(packetLossMax = packetLossMax)
+		session?.setPacketLossMax(packetLossMax)
+	}
+
 	private val _state = MutableLiveData<StreamState>(StreamStateIdle)
 	val state: LiveData<StreamState> get() = _state
 
@@ -70,34 +79,44 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 	/** Held for the duration of an active connection so the WiFi radio doesn't drop into
 	 *  power-save mode between packets — without it, the radio dozes and has to wake back up on
 	 *  each new packet, which shows up as erratic 100-300ms RTT spikes on top of otherwise-low
-	 *  ping. Acquired in [resume], released in [shutdown].
+	 *  ping. Acquired in [resume], released in [shutdown] (and early on a quit event, see
+	 *  [eventCallback]).
 	 *
-	 *  Uses WIFI_MODE_FULL_LOW_LATENCY (Android 10+/API 29) rather than WIFI_MODE_FULL_HIGH_PERF:
-	 *  low-latency mode additionally disables background scans and other power-saving behaviour
-	 *  that HIGH_PERF leaves in place, both of which can otherwise stall real-time streaming
-	 *  packets. Falls back to HIGH_PERF below API 29 where LOW_LATENCY doesn't exist. */
+	 *  HIGH_PERF is always held. On Android 10+/API 29 a WIFI_MODE_FULL_LOW_LATENCY lock is held
+	 *  alongside it: low-latency mode additionally disables background scans and other
+	 *  power-saving behaviour that HIGH_PERF leaves in place, but the OS only honours it while the
+	 *  app is foreground with the screen on — so HIGH_PERF stays as the fallback that still
+	 *  covers background streaming and PiP. */
 	private var wifiLock: WifiManager.WifiLock? = null
+	private var wifiLowLatencyLock: WifiManager.WifiLock? = null
 
 	private fun acquireWifiLock()
 	{
-		if(wifiLock != null)
-			return
 		val wifiManager = input.context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager ?: return
-		val lockMode =
-			if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q)
-				WifiManager.WIFI_MODE_FULL_LOW_LATENCY
-			else
-				@Suppress("DEPRECATION") WifiManager.WIFI_MODE_FULL_HIGH_PERF
-		wifiLock = wifiManager.createWifiLock(lockMode, "CloudPad:streaming").apply {
-			setReferenceCounted(false)
-			acquire()
+		if(wifiLock == null)
+		{
+			@Suppress("DEPRECATION")
+			wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "CloudPad:streaming").apply {
+				setReferenceCounted(false)
+				acquire()
+			}
 		}
+		if(wifiLowLatencyLock == null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q)
+		{
+			wifiLowLatencyLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_LOW_LATENCY, "CloudPad:lowlatency").apply {
+				setReferenceCounted(false)
+				acquire()
+			}
+		}
+		Log.i("StreamSession", "WiFi locks acquired: highPerf=${wifiLock?.isHeld} lowLatency=${wifiLowLatencyLock?.isHeld}")
 	}
 
 	private fun releaseWifiLock()
 	{
 		wifiLock?.let { if(it.isHeld) it.release() }
 		wifiLock = null
+		wifiLowLatencyLock?.let { if(it.isHeld) it.release() }
+		wifiLowLatencyLock = null
 	}
 
 	/** True while the decoder is pointed at [backgroundDrainSurface] instead of the real
@@ -446,6 +465,9 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 			return
 		acquireWifiLock()
 		_state.value = StreamStateConnecting
+		// Picked up here rather than at every ConnectInfo build site so every connect path (Remote
+		// Play, PSN holepunch, cloud, Quick Settings restarts) uses the current setting.
+		connectInfo = connectInfo.copy(packetLossMax = input.preferences.congestionMode.packetLossMax)
 
 		val duid = connectInfo.duid
 		val hasPsnToken = !connectInfo.psnToken.isNullOrEmpty()
@@ -660,6 +682,16 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 			is QuitEvent -> {
 				Log.i("StreamSession", "EVENT: Quit reason=${event.reason} str=${event.reasonString}")
 				_state.postValue(StreamStateQuit(event.reason, event.reasonString))
+				// The connection is gone, so stop holding the radio awake now rather than for as
+				// long as the error dialog stays up (shutdown() would otherwise be the first to
+				// release it). Only if the session that quit is still the current one — the
+				// stray Stopped quit that restartWithNewConnectInfo's shutdown() triggers must not
+				// release the locks the replacement session's resume() is about to take.
+				val quitSession = session
+				Handler(Looper.getMainLooper()).post {
+					if(quitSession != null && session === quitSession)
+						releaseWifiLock()
+				}
 			}
 			is LoginPinRequestEvent -> {
 				Log.i("StreamSession", "EVENT: LoginPinRequest pinIncorrect=${event.pinIncorrect}")

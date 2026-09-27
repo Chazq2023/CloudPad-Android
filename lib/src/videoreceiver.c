@@ -4,6 +4,7 @@
 #include <chiaki/session.h>
 
 #include <string.h>
+#include <chiaki/time.h>
 
 static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *video_receiver);
 
@@ -50,6 +51,8 @@ CHIAKI_EXPORT void chiaki_video_receiver_init(ChiakiVideoReceiver *video_receive
 
 	video_receiver->frames_lost = 0;
 	memset(video_receiver->reference_frames, -1, sizeof(video_receiver->reference_frames));
+	memset(&video_receiver->frame_timing_cur, 0, sizeof(video_receiver->frame_timing_cur));
+	memset(&video_receiver->frame_timing_flushed, 0, sizeof(video_receiver->frame_timing_flushed));
 	chiaki_bitstream_init(&video_receiver->bitstream, video_receiver->log, video_receiver->session->connect_info.video_profile.codec);
 }
 
@@ -115,6 +118,7 @@ CHIAKI_EXPORT void chiaki_video_receiver_av_packet(ChiakiVideoReceiver *video_re
 
 		ChiakiVideoProfile *profile = video_receiver->profiles + video_receiver->profile_cur;
 		CHIAKI_LOGI(video_receiver->log, "Switched to profile %d, resolution: %ux%u", video_receiver->profile_cur, profile->width, profile->height);
+		video_receiver->frame_timing_flushed.flush_us = 0; // header, not a frame: untimed
 		if(video_receiver->session->video_sample_cb)
 			video_receiver->session->video_sample_cb(profile->header, profile->header_sz, 0, false, video_receiver->session->video_sample_cb_user);
 		if(!chiaki_bitstream_header(&video_receiver->bitstream, profile->header, profile->header_sz))
@@ -187,6 +191,18 @@ CHIAKI_EXPORT void chiaki_video_receiver_av_packet(ChiakiVideoReceiver *video_re
 		}
 
 		video_receiver->frame_index_cur = frame_index;
+
+		// Stall tracing: remember when this frame's first packet arrived / was read / picked up.
+		ChiakiTakion *takion = &video_receiver->session->stream_connection.takion;
+		ChiakiVideoFrameTiming *timing = &video_receiver->frame_timing_cur;
+		memset(timing, 0, sizeof(*timing));
+		timing->frame_index = frame_index;
+		timing->units_total = packet->units_in_frame_total;
+		timing->units_fec = packet->units_in_frame_fec;
+		timing->first_kernel_us = takion->cur_packet_kernel_us;
+		timing->first_recv_us = takion->cur_packet_recv_us;
+		timing->first_pop_us = takion->cur_packet_pop_us;
+
 		err = chiaki_frame_processor_alloc_frame(&video_receiver->frame_processor, packet);
 		if(err != CHIAKI_ERR_SUCCESS)
 			CHIAKI_LOGW(video_receiver->log, "Video receiver could not allocate frame for packet.");
@@ -302,6 +318,17 @@ static ChiakiErrorCode chiaki_video_receiver_flush_frame(ChiakiVideoReceiver *vi
 
 	if(succ && video_receiver->session->video_sample_cb)
 	{
+		// Stall tracing: the packet being handled right now is the one that completed (or
+		// force-flushed) this frame.
+		ChiakiTakion *takion = &video_receiver->session->stream_connection.takion;
+		ChiakiVideoFrameTiming *timing = &video_receiver->frame_timing_flushed;
+		*timing = video_receiver->frame_timing_cur;
+		timing->frame_size = frame_size;
+		timing->last_kernel_us = takion->cur_packet_kernel_us;
+		timing->last_recv_us = takion->cur_packet_recv_us;
+		timing->last_pop_us = takion->cur_packet_pop_us;
+		timing->flush_us = chiaki_time_now_monotonic_us();
+
 		bool cb_succ = video_receiver->session->video_sample_cb(frame, frame_size, video_receiver->frames_lost, recovered, video_receiver->session->video_sample_cb_user);
 		video_receiver->frames_lost = 0;
 		if(!cb_succ)

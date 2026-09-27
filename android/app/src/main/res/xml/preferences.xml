@@ -105,6 +105,13 @@
             app:summary="@string/preferences_video_pacing_summary"
             app:icon="@drawable/ic_fps"/>
 
+        <ListPreference
+            app:key="@string/preferences_congestion_mode_key"
+            app:title="@string/preferences_congestion_mode_title"
+            app:summary="@string/preferences_congestion_mode_summary"
+            app:defaultValue="adapt"
+            app:icon="@drawable/ic_bitrate"/>
+
         <SwitchPreference
             app:key="@string/preferences_log_verbose_key"
             app:title="@string/preferences_log_verbose_title"
@@ -226,7 +233,7 @@
             app:title="@string/preferences_cloud_bitrate_pscloud_title"
             app:summary="@string/preferences_cloud_bitrate_pscloud_summary"
             app:min="2"
-            android:max="200"
+            android:max="50"
             app:seekBarIncrement="1"
             app:defaultValue="20"
             app:showSeekBarValue="true"
@@ -260,7 +267,7 @@
             app:title="@string/preferences_cloud_bitrate_psnow_title"
             app:summary="@string/preferences_cloud_bitrate_psnow_summary"
             app:min="2"
-            android:max="200"
+            android:max="50"
             app:seekBarIncrement="1"
             app:defaultValue="20"
             app:showSeekBarValue="true"

@@ -80,6 +80,7 @@ typedef struct chiaki_stream_connection_t
 	double measured_bitrate;
 	double measured_rtt;
 	double measured_loss;
+	int64_t logged_target_bitrate; // last server target_bitrate logged (-1 = none yet)
 
 	/**
 	 * RTT of the periodic HEARTBEAT message measured via its transport-layer DATA_ACK,

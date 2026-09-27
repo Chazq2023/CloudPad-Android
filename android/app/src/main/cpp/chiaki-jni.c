@@ -349,11 +349,14 @@ static bool android_chiaki_video_sample_with_metrics(
 	if(frames_lost > 0)
 		session->metrics_drops += (uint64_t)frames_lost;
 
-	return android_chiaki_video_decoder_video_sample(
+	// Stall tracing: this runs synchronously inside the video receiver's flush, so its timing for
+	// the frame being handed over is current here.
+	ChiakiVideoReceiver *video_receiver = session->session.stream_connection.video_receiver;
+	(void)frame_recovered;
+	return android_chiaki_video_decoder_video_sample_timed(
 			buf,
 			buf_size,
-			frames_lost,
-			frame_recovered,
+			video_receiver ? &video_receiver->frame_timing_flushed : NULL,
 			&session->video_decoder
 	);
 }
@@ -555,6 +558,13 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	// part of the core ChiakiConnectInfo/session protocol, so it's read straight into a local
 	// rather than connect_info.
 	bool adaptive_frame_pacing_enabled = E->GetBooleanField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "adaptiveFramePacingEnabled", "Z"));
+
+	// Previously never set, so it stayed 0 from the { 0 } initializer — which makes congestion
+	// control clamp every report to zero lost packets, so the console/cloud server never backs
+	// off. Now a user setting (Preferences.CongestionMode); applies to every session type since
+	// they all start here.
+	connect_info.packet_loss_max = (double)E->GetFloatField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "packetLossMax", "F"));
+	CHIAKI_LOGI(log, "Congestion control packet_loss_max=%.2f", connect_info.packet_loss_max);
 
 	// Auto-registration field (for PSN remote registration)
 	jboolean auto_regist = E->GetBooleanField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "autoRegist", "Z"));
@@ -871,6 +881,20 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetVideoPacing)(JNIEnv *env, jobject obj, 
 	android_chiaki_video_decoder_set_smooth_pacing(&session->video_decoder, smooth);
 }
 
+JNIEXPORT void JNICALL JNI_FCN(sessionSetPacketLossMax)(JNIEnv *env, jobject obj, jlong ptr, jfloat packet_loss_max)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return;
+	// congestion_control_thread_func re-reads this on every report, so the change takes effect
+	// on the live stream within ~200ms. A single aligned double store; a report racing it just
+	// uses the old or the new value. stream_connection.packet_loss_max is updated too so a
+	// congestion control restart within this session keeps the new value.
+	session->session.stream_connection.packet_loss_max = (double)packet_loss_max;
+	session->session.stream_connection.congestion_control.packet_loss_max = (double)packet_loss_max;
+	CHIAKI_LOGI(session->log, "Congestion control packet_loss_max changed to %.2f", (double)packet_loss_max);
+}
+
 JNIEXPORT void JNICALL JNI_FCN(sessionSetControllerState)(JNIEnv *env, jobject obj, jlong ptr, jobject controller_state_java)
 {
 	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
@@ -972,7 +996,7 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 			env,
 			metrics_class,
 			"<init>",
-			"(IIFFDDDDDJ)V"
+			"(IIFFDDDDDJJ)V"
 	);
 
 	if(!metrics_ctor)
@@ -1049,6 +1073,10 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 
 	double decode_time = 0.0;
 	jlong drops = (jlong)session->metrics_drops;
+	// Packets the kernel dropped on this device because the takion socket buffer was full — see
+	// ChiakiTakion.rx_dropped_total. Shown separately so in-device drops aren't mistaken for
+	// network loss.
+	jlong socket_drops = (jlong)session->session.stream_connection.takion.rx_dropped_total;
 
 	return E->NewObject(
 			env,
@@ -1063,7 +1091,8 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 			(jdouble)latency,
 			(jdouble)packet_loss,
 			(jdouble)decode_time,
-			(jlong)drops
+			(jlong)drops,
+			socket_drops
 	);
 }
 

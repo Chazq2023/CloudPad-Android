@@ -323,6 +323,7 @@
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsHapticsRow" />
             <include layout="@layout/item_quick_settings_switch" android:id="@+id/quickSettingsPipRow" />
             <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsVideoPacingRow" />
+            <include layout="@layout/item_quick_settings_dropdown" android:id="@+id/quickSettingsCongestionModeRow" />
 
             <com.google.android.material.divider.MaterialDivider
                 android:layout_width="match_parent"

@@ -74,6 +74,10 @@ data class ConnectInfo(
 	// PS Cloud, Game Catalog) — see AndroidChiakiVideoDecoder.adaptive_frame_pacing_enabled in
 	// video-decoder.c. Read by native code by this exact field name.
 	val adaptiveFramePacingEnabled: Boolean = false,
+	// Max packet-loss fraction reported to the console/cloud server — see
+	// Preferences.CongestionMode (default matches its ADAPT preset; StreamSession.resume()
+	// overwrites it with the current setting). Read by native code by this exact field name.
+	val packetLossMax: Float = 0.05f,
 	// Cloud streaming fields (optional, null for remote play)
 
 	val serviceType: String? = null, // "psnow" or "pscloud"
@@ -138,7 +142,10 @@ data class SessionMetrics(
 	val latency: Double,
 	val packetLoss: Double,
 	val decodeTime: Double,
-	val drops: Long
+	val drops: Long,
+	/** Cumulative packets dropped inside the device (socket receive buffer overflow), as opposed
+	 *  to lost on the network. Always 0 where the OS can't report it. */
+	val socketDrops: Long
 )
 
 private class ChiakiNative
@@ -162,6 +169,7 @@ private class ChiakiNative
 		@JvmStatic external fun sessionJoin(ptr: Long): Int
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
 		@JvmStatic external fun sessionSetVideoPacing(ptr: Long, smooth: Boolean)
+		@JvmStatic external fun sessionSetPacketLossMax(ptr: Long, packetLossMax: Float)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
 			@JvmStatic external fun sessionConnectMicrophone(ptr: Long)
@@ -608,6 +616,11 @@ class Session(connectInfo: ConnectInfo, logFile: String?, logVerbose: Boolean)
 	fun setVideoPacing(smooth: Boolean)
 	{
 		ChiakiNative.sessionSetVideoPacing(nativePtr, smooth)
+	}
+
+	fun setPacketLossMax(packetLossMax: Float)
+	{
+		ChiakiNative.sessionSetPacketLossMax(nativePtr, packetLossMax)
 	}
 
 	fun setControllerState(controllerState: ControllerState)

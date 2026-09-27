@@ -131,6 +131,7 @@ class PsnAutoRegistration(
 					morning = ByteArray(CHIAKI_KEY_SIZE),
 					videoProfile = prefs.videoProfile,
 					adaptiveFramePacingEnabled = prefs.videoPacing.isSmooth,
+					packetLossMax = prefs.congestionMode.packetLossMax,
 					duid = duid,
 					psnToken = token,
 					psnAccountId = prefs.psnAccountId,

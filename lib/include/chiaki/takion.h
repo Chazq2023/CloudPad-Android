@@ -186,6 +186,26 @@ typedef struct chiaki_takion_t
 	struct chiaki_takion_recv_queue_entry_t *recv_queue_tail;
 	size_t recv_queue_count;
 	bool recv_thread_should_stop;
+	/** Cumulative count of datagrams the kernel dropped because this socket's receive buffer was
+	 *  full (SO_RXQ_OVFL, Linux/Android only — stays 0 elsewhere). Unlike measured packet loss,
+	 *  this only counts packets that reached the device and were thrown away before the app read
+	 *  them, so it tells an in-device bottleneck apart from real network loss. Written by
+	 *  recv_thread, read for the stats overlay. */
+	uint32_t rx_dropped_total;
+	uint32_t rx_dropped_logged; // rx_dropped_total as of the last overflow warning (rate-limited)
+	uint64_t rx_dropped_log_us;
+
+	/** Stall tracing (CLOCK_MONOTONIC µs, see chiaki_time_now_monotonic_us): when the packet that
+	 *  takion_thread_func is currently handling reached the device (kernel receive timestamp via
+	 *  SO_TIMESTAMPNS, 0 where unavailable), when recv_thread read it, and when takion_thread_func
+	 *  picked it up from recv_queue. Only valid inside takion callbacks on the takion thread — the
+	 *  video receiver snapshots them per frame so a playback stall can be traced to the stage that
+	 *  caused it (network vs. each thread in this app). last_recv_kernel_us is takion_recv's own
+	 *  output for the packet it just returned. */
+	uint64_t cur_packet_kernel_us;
+	uint64_t cur_packet_recv_us;
+	uint64_t cur_packet_pop_us;
+	uint64_t last_recv_kernel_us;
 	uint32_t tag_local;
 	uint32_t tag_remote;
 	bool close_socket;

@@ -641,6 +641,20 @@ class QuickSettingsPanel(
 			preferences.videoPacing = pacing
 			viewModel.session.setVideoPacing(pacing.isSmooth)
 		}
+		// Bitrate Adaptation only changes what congestion control reports back, which native code
+		// re-reads every report — so it's also applied live, no restart.
+		panel.quickSettingsCongestionModeRow.quickSettingsDropdownLabel.text = activity.getString(R.string.preferences_congestion_mode_title)
+		val congestionModeOptions = Preferences.CongestionMode.values()
+		bindSpinner(
+			panel.quickSettingsCongestionModeRow.quickSettingsDropdownSpinner,
+			congestionModeOptions.map { activity.getString(it.title) }, congestionModeOptions.map { it.value },
+			preferences.congestionMode.value
+		) { value ->
+			val mode = congestionModeOptions.firstOrNull { it.value == value } ?: return@bindSpinner
+			if(mode == preferences.congestionMode) return@bindSpinner
+			preferences.congestionMode = mode
+			viewModel.session.setPacketLossMax(mode.packetLossMax)
+		}
 		panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, enabled ->
 			preferences.fsrUpscalingEnabled = enabled
 			applyFsr()
@@ -767,6 +781,7 @@ class QuickSettingsPanel(
 			panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar, panel.quickSettingsTrophiesRefreshButton,
 			panel.quickSettingsTrophiesSortButton, panel.quickSettingsTrophiesFilterButton,
 			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
+			panel.quickSettingsCongestionModeRow.quickSettingsDropdownSpinner,
 			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
 			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
@@ -1181,7 +1196,8 @@ class QuickSettingsPanel(
 		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
 		sessionRowControls += addSeekBarRow(
 			container, bitrateSummaryRes,
-			min = 2, max = 200, currentValue = currentBitrateMbps
+			min = Preferences.CLOUD_BITRATE_MIN_KBPS / 1000, max = Preferences.CLOUD_BITRATE_MAX_KBPS / 1000,
+			currentValue = currentBitrateMbps
 		) { valueMbps ->
 			pendingCloudSettings = pendingCloudSettings?.copy(bitrateKbps = valueMbps * 1000)
 			updateSessionApplyVisibility()
@@ -1458,6 +1474,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 		panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner.setSelection(preferences.videoPacing.ordinal)
+		panel.quickSettingsCongestionModeRow.quickSettingsDropdownSpinner.setSelection(preferences.congestionMode.ordinal)
 
 		panel.quickSettingsCasSeekBarRow.root.visibility = if(preferences.imageProcessing == "cas") View.VISIBLE else View.GONE
 		panel.quickSettingsCasSeekBarRow.quickSettingsSeekBar.progress = preferences.casSharpeningLevel - Preferences.CAS_SHARPENING_LEVEL_MIN
