@@ -70,7 +70,12 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 	/** Held for the duration of an active connection so the WiFi radio doesn't drop into
 	 *  power-save mode between packets — without it, the radio dozes and has to wake back up on
 	 *  each new packet, which shows up as erratic 100-300ms RTT spikes on top of otherwise-low
-	 *  ping. Acquired in [resume], released in [shutdown]. */
+	 *  ping. Acquired in [resume], released in [shutdown].
+	 *
+	 *  Uses WIFI_MODE_FULL_LOW_LATENCY (Android 10+/API 29) rather than WIFI_MODE_FULL_HIGH_PERF:
+	 *  low-latency mode additionally disables background scans and other power-saving behaviour
+	 *  that HIGH_PERF leaves in place, both of which can otherwise stall real-time streaming
+	 *  packets. Falls back to HIGH_PERF below API 29 where LOW_LATENCY doesn't exist. */
 	private var wifiLock: WifiManager.WifiLock? = null
 
 	private fun acquireWifiLock()
@@ -78,8 +83,12 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		if(wifiLock != null)
 			return
 		val wifiManager = input.context.applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager ?: return
-		@Suppress("DEPRECATION")
-		wifiLock = wifiManager.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "CloudPad:streaming").apply {
+		val lockMode =
+			if(android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q)
+				WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+			else
+				@Suppress("DEPRECATION") WifiManager.WIFI_MODE_FULL_HIGH_PERF
+		wifiLock = wifiManager.createWifiLock(lockMode, "CloudPad:streaming").apply {
 			setReferenceCounted(false)
 			acquire()
 		}

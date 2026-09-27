@@ -261,8 +261,11 @@ class QuickSettingsPanel(
 		{
 			720 -> activity.getString(R.string.preferences_fsr_output_720)
 			1080 -> if(displayShortEdge < 1440)
-				activity.getString(R.string.preferences_fsr_output_downsample, displayShortEdge)
+				activity.getString(R.string.preferences_fsr_output_downsample, 1080, 1440, displayShortEdge)
 				else activity.getString(R.string.preferences_fsr_output_1080)
+			1440 -> if(displayShortEdge < 2160)
+				activity.getString(R.string.preferences_fsr_output_downsample, 1440, 2160, displayShortEdge)
+				else activity.getString(R.string.preferences_fsr_output_1440)
 			else -> activity.getString(R.string.preferences_fsr_output_unchanged, sourceHeight)
 		}
 	}

@@ -168,6 +168,24 @@ typedef struct chiaki_takion_t
 	chiaki_socket_t sock;
 	ChiakiThread thread;
 	ChiakiStopPipe stop_pipe;
+
+	/** Dedicated network-read thread + handoff queue. The main loop in takion_thread_func used
+	 *  to recv() a packet and process it (MAC check, decrypt, frame reassembly) on the very same
+	 *  thread before looping back to recv() again. Any hiccup in that processing (a slow frame
+	 *  handler, GC pause, scheduling jitter) delays the next recv() call, and packets pile up in
+	 *  the kernel socket buffer meanwhile — once it fills, the OS silently drops them, which is
+	 *  indistinguishable from real network packet loss. recv_thread now does nothing but recv()
+	 *  and hand the raw packet off through this queue, so the socket is drained as fast as the OS
+	 *  can deliver regardless of how long processing takes; takion_thread_func becomes purely a
+	 *  consumer of this queue after the handshake completes. */
+	ChiakiThread recv_thread;
+	bool recv_thread_started;
+	ChiakiMutex recv_queue_mutex;
+	ChiakiCond recv_queue_cond;
+	struct chiaki_takion_recv_queue_entry_t *recv_queue_head;
+	struct chiaki_takion_recv_queue_entry_t *recv_queue_tail;
+	size_t recv_queue_count;
+	bool recv_thread_should_stop;
 	uint32_t tag_local;
 	uint32_t tag_remote;
 	bool close_socket;

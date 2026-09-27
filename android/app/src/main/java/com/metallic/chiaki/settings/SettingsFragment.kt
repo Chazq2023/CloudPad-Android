@@ -299,8 +299,10 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		fun outputSummary(resolution: Int) = when(resolution)
 		{
 			720 -> getString(R.string.preferences_fsr_output_720)
-			1080 -> if(displayShortEdge < 1440) getString(R.string.preferences_fsr_output_downsample, displayShortEdge)
+			1080 -> if(displayShortEdge < 1440) getString(R.string.preferences_fsr_output_downsample, 1080, 1440, displayShortEdge)
 				else getString(R.string.preferences_fsr_output_1080)
+			1440 -> if(displayShortEdge < 2160) getString(R.string.preferences_fsr_output_downsample, 1440, 2160, displayShortEdge)
+				else getString(R.string.preferences_fsr_output_1440)
 			else -> getString(R.string.preferences_fsr_output_unchanged, resolution)
 		}
 		fun remotePlayHeight(resolution: Preferences.Resolution) = when(resolution)

@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">Activer FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Activer la mise à l\'échelle et la netteté AMD FidelityFX</string>
     <string name="preferences_fsr_upscaling_title">Mise à l\'échelle</string>
-    <string name="preferences_fsr_upscaling_summary">Si le flux est réglé sur 720p et que la mise à l\'échelle est activée, il sera mis à l\'échelle en 1080p. Si le flux est réglé sur 1080p et que la mise à l\'échelle est activée, il sera mis à l\'échelle en 1440p. Remarque : si la résolution maximale de votre appareil est 1080p, Android sous-échantillonnera la sortie 1440p en 1080p, ce qui peut rendre l\'image floue. Dans ce cas, laissez la mise à l\'échelle désactivée.</string>
+    <string name="preferences_fsr_upscaling_summary">Si le flux est réglé sur 720p et que la mise à l\'échelle est activée, il sera mis à l\'échelle en 1080p. S\'il est réglé sur 1080p, il sera mis à l\'échelle en 1440p. S\'il est réglé sur 1440p, il sera mis à l\'échelle en 2160p (4K). Remarque : si la résolution maximale de votre appareil est inférieure à cette cible de mise à l\'échelle, Android sous-échantillonnera la sortie, ce qui peut rendre l\'image floue. Dans ce cas, laissez la mise à l\'échelle désactivée.</string>
     <string name="preferences_fsr_sharpening_title">Netteté</string>
     <string name="quick_settings_fsr_sharpening">Netteté : %d%%</string>
     <string name="preferences_category_title_image_quality">Qualité d\'image</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">Appliqué après le redémarrage du flux</string>
     <string name="preferences_fsr_output_720">Flux 720p → sortie 1080p</string>
     <string name="preferences_fsr_output_1080">Flux 1080p → sortie 1440p</string>
-    <string name="preferences_fsr_output_downsample">Flux 1080p → sortie 1440p ; cet écran %1$dp la sous-échantillonnera et l\'image pourra paraître plus floue. Si c\'est le cas, laissez la mise à l\'échelle désactivée.</string>
+    <string name="preferences_fsr_output_1440">Flux 1440p → sortie 2160p (4K)</string>
+    <string name="preferences_fsr_output_downsample">Flux %1$dp → sortie %2$dp ; cet écran %3$dp la sous-échantillonnera et l\'image pourra paraître plus floue. Si c\'est le cas, laissez la mise à l\'échelle désactivée.</string>
     <string name="preferences_fsr_output_unchanged">Flux %1$dp ; aucune mise à l\'échelle FSR appliquée</string>
     <string name="preferences_fsr_output_all">Remote Play : %1$s\nBibliothèque de jeux : %2$s\nCatalogue de jeux : %3$s</string>
     <string name="quick_settings_image_quality">Qualité d\'image · S\'applique immédiatement</string>
@@ -354,16 +355,18 @@
         <item>Auto (meilleur ping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">Complet</string>

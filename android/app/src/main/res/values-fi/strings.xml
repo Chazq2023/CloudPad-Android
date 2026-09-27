@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">Ota käyttöön FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Ota käyttöön AMD FidelityFX -skaalaus ja terävöinti</string>
     <string name="preferences_fsr_upscaling_title">Skaalaus</string>
-    <string name="preferences_fsr_upscaling_summary">Jos suoratoisto on asetettu 720p:hen ja skaalaus on käytössä, se skaalataan 1080p:hen. Jos suoratoisto on asetettu 1080p:hen ja skaalaus on käytössä, se skaalataan 1440p:hen. Huomaa: jos laitteesi enimmäistarkkuus on 1080p, Android alinäytteistää 1440p-lähdön 1080p:hen, mikä voi aiheuttaa epätarkan kuvan. Tässä tilanteessa jätä skaalaus pois käytöstä.</string>
+    <string name="preferences_fsr_upscaling_summary">Jos suoratoisto on asetettu 720p:hen ja skaalaus on käytössä, se skaalataan 1080p:hen. Jos suoratoisto on asetettu 1080p:hen, se skaalataan 1440p:hen. Jos suoratoisto on asetettu 1440p:hen, se skaalataan 2160p:hen (4K). Huomaa: jos laitteesi enimmäistarkkuus on pienempi kuin tämä skaalaustavoite, Android alinäytteistää lähdön, mikä voi aiheuttaa epätarkan kuvan. Tässä tilanteessa jätä skaalaus pois käytöstä.</string>
     <string name="preferences_fsr_sharpening_title">Terävöinti</string>
     <string name="quick_settings_fsr_sharpening">Terävöinti: %d%%</string>
     <string name="preferences_category_title_image_quality">Kuvanlaatu</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">Otetaan käyttöön suoratoiston uudelleenkäynnistyksen jälkeen</string>
     <string name="preferences_fsr_output_720">720p-suoratoisto → 1080p-lähtö</string>
     <string name="preferences_fsr_output_1080">1080p-suoratoisto → 1440p-lähtö</string>
-    <string name="preferences_fsr_output_downsample">1080p-suoratoisto → 1440p-lähtö; tämä %1$dp-näyttö alinäytteistää sen, mikä voi näyttää pehmeämmältä. Jos näin käy, jätä skaalaus pois käytöstä.</string>
+    <string name="preferences_fsr_output_1440">1440p-suoratoisto → 2160p-lähtö (4K)</string>
+    <string name="preferences_fsr_output_downsample">%1$dp-suoratoisto → %2$dp-lähtö; tämä %3$dp-näyttö alinäytteistää sen, mikä voi näyttää pehmeämmältä. Jos näin käy, jätä skaalaus pois käytöstä.</string>
     <string name="preferences_fsr_output_unchanged">%1$dp-suoratoisto; FSR-skaalausta ei käytetä</string>
     <string name="preferences_fsr_output_all">Etäpeli: %1$s\nPelikirjasto: %2$s\nPelikatalogi: %3$s</string>
     <string name="quick_settings_image_quality">Kuvanlaatu · Tulee voimaan välittömästi</string>
@@ -354,16 +355,18 @@
         <item>Automaattinen (paras ping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">Täysi</string>

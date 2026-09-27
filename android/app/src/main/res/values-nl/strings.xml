@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">FSR 1 inschakelen</string>
     <string name="preferences_fsr_enabled_summary">AMD FidelityFX-upscaling en -verscherping inschakelen</string>
     <string name="preferences_fsr_upscaling_title">Upscaling</string>
-    <string name="preferences_fsr_upscaling_summary">Als de stream is ingesteld op 720p en Upscaling is ingeschakeld, wordt deze opgeschaald naar 1080p. Als de stream is ingesteld op 1080p en Upscaling is ingeschakeld, wordt deze opgeschaald naar 1440p. Let op: als de maximale resolutie van je apparaat 1080p is, zal Android de 1440p-uitvoer downsamplen naar 1080p, wat een wazig beeld kan veroorzaken. Laat Upscaling in dat geval uitgeschakeld.</string>
+    <string name="preferences_fsr_upscaling_summary">Als de stream is ingesteld op 720p en Upscaling is ingeschakeld, wordt deze opgeschaald naar 1080p. Als de stream is ingesteld op 1080p, wordt deze opgeschaald naar 1440p. Als de stream is ingesteld op 1440p, wordt deze opgeschaald naar 2160p (4K). Let op: als de maximale resolutie van je apparaat lager is dan dat opschaaldoel, zal Android de uitvoer downsamplen, wat een wazig beeld kan veroorzaken. Laat Upscaling in dat geval uitgeschakeld.</string>
     <string name="preferences_fsr_sharpening_title">Verscherping</string>
     <string name="quick_settings_fsr_sharpening">Verscherping: %d%%</string>
     <string name="preferences_category_title_image_quality">Beeldkwaliteit</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">Wordt toegepast na herstart van de stream</string>
     <string name="preferences_fsr_output_720">720p-stream → 1080p-uitvoer</string>
     <string name="preferences_fsr_output_1080">1080p-stream → 1440p-uitvoer</string>
-    <string name="preferences_fsr_output_downsample">1080p-stream → 1440p-uitvoer; dit %1$dp-scherm zal dit downsamplen en kan zachter overkomen. Laat Upscaling in dat geval uitgeschakeld.</string>
+    <string name="preferences_fsr_output_1440">1440p-stream → 2160p-uitvoer (4K)</string>
+    <string name="preferences_fsr_output_downsample">%1$dp-stream → %2$dp-uitvoer; dit %3$dp-scherm zal dit downsamplen en kan zachter overkomen. Laat Upscaling in dat geval uitgeschakeld.</string>
     <string name="preferences_fsr_output_unchanged">%1$dp-stream; geen FSR-upscale toegepast</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nSpelbibliotheek: %2$s\nSpelcatalogus: %3$s</string>
     <string name="quick_settings_image_quality">Beeldkwaliteit · Wordt direct toegepast</string>
@@ -354,16 +355,18 @@
         <item>Automatisch (beste ping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <!-- Don't localize these -->

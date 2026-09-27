@@ -178,7 +178,7 @@
     <string name="preferences_fsr_enabled_title">Ativar FSR 1</string>
     <string name="preferences_fsr_enabled_summary">Ativa o upscaling e a nitidez do AMD FidelityFX</string>
     <string name="preferences_fsr_upscaling_title">Upscaling</string>
-    <string name="preferences_fsr_upscaling_summary">Se a transmissão estiver definida como 720p e o Upscaling estiver ativado, ela será convertida para 1080p. Se a transmissão estiver definida como 1080p e o Upscaling estiver ativado, ela será convertida para 1440p. Observação: se a resolução máxima do seu dispositivo for 1080p, o Android reduzirá a saída de 1440p para 1080p, o que pode deixar a imagem desfocada. Nesse caso, deixe o Upscaling desativado.</string>
+    <string name="preferences_fsr_upscaling_summary">Se a transmissão estiver definida como 720p e o Upscaling estiver ativado, ela será convertida para 1080p. Se estiver definida como 1080p, será convertida para 1440p. Se estiver definida como 1440p, será convertida para 2160p (4K). Observação: se a resolução máxima do seu dispositivo for menor que essa meta de upscaling, o Android reduzirá a saída, o que pode deixar a imagem desfocada. Nesse caso, deixe o Upscaling desativado.</string>
     <string name="preferences_fsr_sharpening_title">Nitidez</string>
     <string name="quick_settings_fsr_sharpening">Nitidez: %d%%</string>
     <string name="preferences_category_title_image_quality">Qualidade de Imagem</string>
@@ -194,7 +194,8 @@
     <string name="preferences_restarts_stream">Aplicado após reiniciar a transmissão</string>
     <string name="preferences_fsr_output_720">Transmissão em 720p → saída em 1080p</string>
     <string name="preferences_fsr_output_1080">Transmissão em 1080p → saída em 1440p</string>
-    <string name="preferences_fsr_output_downsample">Transmissão em 1080p → saída em 1440p; esta tela de %1$dp fará a redução da imagem, o que pode deixá-la mais suave. Se for esse o caso, deixe o Upscaling desativado.</string>
+    <string name="preferences_fsr_output_1440">Transmissão em 1440p → saída em 2160p (4K)</string>
+    <string name="preferences_fsr_output_downsample">Transmissão em %1$dp → saída em %2$dp; esta tela de %3$dp fará a redução da imagem, o que pode deixá-la mais suave. Se for esse o caso, deixe o Upscaling desativado.</string>
     <string name="preferences_fsr_output_unchanged">Transmissão em %1$dp; nenhum upscale de FSR aplicado</string>
     <string name="preferences_fsr_output_all">Remote Play: %1$s\nBiblioteca de Jogos: %2$s\nCatálogo de Jogos: %3$s</string>
     <string name="quick_settings_image_quality">Qualidade de Imagem · Aplica-se imediatamente</string>
@@ -354,16 +355,18 @@
         <item>Automático (Melhor Ping)</item>
     </string-array>
 
-    <!-- Resolution options for Game Catalog (PSNOW) - up to 1080p -->
+    <!-- Resolution options for Game Catalog (PSNOW) - up to 1440p -->
     <string-array name="cloud_resolution_psnow_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
-    <!-- Resolution options for Game Library (PSCloud) -->
+    <!-- Resolution options for Game Library (PSCloud) - up to 1440p -->
     <string-array name="cloud_resolution_pscloud_entries">
         <item>720p (1280x720)</item>
         <item>1080p (1920x1080)</item>
+        <item>1440p (2560x1440)</item>
     </string-array>
 
     <string name="quick_settings_overlay_mode_full">Completo</string>
