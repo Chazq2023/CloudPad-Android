@@ -166,6 +166,24 @@ CHIAKI_EXPORT void chiaki_video_receiver_av_packet(ChiakiVideoReceiver *video_re
 			err = stream_connection_send_corrupt_frame(&video_receiver->session->stream_connection, next_frame_expected, frame_index - 1);
 			if(err != CHIAKI_ERR_SUCCESS)
 				CHIAKI_LOGW(video_receiver->log, "Error sending corrupt frame.");
+
+			// A frame entirely skipped here (not one packet of it ever arrived) never gets a
+			// frame_processor instance, so the chiaki_frame_processor_report_packet_stats() call
+			// above never runs for it and it silently drops out of the loss fraction that feeds
+			// the server's own bitrate/resolution adaptation (see StreamConnection's "connection
+			// quality" reports) — the server can end up ramping the bitrate *up* right through a
+			// real gap because nothing told its congestion control there was one. Approximate
+			// each skipped frame's unit count from the last known generation size (FEC layout is
+			// stable frame-to-frame in practice) so this loss is at least represented, even though
+			// we never received a single unit of these frames to measure them directly.
+			if(video_receiver->packet_stats)
+			{
+				uint64_t skipped_frames = (uint64_t)(frame_index - next_frame_expected);
+				uint64_t units_per_frame = video_receiver->frame_processor.units_source_expected
+					+ video_receiver->frame_processor.units_fec_expected;
+				if(units_per_frame > 0)
+					chiaki_packet_stats_push_generation(video_receiver->packet_stats, 0, skipped_frames * units_per_frame);
+			}
 		}
 
 		video_receiver->frame_index_cur = frame_index;
