@@ -442,9 +442,31 @@ void android_chiaki_video_decoder_set_surface(AndroidChiakiVideoDecoder *decoder
 	// Realtime decoding hints. low-latency is intentionally omitted — on many devices
 	// it causes the hardware decoder to discard frames under load rather than buffer them.
 	AMediaFormat_setInt32(format, "priority", 0);
-	AMediaFormat_setFloat(format, "operating-rate", (float)decoder->target_fps);
+	// Ask for the decoder's maximum speed rather than just the stream fps. An operating rate equal
+	// to the fps lets the hardware clock down until an *average* frame just fits its 16.7ms slot,
+	// so the large frames of heavy scenes (stall tracing measured 15-20ms decodes at 1440p) overrun
+	// it and add to every network stall. Same approach as Moonlight. Some decoders reject rates
+	// beyond their capability, so fall back to the stream fps if configure fails.
+	AMediaFormat_setFloat(format, "operating-rate", 32767.0f);
 
 	media_status_t r = AMediaCodec_configure(decoder->codec, format, decoder->window, NULL, 0);
+	if(r != AMEDIA_OK)
+	{
+		CHIAKI_LOGW(decoder->log, "AMediaCodec_configure() with max operating rate failed: %d, retrying at %d fps", (int)r, decoder->target_fps);
+		// A failed configure can leave the codec unusable, so start again with a fresh one.
+		AMediaCodec_delete(decoder->codec);
+		decoder->codec = AMediaCodec_createDecoderByType(mime);
+		if(!decoder->codec)
+		{
+			CHIAKI_LOGE(decoder->log, "Failed to re-create AMediaCodec for mime type %s", mime);
+			AMediaFormat_delete(format);
+			goto error_surface;
+		}
+		AMediaFormat_setFloat(format, "operating-rate", (float)decoder->target_fps);
+		r = AMediaCodec_configure(decoder->codec, format, decoder->window, NULL, 0);
+	}
+	else
+		CHIAKI_LOGI(decoder->log, "Decoder configured with max operating rate");
 	if(r != AMEDIA_OK)
 	{
 		CHIAKI_LOGE(decoder->log, "AMediaCodec_configure() failed: %d", (int)r);
@@ -694,6 +716,13 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int64_t smooth_hold_set_ns = 0;
 	int64_t smooth_hold_decay_ns = 0; // time the decay was last applied
 
+	// Smooth: average arrival interval over *all* frames, stalls included (each sample clamped so
+	// one outlier can't dominate). ema_inter_frame_ns deliberately ignores long gaps, so in heavy
+	// cloud scenes where the server only manages ~55-58 frames/s for seconds at a time, pacing at
+	// it presented faster than frames arrived and drained the cushion ~50ms/s into a visible
+	// freeze. Pacing at the real rate shows those frames evenly instead.
+	int64_t ema_arrival_ns = vsync_period_ns;
+
 	decoder->next_render_ns = 0;
 	bool last_smooth = decoder->adaptive_frame_pacing_enabled;
 	int64_t last_baseline_ns = 2 * vsync_period_ns; // for the per-second log only
@@ -782,6 +811,9 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int64_t deviation_ns = delta_ns > source_period_ns ? delta_ns - source_period_ns : source_period_ns - delta_ns;
 					ema_jitter_ns = (ema_jitter_ns * 7 + deviation_ns) / 8;
 
+					int64_t arrival_sample_ns = delta_ns < 4 * source_period_ns ? delta_ns : 4 * source_period_ns;
+					ema_arrival_ns = (ema_arrival_ns * 15 + arrival_sample_ns) / 16;
+
 					// Smooth peak hold: a real stall (same threshold as FRAME_STALL) raises the held
 					// cushion to cover a gap that size plus a frame of margin. Ordinary bunching
 					// (e.g. the paired arrivals of 30fps content) stays below the threshold.
@@ -827,8 +859,9 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 						smooth ? "smooth" : "standard");
 					if(smooth)
 					{
-						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f hold_ms=%.1f dropped=%d",
-							(double)ema_jitter_ns / 1000000.0, (double)smooth_hold_ns / 1000000.0, adaptive_dropped);
+						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f hold_ms=%.1f arrival_fps=%.1f dropped=%d",
+							(double)ema_jitter_ns / 1000000.0, (double)smooth_hold_ns / 1000000.0,
+							1e9 / (double)ema_arrival_ns, adaptive_dropped);
 						adaptive_dropped = 0;
 					}
 					bucket_start_ns   = now_ns;
@@ -904,11 +937,20 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int64_t advance_ns = (headroom_ns > baseline_ns)
 						? vsync_period_ns
 						: (ema_inter_frame_ns > source_period_ns ? ema_inter_frame_ns : source_period_ns);
-					// Growing into a raised peak-hold cushion: show each frame 2ms later than the last
-					// until the cushion is within a frame of the target (~0.4s for +50ms). On screen
-					// that's an occasional repeated frame rather than one long freeze.
-					if(smooth && smooth_hold_ns > 0 && render_ns - now_ns < baseline_ns - vsync_period_ns)
-						advance_ns += 2000000LL;
+					if(smooth && headroom_ns <= baseline_ns)
+					{
+						// Smooth: present at the rate frames are really arriving (see ema_arrival_ns),
+						// never slower than half rate.
+						int64_t arrival_ns = ema_arrival_ns < 2 * source_period_ns ? ema_arrival_ns : 2 * source_period_ns;
+						if(arrival_ns > advance_ns)
+							advance_ns = arrival_ns;
+						// Refill the cushion when it's below target — after a stall, or into a raised
+						// peak hold — by showing each frame 2ms later than the last until it's within a
+						// frame of the target (~0.4s for +50ms). On screen that's an occasional repeated
+						// frame rather than waiting for the next freeze to reset it.
+						if(render_ns - now_ns < baseline_ns - vsync_period_ns)
+							advance_ns += 2000000LL;
+					}
 					decoder->next_render_ns = render_ns + advance_ns;
 					decoder->output_frames_total++;
 				}
