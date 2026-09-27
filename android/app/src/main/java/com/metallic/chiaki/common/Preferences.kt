@@ -59,6 +59,23 @@ class Preferences(context: Context)
 		}
 	}
 
+	/** How much packet loss the client reports back to the console/cloud server, which uses it to
+	 *  decide whether to lower the stream bitrate. Loss above [packetLossMax] is clamped down to it
+	 *  (see congestioncontrol.c), so 0 means "always report no loss" and the server never backs
+	 *  off, even through a real run of dropped packets. */
+	enum class CongestionMode(val value: String, @StringRes val title: Int, val packetLossMax: Float)
+	{
+		ADAPT("adapt", R.string.preferences_congestion_mode_adapt, 0.05f),
+		HOLD("hold", R.string.preferences_congestion_mode_hold, 0.0f);
+
+		companion object
+		{
+			val default = ADAPT
+			fun fromStored(stored: String?): CongestionMode =
+				values().firstOrNull { it.value == stored } ?: default
+		}
+	}
+
 	enum class Codec(val value: String, @StringRes val title: Int, val codec: com.metallic.chiaki.lib.Codec)
 	{
 		CODEC_H264("h264", R.string.preferences_codec_title_h264, com.metallic.chiaki.lib.Codec.CODEC_H264),
@@ -253,6 +270,14 @@ class Preferences(context: Context)
 			sharedPreferences.getBoolean(legacyAdaptiveFramePacingKey, false)
 		)
 		set(value) { sharedPreferences.edit().putString(videoPacingKey, value.value).apply() }
+
+	// Applies to every session type — Remote Play and cloud all send congestion reports through
+	// the same native congestion control. Stored as the preset id (not the raw float) because the
+	// Settings screen's ListPreference can only read/write strings.
+	val congestionModeKey get() = resources.getString(R.string.preferences_congestion_mode_key)
+	var congestionMode: CongestionMode
+		get() = CongestionMode.fromStored(sharedPreferences.getString(congestionModeKey, null))
+		set(value) { sharedPreferences.edit().putString(congestionModeKey, value.value).apply() }
 
 	val casSharpeningEnabledKey get() = resources.getString(R.string.preferences_cas_sharpening_enabled_key)
 	var casSharpeningEnabled

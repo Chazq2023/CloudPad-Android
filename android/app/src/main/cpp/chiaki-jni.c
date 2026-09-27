@@ -556,6 +556,13 @@ JNIEXPORT void JNICALL JNI_FCN(sessionCreate)(JNIEnv *env, jobject obj, jobject 
 	// rather than connect_info.
 	bool adaptive_frame_pacing_enabled = E->GetBooleanField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "adaptiveFramePacingEnabled", "Z"));
 
+	// Previously never set, so it stayed 0 from the { 0 } initializer — which makes congestion
+	// control clamp every report to zero lost packets, so the console/cloud server never backs
+	// off. Now a user setting (Preferences.CongestionMode); applies to every session type since
+	// they all start here.
+	connect_info.packet_loss_max = (double)E->GetFloatField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "packetLossMax", "F"));
+	CHIAKI_LOGI(log, "Congestion control packet_loss_max=%.2f", connect_info.packet_loss_max);
+
 	// Auto-registration field (for PSN remote registration)
 	jboolean auto_regist = E->GetBooleanField(env, connect_info_obj, E->GetFieldID(env, connect_info_class, "autoRegist", "Z"));
 	connect_info.auto_regist = auto_regist;
@@ -869,6 +876,20 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetVideoPacing)(JNIEnv *env, jobject obj, 
 	if(!session)
 		return;
 	android_chiaki_video_decoder_set_smooth_pacing(&session->video_decoder, smooth);
+}
+
+JNIEXPORT void JNICALL JNI_FCN(sessionSetPacketLossMax)(JNIEnv *env, jobject obj, jlong ptr, jfloat packet_loss_max)
+{
+	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;
+	if(!session)
+		return;
+	// congestion_control_thread_func re-reads this on every report, so the change takes effect
+	// on the live stream within ~200ms. A single aligned double store; a report racing it just
+	// uses the old or the new value. stream_connection.packet_loss_max is updated too so a
+	// congestion control restart within this session keeps the new value.
+	session->session.stream_connection.packet_loss_max = (double)packet_loss_max;
+	session->session.stream_connection.congestion_control.packet_loss_max = (double)packet_loss_max;
+	CHIAKI_LOGI(session->log, "Congestion control packet_loss_max changed to %.2f", (double)packet_loss_max);
 }
 
 JNIEXPORT void JNICALL JNI_FCN(sessionSetControllerState)(JNIEnv *env, jobject obj, jlong ptr, jobject controller_state_java)

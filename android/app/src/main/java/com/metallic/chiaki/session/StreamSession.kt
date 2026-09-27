@@ -48,6 +48,15 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		session?.setVideoPacing(smooth)
 	}
 
+	/** Live Bitrate Adaptation change: congestion control re-reads the limit on every report
+	 *  (~200ms), so it takes effect on the running session without a restart, and is recorded in
+	 *  [connectInfo] for later reconnects. */
+	fun setPacketLossMax(packetLossMax: Float)
+	{
+		connectInfo = connectInfo.copy(packetLossMax = packetLossMax)
+		session?.setPacketLossMax(packetLossMax)
+	}
+
 	private val _state = MutableLiveData<StreamState>(StreamStateIdle)
 	val state: LiveData<StreamState> get() = _state
 
@@ -456,6 +465,9 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 			return
 		acquireWifiLock()
 		_state.value = StreamStateConnecting
+		// Picked up here rather than at every ConnectInfo build site so every connect path (Remote
+		// Play, PSN holepunch, cloud, Quick Settings restarts) uses the current setting.
+		connectInfo = connectInfo.copy(packetLossMax = input.preferences.congestionMode.packetLossMax)
 
 		val duid = connectInfo.duid
 		val hasPsnToken = !connectInfo.psnToken.isNullOrEmpty()
