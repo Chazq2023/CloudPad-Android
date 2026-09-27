@@ -206,11 +206,24 @@ class QuickSettingsPanel(
 				event.action != KeyEvent.ACTION_UP -> false
 				keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_BUTTON_B ->
 				{
-					when
+					// This branch's own step-back-then-close is otherwise unconditional (Circle's
+					// dedicated close shortcut always was, regardless of what opens the panel) —
+					// except when this exact key is ALSO the current Open Quick Settings trigger
+					// (its default, but back specifically can be remapped anywhere, including
+					// right back onto itself) and this dialog never saw its ACTION_DOWN, meaning
+					// this is the same leftover opening-press release the branch above exists to
+					// filter out for every other key mapped to the action — this hardcoded branch
+					// runs first in this `when` and would otherwise close on it regardless.
+					val isLeftoverOpenRelease = streamInput.isOpenQuickSettingsKeyCode(keyCode) && !openQuickSettingsKeyDownSeen
+					if(!isLeftoverOpenRelease)
 					{
-						inTrophyCompare -> backFromTrophyCompare()
-						inTabContent -> exitToRailScope()
-						else -> close()
+						openQuickSettingsKeyDownSeen = false
+						when
+						{
+							inTrophyCompare -> backFromTrophyCompare()
+							inTabContent -> exitToRailScope()
+							else -> close()
+						}
 					}
 					true
 				}
