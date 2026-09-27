@@ -205,9 +205,17 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 			},
 			onMoveOverlay = { onDone -> startOverlayMoveMode(onDone) }
 		)
+		viewModel.input.onOpenQuickSettings = { quickSettingsPanel.toggle() }
 
-		// Handle back button — on TV show a disconnect confirmation dialog; on touch,
-		// toggle the Quick Settings panel (open if closed, discard-and-close if open).
+		// ControllerAction.OPEN_QUICK_SETTINGS (defaults to the back button/key, remappable —
+		// see ControllerMapping.kt) is what normally opens this now, on every platform including
+		// TV, which previously had no way to reach it at all. It's consumed in
+		// StreamInput.dispatchKeyEvent before a back *key* press would ever reach this Activity's
+		// own dispatchKeyEvent override below and fall through to the back-press callback here, so
+		// the two don't double-fire. This callback stays as a fallback for whatever doesn't go
+		// through a KeyEvent at all (e.g. gesture navigation) and for a back key freed up by
+		// remapping Open Quick Settings elsewhere — on TV that's still a disconnect confirmation;
+		// elsewhere it's still the old toggle.
 		onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
 			override fun handleOnBackPressed() {
 				Log.i("StreamActivity", "handleOnBackPressed: isTv=${isTv()}")
@@ -285,8 +293,11 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 
 		applyPerformanceOverlayCustomization()
 
-		// On TV, the Quick Settings panel is simply never shown — the back-press handler's
-		// isTv() branch below never calls quickSettingsPanel.toggle()/open().
+		// On TV, Quick Settings now opens via ControllerAction.OPEN_QUICK_SETTINGS (default: back
+		// button/key, remappable in Controller Settings) — see its wiring and the back-press
+		// handler above. The isTv() branch there is only a fallback for whatever doesn't reach
+		// dispatchKeyEvent as a back KeyEvent at all (gesture navigation, or Open Quick Settings
+		// remapped off the back key).
 
 	}
 

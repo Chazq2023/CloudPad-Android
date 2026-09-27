@@ -610,6 +610,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">Système</string>
     <string name="controller_group_touchpad">Pavé tactile</string>
+    <string name="controller_group_app">Application</string>
 
     <string name="controller_action_left_stick_up">Stick gauche vers le haut</string>
     <string name="controller_action_left_stick_down">Stick gauche vers le bas</string>
@@ -644,6 +645,7 @@
     <string name="controller_action_touchpad_swipe_down">Glissement du pavé tactile vers le bas</string>
     <string name="controller_action_touchpad_swipe_left">Glissement du pavé tactile vers la gauche</string>
     <string name="controller_action_touchpad_swipe_right">Glissement du pavé tactile vers la droite</string>
+    <string name="controller_action_open_quick_settings">Ouvrir les paramètres rapides</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Ajouter un jeu à la bibliothèque</string>

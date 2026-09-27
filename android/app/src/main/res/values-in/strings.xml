@@ -578,6 +578,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">Sistem</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">Aplikasi</string>
     <string name="controller_action_left_stick_up">Stik Kiri Atas</string>
     <string name="controller_action_left_stick_down">Stik Kiri Bawah</string>
     <string name="controller_action_left_stick_left">Stik Kiri Kiri</string>
@@ -611,6 +612,7 @@
     <string name="controller_action_touchpad_swipe_down">Usap Touchpad ke Bawah</string>
     <string name="controller_action_touchpad_swipe_left">Usap Touchpad ke Kiri</string>
     <string name="controller_action_touchpad_swipe_right">Usap Touchpad ke Kanan</string>
+    <string name="controller_action_open_quick_settings">Buka Pengaturan Cepat</string>
 
     <string-array name="theme_colour_entries">
         <item>Neon Merah Muda</item>

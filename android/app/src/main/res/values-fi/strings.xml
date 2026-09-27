@@ -610,6 +610,7 @@
     <string name="controller_group_menu">Valikko</string>
     <string name="controller_group_system">Järjestelmä</string>
     <string name="controller_group_touchpad">Kosketuslevy</string>
+    <string name="controller_group_app">Sovellus</string>
 
     <string name="controller_action_left_stick_up">Vasen sauva ylös</string>
     <string name="controller_action_left_stick_down">Vasen sauva alas</string>
@@ -644,6 +645,7 @@
     <string name="controller_action_touchpad_swipe_down">Kosketuslevyn pyyhkäisy alas</string>
     <string name="controller_action_touchpad_swipe_left">Kosketuslevyn pyyhkäisy vasemmalle</string>
     <string name="controller_action_touchpad_swipe_right">Kosketuslevyn pyyhkäisy oikealle</string>
+    <string name="controller_action_open_quick_settings">Avaa pikaasetukset</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Lisää peli kirjastoon</string>

@@ -636,6 +636,7 @@
     <string name="controller_group_menu">Menü</string>
     <string name="controller_group_system">System</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">App</string>
 
     <string name="controller_action_left_stick_up">Linker Stick nach oben</string>
     <string name="controller_action_left_stick_down">Linker Stick nach unten</string>
@@ -670,6 +671,7 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad nach unten wischen</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad nach links wischen</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad nach rechts wischen</string>
+    <string name="controller_action_open_quick_settings">Schnelleinstellungen öffnen</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Spiel zur Bibliothek hinzufügen</string>

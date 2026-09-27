@@ -732,6 +732,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">System</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">App</string>
 
     <string name="controller_action_left_stick_up">Left Stick Up</string>
     <string name="controller_action_left_stick_down">Left Stick Down</string>
@@ -766,4 +767,5 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad Swipe Down</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad Swipe Left</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad Swipe Right</string>
+    <string name="controller_action_open_quick_settings">Open Quick Settings</string>
 </resources>

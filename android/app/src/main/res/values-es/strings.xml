@@ -611,6 +611,7 @@
     <string name="controller_group_menu">Menú</string>
     <string name="controller_group_system">Sistema</string>
     <string name="controller_group_touchpad">Panel táctil</string>
+    <string name="controller_group_app">Aplicación</string>
 
     <string name="controller_action_left_stick_up">Stick izquierdo arriba</string>
     <string name="controller_action_left_stick_down">Stick izquierdo abajo</string>
@@ -645,6 +646,7 @@
     <string name="controller_action_touchpad_swipe_down">Deslizar hacia abajo en el panel táctil</string>
     <string name="controller_action_touchpad_swipe_left">Deslizar hacia la izquierda en el panel táctil</string>
     <string name="controller_action_touchpad_swipe_right">Deslizar hacia la derecha en el panel táctil</string>
+    <string name="controller_action_open_quick_settings">Abrir ajustes rápidos</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Añadir un juego a la biblioteca</string>

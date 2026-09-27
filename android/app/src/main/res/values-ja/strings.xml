@@ -609,6 +609,7 @@
     <string name="controller_group_menu">メニュー</string>
     <string name="controller_group_system">システム</string>
     <string name="controller_group_touchpad">タッチパッド</string>
+    <string name="controller_group_app">アプリ</string>
 
     <string name="controller_action_left_stick_up">左スティック上</string>
     <string name="controller_action_left_stick_down">左スティック下</string>
@@ -643,6 +644,7 @@
     <string name="controller_action_touchpad_swipe_down">タッチパッド下スワイプ</string>
     <string name="controller_action_touchpad_swipe_left">タッチパッド左スワイプ</string>
     <string name="controller_action_touchpad_swipe_right">タッチパッド右スワイプ</string>
+    <string name="controller_action_open_quick_settings">クイック設定を開く</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">ゲームをライブラリに追加</string>

@@ -612,6 +612,7 @@
     <string name="controller_group_menu">Menu</string>
     <string name="controller_group_system">Systeem</string>
     <string name="controller_group_touchpad">Touchpad</string>
+    <string name="controller_group_app">App</string>
 
     <string name="controller_action_left_stick_up">Linkerstick omhoog</string>
     <string name="controller_action_left_stick_down">Linkerstick omlaag</string>
@@ -646,6 +647,7 @@
     <string name="controller_action_touchpad_swipe_down">Touchpad omlaag vegen</string>
     <string name="controller_action_touchpad_swipe_left">Touchpad naar links vegen</string>
     <string name="controller_action_touchpad_swipe_right">Touchpad naar rechts vegen</string>
+    <string name="controller_action_open_quick_settings">Snelle instellingen openen</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">Game aan bibliotheek toevoegen</string>

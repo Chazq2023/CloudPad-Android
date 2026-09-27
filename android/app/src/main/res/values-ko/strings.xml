@@ -646,6 +646,7 @@
     <string name="controller_group_menu">메뉴</string>
     <string name="controller_group_system">시스템</string>
     <string name="controller_group_touchpad">터치패드</string>
+    <string name="controller_group_app">앱</string>
 
     <string name="controller_action_left_stick_up">왼쪽 스틱 위</string>
     <string name="controller_action_left_stick_down">왼쪽 스틱 아래</string>
@@ -680,6 +681,7 @@
     <string name="controller_action_touchpad_swipe_down">터치패드 아래로 스와이프</string>
     <string name="controller_action_touchpad_swipe_left">터치패드 왼쪽으로 스와이프</string>
     <string name="controller_action_touchpad_swipe_right">터치패드 오른쪽으로 스와이프</string>
+    <string name="controller_action_open_quick_settings">퀵 설정 열기</string>
 
     <!-- Add Game to PS5 Library page, Video Pacing setting -->
     <string name="cloud_add_game_button_content_description">라이브러리에 게임 추가</string>
