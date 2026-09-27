@@ -208,6 +208,11 @@ class QuickSettingsPanel(
 					if(wasTabButton) enterContentScope()
 					true
 				}
+				// Whatever the user has ControllerAction.OPEN_QUICK_SETTINGS remapped to (if
+				// anything other than back/circle, already handled above) should also close the
+				// panel it opens — see isOpenQuickSettingsKeyCode's own doc comment for why this
+				// Dialog needs to check for it explicitly rather than that remap just working.
+				streamInput.isOpenQuickSettingsKeyCode(keyCode) -> { close(); true }
 				else -> false
 			}
 		}

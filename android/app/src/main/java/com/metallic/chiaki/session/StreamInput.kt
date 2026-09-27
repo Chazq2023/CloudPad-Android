@@ -110,6 +110,28 @@ class StreamInput(
 		controllerStateUpdated()
 	}
 
+	/** Whether [keyCode] matches whatever is currently mapped to
+	 *  [ControllerAction.OPEN_QUICK_SETTINGS] — a plain button binding, or just the trigger half
+	 *  of a combo (the modifier isn't required to still be held: by the time anything could call
+	 *  this, the panel that action opens is already showing, so the accidental-trigger concern a
+	 *  combo modifier normally guards against no longer applies — closing should just be easy).
+	 *
+	 *  QuickSettingsPanel's own Dialog window takes input ahead of this class's own
+	 *  dispatchKeyEvent while it's showing (see that Dialog's doc comment), so a press that would
+	 *  otherwise close the panel by re-triggering OPEN_QUICK_SETTINGS the normal way never reaches
+	 *  dispatchKeyEvent at all — only KEYCODE_BACK/BUTTON_B do, via that Dialog's own hardcoded
+	 *  close handling. This lets it also honour whatever the user actually remapped the action to
+	 *  instead of only ever closing via those two fixed keys. */
+	fun isOpenQuickSettingsKeyCode(keyCode: Int): Boolean
+	{
+		return when(val input = activeMapping[ControllerAction.OPEN_QUICK_SETTINGS])
+		{
+			is PhysicalInput.Button -> input.keyCode == keyCode
+			is PhysicalInput.Combo -> (input.trigger as? PhysicalInput.Button)?.keyCode == keyCode
+			else -> false
+		}
+	}
+
 	// ---- Sensor / lifecycle ----
 
 	/** Backs the rotation the [controllerState] getter flips motion axes for. Only read/written

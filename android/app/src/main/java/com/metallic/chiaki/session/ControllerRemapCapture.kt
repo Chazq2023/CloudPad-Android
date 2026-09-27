@@ -85,10 +85,20 @@ class ControllerRemapCapture(
 		// Ignore held-key repeat events
 		if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount > 0) return true
 
-		val ignoredKeyCodes = setOf(
-			KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_HOME,
-			KeyEvent.KEYCODE_APP_SWITCH, KeyEvent.KEYCODE_MENU
-		)
+		// Back is capturable only when remapping OPEN_QUICK_SETTINGS — the one action whose
+		// entire purpose is to be a local UI shortcut rather than a button sent to the console
+		// (see its own doc comment), and the one action back is already the *default* input for,
+		// so rebinding it there is meaningful and safe. Every other action keeps back blocked,
+		// same as HOME/APP_SWITCH/MENU always are regardless of action: binding e.g. Cross to
+		// hijack the system back key would be confusing at best and could leave a user with no
+		// way to navigate back at all.
+		val ignoredKeyCodes = if (listeningForAction == ControllerAction.OPEN_QUICK_SETTINGS)
+			setOf(KeyEvent.KEYCODE_HOME, KeyEvent.KEYCODE_APP_SWITCH, KeyEvent.KEYCODE_MENU)
+		else
+			setOf(
+				KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_HOME,
+				KeyEvent.KEYCODE_APP_SWITCH, KeyEvent.KEYCODE_MENU
+			)
 		if (event.keyCode in ignoredKeyCodes) {
 			if (event.keyCode == KeyEvent.KEYCODE_BACK && event.action == KeyEvent.ACTION_UP) {
 				listenDialog?.dismiss()
