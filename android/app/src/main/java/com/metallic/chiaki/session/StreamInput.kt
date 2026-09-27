@@ -511,36 +511,11 @@ class StreamInput(
 
 	// ---- dispatchKeyEvent ----
 
-	/** DualShock 4 and most generic gamepads report the D-pad as a hat-switch motion event
-	 *  (AXIS_HAT_X/Y — see the default mapping in ControllerMapping.kt and onGenericMotionEvent
-	 *  below), which is all the customizable mapping system listens for. Some pads — notably
-	 *  DualSense on certain Android/Bluetooth stacks — instead report it as discrete
-	 *  KEYCODE_DPAD_* key events, which nothing consumes today: DEFAULT_MAPPING has no Button
-	 *  entry for the D-pad actions, so dispatchKeyEvent's singleKeyToActions lookup below finds
-	 *  nothing and the press is silently dropped. This is a fallback only — it never runs when
-	 *  the keycode is already claimed by the (default or user-customized) mapping, so it can't
-	 *  override an explicit remap or double-fire for a pad that reports the D-pad the normal way.
-	 *  Gated to gamepad/joystick-sourced input so a plain keyboard's arrow keys aren't quietly
-	 *  turned into console input while streaming. */
-	private fun fallbackDpadAction(event: KeyEvent): ControllerAction?
-	{
-		if(event.source and (InputDevice.SOURCE_GAMEPAD or InputDevice.SOURCE_JOYSTICK) == 0) return null
-		return when(event.keyCode)
-		{
-			KeyEvent.KEYCODE_DPAD_UP -> ControllerAction.DPAD_UP
-			KeyEvent.KEYCODE_DPAD_DOWN -> ControllerAction.DPAD_DOWN
-			KeyEvent.KEYCODE_DPAD_LEFT -> ControllerAction.DPAD_LEFT
-			KeyEvent.KEYCODE_DPAD_RIGHT -> ControllerAction.DPAD_RIGHT
-			else -> null
-		}
-	}
-
 	fun dispatchKeyEvent(event: KeyEvent): Boolean
 	{
 		if(event.action != KeyEvent.ACTION_DOWN && event.action != KeyEvent.ACTION_UP) return false
 		if(event.action == KeyEvent.ACTION_DOWN && event.repeatCount > 0)
-			return event.keyCode in comboModifierKeyCodes || event.keyCode in singleKeyToActions ||
-				fallbackDpadAction(event) != null
+			return event.keyCode in comboModifierKeyCodes || event.keyCode in singleKeyToActions
 		val isDown = event.action == KeyEvent.ACTION_DOWN
 
 		// --- COMBO MODIFIER ---
@@ -589,9 +564,7 @@ class StreamInput(
 		}
 
 		// --- SINGLE-INPUT ACTION(S) — one physical button may fire multiple actions ---
-		val actions = singleKeyToActions[event.keyCode]
-			?: fallbackDpadAction(event)?.let { listOf(it) }
-			?: return false
+		val actions = singleKeyToActions[event.keyCode] ?: return false
 
 		// If any held action (e.g. SELECT→BUTTON_SHARE) shares this key with TOUCHPAD_CLICK,
 		// defer the touchpad quick press until after the held action releases so the two
