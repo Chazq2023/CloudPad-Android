@@ -21,6 +21,7 @@ jobs:
         - Reduced packet loss during streaming: the WiFi lock now requests low-latency mode (Android 10+) instead of high-performance mode, which also disables background WiFi scans during a stream; the network socket now has a dedicated read thread so a slow frame decode can no longer delay draining incoming packets and cause the phone to silently drop them internally; and a warning is now logged if the OS caps the receive buffer below what was requested.
         - Translated the new 1440p and FSR messaging into every supported language (German, Spanish, Finnish, French, Indonesian, Italian, Japanese, Korean, Dutch, Portuguese (Brazil)).
         - Fixed a gap where entirely dropped video frames (as opposed to partial frame corruption) weren't counted as packet loss, which could let the streaming server keep raising the bitrate through a real run of dropped frames instead of backing off.
+        - Fixed Cloud Play (Game Library/Game Catalog) sometimes getting stuck asking you to log in again right after logging in successfully, and never recovering even after reinstalling. The app was generating a brand new random device ID for every single stream launch instead of a stable one for the install, which could make PlayStation's fraud detection treat the account as logging in from a different device each time and start rejecting it — reinstalling couldn't fix this since the rejection lives on PlayStation's servers, not the device. The device ID is now generated once and reused.
 
     steps:
       - name: Checkout repo
