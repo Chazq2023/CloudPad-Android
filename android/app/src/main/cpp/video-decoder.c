@@ -179,6 +179,7 @@ typedef struct
 	size_t size_max;
 	int64_t window_start_us;
 	int stall_logs;
+	int pacing_dropped; // frames Smooth dropped to thin bursts (was in ADAPTIVE_PACING)
 } TraceSummary;
 
 static void trace_log_stall(AndroidChiakiVideoDecoder *decoder, const AndroidChiakiVideoFrameTrace *prev, const AndroidChiakiVideoFrameTrace *cur,
@@ -245,7 +246,8 @@ static void trace_summary_add(TraceSummary *s, const AndroidChiakiVideoFrameTrac
 	s->frames++;
 }
 
-static void trace_summary_flush(AndroidChiakiVideoDecoder *decoder, TraceSummary *s, int64_t now_us_val)
+static void trace_summary_flush(AndroidChiakiVideoDecoder *decoder, TraceSummary *s, int64_t now_us_val,
+	const char *pacing, int64_t buffer_ns, int64_t hold_ns, int64_t arrival_ns)
 {
 	chiaki_mutex_lock(&decoder->trace_mutex);
 	int32_t evictions = decoder->queue_evictions;
@@ -257,9 +259,11 @@ static void trace_summary_flush(AndroidChiakiVideoDecoder *decoder, TraceSummary
 	chiaki_mutex_unlock(&decoder->trace_mutex);
 
 	int n = s->frames > 0 ? s->frames : 1;
-	CHIAKI_LOGI(decoder->log, "PIPELINE_5S frames=%d scheduled=%d shown=%d display_max_gap_ms=%.1f stalls=%d queue_evictions=%d untraced=%d"
+	CHIAKI_LOGI(decoder->log, "PIPELINE_5S pacing=%s buffer_ms=%.1f hold_ms=%.1f arrival_fps=%.1f pacing_dropped=%d"
+		" | frames=%d scheduled=%d shown=%d display_max_gap_ms=%.1f stalls=%d queue_evictions=%d untraced=%d"
 		" | avg/max_ms read=%.1f/%.1f takion=%.1f/%.1f assemble=%.1f/%.1f queue=%.1f/%.1f codec_in=%.1f/%.1f decode=%.1f/%.1f"
 		" | arrival_span_max_ms=%.1f size_max_kb=%.1f",
+		pacing, buffer_ns / 1e6, hold_ns / 1e6, arrival_ns > 0 ? 1e9 / (double)arrival_ns : 0.0, s->pacing_dropped,
 		s->frames, s->scheduled, (int)rendered, disp_max_gap / 1e6, s->stalls, (int)evictions, s->untraced,
 		s->sum[0] / 1000.0 / n, s->max[0] / 1000.0, s->sum[1] / 1000.0 / n, s->max[1] / 1000.0,
 		s->sum[2] / 1000.0 / n, s->max[2] / 1000.0, s->sum[3] / 1000.0 / n, s->max[3] / 1000.0,
@@ -848,22 +852,28 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				int64_t elapsed_ns = now_ns - bucket_start_ns;
 				if(elapsed_ns >= 1000000000LL)
 				{
-					int32_t cur_timeouts = decoder->input_timeouts;
-					int32_t new_timeouts = cur_timeouts - last_input_timeouts;
-					last_input_timeouts = cur_timeouts;
-					int min_hdm_ms = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
-					CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d src_ms=%.1f buf_ms=%d mode=%s",
-						bucket_frames * 1e9f / (float)elapsed_ns,
-						short_intervals, long_intervals, new_timeouts, min_hdm_ms,
-						(double)source_period_ns / 1000000.0, (int)(last_baseline_ns / 1000000LL),
-						smooth ? "smooth" : "standard");
-					if(smooth)
-					{
-						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f hold_ms=%.1f arrival_fps=%.1f dropped=%d",
-							(double)ema_jitter_ns / 1000000.0, (double)smooth_hold_ns / 1000000.0,
-							1e9 / (double)ema_arrival_ns, adaptive_dropped);
-						adaptive_dropped = 0;
-					}
+					// These two once-a-second lines are left commented out to keep routine logging
+					// off the output thread; PIPELINE_5S (see trace_summary_flush) carries the same
+					// health picture every 5 seconds, and problems are logged as they happen
+					// (FRAME_STALL / DISPLAY_GAP). Uncomment when tuning pacing itself.
+					// int32_t cur_timeouts = decoder->input_timeouts;
+					// int32_t new_timeouts = cur_timeouts - last_input_timeouts;
+					// last_input_timeouts = cur_timeouts;
+					// int min_hdm_ms = (min_headroom_ns == INT64_MAX) ? 0 : (int)(min_headroom_ns / 1000000LL);
+					// CHIAKI_LOGI(decoder->log, "VIDEO_FRAME_TIMING fps=%.1f short=%d long=%d in_tout=%d min_hdm=%d src_ms=%.1f buf_ms=%d mode=%s",
+					// 	bucket_frames * 1e9f / (float)elapsed_ns,
+					// 	short_intervals, long_intervals, new_timeouts, min_hdm_ms,
+					// 	(double)source_period_ns / 1000000.0, (int)(last_baseline_ns / 1000000LL),
+					// 	smooth ? "smooth" : "standard");
+					// if(smooth)
+					// {
+					// 	CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f hold_ms=%.1f arrival_fps=%.1f dropped=%d",
+					// 		(double)ema_jitter_ns / 1000000.0, (double)smooth_hold_ns / 1000000.0,
+					// 		1e9 / (double)ema_arrival_ns, adaptive_dropped);
+					// }
+					(void)last_input_timeouts;
+					trace_summary.pacing_dropped += adaptive_dropped;
+					adaptive_dropped = 0;
 					bucket_start_ns   = now_ns;
 					bucket_frames     = 0;
 					short_intervals   = 0;
@@ -996,7 +1006,8 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				else
 					trace_summary.untraced++;
 				if(now_trace_us - trace_summary.window_start_us >= 5000000)
-					trace_summary_flush(decoder, &trace_summary, now_trace_us);
+					trace_summary_flush(decoder, &trace_summary, now_trace_us, smooth ? "smooth" : "standard",
+						baseline_ns, smooth_hold_ns, ema_arrival_ns);
 				trace_output_busy_us = now_us() - now_trace_us;
 			}
 			else

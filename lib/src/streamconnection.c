@@ -71,6 +71,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_stream_connection_init(ChiakiStreamConnecti
 	stream_connection->measured_bitrate = 0.0;
 	stream_connection->measured_rtt = 0.0;
 	stream_connection->measured_loss = 0.0;
+	stream_connection->logged_target_bitrate = -1;
 	stream_connection->measured_ping_rtt = 0.0;
 	stream_connection->ping_probe_pending = false;
 	stream_connection->ping_probe_seq_num = 0;
@@ -731,18 +732,28 @@ static void stream_connection_takion_data_idle(ChiakiStreamConnection *stream_co
 	case tkproto_TakionMessage_PayloadType_CONNECTIONQUALITY:
 	{
 		tkproto_ConnectionQualityPayload q = msg.connection_quality_payload;
-		CHIAKI_LOGI(
-			stream_connection->log,
-			"StreamConnection received connection quality: target_bitrate=%d, "
-			"upstream_bitrate=%d, upstream_loss=%.4f, "
-			"disable_upstream_audio=%d, rtt=%.4f, loss=%lld",
-			 q.target_bitrate, q.upstream_bitrate,
-			 q.upstream_loss,
-			 q.disable_upstream_audio, q.rtt, q.loss);
+		// Arrives about once a second on the takion thread, so the full report is left commented
+		// out to keep routine logging off the stream's hot path. The server's bitrate target is
+		// still logged whenever it changes (the useful part when checking a bitrate setting).
+		// CHIAKI_LOGI(
+		// 	stream_connection->log,
+		// 	"StreamConnection received connection quality: target_bitrate=%d, "
+		// 	"upstream_bitrate=%d, upstream_loss=%.4f, "
+		// 	"disable_upstream_audio=%d, rtt=%.4f, loss=%lld",
+		// 	 q.target_bitrate, q.upstream_bitrate,
+		// 	 q.upstream_loss,
+		// 	 q.disable_upstream_audio, q.rtt, q.loss);
+		if((int64_t)q.target_bitrate != stream_connection->logged_target_bitrate)
+		{
+			CHIAKI_LOGI(stream_connection->log, "StreamConnection server target_bitrate=%u (loss=%lld, rtt=%.1f)",
+				(unsigned int)q.target_bitrate, (long long)q.loss, (double)q.rtt);
+			stream_connection->logged_target_bitrate = (int64_t)q.target_bitrate;
+		}
 		stream_connection->measured_rtt = q.has_rtt ? q.rtt : 0.0;
 		stream_connection->measured_loss = q.has_loss ? (double)q.loss : 0.0;
 		stream_connection->measured_bitrate = chiaki_stream_stats_bitrate(&stream_connection->video_receiver->frame_processor.stream_stats, stream_connection->session->connect_info.video_profile.max_fps) / 1000000.0;
-		CHIAKI_LOGI(stream_connection->log, "StreamConnection measured bitrate: %.4f MBit/s", stream_connection->measured_bitrate);
+		// Once a second on the takion thread; the overlay's BT line shows the same value.
+		// CHIAKI_LOGI(stream_connection->log, "StreamConnection measured bitrate: %.4f MBit/s", stream_connection->measured_bitrate);
 		chiaki_stream_stats_reset(&stream_connection->video_receiver->frame_processor.stream_stats);
 		break;
 	}
