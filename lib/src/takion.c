@@ -260,6 +260,8 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 	takion->cb_user = info->cb_user;
 	takion->a_rwnd = TAKION_A_RWND;
 	takion->rx_dropped_total = 0;
+	takion->rx_dropped_logged = 0;
+	takion->rx_dropped_log_us = 0;
 	takion->cur_packet_kernel_us = 0;
 	takion->cur_packet_recv_us = 0;
 	takion->cur_packet_pop_us = 0;
@@ -1178,6 +1180,11 @@ static void *takion_thread_func(void *user)
 
 	bool crypt_available = takion->gkcrypt_remote ? true : false;
 
+	// TAKION_SLOW_HANDLE rate limit (below): at most 5 warnings per 5 seconds, since logging
+	// happens on this thread and would add to the delay it's reporting.
+	uint64_t slow_log_window_us = 0;
+	int slow_logs = 0;
+
 	while(true)
 	{
 		if(takion->enable_crypt && !crypt_available && takion->gkcrypt_remote)
@@ -1237,8 +1244,14 @@ static void *takion_thread_func(void *user)
 		takion_handle_packet(takion, entry->buf, entry->buf_size); // takes ownership of entry->buf
 		free(entry);
 
-		uint64_t handle_us = chiaki_time_now_monotonic_us() - takion->cur_packet_pop_us;
-		if(handle_us > 8000)
+		uint64_t handled_us = chiaki_time_now_monotonic_us();
+		uint64_t handle_us = handled_us - takion->cur_packet_pop_us;
+		if(handled_us - slow_log_window_us >= 5000000)
+		{
+			slow_log_window_us = handled_us;
+			slow_logs = 0;
+		}
+		if(handle_us > 8000 && slow_logs++ < 5)
 			CHIAKI_LOGW(takion->log, "TAKION_SLOW_HANDLE type=%#x size=%zu handle_ms=%.1f queued_ms=%.1f",
 				(unsigned int)(packet_type & TAKION_PACKET_BASE_TYPE_MASK), packet_size, handle_us / 1000.0,
 				(takion->cur_packet_pop_us - takion->cur_packet_recv_us) / 1000.0);
@@ -1469,11 +1482,21 @@ static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *b
 				continue;
 			uint32_t dropped_total;
 			memcpy(&dropped_total, CMSG_DATA(cmsg), sizeof(dropped_total));
-			// The kernel reports a running total, so log only the increase since the last packet.
-			if(dropped_total > takion->rx_dropped_total)
-				CHIAKI_LOGW(takion->log, "Takion socket buffer overflow: %u packets dropped locally",
-					(unsigned int)(dropped_total - takion->rx_dropped_total));
+			// The kernel reports a running total. Summarise increases at most once a second: this
+			// runs on the thread that drains the socket, so logging every overflow would slow it
+			// down exactly when it's already falling behind.
 			takion->rx_dropped_total = dropped_total;
+			if(dropped_total > takion->rx_dropped_logged)
+			{
+				uint64_t now_us = chiaki_time_now_monotonic_us();
+				if(now_us - takion->rx_dropped_log_us >= 1000000)
+				{
+					CHIAKI_LOGW(takion->log, "Takion socket buffer overflow: %u packets dropped locally (total %u)",
+						(unsigned int)(dropped_total - takion->rx_dropped_logged), (unsigned int)dropped_total);
+					takion->rx_dropped_logged = dropped_total;
+					takion->rx_dropped_log_us = now_us;
+				}
+			}
 		}
 	}
 #else

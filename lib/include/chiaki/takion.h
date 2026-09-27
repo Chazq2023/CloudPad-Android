@@ -192,6 +192,8 @@ typedef struct chiaki_takion_t
 	 *  them, so it tells an in-device bottleneck apart from real network loss. Written by
 	 *  recv_thread, read for the stats overlay. */
 	uint32_t rx_dropped_total;
+	uint32_t rx_dropped_logged; // rx_dropped_total as of the last overflow warning (rate-limited)
+	uint64_t rx_dropped_log_us;
 
 	/** Stall tracing (CLOCK_MONOTONIC µs, see chiaki_time_now_monotonic_us): when the packet that
 	 *  takion_thread_func is currently handling reached the device (kernel receive timestamp via
