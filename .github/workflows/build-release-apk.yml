@@ -20,6 +20,7 @@ jobs:
         - Added a "Sock" line to the performance overlay that counts packets the device itself had to throw away because it couldn't read them fast enough. This separates stutter caused by the device from real network packet loss.
         - New "Bitrate Adaptation" setting, in Settings and in-stream Quick Settings, where changes apply live. "Adapt to network" is the new default: it lets the console or cloud server briefly lower quality during rough network patches instead of stuttering or freezing. "Hold bitrate" keeps the old always-full-quality behaviour.
         - Session logs now pinpoint the cause of any playback stutter: whether a delayed frame was held up by the network or server, by one of the app's own processing steps, by the hardware video decoder, or by the display.
+        - Smooth video pacing now holds a larger buffer for a few seconds after a stutter, up to 100 ms (was 83 ms). Heavy cloud scenes, such as 30 fps graphics modes, where large frames arrive late in clusters, stay smooth after the first hitch instead of stuttering repeatedly.
 
     steps:
       - name: Checkout repo

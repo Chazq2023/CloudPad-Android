@@ -682,6 +682,18 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 	int64_t ema_jitter_ns    = 0;
 	int     adaptive_dropped = 0; // frames dropped this second to thin a burst
 
+	// Smooth pacing peak hold. The jitter EMA above forgets a stall within a fraction of a second,
+	// so the cushion shrank straight back between stalls and the next one got through. Stall
+	// tracing showed why stalls come in clusters: in heavy scenes (notably 30fps "graphics" modes)
+	// the cloud server sends frames of 140-210KB but paces delivery at the stream bitrate (~32Mbps),
+	// so each takes 35-55ms to arrive instead of 16.7ms. After a real stall, hold a cushion big
+	// enough for that gap for a while, then let it decay back.
+	const int64_t smooth_hold_duration_ns = 10000000000LL; // keep the raised cushion this long
+	const int64_t smooth_hold_decay_per_s_ns = vsync_period_ns; // then shrink by one frame per second
+	int64_t smooth_hold_ns     = 0;
+	int64_t smooth_hold_set_ns = 0;
+	int64_t smooth_hold_decay_ns = 0; // time the decay was last applied
+
 	decoder->next_render_ns = 0;
 	bool last_smooth = decoder->adaptive_frame_pacing_enabled;
 	int64_t last_baseline_ns = 2 * vsync_period_ns; // for the per-second log only
@@ -769,6 +781,32 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 
 					int64_t deviation_ns = delta_ns > source_period_ns ? delta_ns - source_period_ns : source_period_ns - delta_ns;
 					ema_jitter_ns = (ema_jitter_ns * 7 + deviation_ns) / 8;
+
+					// Smooth peak hold: a real stall (same threshold as FRAME_STALL) raises the held
+					// cushion to cover a gap that size plus a frame of margin. Ordinary bunching
+					// (e.g. the paired arrivals of 30fps content) stays below the threshold.
+					if(delta_ns > 2 * source_period_ns + 8000000LL)
+					{
+						int64_t want_ns = (delta_ns - source_period_ns) + 3 * vsync_period_ns;
+						if(want_ns > smooth_hold_ns)
+						{
+							smooth_hold_ns = want_ns;
+							if(decoder->adaptive_frame_pacing_enabled)
+								CHIAKI_LOGI(decoder->log, "Video pacing: %.1f ms gap, holding smooth buffer at up to %.1f ms",
+									delta_ns / 1e6, want_ns / 1e6);
+						}
+						smooth_hold_set_ns = now_ns;
+						smooth_hold_decay_ns = now_ns;
+					}
+					else if(smooth_hold_ns > 0 && now_ns - smooth_hold_set_ns > smooth_hold_duration_ns)
+					{
+						smooth_hold_ns -= smooth_hold_decay_per_s_ns * (now_ns - smooth_hold_decay_ns) / 1000000000LL;
+						if(smooth_hold_ns < 0)
+							smooth_hold_ns = 0;
+						smooth_hold_decay_ns = now_ns;
+					}
+					else if(smooth_hold_ns > 0)
+						smooth_hold_decay_ns = now_ns;
 				}
 				last_frame_ns = now_ns;
 
@@ -789,8 +827,8 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 						smooth ? "smooth" : "standard");
 					if(smooth)
 					{
-						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f dropped=%d",
-							(double)ema_jitter_ns / 1000000.0, adaptive_dropped);
+						CHIAKI_LOGI(decoder->log, "ADAPTIVE_PACING jitter_ms=%.1f hold_ms=%.1f dropped=%d",
+							(double)ema_jitter_ns / 1000000.0, (double)smooth_hold_ns / 1000000.0, adaptive_dropped);
 						adaptive_dropped = 0;
 					}
 					bucket_start_ns   = now_ns;
@@ -806,16 +844,26 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				//
 				// Standard: a fixed 2x grid period (33ms at 60fps) baseline minimises display-side
 				// input latency.
-				// Smooth scales the baseline up with recently observed jitter (ema_jitter_ns above)
-				// instead of using the fixed value, up to 5x (83ms at 60fps) so a bad connection
-				// can't pile latency on indefinitely, and proactively drops frames that arrive well
-				// ahead of schedule during a burst — see below — rather than queueing them further
-				// into the future and letting latency creep up until a hard cap-reset is needed.
+				// Smooth scales the baseline up with recently observed jitter (ema_jitter_ns above), or
+				// the peak-hold cushion after a recent stall (smooth_hold_ns above) if that's larger,
+				// instead of using the fixed value, up to 6x (100ms at 60fps — the largest gaps seen in
+				// traced cloud sessions needed ~92ms) so a bad connection can't pile latency on
+				// indefinitely, and proactively drops frames that arrive well ahead of schedule during
+				// a burst — see below — rather than queueing them further into the future and letting
+				// latency creep up until a hard cap-reset is needed.
 				int64_t baseline_ns = 2 * vsync_period_ns;
+				// Cushion a late frame is re-scheduled with. The peak-hold part of the Smooth
+				// baseline is deliberately left out: jumping straight to it would freeze the picture
+				// for that much longer right on top of the stall. It is grown into gradually instead
+				// (see advance_ns below).
+				int64_t reset_baseline_ns = baseline_ns;
 				if(smooth)
 				{
-					const int64_t smooth_max_ns = 5 * vsync_period_ns;
+					const int64_t smooth_max_ns = 6 * vsync_period_ns;
 					int64_t smooth_baseline_ns = baseline_ns + ema_jitter_ns * 2;
+					reset_baseline_ns = smooth_baseline_ns > smooth_max_ns ? smooth_max_ns : smooth_baseline_ns;
+					if(smooth_hold_ns > smooth_baseline_ns)
+						smooth_baseline_ns = smooth_hold_ns;
 					baseline_ns = smooth_baseline_ns > smooth_max_ns ? smooth_max_ns : smooth_baseline_ns;
 				}
 				last_baseline_ns = baseline_ns;
@@ -843,7 +891,7 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 				else
 				{
 					if(headroom_ns <= 1000000LL || headroom_ns > cap_ns)
-						render_ns = now_ns + baseline_ns;
+						render_ns = now_ns + reset_baseline_ns;
 
 					AMediaCodec_releaseOutputBufferAtTime(decoder->codec, (size_t)status, render_ns);
 					trace_render_ns = render_ns;
@@ -856,6 +904,11 @@ static void *android_chiaki_video_decoder_output_thread_func(void *user)
 					int64_t advance_ns = (headroom_ns > baseline_ns)
 						? vsync_period_ns
 						: (ema_inter_frame_ns > source_period_ns ? ema_inter_frame_ns : source_period_ns);
+					// Growing into a raised peak-hold cushion: show each frame 2ms later than the last
+					// until the cushion is within a frame of the target (~0.4s for +50ms). On screen
+					// that's an occasional repeated frame rather than one long freeze.
+					if(smooth && smooth_hold_ns > 0 && render_ns - now_ns < baseline_ns - vsync_period_ns)
+						advance_ns += 2000000LL;
 					decoder->next_render_ns = render_ns + advance_ns;
 					decoder->output_frames_total++;
 				}
