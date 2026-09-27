@@ -45,6 +45,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelDT = metricRow("DT")
     private val labelVL = metricRow("VL")
     private val labelDrops = metricRow("Drops")
+    private val labelSock = metricRow("Sock")
     private val labelPace = metricRow("Pace")
 
     // Session time sits under "Visual" in Full mode (latencyCol) but under "Res" in Minimal mode,
@@ -98,6 +99,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         qualityCol.addView(labelDT)
         qualityCol.addView(labelVL)
         qualityCol.addView(labelDrops)
+        qualityCol.addView(labelSock)
         qualityCol.addView(labelPace)
 
         columns.addView(
@@ -290,6 +292,13 @@ class PerformanceOverlayView @JvmOverloads constructor(
         labelVL.setTextColor(lossColor)
 
         labelDrops.text = String.format(Locale.US, "%-5s %-5d", "Drops", m.drops)
+
+        // Packets thrown away inside the device (socket buffer full) rather than lost on the
+        // network — any non-zero value means the device, not the network, is behind a stutter.
+        labelSock.text = String.format(Locale.US, "%-5s %-5d", "Sock", m.socketDrops)
+        labelSock.setTextColor(
+            if (m.socketDrops > 0) Color.rgb(255, 80, 80) else Color.rgb(0, 220, 100)
+        )
 
         // Plain (default-coloured) text in both modes — the mode name says it all, no traffic light.
         labelPace.text = String.format(

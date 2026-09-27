@@ -17,6 +17,7 @@ jobs:
     env:
       RELEASE_NOTES: |-
         - WiFi now stays in high-performance mode for the whole stream, including in the background and picture-in-picture, with low-latency mode added on top on Android 10+. WiFi power saving is restored as soon as a stream ends, including when it ends with an error.
+        - Added a "Sock" line to the performance overlay that counts packets the device itself had to throw away because it couldn't read them fast enough. This separates stutter caused by the device from real network packet loss.
 
     steps:
       - name: Checkout repo

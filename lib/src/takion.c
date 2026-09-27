@@ -213,6 +213,7 @@ static void takion_write_message_header(uint8_t *buf, uint32_t tag, uint64_t key
 static ChiakiErrorCode takion_send_message_init(ChiakiTakion *takion, TakionMessagePayloadInit *payload);
 static ChiakiErrorCode takion_send_message_cookie(ChiakiTakion *takion, uint8_t *cookie);
 static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *buf_size, uint64_t timeout_ms);
+static void takion_enable_rxq_ovfl(ChiakiTakion *takion);
 static ChiakiErrorCode takion_recv_message_init_ack(ChiakiTakion *takion, TakionMessagePayloadInitAck *payload);
 static ChiakiErrorCode takion_recv_message_cookie_ack(ChiakiTakion *takion);
 static void takion_handle_packet_av(ChiakiTakion *takion, uint8_t base_type, uint8_t *buf, size_t buf_size);
@@ -255,6 +256,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 	takion->cb = info->cb;
 	takion->cb_user = info->cb_user;
 	takion->a_rwnd = TAKION_A_RWND;
+	takion->rx_dropped_total = 0;
 
 	takion->tag_local = chiaki_random_32();
 	takion->seq_num_local = takion->tag_local;
@@ -334,6 +336,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 		{
 			CHIAKI_LOGW(takion->log, "TAKION_RCVBUF_DETAIL getsockopt failed");
 		}
+		takion_enable_rxq_ovfl(takion);
 
 #if defined(__APPLE__) && TARGET_OS_OSX
 		// macOS < 11 doesn't support IP_DONTFRAG
@@ -446,6 +449,7 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_takion_connect(ChiakiTakion *takion, Chiaki
 		{
 			CHIAKI_LOGW(takion->log, "TAKION_RCVBUF_DETAIL getsockopt failed");
 		}
+		takion_enable_rxq_ovfl(takion);
 		if(info->ip_dontfrag)
 		{
 #if defined(__APPLE__) && TARGET_OS_OSX
@@ -1364,6 +1368,21 @@ static void takion_recv_queue_fini(ChiakiTakion *takion)
 	takion->recv_queue_count = 0;
 }
 
+/**
+ * Ask the kernel to report how many datagrams it dropped because the receive buffer was full
+ * (read back in takion_recv()). Purely diagnostic, so failure only logs a warning.
+ */
+static void takion_enable_rxq_ovfl(ChiakiTakion *takion)
+{
+#ifdef SO_RXQ_OVFL
+	const int rxq_ovfl_val = 1;
+	if(setsockopt(takion->sock, SOL_SOCKET, SO_RXQ_OVFL, (const CHIAKI_SOCKET_BUF_TYPE)&rxq_ovfl_val, sizeof(rxq_ovfl_val)) < 0)
+		CHIAKI_LOGW(takion->log, "Takion failed to setsockopt SO_RXQ_OVFL, local drop counting disabled: " CHIAKI_SOCKET_ERROR_FMT, CHIAKI_SOCKET_ERROR_VALUE);
+#else
+	(void)takion;
+#endif
+}
+
 static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *buf_size, uint64_t timeout_ms)
 {
 	ChiakiErrorCode err = chiaki_stop_pipe_select_single(&takion->stop_pipe, takion->sock, false, timeout_ms);
@@ -1375,7 +1394,40 @@ static ChiakiErrorCode takion_recv(ChiakiTakion *takion, uint8_t *buf, size_t *b
 		return err;
 	}
 
+#ifdef SO_RXQ_OVFL
+	// recvmsg() instead of recv() so the kernel can attach the SO_RXQ_OVFL drop counter enabled
+	// in takion_enable_rxq_ovfl() — the only way to see packets the device itself threw away
+	// because the socket buffer was full, as opposed to packets lost on the network.
+	struct iovec iov = { .iov_base = buf, .iov_len = *buf_size };
+	union
+	{
+		char buf[CMSG_SPACE(sizeof(uint32_t))];
+		struct cmsghdr align;
+	} control;
+	struct msghdr msg = { 0 };
+	msg.msg_iov = &iov;
+	msg.msg_iovlen = 1;
+	msg.msg_control = control.buf;
+	msg.msg_controllen = sizeof(control.buf);
+	CHIAKI_SSIZET_TYPE received_sz = recvmsg(takion->sock, &msg, 0);
+	if(received_sz > 0)
+	{
+		for(struct cmsghdr *cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg))
+		{
+			if(cmsg->cmsg_level != SOL_SOCKET || cmsg->cmsg_type != SO_RXQ_OVFL)
+				continue;
+			uint32_t dropped_total;
+			memcpy(&dropped_total, CMSG_DATA(cmsg), sizeof(dropped_total));
+			// The kernel reports a running total, so log only the increase since the last packet.
+			if(dropped_total > takion->rx_dropped_total)
+				CHIAKI_LOGW(takion->log, "Takion socket buffer overflow: %u packets dropped locally",
+					(unsigned int)(dropped_total - takion->rx_dropped_total));
+			takion->rx_dropped_total = dropped_total;
+		}
+	}
+#else
 	CHIAKI_SSIZET_TYPE received_sz = recv(takion->sock, buf, *buf_size, 0);
+#endif
 	if(received_sz <= 0)
 	{
 		if(received_sz < 0)

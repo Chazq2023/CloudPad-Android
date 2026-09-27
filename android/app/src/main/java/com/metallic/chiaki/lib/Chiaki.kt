@@ -138,7 +138,10 @@ data class SessionMetrics(
 	val latency: Double,
 	val packetLoss: Double,
 	val decodeTime: Double,
-	val drops: Long
+	val drops: Long,
+	/** Cumulative packets dropped inside the device (socket receive buffer overflow), as opposed
+	 *  to lost on the network. Always 0 where the OS can't report it. */
+	val socketDrops: Long
 )
 
 private class ChiakiNative

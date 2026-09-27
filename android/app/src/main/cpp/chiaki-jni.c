@@ -972,7 +972,7 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 			env,
 			metrics_class,
 			"<init>",
-			"(IIFFDDDDDJ)V"
+			"(IIFFDDDDDJJ)V"
 	);
 
 	if(!metrics_ctor)
@@ -1049,6 +1049,10 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 
 	double decode_time = 0.0;
 	jlong drops = (jlong)session->metrics_drops;
+	// Packets the kernel dropped on this device because the takion socket buffer was full — see
+	// ChiakiTakion.rx_dropped_total. Shown separately so in-device drops aren't mistaken for
+	// network loss.
+	jlong socket_drops = (jlong)session->session.stream_connection.takion.rx_dropped_total;
 
 	return E->NewObject(
 			env,
@@ -1063,7 +1067,8 @@ JNIEXPORT jobject JNICALL JNI_FCN(sessionGetMetrics)(JNIEnv *env, jobject obj, j
 			(jdouble)latency,
 			(jdouble)packet_loss,
 			(jdouble)decode_time,
-			(jlong)drops
+			(jlong)drops,
+			socket_drops
 	);
 }
 

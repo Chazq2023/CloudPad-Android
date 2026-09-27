@@ -186,6 +186,12 @@ typedef struct chiaki_takion_t
 	struct chiaki_takion_recv_queue_entry_t *recv_queue_tail;
 	size_t recv_queue_count;
 	bool recv_thread_should_stop;
+	/** Cumulative count of datagrams the kernel dropped because this socket's receive buffer was
+	 *  full (SO_RXQ_OVFL, Linux/Android only — stays 0 elsewhere). Unlike measured packet loss,
+	 *  this only counts packets that reached the device and were thrown away before the app read
+	 *  them, so it tells an in-device bottleneck apart from real network loss. Written by
+	 *  recv_thread, read for the stats overlay. */
+	uint32_t rx_dropped_total;
 	uint32_t tag_local;
 	uint32_t tag_remote;
 	bool close_socket;
