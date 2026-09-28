@@ -14,6 +14,16 @@ import android.view.View
 import com.pylux.stream.R
 import kotlin.math.abs
 
+/** Returns (handle travel distance, handle draw radius) for a base circle drawn at
+ *  [circleRadius], scaling both down proportionally when the base is clamped below its
+ *  natural size of [radius] + [handleRadius] so the handle never leaves the base. */
+internal fun scaledHandleGeometry(radius: Float, handleRadius: Float, circleRadius: Float): Pair<Float, Float>
+{
+	val fullRadius = radius + handleRadius
+	val scale = if(fullRadius > 0f) circleRadius / fullRadius else 1f
+	return Pair(radius * scale, handleRadius * scale)
+}
+
 class AnalogStickView @JvmOverloads constructor(
 	context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr)
@@ -86,9 +96,12 @@ class AnalogStickView @JvmOverloads constructor(
 			drawableBase?.setBounds((center.x - circleRadius).toInt(), (center.y - circleRadius).toInt(), (center.x + circleRadius).toInt(), (center.y + circleRadius).toInt())
 			drawableBase?.draw(canvas)
 
-			val handleDrawRadius = minOf(handleRadius, circleRadius)
-			val handleX = center.x + handlePosition.x * radius
-			val handleY = center.y + handlePosition.y * radius
+			// Shrink the handle and its travel by the same factor as the base, so a deflected
+			// handle stays inside the (possibly clamped) base circle instead of running past the
+			// view's edge and getting clipped flat.
+			val (handleTravel, handleDrawRadius) = scaledHandleGeometry(radius, handleRadius, circleRadius)
+			val handleX = center.x + handlePosition.x * handleTravel
+			val handleY = center.y + handlePosition.y * handleTravel
 			drawableHandle?.setBounds((handleX - handleDrawRadius).toInt(), (handleY - handleDrawRadius).toInt(), (handleX + handleDrawRadius).toInt(),(handleY + handleDrawRadius).toInt())
 			drawableHandle?.draw(canvas)
 		}

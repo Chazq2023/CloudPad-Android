@@ -16,13 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - WiFi now stays in high-performance mode for the whole stream, including in the background and picture-in-picture, with low-latency mode added on top on Android 10+. WiFi power saving is restored as soon as a stream ends, including when it ends with an error.
-        - Added a "Sock" line to the performance overlay that counts packets the device itself had to throw away because it couldn't read them fast enough. This separates stutter caused by the device from real network packet loss.
-        - New "Bitrate Adaptation" setting, in Settings and in-stream Quick Settings, where changes apply live. "Adapt to network" is the new default: it lets the console or cloud server briefly lower quality during rough network patches instead of stuttering or freezing. "Hold bitrate" keeps the old always-full-quality behaviour.
-        - Session logs now pinpoint the cause of any playback stutter: whether a delayed frame was held up by the network or server, by one of the app's own processing steps, by the hardware video decoder, or by the display.
-        - Smoother cloud streaming in heavy scenes, such as 30 fps graphics modes at 1440p. When the server can only deliver about 55–58 frames per second, Smooth video pacing now shows them evenly instead of freezing every few seconds. It also keeps a larger buffer, up to 100 ms, for a few seconds after a stutter and refills it gradually.
-        - Frames decode faster: the hardware video decoder now runs at full speed instead of just fast enough for 60 fps, so large frames no longer take longer than a frame's slot to decode.
-        - The Game Library and Game Catalog bitrate sliders now go up to 50 Mbps (was 200). Settings saved above 50 are lowered to 50 automatically.
+        - Fixed the left on-screen analog stick handle getting cut off when pushed on wide phones (e.g. 20:9 screens). The handle now scales with the stick so it always stays inside it.
 
     steps:
       - name: Checkout repo
