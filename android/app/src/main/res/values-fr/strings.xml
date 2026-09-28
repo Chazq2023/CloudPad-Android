@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">Déplacer le bouton</string>
     <string name="touch_controls_finish">Terminer</string>
     <string name="touch_controls_always_show">Toujours afficher</string>
+    <string name="touch_controls_always_visible">Toujours visible</string>
     <string name="touch_controls_restore_default">Restaurer par défaut</string>
     <string name="touch_control_dpad">Croix directionnelle</string>
     <string name="touch_control_left_stick">Stick gauche</string>

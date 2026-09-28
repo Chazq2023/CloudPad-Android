@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">버튼 이동</string>
     <string name="touch_controls_finish">완료</string>
     <string name="touch_controls_always_show">항상 표시</string>
+    <string name="touch_controls_always_visible">항상 보이기</string>
     <string name="touch_controls_restore_default">기본값으로 복원</string>
     <string name="touch_control_dpad">방향키</string>
     <string name="touch_control_left_stick">왼쪽 스틱</string>

@@ -109,7 +109,7 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 		binding.faceButtonsLayout.clipToPadding = false
 		val controlsRoot = binding.root
 		views.forEach { (control, controlView) ->
-			val style = preferences.touchControlStyle(control)
+			val style = preferences.touchControlStyle(control).effectiveFor(control)
 			val scale = style.sizePercent / 100f
 			controlView.scaleX = scale
 			controlView.scaleY = scale
@@ -121,6 +121,7 @@ class DefaultTouchControlsFragment : TouchControlsFragment()
 		}
 		binding.leftAnalogStickView.alwaysShow = preferences.touchControlStyle(TouchControl.LEFT_STICK).alwaysShow
 		binding.rightAnalogStickView.alwaysShow = preferences.touchControlStyle(TouchControl.RIGHT_STICK).alwaysShow
+		binding.touchpadView.alwaysShow = preferences.touchControlStyle(TouchControl.TOUCHPAD).alwaysShow
 	}
 
 	private fun controlViews() = mapOf(

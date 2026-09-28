@@ -216,6 +216,7 @@
     <string name="touch_controls_move_button">Taste verschieben</string>
     <string name="touch_controls_finish">Fertig</string>
     <string name="touch_controls_always_show">Immer anzeigen</string>
+    <string name="touch_controls_always_visible">Immer sichtbar</string>
     <string name="touch_controls_restore_default">Auf Standard zurücksetzen</string>
     <string name="touch_control_dpad">D-Pad</string>
     <string name="touch_control_left_stick">Linker Stick</string>

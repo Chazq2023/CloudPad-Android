@@ -1537,7 +1537,7 @@ class QuickSettingsPanel(
 		if(isOpen) close() else open()
 	}
 
-	private fun showTouchControlsCustomiseDialog()
+	private fun showTouchControlsCustomiseDialog(initialControl: TouchControl? = null)
 	{
 		dismissImmediately()
 		customizationView?.let { (it.parent as? ViewGroup)?.removeView(it) }
@@ -1549,6 +1549,8 @@ class QuickSettingsPanel(
 			R.layout.item_touch_control_spinner,
 			labels
 		).apply { setDropDownViewResource(R.layout.item_touch_control_spinner) }
+		// Reopen on the control that was just moved rather than the first entry (D-pad).
+		initialControl?.let { binding.touchControlSpinner.setSelection(controls.indexOf(it), false) }
 
 		binding.touchControlSizeSeekBar.max = TouchControlStyle.MAX_SIZE_PERCENT - TouchControlStyle.MIN_SIZE_PERCENT
 		binding.touchControlSizeSeekBar.keyProgressIncrement = 1
@@ -1579,15 +1581,30 @@ class QuickSettingsPanel(
 			binding.touchControlSizeLabel.text = activity.getString(R.string.touch_controls_size, style.sizePercent)
 			binding.touchControlOpacityLabel.text = activity.getString(R.string.touch_controls_opacity, style.opacityPercent)
 		}
+		fun updateSliderVisibility()
+		{
+			val control = controls[binding.touchControlSpinner.selectedItemPosition]
+			val visibility =
+				if(control.alwaysShowGatesStyle && !binding.touchControlAlwaysShowCheckBox.isChecked) View.GONE else View.VISIBLE
+			listOf(
+				binding.touchControlSizeLabel,
+				binding.touchControlSizeSeekBar,
+				binding.touchControlOpacityLabel,
+				binding.touchControlOpacitySeekBar,
+				binding.touchControlMoveButton
+			).forEach { it.visibility = visibility }
+		}
 		fun loadControl(position: Int)
 		{
 			loadingControl = true
 			val style = preferences.touchControlStyle(controls[position])
 			binding.touchControlSizeSeekBar.progress = style.sizePercent - TouchControlStyle.MIN_SIZE_PERCENT
 			binding.touchControlOpacitySeekBar.progress = style.opacityPercent - TouchControlStyle.MIN_OPACITY_PERCENT
-			binding.touchControlAlwaysShowCheckBox.visibility =
-				if(controls[position] == TouchControl.LEFT_STICK || controls[position] == TouchControl.RIGHT_STICK) View.VISIBLE else View.GONE
+			val control = controls[position]
+			binding.touchControlAlwaysShowCheckBox.visibility = if(control.hasAlwaysShowOption) View.VISIBLE else View.GONE
+			binding.touchControlAlwaysShowCheckBox.setText(control.alwaysShowLabelRes)
 			binding.touchControlAlwaysShowCheckBox.isChecked = style.alwaysShow
+			updateSliderVisibility()
 			updateLabels()
 			loadingControl = false
 		}
@@ -1609,7 +1626,10 @@ class QuickSettingsPanel(
 		}
 		binding.touchControlSizeSeekBar.setOnSeekBarChangeListener(sliderListener)
 		binding.touchControlOpacitySeekBar.setOnSeekBarChangeListener(sliderListener)
-		binding.touchControlAlwaysShowCheckBox.setOnCheckedChangeListener { _, _ -> applySelectedStyle() }
+		binding.touchControlAlwaysShowCheckBox.setOnCheckedChangeListener { _, _ ->
+			updateSliderVisibility()
+			applySelectedStyle()
+		}
 
 		val streamRoot = activity.findViewById<FrameLayout>(R.id.mainStreamLayout)
 		fun dismissCustomization()
@@ -1627,7 +1647,7 @@ class QuickSettingsPanel(
 		binding.touchControlMoveButton.setOnClickListener {
 			val control = controls[binding.touchControlSpinner.selectedItemPosition]
 			dismissCustomization()
-			onMoveTouchControl(control) { showTouchControlsCustomiseDialog() }
+			onMoveTouchControl(control) { showTouchControlsCustomiseDialog(control) }
 		}
 		binding.touchControlFinishButton.setOnClickListener {
 			dismissCustomization()

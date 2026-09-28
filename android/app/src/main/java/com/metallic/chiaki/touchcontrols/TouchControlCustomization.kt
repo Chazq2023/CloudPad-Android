@@ -5,12 +5,21 @@ package com.metallic.chiaki.touchcontrols
 import androidx.annotation.StringRes
 import com.pylux.stream.R
 
-enum class TouchControl(@StringRes val labelRes: Int, val defaultAlwaysShow: Boolean = false)
+/**
+ * @param alwaysShowGatesStyle the control is invisible until touched unless "Always visible"
+ *   is on, so its size/transparency sliders and Move button are hidden, and its saved size,
+ *   transparency and position ignored, while it's off.
+ */
+enum class TouchControl(
+	@StringRes val labelRes: Int,
+	val defaultAlwaysShow: Boolean = false,
+	val alwaysShowGatesStyle: Boolean = false
+)
 {
 	DPAD(R.string.touch_control_dpad),
 	LEFT_STICK(R.string.touch_control_left_stick, defaultAlwaysShow = true),
 	RIGHT_STICK(R.string.touch_control_right_stick, defaultAlwaysShow = true),
-	TOUCHPAD(R.string.touch_control_touchpad),
+	TOUCHPAD(R.string.touch_control_touchpad, alwaysShowGatesStyle = true),
 	CROSS(R.string.touch_control_cross),
 	CIRCLE(R.string.touch_control_circle),
 	TRIANGLE(R.string.touch_control_triangle),
@@ -23,7 +32,13 @@ enum class TouchControl(@StringRes val labelRes: Int, val defaultAlwaysShow: Boo
 	R3(R.string.touch_control_r3),
 	SHARE(R.string.touch_control_share),
 	OPTIONS(R.string.touch_control_options),
-	PS(R.string.touch_control_ps)
+	PS(R.string.touch_control_ps);
+
+	val hasAlwaysShowOption get() = this == LEFT_STICK || this == RIGHT_STICK || alwaysShowGatesStyle
+
+	@get:StringRes
+	val alwaysShowLabelRes get() =
+		if(alwaysShowGatesStyle) R.string.touch_controls_always_visible else R.string.touch_controls_always_show
 }
 
 data class TouchControlStyle(
@@ -44,3 +59,17 @@ data class TouchControlStyle(
 		const val MAX_OPACITY_PERCENT = 100
 	}
 }
+
+/** The style to actually render [control] with: for controls whose size/transparency/position
+ *  only apply while "Always visible" is on, fall back to the defaults while it's off. The saved
+ *  values are kept, so turning it back on restores them. */
+fun TouchControlStyle.effectiveFor(control: TouchControl): TouchControlStyle =
+	if(control.alwaysShowGatesStyle && !alwaysShow)
+		copy(
+			sizePercent = TouchControlStyle.DEFAULT_SIZE_PERCENT,
+			opacityPercent = TouchControlStyle.DEFAULT_OPACITY_PERCENT,
+			offsetXPermille = 0,
+			offsetYPermille = 0
+		)
+	else
+		this

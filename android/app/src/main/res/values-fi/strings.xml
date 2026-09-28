@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">Siirrä painiketta</string>
     <string name="touch_controls_finish">Valmis</string>
     <string name="touch_controls_always_show">Näytä aina</string>
+    <string name="touch_controls_always_visible">Aina näkyvissä</string>
     <string name="touch_controls_restore_default">Palauta oletukseen</string>
     <string name="touch_control_dpad">Ristiohjain</string>
     <string name="touch_control_left_stick">Vasen sauva</string>

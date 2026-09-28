@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">Knop verplaatsen</string>
     <string name="touch_controls_finish">Voltooien</string>
     <string name="touch_controls_always_show">Altijd tonen</string>
+    <string name="touch_controls_always_visible">Altijd zichtbaar</string>
     <string name="touch_controls_restore_default">Standaardwaarde herstellen</string>
     <string name="touch_control_dpad">D-pad</string>
     <string name="touch_control_left_stick">Linkerstick</string>

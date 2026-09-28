@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">Sposta pulsante</string>
     <string name="touch_controls_finish">Fine</string>
     <string name="touch_controls_always_show">Mostra sempre</string>
+    <string name="touch_controls_always_visible">Sempre visibile</string>
     <string name="touch_controls_restore_default">Ripristina predefinito</string>
     <string name="touch_control_dpad">Croce direzionale</string>
     <string name="touch_control_left_stick">Levetta sinistra</string>
