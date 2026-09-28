@@ -75,6 +75,14 @@ class TouchpadView @JvmOverloads constructor(
 
 	private var buttonHeld = false
 
+	/** Draw the touchpad outline even when it isn't being touched. */
+	var alwaysShow: Boolean = false
+		set(value)
+		{
+			field = value
+			invalidate()
+		}
+
 	init
 	{
 		context.theme.obtainStyledAttributes(attrs, R.styleable.TouchpadView, 0, 0).apply {
@@ -88,7 +96,7 @@ class TouchpadView @JvmOverloads constructor(
 	override fun onDraw(canvas: Canvas)
 	{
 		super.onDraw(canvas)
-		if(pointerTouches.values.find { !it.lifted } == null)
+		if(!alwaysShow && pointerTouches.values.find { !it.lifted } == null)
 			return
 		val drawable = if(state.buttons and ControllerState.BUTTON_TOUCHPAD != 0U) drawablePressed else drawableIdle
 		drawable?.setBounds(paddingLeft, paddingTop, width - paddingRight, height - paddingBottom)

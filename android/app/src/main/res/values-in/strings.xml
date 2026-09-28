@@ -295,6 +295,7 @@
     <string name="touch_controls_move_button">Pindahkan Tombol</string>
     <string name="touch_controls_finish">Selesai</string>
     <string name="touch_controls_always_show">Selalu tampilkan</string>
+    <string name="touch_controls_always_visible">Selalu terlihat</string>
     <string name="touch_controls_restore_default">Kembalikan ke default</string>
     <string name="touch_control_dpad">D-pad</string>
     <string name="touch_control_left_stick">Stik kiri</string>

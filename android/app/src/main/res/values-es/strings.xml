@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">Mover botón</string>
     <string name="touch_controls_finish">Finalizar</string>
     <string name="touch_controls_always_show">Mostrar siempre</string>
+    <string name="touch_controls_always_visible">Siempre visible</string>
     <string name="touch_controls_restore_default">Restaurar valor predeterminado</string>
     <string name="touch_control_dpad">Cruceta</string>
     <string name="touch_control_left_stick">Stick izquierdo</string>

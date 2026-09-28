@@ -1579,15 +1579,29 @@ class QuickSettingsPanel(
 			binding.touchControlSizeLabel.text = activity.getString(R.string.touch_controls_size, style.sizePercent)
 			binding.touchControlOpacityLabel.text = activity.getString(R.string.touch_controls_opacity, style.opacityPercent)
 		}
+		fun updateSliderVisibility()
+		{
+			val control = controls[binding.touchControlSpinner.selectedItemPosition]
+			val visibility =
+				if(control.alwaysShowGatesStyle && !binding.touchControlAlwaysShowCheckBox.isChecked) View.GONE else View.VISIBLE
+			listOf(
+				binding.touchControlSizeLabel,
+				binding.touchControlSizeSeekBar,
+				binding.touchControlOpacityLabel,
+				binding.touchControlOpacitySeekBar
+			).forEach { it.visibility = visibility }
+		}
 		fun loadControl(position: Int)
 		{
 			loadingControl = true
 			val style = preferences.touchControlStyle(controls[position])
 			binding.touchControlSizeSeekBar.progress = style.sizePercent - TouchControlStyle.MIN_SIZE_PERCENT
 			binding.touchControlOpacitySeekBar.progress = style.opacityPercent - TouchControlStyle.MIN_OPACITY_PERCENT
-			binding.touchControlAlwaysShowCheckBox.visibility =
-				if(controls[position] == TouchControl.LEFT_STICK || controls[position] == TouchControl.RIGHT_STICK) View.VISIBLE else View.GONE
+			val control = controls[position]
+			binding.touchControlAlwaysShowCheckBox.visibility = if(control.hasAlwaysShowOption) View.VISIBLE else View.GONE
+			binding.touchControlAlwaysShowCheckBox.setText(control.alwaysShowLabelRes)
 			binding.touchControlAlwaysShowCheckBox.isChecked = style.alwaysShow
+			updateSliderVisibility()
 			updateLabels()
 			loadingControl = false
 		}
@@ -1609,7 +1623,10 @@ class QuickSettingsPanel(
 		}
 		binding.touchControlSizeSeekBar.setOnSeekBarChangeListener(sliderListener)
 		binding.touchControlOpacitySeekBar.setOnSeekBarChangeListener(sliderListener)
-		binding.touchControlAlwaysShowCheckBox.setOnCheckedChangeListener { _, _ -> applySelectedStyle() }
+		binding.touchControlAlwaysShowCheckBox.setOnCheckedChangeListener { _, _ ->
+			updateSliderVisibility()
+			applySelectedStyle()
+		}
 
 		val streamRoot = activity.findViewById<FrameLayout>(R.id.mainStreamLayout)
 		fun dismissCustomization()

@@ -217,6 +217,7 @@
     <string name="touch_controls_move_button">Mover Botão</string>
     <string name="touch_controls_finish">Concluir</string>
     <string name="touch_controls_always_show">Sempre mostrar</string>
+    <string name="touch_controls_always_visible">Sempre visível</string>
     <string name="touch_controls_restore_default">Restaurar padrão</string>
     <string name="touch_control_dpad">D-pad</string>
     <string name="touch_control_left_stick">Analógico esquerdo</string>
