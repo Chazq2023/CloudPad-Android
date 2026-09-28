@@ -40,26 +40,27 @@ class TouchControlCustomizationTest
 	}
 
 	@Test
-	fun touchpadSlidersAreIgnoredWhileNotAlwaysShown()
+	fun touchpadSizeTransparencyAndPositionAreIgnoredWhileNotAlwaysShown()
 	{
-		val style = TouchControlStyle(sizePercent = 140, opacityPercent = 90, offsetXPermille = 12, alwaysShow = false)
+		val style = TouchControlStyle(sizePercent = 140, opacityPercent = 90, offsetXPermille = 12, offsetYPermille = -30, alwaysShow = false)
 		val effective = style.effectiveFor(TouchControl.TOUCHPAD)
 		assertEquals(TouchControlStyle.DEFAULT_SIZE_PERCENT, effective.sizePercent)
 		assertEquals(TouchControlStyle.DEFAULT_OPACITY_PERCENT, effective.opacityPercent)
-		assertEquals(12, effective.offsetXPermille)
+		assertEquals(0, effective.offsetXPermille)
+		assertEquals(0, effective.offsetYPermille)
 	}
 
 	@Test
 	fun touchpadSlidersApplyWhileAlwaysShown()
 	{
-		val style = TouchControlStyle(sizePercent = 140, opacityPercent = 90, alwaysShow = true)
+		val style = TouchControlStyle(sizePercent = 140, opacityPercent = 90, offsetXPermille = 12, offsetYPermille = -30, alwaysShow = true)
 		assertEquals(style, style.effectiveFor(TouchControl.TOUCHPAD))
 	}
 
 	@Test
 	fun otherControlsAlwaysUseTheirSliders()
 	{
-		val style = TouchControlStyle(sizePercent = 140, opacityPercent = 90, alwaysShow = false)
+		val style = TouchControlStyle(sizePercent = 140, opacityPercent = 90, offsetXPermille = 12, offsetYPermille = -30, alwaysShow = false)
 		TouchControl.values().filterNot { it == TouchControl.TOUCHPAD }
 			.forEach { assertEquals(style, style.effectiveFor(it)) }
 	}

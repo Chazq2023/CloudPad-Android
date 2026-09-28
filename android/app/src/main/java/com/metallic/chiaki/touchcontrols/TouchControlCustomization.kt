@@ -7,7 +7,8 @@ import com.pylux.stream.R
 
 /**
  * @param alwaysShowGatesStyle the control is invisible until touched unless "Always visible"
- *   is on, so its size/transparency sliders are hidden and ignored while it's off.
+ *   is on, so its size/transparency sliders and Move button are hidden, and its saved size,
+ *   transparency and position ignored, while it's off.
  */
 enum class TouchControl(
 	@StringRes val labelRes: Int,
@@ -59,11 +60,16 @@ data class TouchControlStyle(
 	}
 }
 
-/** The style to actually render [control] with: for controls whose size/transparency only
- *  apply while "Always visible" is on, fall back to the defaults while it's off. The saved
- *  slider values are kept, so turning it back on restores them. */
+/** The style to actually render [control] with: for controls whose size/transparency/position
+ *  only apply while "Always visible" is on, fall back to the defaults while it's off. The saved
+ *  values are kept, so turning it back on restores them. */
 fun TouchControlStyle.effectiveFor(control: TouchControl): TouchControlStyle =
 	if(control.alwaysShowGatesStyle && !alwaysShow)
-		copy(sizePercent = TouchControlStyle.DEFAULT_SIZE_PERCENT, opacityPercent = TouchControlStyle.DEFAULT_OPACITY_PERCENT)
+		copy(
+			sizePercent = TouchControlStyle.DEFAULT_SIZE_PERCENT,
+			opacityPercent = TouchControlStyle.DEFAULT_OPACITY_PERCENT,
+			offsetXPermille = 0,
+			offsetYPermille = 0
+		)
 	else
 		this

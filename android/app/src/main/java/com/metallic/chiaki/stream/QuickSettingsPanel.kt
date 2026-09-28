@@ -1537,7 +1537,7 @@ class QuickSettingsPanel(
 		if(isOpen) close() else open()
 	}
 
-	private fun showTouchControlsCustomiseDialog()
+	private fun showTouchControlsCustomiseDialog(initialControl: TouchControl? = null)
 	{
 		dismissImmediately()
 		customizationView?.let { (it.parent as? ViewGroup)?.removeView(it) }
@@ -1549,6 +1549,8 @@ class QuickSettingsPanel(
 			R.layout.item_touch_control_spinner,
 			labels
 		).apply { setDropDownViewResource(R.layout.item_touch_control_spinner) }
+		// Reopen on the control that was just moved rather than the first entry (D-pad).
+		initialControl?.let { binding.touchControlSpinner.setSelection(controls.indexOf(it), false) }
 
 		binding.touchControlSizeSeekBar.max = TouchControlStyle.MAX_SIZE_PERCENT - TouchControlStyle.MIN_SIZE_PERCENT
 		binding.touchControlSizeSeekBar.keyProgressIncrement = 1
@@ -1588,7 +1590,8 @@ class QuickSettingsPanel(
 				binding.touchControlSizeLabel,
 				binding.touchControlSizeSeekBar,
 				binding.touchControlOpacityLabel,
-				binding.touchControlOpacitySeekBar
+				binding.touchControlOpacitySeekBar,
+				binding.touchControlMoveButton
 			).forEach { it.visibility = visibility }
 		}
 		fun loadControl(position: Int)
@@ -1644,7 +1647,7 @@ class QuickSettingsPanel(
 		binding.touchControlMoveButton.setOnClickListener {
 			val control = controls[binding.touchControlSpinner.selectedItemPosition]
 			dismissCustomization()
-			onMoveTouchControl(control) { showTouchControlsCustomiseDialog() }
+			onMoveTouchControl(control) { showTouchControlsCustomiseDialog(control) }
 		}
 		binding.touchControlFinishButton.setOnClickListener {
 			dismissCustomization()
