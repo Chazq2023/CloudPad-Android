@@ -16,9 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed the left on-screen analog stick handle getting cut off when pushed on wide phones (e.g. 20:9 screens). The handle now scales with the stick so it always stays inside it.
-        - New "Always visible" option for the on-screen touchpad in Customise. When it's on, the touchpad stays visible at your chosen size, transparency and position. When it's off (the default), the touchpad only shows while touched and sits in its default spot, as before, and its size, transparency and Move options are hidden. Your settings are remembered for the next time you turn it on.
-        - After moving a control and tapping Save, Customise now reopens on that control instead of jumping back to the D-pad.
+        - Fixed cloud streaming sometimes failing with "Ping Too High" (or "datacenter not available" when a datacenter is chosen manually) when Sony offers a session only far-away datacenters. CloudPad now automatically tries again with a new session, up to 4 times, until it gets a nearby datacenter.
 
     steps:
       - name: Checkout repo

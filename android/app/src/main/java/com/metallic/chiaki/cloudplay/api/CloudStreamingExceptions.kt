@@ -16,6 +16,9 @@ class AccountPrivacySettingsException(val upgradeUrl: String, message: String) :
 /** Ping timeout error */
 class PingTimeoutException(message: String) : Exception(message)
 
+/** The manually selected datacenter isn't in the batch Gaikai offered for this session */
+class DatacenterNotOfferedException(message: String) : Exception(message)
+
 /** Authorization failed */
 class AuthorizationFailedException(message: String) : Exception(message)
 

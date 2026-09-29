@@ -300,6 +300,10 @@ class PSGaikaiStreaming(
 			// Re-throw ping timeout exception so it shows proper dialog
 			throw e
 		}
+		catch (e: DatacenterNotOfferedException)
+		{
+			throw e
+		}
 		catch (e: GaikaiAllocationException)
 		{
 			// Re-throw specific exceptions so they bubble up to UI
@@ -1054,7 +1058,7 @@ catch (e: Exception)
 				if (!found)
 				{
 					Log.w(TAG, "Selected datacenter $selectedDatacenterSetting not found in available datacenters")
-					throw GaikaiAllocationException("Selected datacenter '$selectedDatacenterSetting' not available")
+					throw DatacenterNotOfferedException("Selected datacenter '$selectedDatacenterSetting' not available")
 				}
 				
 				// Create dummy ping result with 20ms RTT (Qt lines 1230-1246)
@@ -1144,6 +1148,12 @@ catch (e: Exception)
 		{
 			// Re-throw PingTimeoutException so it can be caught by CloudPlayFragment and show proper dialog
 			Log.e(TAG, "Step 12 error: Ping too high", e)
+			throw e
+		}
+		catch (e: DatacenterNotOfferedException)
+		{
+			// Re-throw so CloudStreamingBackend can retry in a fresh session with a new batch
+			Log.w(TAG, "Step 12: ${e.message}")
 			throw e
 		}
 		catch (e: Exception)
