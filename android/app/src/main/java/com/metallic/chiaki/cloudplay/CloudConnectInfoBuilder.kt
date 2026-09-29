@@ -62,6 +62,7 @@ object CloudConnectInfoBuilder
 			cloudMtuIn = session.mtuIn,
 			cloudMtuOut = session.mtuOut,
 			cloudRttUs = session.rttMs.toLong() * 1000L, // Convert ms to microseconds
+			cloudDatacenter = session.datacenter,
 			cloudGameIdentifier = gameIdentifier,
 			cloudGameName = session.gameName,
 			cloudOwnedEntitlementId = session.entitlementId,

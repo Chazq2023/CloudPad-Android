@@ -90,6 +90,8 @@ data class ConnectInfo(
 	val cloudMtuIn: Int = 0,
 	val cloudMtuOut: Int = 0,
 	val cloudRttUs: Long = 0L,
+	// Gaikai datacenter code (e.g. "lonb") — display only, for the performance overlay.
+	val cloudDatacenter: String = "",
 	// Identifies the game this cloud session is streaming, kept alongside the (short-lived)
 	// allocation fields above so an in-stream "refresh" can re-run the same allocation flow
 	// for the same game later, without needing to go back through the Catalog/Library screen.

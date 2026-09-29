@@ -116,7 +116,8 @@ class PSGaikaiStreaming(
 		val psnWrapperType: Int = 0,
 		val mtuIn: Int = 0,
 		val mtuOut: Int = 0,
-		val rttMs: Int = 0
+		val rttMs: Int = 0,
+		val datacenter: String = ""
 	)
 	
 	/**
@@ -297,7 +298,8 @@ class PSGaikaiStreaming(
 				psnWrapperType = psnWrapperType,
 				mtuIn = selectedDatacenterPingResult.optInt("mtu_in", 1454),
 				mtuOut = selectedDatacenterPingResult.optInt("mtu_out", 1254),
-				rttMs = selectedDatacenterPingResult.optInt("rtt", 20)
+				rttMs = selectedDatacenterPingResult.optInt("rtt", 20),
+				datacenter = selectedDatacenter
 			)
 		}
 		catch (e: PsPlusSubscriptionException)
