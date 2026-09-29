@@ -43,7 +43,13 @@ class PSGaikaiStreaming(
 	private val npssoToken: String,
 	private val preferences: com.metallic.chiaki.common.Preferences,
 	private val onProgress: ((String) -> Unit)? = null,  // Progress callback (message)
-	private val isCancelled: () -> Boolean = { false }  // Cancellation check
+	private val isCancelled: () -> Boolean = { false },  // Cancellation check
+	// False while retries remain: auto-select then rejects a batch far worse than a datacenter
+	// measured in an earlier session (see DistantDatacenterBatchException).
+	private val acceptDistantBatch: Boolean = true,
+	// True on the first attempts: a slow batch is also rejected when no other region has ever
+	// been measured, so a device with no history gets to see (and remember) other batches.
+	private val probeUnseenRegions: Boolean = false
 )
 {
 	companion object
@@ -54,6 +60,10 @@ class PSGaikaiStreaming(
 		private const val DEFAULT_ALLOCATION_WAIT_SECONDS = 300  // 5 minutes (fallback)
 		// Lock session retry limit (Qt line 147)
 		private const val MAX_LOCK_SESSION_RETRIES = 12  // Max retries for lock session
+		// How much closer a previously measured datacenter must be before a batch counts as distant
+		private const val DISTANT_BATCH_MARGIN_MS = 30
+		// Slow enough that a device with no other measurements probes for another regional batch
+		private const val PROBE_REGIONS_ABOVE_MS = 50
 	}
 	
 	// Configuration
@@ -301,6 +311,10 @@ class PSGaikaiStreaming(
 			throw e
 		}
 		catch (e: DatacenterNotOfferedException)
+		{
+			throw e
+		}
+		catch (e: DistantDatacenterBatchException)
 		{
 			throw e
 		}
@@ -1096,6 +1110,12 @@ catch (e: Exception)
 				serviceType
 			)
 			
+			// Read before persisting so the check below compares against earlier sessions only.
+			val priorPickerJson = if (serviceType == "pscloud")
+				preferences.getCloudDatacentersJsonPscloud()
+			else
+				preferences.getCloudDatacentersJsonPsnow()
+
 			// Persist a complete picker list. Current results win, while datacenters omitted
 			// by a timeout retain their prior RTT instead of being replaced by raw API rows.
 			persistDatacenterPicker(datacenters, pingResults)
@@ -1119,6 +1139,30 @@ catch (e: Exception)
 				}
 
 				Log.i(TAG, "Step 12: Best datacenter: ${bestResult.getString("dataCenter")} with ${bestRtt}ms RTT")
+
+				// Gaikai hands each session one regional batch and sometimes the wrong region (a UK
+				// user offered only US datacenters). A batch can scrape under the ping limit yet be
+				// far worse than a datacenter measured before, so reject it while retries remain.
+				if (!acceptDistantBatch && bestRtt in 1..998)
+				{
+					val closer = DatacenterPickerResults.closerKnownDatacenter(
+						priorPickerJson, datacenters, bestRtt, DISTANT_BATCH_MARGIN_MS
+					)
+					if (closer != null)
+					{
+						throw DistantDatacenterBatchException(
+							"Best offered ${bestResult.getString("dataCenter")} is ${bestRtt}ms, " +
+								"but ${closer.getString("dataCenter")} measured ${closer.getInt("rtt")}ms before"
+						)
+					}
+					if (probeUnseenRegions && bestRtt > PROBE_REGIONS_ABOVE_MS &&
+						!DatacenterPickerResults.hasMeasurementOutside(priorPickerJson, datacenters))
+					{
+						throw DistantDatacenterBatchException(
+							"Best offered ${bestResult.getString("dataCenter")} is ${bestRtt}ms and no other region measured yet"
+						)
+					}
+				}
 				// Submit every tested datacenter's ping result, not just the winner — the
 				// server uses the full set (not just one row) to gauge the client's network
 				// picture when it builds the session's bandwidth ladder.
@@ -1153,6 +1197,11 @@ catch (e: Exception)
 		catch (e: DatacenterNotOfferedException)
 		{
 			// Re-throw so CloudStreamingBackend can retry in a fresh session with a new batch
+			Log.w(TAG, "Step 12: ${e.message}")
+			throw e
+		}
+		catch (e: DistantDatacenterBatchException)
+		{
 			Log.w(TAG, "Step 12: ${e.message}")
 			throw e
 		}

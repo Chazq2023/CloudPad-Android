@@ -40,6 +40,8 @@ class CloudStreamingBackend(
 		// the user's region (e.g. a UK user alternately gets lon/par/fra/mil or iad/lga/atl/ord/dfw),
 		// so a distant batch is retried in a fresh session before giving up.
 		private const val MAX_DATACENTER_BATCH_ATTEMPTS = 4
+		// Attempts that may probe for another region when none has been measured yet
+		private const val MAX_REGION_PROBE_ATTEMPTS = 2
 	}
 	
 	/**
@@ -169,7 +171,7 @@ class CloudStreamingBackend(
 			onNotOfferedExhausted = {
 				PSGaikaiStreaming.AllocationResult(false, preferences.getString(R.string.gaikai_error_no_datacenters))
 			}
-		) {
+		) { attempt, isLastAttempt ->
 			PSGaikaiStreaming(
 				duid = sharedDuid,
 				serviceType = serviceType,
@@ -177,7 +179,9 @@ class CloudStreamingBackend(
 				npssoToken = npssoToken,
 				preferences = preferences,
 				onProgress = onProgress,
-				isCancelled = isCancelled
+				isCancelled = isCancelled,
+				acceptDistantBatch = isLastAttempt,
+				probeUnseenRegions = attempt <= MAX_REGION_PROBE_ATTEMPTS && !isLastAttempt
 			).startAllocationFlow(entitlementId)
 		}
 	}
@@ -479,15 +483,17 @@ class CloudStreamingBackend(
 
 /**
  * Runs [allocate] up to [maxAttempts] times, starting over whenever the datacenter batch it was
- * offered is unusable ([PingTimeoutException] / [DatacenterNotOfferedException]). Once attempts run
- * out (or the launch is cancelled) a ping failure is rethrown and a missing manual datacenter
- * resolves to [onNotOfferedExhausted]. Any other outcome is returned or thrown immediately.
+ * offered is unusable ([PingTimeoutException] / [DatacenterNotOfferedException]) or distant
+ * ([DistantDatacenterBatchException]; [allocate] gets the attempt number and whether it's the
+ * last, so it can accept a distant batch instead). Once attempts run out (or the launch is cancelled) a ping
+ * failure is rethrown and a missing manual datacenter resolves to [onNotOfferedExhausted]. Any
+ * other outcome is returned or thrown immediately.
  */
 internal suspend fun <T> retryUnusableDatacenterBatches(
 	maxAttempts: Int,
 	isCancelled: () -> Boolean,
 	onNotOfferedExhausted: () -> T,
-	allocate: suspend () -> T
+	allocate: suspend (attempt: Int, isLastAttempt: Boolean) -> T
 ): T
 {
 	var attempt = 1
@@ -495,7 +501,7 @@ internal suspend fun <T> retryUnusableDatacenterBatches(
 	{
 		val retryReason = try
 		{
-			return allocate()
+			return allocate(attempt, attempt >= maxAttempts)
 		}
 		catch (e: PingTimeoutException)
 		{
@@ -505,6 +511,11 @@ internal suspend fun <T> retryUnusableDatacenterBatches(
 		catch (e: DatacenterNotOfferedException)
 		{
 			if (attempt >= maxAttempts || isCancelled()) return onNotOfferedExhausted()
+			e.message
+		}
+		catch (e: DistantDatacenterBatchException)
+		{
+			if (attempt >= maxAttempts || isCancelled()) throw e
 			e.message
 		}
 		Log.w("CloudStreamingBackend", "Datacenter batch unusable ($retryReason); retrying in a new session (attempt ${attempt + 1}/$maxAttempts)")

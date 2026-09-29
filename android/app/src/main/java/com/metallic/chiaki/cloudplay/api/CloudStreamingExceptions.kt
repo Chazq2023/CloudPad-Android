@@ -19,6 +19,9 @@ class PingTimeoutException(message: String) : Exception(message)
 /** The manually selected datacenter isn't in the batch Gaikai offered for this session */
 class DatacenterNotOfferedException(message: String) : Exception(message)
 
+/** Gaikai offered a batch that's usable but far worse than a datacenter this device has measured before */
+class DistantDatacenterBatchException(message: String) : Exception(message)
+
 /** Authorization failed */
 class AuthorizationFailedException(message: String) : Exception(message)
 
