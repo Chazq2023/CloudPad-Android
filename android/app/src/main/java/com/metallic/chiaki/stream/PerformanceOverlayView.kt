@@ -25,8 +25,8 @@ class PerformanceOverlayView @JvmOverloads constructor(
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     /** FULL is every metric (the original view); MINIMAL is just the numbers most people
-     *  actually glance at mid-session — FPS, Bitrate, Resolution, Session time, Video Loss, Drops,
-     *  Ping and Video Pacing status. */
+     *  actually glance at mid-session — FPS, Bitrate, Resolution, Session time, Datacenter (cloud
+     *  only), Video Loss, Drops, Ping and Video Pacing status. */
     enum class OverlayMode { FULL, MINIMAL }
 
     private val headerView: TextView
@@ -54,6 +54,13 @@ class PerformanceOverlayView @JvmOverloads constructor(
     private val labelSessionFull = metricRow("Session")
     private val labelSessionMinimal = metricRow("Session")
 
+    // Cloud datacenter, directly under Session in whichever column Session is in (same two-view
+    // arrangement). Hidden for Remote Play, which has no datacenter.
+    private val labelDatacenterFull = metricRow("Datacenter")
+    private val labelDatacenterMinimal = metricRow("Datacenter")
+    private var minimalMode = false
+    private var hasDatacenter = false
+
     init {
         orientation = VERTICAL
         setPadding(7, 5, 7, 5)
@@ -80,6 +87,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         latencyCol.addView(labelNet)
         latencyCol.addView(labelVisual)
         latencyCol.addView(labelSessionFull)
+        latencyCol.addView(labelDatacenterFull)
 
         val streamCol = buildColumn()
         sparklineView = SparklineView(context)
@@ -92,6 +100,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         streamCol.addView(labelBT)
         streamCol.addView(labelRes)
         streamCol.addView(labelSessionMinimal)
+        streamCol.addView(labelDatacenterMinimal)
 
         val qualityCol = buildColumn()
         qualityCol.addView(labelRTT)
@@ -137,6 +146,7 @@ class PerformanceOverlayView @JvmOverloads constructor(
         )
 
         labelSessionMinimal.visibility = View.GONE // starts in Full mode; see setMode
+        updateDatacenterVisibility()
         setOpacityPercent(50)
         visibility = View.GONE
     }
@@ -172,6 +182,8 @@ class PerformanceOverlayView @JvmOverloads constructor(
         labelJit.visibility = if (minimal) View.GONE else View.VISIBLE
         labelDT.visibility = if (minimal) View.GONE else View.VISIBLE
         labelSessionMinimal.visibility = if (minimal) View.VISIBLE else View.GONE
+        minimalMode = minimal
+        updateDatacenterVisibility()
         // On-device: after a mode switch (and especially after the freeze/hardware-layer window
         // move mode puts this view through — see StreamActivity.overlayMoveModeActive), this
         // view's own rendered width could get stuck narrower than its actual content, clipping
@@ -179,6 +191,12 @@ class PerformanceOverlayView @JvmOverloads constructor(
         // isn't otherwise triggering reliably by itself.
         requestLayout()
         invalidate()
+    }
+
+    private fun updateDatacenterVisibility()
+    {
+        labelDatacenterFull.visibility = if (hasDatacenter && !minimalMode) View.VISIBLE else View.GONE
+        labelDatacenterMinimal.visibility = if (hasDatacenter && minimalMode) View.VISIBLE else View.GONE
     }
 
     private fun buildColumn() = LinearLayout(context).apply {
@@ -316,6 +334,14 @@ class PerformanceOverlayView @JvmOverloads constructor(
         }
         labelSessionFull.text = sessionText
         labelSessionMinimal.text = sessionText
+
+        val datacenterText = "Datacenter ${data.datacenter}"
+        labelDatacenterFull.text = datacenterText
+        labelDatacenterMinimal.text = datacenterText
+        if (hasDatacenter != data.datacenter.isNotEmpty()) {
+            hasDatacenter = data.datacenter.isNotEmpty()
+            updateDatacenterVisibility()
+        }
 
         sparklineView.setData(data.fpsHistory)
     }

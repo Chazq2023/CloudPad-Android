@@ -18,6 +18,7 @@ data class CloudStreamSession(
 	val mtuIn: Int,
 	val mtuOut: Int,
 	val rttMs: Int,
-	val serviceType: String // "psnow" or "pscloud"
+	val serviceType: String, // "psnow" or "pscloud"
+	val datacenter: String = "" // Gaikai datacenter code the session was allocated in, e.g. "lonb"
 )
 

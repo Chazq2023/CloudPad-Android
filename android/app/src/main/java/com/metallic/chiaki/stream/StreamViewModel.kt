@@ -30,7 +30,9 @@ data class OverlayData(
 	val header: String,
 	val fpsHistory: List<Float>,
 	val smoothPacing: Boolean,
-	val sessionSeconds: Long
+	val sessionSeconds: Long,
+	/** Cloud datacenter code, or empty for Remote Play (the overlay hides the row then). */
+	val datacenter: String
 )
 
 /** State of an in-stream settings-driven session restart (Quick Settings panel's Apply button).
@@ -151,7 +153,8 @@ class StreamViewModel(
 							// StreamSession.restartWithNewConnectInfo, which reassigns connectInfo
 							// right before the new session is actually created.
 							smoothPacing = session.connectInfo.adaptiveFramePacingEnabled,
-							sessionSeconds = sessionClock.elapsedSeconds()
+							sessionSeconds = sessionClock.elapsedSeconds(),
+							datacenter = session.connectInfo.cloudDatacenter
 						)
 					)
 				}
