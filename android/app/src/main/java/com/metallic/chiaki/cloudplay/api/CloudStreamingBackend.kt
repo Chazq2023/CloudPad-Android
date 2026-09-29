@@ -39,7 +39,7 @@ class CloudStreamingBackend(
 		// Gaikai hands each session one regional batch of datacenters and doesn't always pick
 		// the user's region (e.g. a UK user alternately gets lon/par/fra/mil or iad/lga/atl/ord/dfw),
 		// so a distant batch is retried in a fresh session before giving up.
-		private const val MAX_DATACENTER_BATCH_ATTEMPTS = 4
+		private const val MAX_DATACENTER_BATCH_ATTEMPTS = 6
 		// Attempts that may probe for another region when none has been measured yet
 		private const val MAX_REGION_PROBE_ATTEMPTS = 2
 	}
