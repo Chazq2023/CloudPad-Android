@@ -32,6 +32,15 @@
             android:textSize="14sp" />
 
         <TextView
+            android:id="@+id/disclaimerResponsibleUse"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/disclaimer_responsible_use"
+            android:textColor="@android:color/white"
+            android:textSize="14sp" />
+
+        <TextView
             android:id="@+id/disclaimerMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

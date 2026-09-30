@@ -75,8 +75,8 @@ class AllTranslationsTest {
     }
 
     @Test
-    fun `PSN account-risk warnings are translated in every locale`() {
-        for (key in listOf("disclaimer_account_risk", "psn_login_account_risk")) {
+    fun `PSN account-risk and responsible-use warnings are translated in every locale`() {
+        for (key in listOf("disclaimer_account_risk", "disclaimer_responsible_use", "psn_login_account_risk")) {
             assertTrue("$key missing from default", key in english)
             for (locale in locales) {
                 val translated = strings(localeFile(locale))[key]

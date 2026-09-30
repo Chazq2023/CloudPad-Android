@@ -19,6 +19,7 @@ jobs:
         - The launch disclaimer now opens with a warning that CloudPad is an unofficial client and that using it could put your PSN account at risk (restriction, suspension or ban), in every supported language. The same warning is at the top of the README.
         - The PSN sign-in screen now shows a short account-risk notice before you sign in.
         - The warnings now state that continuing to use CloudPad (or signing in) means you acknowledge and accept the risk.
+        - The launch disclaimer and README now ask you to use only your own PSN account and not to use CloudPad to get around region or subscription restrictions.
 
     steps:
       - name: Checkout repo
