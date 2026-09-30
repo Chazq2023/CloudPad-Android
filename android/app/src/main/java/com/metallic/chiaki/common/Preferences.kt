@@ -876,6 +876,16 @@ class Preferences(context: Context)
 		sharedPreferences.edit().putString(cloudDatacenterPscloudKey, value).apply()
 	}
 
+	// "Retry for nearest datacenter", independently for Game Catalog (PSNow) and Game Library
+	// (PSCloud). Off by default: a single allocation attempt, as before the retry existed.
+	val cloudDatacenterRetryPsnowKey get() = resources.getString(R.string.preferences_cloud_datacenter_retry_psnow_key)
+	val cloudDatacenterRetryPscloudKey get() = resources.getString(R.string.preferences_cloud_datacenter_retry_pscloud_key)
+
+	fun getCloudDatacenterRetryPsnow(): Boolean = sharedPreferences.getBoolean(cloudDatacenterRetryPsnowKey, false)
+	fun setCloudDatacenterRetryPsnow(value: Boolean) = sharedPreferences.edit().putBoolean(cloudDatacenterRetryPsnowKey, value).apply()
+	fun getCloudDatacenterRetryPscloud(): Boolean = sharedPreferences.getBoolean(cloudDatacenterRetryPscloudKey, false)
+	fun setCloudDatacenterRetryPscloud(value: Boolean) = sharedPreferences.edit().putBoolean(cloudDatacenterRetryPscloudKey, value).apply()
+
 	// PSCloud datacenters JSON (matching Qt GetCloudDatacentersJsonPSCloud/SetCloudDatacentersJsonPSCloud)
 	val cloudDatacentersJsonPscloudKey get() = resources.getString(R.string.preferences_cloud_datacenters_json_pscloud_key)
 	fun getCloudDatacentersJsonPscloud(): String

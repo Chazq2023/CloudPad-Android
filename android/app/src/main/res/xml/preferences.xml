@@ -228,6 +228,13 @@
             app:defaultValue="Auto"
             app:icon="@drawable/ic_bitrate"/>
 
+        <SwitchPreference
+            app:key="@string/preferences_cloud_datacenter_retry_pscloud_key"
+            app:title="@string/preferences_cloud_datacenter_retry_pscloud_title"
+            app:summary="@string/preferences_cloud_datacenter_retry_pscloud_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_bitrate"/>
+
         <SeekBarPreference
             app:key="@string/preferences_cloud_bitrate_pscloud_key"
             app:title="@string/preferences_cloud_bitrate_pscloud_title"
@@ -260,6 +267,13 @@
             app:entries="@array/cloud_datacenter_entries"
             app:entryValues="@array/cloud_datacenter_values"
             app:defaultValue="Auto"
+            app:icon="@drawable/ic_bitrate"/>
+
+        <SwitchPreference
+            app:key="@string/preferences_cloud_datacenter_retry_psnow_key"
+            app:title="@string/preferences_cloud_datacenter_retry_psnow_title"
+            app:summary="@string/preferences_cloud_datacenter_retry_psnow_summary"
+            app:defaultValue="false"
             app:icon="@drawable/ic_bitrate"/>
             
         <SeekBarPreference

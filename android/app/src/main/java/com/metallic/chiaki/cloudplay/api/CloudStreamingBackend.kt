@@ -165,8 +165,16 @@ class CloudStreamingBackend(
 		isCancelled: () -> Boolean
 	): PSGaikaiStreaming.AllocationResult
 	{
+		// "Retry for nearest datacenter" off: a single attempt, i.e. the original behaviour — a
+		// distant batch is accepted if under the ping limit, else the usual ping/not-offered error.
+		val retryEnabled = if (serviceType == "pscloud")
+			preferences.getCloudDatacenterRetryPscloud()
+		else
+			preferences.getCloudDatacenterRetryPsnow()
+		if (!retryEnabled) Log.i(TAG, "Retry for nearest datacenter is off for $serviceType; single allocation attempt")
+
 		return retryUnusableDatacenterBatches(
-			maxAttempts = MAX_DATACENTER_BATCH_ATTEMPTS,
+			maxAttempts = if (retryEnabled) MAX_DATACENTER_BATCH_ATTEMPTS else 1,
 			isCancelled = isCancelled,
 			onNotOfferedExhausted = {
 				PSGaikaiStreaming.AllocationResult(false, preferences.getString(R.string.gaikai_error_no_datacenters))

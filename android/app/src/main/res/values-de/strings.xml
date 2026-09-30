@@ -310,12 +310,16 @@
     <string name="preferences_cloud_resolution_pscloud_summary">Streaming-Auflösung für die Spielebibliothek (bis zu 4K)</string>
     <string name="preferences_cloud_datacenter_pscloud_title">Rechenzentrum</string>
     <string name="preferences_cloud_datacenter_pscloud_summary">Wähle ein bestimmtes Rechenzentrum oder verwende Auto für den besten Ping</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_title">Nächstes Rechenzentrum erneut suchen</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_summary">Startet eine neue Sitzung (bis zu 6 Versuche), wenn Sony nur weit entfernte Rechenzentren anbietet. Die Verbindung kann länger dauern.</string>
 
     <string name="preferences_category_title_game_catalog">Spielekatalog</string>
     <string name="preferences_cloud_resolution_psnow_title">Auflösung</string>
     <string name="preferences_cloud_resolution_psnow_summary">Streaming-Auflösung für den Spielekatalog</string>
     <string name="preferences_cloud_datacenter_psnow_title">Rechenzentrum</string>
     <string name="preferences_cloud_datacenter_psnow_summary">Wähle ein bestimmtes Rechenzentrum oder verwende Auto für den besten Ping</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_title">Nächstes Rechenzentrum erneut suchen</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_summary">Startet eine neue Sitzung (bis zu 6 Versuche), wenn Sony nur weit entfernte Rechenzentren anbietet. Die Verbindung kann länger dauern.</string>
 
     <string name="psn_login_title">Anmelden</string>
     <string name="psn_login_button">ANMELDEN</string>

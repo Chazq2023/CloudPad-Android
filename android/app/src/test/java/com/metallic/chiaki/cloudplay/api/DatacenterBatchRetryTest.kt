@@ -84,4 +84,46 @@ class DatacenterBatchRetryTest
 		assertEquals("lgab", result)
 		assertEquals(listOf(false, false, false, true), lastFlags)
 	}
+
+	// Retry for nearest datacenter off → maxAttempts = 1: the pre-retry behaviour.
+
+	@Test
+	fun `single attempt treats the first attempt as last so a distant batch is accepted`() = runTest {
+		var calls = 0
+		val result = retryUnusableDatacenterBatches(1, { false }, { "exhausted" }) { attempt, isLastAttempt ->
+			calls++
+			assertEquals(1, attempt)
+			if (!isLastAttempt) throw DistantDatacenterBatchException("lgab 78ms, lonb 10ms before")
+			"lgab"
+		}
+
+		assertEquals("lgab", result)
+		assertEquals(1, calls)
+	}
+
+	@Test
+	fun `single attempt surfaces ping failure without retrying`() = runTest {
+		var calls = 0
+		assertThrows(PingTimeoutException::class.java) {
+			kotlinx.coroutines.runBlocking {
+				retryUnusableDatacenterBatches(1, { false }, { "exhausted" }) { _, _ ->
+					calls++
+					throw PingTimeoutException("lgab 83ms")
+				}
+			}
+		}
+		assertEquals(1, calls)
+	}
+
+	@Test
+	fun `single attempt resolves a missing manual datacenter without retrying`() = runTest {
+		var calls = 0
+		val result = retryUnusableDatacenterBatches(1, { false }, { "exhausted" }) { _, _ ->
+			calls++
+			throw DatacenterNotOfferedException("lonb not available")
+		}
+
+		assertEquals("exhausted", result)
+		assertEquals(1, calls)
+	}
 }
