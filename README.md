@@ -136,7 +136,7 @@ Users should check official store listings, subscription catalogues, subscriptio
 
 # Legal and responsible use
 
-Pylux is intended for use with games and content you own or are licensed to use, on hardware you own, with a valid account or subscription.
+CloudPad is intended for use with games and content you own or are licensed to use, on hardware you own, with a valid account or subscription.
 
 This project does not circumvent copy protection and does not facilitate piracy.
 
