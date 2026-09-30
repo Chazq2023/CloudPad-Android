@@ -75,6 +75,18 @@ class AllTranslationsTest {
     }
 
     @Test
+    fun `PSN account-risk and responsible-use warnings are translated in every locale`() {
+        for (key in listOf("disclaimer_account_risk", "disclaimer_responsible_use", "psn_login_account_risk")) {
+            assertTrue("$key missing from default", key in english)
+            for (locale in locales) {
+                val translated = strings(localeFile(locale))[key]
+                assertTrue("$locale is missing $key", !translated.isNullOrBlank())
+                assertTrue("$locale $key is untranslated", translated != english[key])
+            }
+        }
+    }
+
+    @Test
     fun `the games-displayed plural exists in every locale and keeps both counts`() {
         val onlyOther = setOf("ja", "ko", "in")
         for (locale in locales) {

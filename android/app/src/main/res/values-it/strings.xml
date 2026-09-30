@@ -582,6 +582,9 @@
     <string name="cloud_refresh_games_list_button">Aggiorna elenco giochi</string>
     <string name="disclaimer_title">Avvertenza</string>
     <string name="disclaimer_message">CloudPad è ancora in fase di sviluppo. Sei responsabile di:\n\n• Avere un abbonamento PS Plus attivo.\n• Verificare che PS Now e PS5 Cloud Gaming siano disponibili nella tua regione.\n• Verificare che i giochi PS5 che acquisti o possiedi già siano idonei per il Cloud Streaming.\n\nSe non sei sicuro, visita il PSN Store ufficiale online oppure usa l\'app PS ufficiale per verificare se un titolo è disponibile in streaming nella tua regione.</string>
+    <string name="disclaimer_account_risk"><b>Usalo a tuo rischio: il tuo account PSN potrebbe subirne le conseguenze.</b> CloudPad è un\'app non ufficiale, non realizzata né approvata da Sony. I termini di servizio di Sony non consentono software non ufficiale, quindi Sony potrebbe limitare, sospendere o bannare un account che usa CloudPad, oppure impedire all\'app di funzionare in qualsiasi momento. Se perdere il tuo account sarebbe un problema serio, non usare CloudPad con esso; usa invece le app o i dispositivi ufficiali di Sony. Continuando a usare CloudPad, accetti questi rischi.</string>
+    <string name="disclaimer_responsible_use"><b>Usa solo il tuo account PSN; non condividere account e non accedere con quello di qualcun altro. Non usare CloudPad per aggirare restrizioni regionali o di abbonamento.</b></string>
+    <string name="psn_login_account_risk">Usare CloudPad potrebbe esporre questo account PSN a limitazioni o a un ban. Consulta l\'avviso mostrato all\'avvio di CloudPad. Accedendo, accetti questo rischio.</string>
 
     <string name="remote_play_refresh_consoles_list_button">Aggiorna elenco console</string>
     <string name="remote_play_manually_register_console_button">Registra manualmente la console</string>
