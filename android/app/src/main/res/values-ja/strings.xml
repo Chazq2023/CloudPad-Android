@@ -312,6 +312,8 @@
     <string name="preferences_cloud_resolution_pscloud_summary">ゲームライブラリのストリーミング解像度(最大4K)</string>
     <string name="preferences_cloud_datacenter_pscloud_title">データセンター</string>
     <string name="preferences_cloud_datacenter_pscloud_summary">特定のデータセンターを選択するか、自動で最適なpingを使用</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_title">最寄りのデータセンターを再試行</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_summary">Sonyが遠くのデータセンターしか提示しない場合、新しいセッションを開始します(最大6回)。接続に時間がかかることがあります。</string>
 
     <!-- Game Catalog (PSNOW) Settings - up to 1080p -->
     <string name="preferences_category_title_game_catalog">ゲームカタログ</string>
@@ -319,6 +321,8 @@
     <string name="preferences_cloud_resolution_psnow_summary">ゲームカタログのストリーミング解像度</string>
     <string name="preferences_cloud_datacenter_psnow_title">データセンター</string>
     <string name="preferences_cloud_datacenter_psnow_summary">特定のデータセンターを選択するか、自動で最適なpingを使用</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_title">最寄りのデータセンターを再試行</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_summary">Sonyが遠くのデータセンターしか提示しない場合、新しいセッションを開始します(最大6回)。接続に時間がかかることがあります。</string>
 
     <!-- PSN Login -->
     <string name="psn_login_title">ログイン</string>

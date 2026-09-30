@@ -63,6 +63,8 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
 		preferences.fsrEnabledKey -> preferences.fsrEnabled
 		preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled
+		preferences.cloudDatacenterRetryPscloudKey -> preferences.getCloudDatacenterRetryPscloud()
+		preferences.cloudDatacenterRetryPsnowKey -> preferences.getCloudDatacenterRetryPsnow()
 		else -> defValue
 	}
 
@@ -78,6 +80,8 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
 			preferences.fsrEnabledKey -> preferences.fsrEnabled = value
 			preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled = value
+			preferences.cloudDatacenterRetryPscloudKey -> preferences.setCloudDatacenterRetryPscloud(value)
+			preferences.cloudDatacenterRetryPsnowKey -> preferences.setCloudDatacenterRetryPsnow(value)
 		}
 	}
 

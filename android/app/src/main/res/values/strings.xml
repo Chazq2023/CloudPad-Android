@@ -424,6 +424,8 @@
     <string name="preferences_cloud_resolution_pscloud_summary">Streaming resolution for Game Library (up to 4K)</string>
     <string name="preferences_cloud_datacenter_pscloud_title">Datacenter</string>
     <string name="preferences_cloud_datacenter_pscloud_summary">Select a specific datacenter or use Auto for best ping</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_title">Retry for nearest datacenter</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_summary">Starts a new session (up to 6 tries) when Sony only offers distant datacenters. Connecting may take longer.</string>
     
     <!-- Game Catalog (PSNOW) Settings - up to 1080p -->
     <string name="preferences_category_title_game_catalog">Game Catalog</string>
@@ -431,6 +433,8 @@
     <string name="preferences_cloud_resolution_psnow_summary">Streaming resolution for Game Catalog</string>
     <string name="preferences_cloud_datacenter_psnow_title">Datacenter</string>
     <string name="preferences_cloud_datacenter_psnow_summary">Select a specific datacenter or use Auto for best ping</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_title">Retry for nearest datacenter</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_summary">Starts a new session (up to 6 tries) when Sony only offers distant datacenters. Connecting may take longer.</string>
     
     <!-- PSN Login -->
     <string name="psn_login_title">Login</string>
@@ -641,6 +645,8 @@
     <string name="preferences_cloud_datacenter_psnow_key">cloud_datacenter_psnow</string>
     <string name="preferences_cloud_datacenters_json_psnow_key">cloud_datacenters_json_psnow</string>
     <string name="preferences_cloud_datacenter_pscloud_key">cloud_datacenter_pscloud</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_key">cloud_datacenter_retry_psnow</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_key">cloud_datacenter_retry_pscloud</string>
     <string name="preferences_cloud_datacenters_json_pscloud_key">cloud_datacenters_json_pscloud</string>
     <string name="preferences_cloud_resolution_psnow_key">cloud_resolution_psnow</string>
     <string name="preferences_cloud_resolution_pscloud_key">cloud_resolution_pscloud</string>

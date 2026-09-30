@@ -322,7 +322,8 @@ class QuickSettingsPanel(
 	private data class CloudSettingsSnapshot(
 		val resolution: Int,
 		val datacenter: String,
-		val bitrateKbps: Int
+		val bitrateKbps: Int,
+		val retryNearestDatacenter: Boolean
 	)
 
 	/** Snapshot of the settings the live stream actually last (re)started with, i.e. what's
@@ -1192,6 +1193,19 @@ class QuickSettingsPanel(
 			updateSessionApplyVisibility()
 		}
 
+		sessionRowControls += addSwitchRow(
+			container,
+			if(isLibrary) R.string.preferences_cloud_datacenter_retry_pscloud_title else R.string.preferences_cloud_datacenter_retry_psnow_title,
+			if(isLibrary) preferences.getCloudDatacenterRetryPscloud() else preferences.getCloudDatacenterRetryPsnow()
+		) { enabled ->
+			pendingCloudSettings = pendingCloudSettings?.copy(retryNearestDatacenter = enabled)
+			updateSessionApplyVisibility()
+		}
+		addHint(
+			container,
+			if(isLibrary) R.string.preferences_cloud_datacenter_retry_pscloud_summary else R.string.preferences_cloud_datacenter_retry_psnow_summary
+		)
+
 		val bitrateSummaryRes = if(isLibrary) R.string.preferences_cloud_bitrate_pscloud_summary else R.string.preferences_cloud_bitrate_psnow_summary
 		val currentBitrateMbps = (if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()) / 1000
 		sessionRowControls += addSeekBarRow(
@@ -1225,12 +1239,14 @@ class QuickSettingsPanel(
 					preferences.setCloudResolutionPscloud(pending.resolution)
 					preferences.setCloudDatacenterPscloud(pending.datacenter)
 					preferences.setCloudBitratePscloud(pending.bitrateKbps)
+					preferences.setCloudDatacenterRetryPscloud(pending.retryNearestDatacenter)
 				}
 				else
 				{
 					preferences.setCloudResolutionPsnow(pending.resolution)
 					preferences.setCloudDatacenterPsnow(pending.datacenter)
 					preferences.setCloudBitratePsnow(pending.bitrateKbps)
+					preferences.setCloudDatacenterRetryPsnow(pending.retryNearestDatacenter)
 				}
 			}
 		}
@@ -1252,7 +1268,8 @@ class QuickSettingsPanel(
 		return CloudSettingsSnapshot(
 			resolution = if(isLibrary) preferences.getCloudResolutionPscloud() else preferences.getCloudResolutionPsnow(),
 			datacenter = if(isLibrary) preferences.getCloudDatacenterPscloud() else preferences.getCloudDatacenterPsnow(),
-			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow()
+			bitrateKbps = if(isLibrary) preferences.getCloudBitratePscloud() else preferences.getCloudBitratePsnow(),
+			retryNearestDatacenter = if(isLibrary) preferences.getCloudDatacenterRetryPscloud() else preferences.getCloudDatacenterRetryPsnow()
 		)
 	}
 
@@ -1343,6 +1360,13 @@ class QuickSettingsPanel(
 		val label = activity.layoutInflater.inflate(R.layout.item_quick_settings_section_label, container, false) as TextView
 		label.text = activity.getString(textRes)
 		container.addView(label)
+	}
+
+	private fun addHint(container: LinearLayout, textRes: Int)
+	{
+		val hint = activity.layoutInflater.inflate(R.layout.item_quick_settings_hint, container, false) as TextView
+		hint.text = activity.getString(textRes)
+		container.addView(hint)
 	}
 
 	private fun addDropdownRow(

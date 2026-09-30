@@ -312,6 +312,8 @@
     <string name="preferences_cloud_resolution_pscloud_summary">Resolución de transmisión para la Biblioteca de juegos (hasta 4K)</string>
     <string name="preferences_cloud_datacenter_pscloud_title">Centro de datos</string>
     <string name="preferences_cloud_datacenter_pscloud_summary">Selecciona un centro de datos específico o usa Automático para el mejor ping</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_title">Reintentar para el centro de datos más cercano</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_summary">Inicia una nueva sesión (hasta 6 intentos) cuando Sony solo ofrece centros de datos lejanos. La conexión puede tardar más.</string>
 
     <!-- Game Catalog (PSNOW) Settings - up to 1080p -->
     <string name="preferences_category_title_game_catalog">Catálogo de juegos</string>
@@ -319,6 +321,8 @@
     <string name="preferences_cloud_resolution_psnow_summary">Resolución de transmisión para el Catálogo de juegos</string>
     <string name="preferences_cloud_datacenter_psnow_title">Centro de datos</string>
     <string name="preferences_cloud_datacenter_psnow_summary">Selecciona un centro de datos específico o usa Automático para el mejor ping</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_title">Reintentar para el centro de datos más cercano</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_summary">Inicia una nueva sesión (hasta 6 intentos) cuando Sony solo ofrece centros de datos lejanos. La conexión puede tardar más.</string>
 
     <!-- PSN Login -->
     <string name="psn_login_title">Inicio de sesión</string>

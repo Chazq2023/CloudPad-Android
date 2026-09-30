@@ -396,11 +396,15 @@
     <string name="preferences_cloud_resolution_pscloud_summary">Resolusi streaming untuk Pustaka Game (hingga 4K)</string>
     <string name="preferences_cloud_datacenter_pscloud_title">Pusat Data</string>
     <string name="preferences_cloud_datacenter_pscloud_summary">Pilih pusat data tertentu atau gunakan Otomatis untuk ping terbaik</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_title">Coba lagi untuk pusat data terdekat</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_summary">Memulai sesi baru (hingga 6 percobaan) saat Sony hanya menawarkan pusat data yang jauh. Koneksi mungkin lebih lama.</string>
     <string name="preferences_category_title_game_catalog">Katalog Game</string>
     <string name="preferences_cloud_resolution_psnow_title">Resolusi</string>
     <string name="preferences_cloud_resolution_psnow_summary">Resolusi streaming untuk Katalog Game</string>
     <string name="preferences_cloud_datacenter_psnow_title">Pusat Data</string>
     <string name="preferences_cloud_datacenter_psnow_summary">Pilih pusat data tertentu atau gunakan Otomatis untuk ping terbaik</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_title">Coba lagi untuk pusat data terdekat</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_summary">Memulai sesi baru (hingga 6 percobaan) saat Sony hanya menawarkan pusat data yang jauh. Koneksi mungkin lebih lama.</string>
     <string name="psn_login_title">Masuk</string>
     <string name="psn_login_button">MASUK</string>
     <string name="psn_login_success">Berhasil masuk</string>

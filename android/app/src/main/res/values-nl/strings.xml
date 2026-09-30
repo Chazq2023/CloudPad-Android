@@ -312,6 +312,8 @@
     <string name="preferences_cloud_resolution_pscloud_summary">Streamresolutie voor Spelbibliotheek (tot 4K)</string>
     <string name="preferences_cloud_datacenter_pscloud_title">Datacenter</string>
     <string name="preferences_cloud_datacenter_pscloud_summary">Selecteer een specifiek datacenter of gebruik Automatisch voor de beste ping</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_title">Opnieuw proberen voor dichtstbijzijnd datacenter</string>
+    <string name="preferences_cloud_datacenter_retry_pscloud_summary">Start een nieuwe sessie (tot 6 pogingen) als Sony alleen verre datacenters aanbiedt. Verbinden kan langer duren.</string>
 
     <!-- Game Catalog (PSNOW) Settings - up to 1080p -->
     <string name="preferences_category_title_game_catalog">Spelcatalogus</string>
@@ -319,6 +321,8 @@
     <string name="preferences_cloud_resolution_psnow_summary">Streamresolutie voor Spelcatalogus</string>
     <string name="preferences_cloud_datacenter_psnow_title">Datacenter</string>
     <string name="preferences_cloud_datacenter_psnow_summary">Selecteer een specifiek datacenter of gebruik Automatisch voor de beste ping</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_title">Opnieuw proberen voor dichtstbijzijnd datacenter</string>
+    <string name="preferences_cloud_datacenter_retry_psnow_summary">Start een nieuwe sessie (tot 6 pogingen) als Sony alleen verre datacenters aanbiedt. Verbinden kan langer duren.</string>
 
     <!-- PSN Login -->
     <string name="psn_login_title">Inloggen</string>

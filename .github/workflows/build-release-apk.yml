@@ -16,8 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed cloud streaming connecting to a far-away datacenter (e.g. US servers for UK players), or failing with "Ping Too High" or "datacenter not available", when Sony offers a session only distant datacenters. CloudPad now recognises a distant batch, even one just under the ping limit, and automatically tries again with a new session, up to 6 times, until it gets a nearby datacenter.
-        - The performance overlay now shows which datacenter a cloud session is running on, under Session in both the Full and Minimal views.
+        - New "Retry for nearest datacenter" setting, separately for Game Library and Game Catalog (in Settings and the in-stream Quick Settings panel). When on, CloudPad starts a new session (up to 6 tries) if Sony only offers distant datacenters. It's off by default, which connects on the first attempt as before.
 
     steps:
       - name: Checkout repo
