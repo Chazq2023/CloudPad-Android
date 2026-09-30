@@ -138,8 +138,8 @@ Users should check official store listings, subscription catalogues, subscriptio
 
 CloudPad is intended for use with games and content you own or are licensed to use, on hardware you own, with a valid account or subscription.
 
-* Only use your own PSN account; don't share accounts or sign in with someone else's.
-* Don't use CloudPad to get around region or subscription restrictions.
+* **Only use your own PSN account; don't share accounts or sign in with someone else's.**
+* **Don't use CloudPad to get around region or subscription restrictions.**
 
 This project does not circumvent copy protection and does not facilitate piracy.
 
