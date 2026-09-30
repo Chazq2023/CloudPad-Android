@@ -141,6 +141,8 @@ CloudPad is intended for use with games and content you own or are licensed to u
 * **Only use your own PSN account; don't share accounts or sign in with someone else's.**
 * **Don't use CloudPad to get around region or subscription restrictions.**
 
+Using a VPN can make your connection appear to come from another country, which may add to your account's risk and usually increases latency.
+
 This project does not circumvent copy protection and does not facilitate piracy.
 
 This project is not endorsed, sponsored, approved, or certified by Sony Interactive Entertainment, PlayStation, or any console manufacturer.
