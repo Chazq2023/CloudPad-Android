@@ -75,6 +75,16 @@ class AllTranslationsTest {
     }
 
     @Test
+    fun `launch disclaimer account-risk warning is translated in every locale`() {
+        assertTrue("disclaimer_account_risk" in english)
+        for (locale in locales) {
+            val translated = strings(localeFile(locale))["disclaimer_account_risk"]
+            assertTrue("$locale is missing disclaimer_account_risk", !translated.isNullOrBlank())
+            assertTrue("$locale disclaimer_account_risk is untranslated", translated != english["disclaimer_account_risk"])
+        }
+    }
+
+    @Test
     fun `the games-displayed plural exists in every locale and keeps both counts`() {
         val onlyOther = setOf("ja", "ko", "in")
         for (locale in locales) {

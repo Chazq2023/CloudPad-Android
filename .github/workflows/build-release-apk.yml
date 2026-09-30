@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - New "Retry for nearest datacenter" setting, separately for Game Library and Game Catalog (in Settings and the in-stream Quick Settings panel). When on, CloudPad starts a new session (up to 6 tries) if Sony only offers distant datacenters. It's off by default, which connects on the first attempt as before.
+        - The launch disclaimer now also warns that CloudPad is an unofficial client and that using it could put your PSN account at risk (restriction, suspension or ban), in every supported language. The same warning is at the top of the README.
 
     steps:
       - name: Checkout repo

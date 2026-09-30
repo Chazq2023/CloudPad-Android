@@ -1,5 +1,8 @@
 ![CloudPad Logo](cloudpad-logo.png)
 
+> [!WARNING]
+> **Use at your own risk: your PSN account could be affected.** CloudPad is an unofficial client, not made or approved by Sony. To stream, it signs in to Sony's services with your PSN account and presents itself as an official PlayStation client. Sony can tell these sessions apart from its own apps, and its terms of service forbid unauthorised software. Sony could therefore restrict, suspend or ban an account that uses CloudPad, or stop the app from working at any time. If losing your account would be a serious problem, don't use CloudPad with it.
+
 Join our discord for all of the latest CloudPad news and updates!  
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/KvFaS4f8pk)
 [![YouTube](https://img.shields.io/badge/YouTube-Subscribe-FF0000?logo=youtube&logoColor=white)](https://youtube.com/@cloudpaddev?si=nLK2s43MTzsx_Nlv)
