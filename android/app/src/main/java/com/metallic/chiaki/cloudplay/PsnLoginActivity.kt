@@ -123,6 +123,15 @@ class PsnLoginActivity : AppCompatActivity() {
 			setPadding(0, 0, 0, 12)
 		}
 
+		// Shown before the user opens Sony's sign-in, where the account risk actually begins
+		val accountRiskText = TextView(this).apply {
+			text = getString(R.string.psn_login_account_risk)
+			setTextColor(resolveThemeColor(R.attr.pyluxAccentLight))
+			textSize = 13f
+			gravity = Gravity.CENTER
+			setPadding(0, 0, 0, 12)
+		}
+
 		statusTextView = TextView(this).apply {
 			setTextColor(Color.WHITE)
 			textSize = 15f
@@ -188,6 +197,7 @@ class PsnLoginActivity : AppCompatActivity() {
 		}
 
 		root.addView(titleText)
+		root.addView(accountRiskText)
 		root.addView(statusTextView)
 		root.addView(progressBar)
 		root.addView(signInButton)

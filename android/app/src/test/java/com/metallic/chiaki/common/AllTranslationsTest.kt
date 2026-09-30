@@ -75,12 +75,14 @@ class AllTranslationsTest {
     }
 
     @Test
-    fun `launch disclaimer account-risk warning is translated in every locale`() {
-        assertTrue("disclaimer_account_risk" in english)
-        for (locale in locales) {
-            val translated = strings(localeFile(locale))["disclaimer_account_risk"]
-            assertTrue("$locale is missing disclaimer_account_risk", !translated.isNullOrBlank())
-            assertTrue("$locale disclaimer_account_risk is untranslated", translated != english["disclaimer_account_risk"])
+    fun `PSN account-risk warnings are translated in every locale`() {
+        for (key in listOf("disclaimer_account_risk", "psn_login_account_risk")) {
+            assertTrue("$key missing from default", key in english)
+            for (locale in locales) {
+                val translated = strings(localeFile(locale))[key]
+                assertTrue("$locale is missing $key", !translated.isNullOrBlank())
+                assertTrue("$locale $key is untranslated", translated != english[key])
+            }
         }
     }
 

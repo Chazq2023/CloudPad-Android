@@ -24,19 +24,19 @@
             android:textStyle="bold" />
 
         <TextView
-            android:id="@+id/disclaimerMessage"
+            android:id="@+id/disclaimerAccountRisk"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/disclaimer_message"
+            android:text="@string/disclaimer_account_risk"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 
         <TextView
-            android:id="@+id/disclaimerAccountRisk"
+            android:id="@+id/disclaimerMessage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/disclaimer_account_risk"
+            android:text="@string/disclaimer_message"
             android:textColor="@android:color/white"
             android:textSize="14sp" />
 

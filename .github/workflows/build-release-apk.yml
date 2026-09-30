@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - The launch disclaimer now also warns that CloudPad is an unofficial client and that using it could put your PSN account at risk (restriction, suspension or ban), in every supported language. The same warning is at the top of the README.
+        - The launch disclaimer now opens with a warning that CloudPad is an unofficial client and that using it could put your PSN account at risk (restriction, suspension or ban), in every supported language. The same warning is at the top of the README.
+        - The PSN sign-in screen now shows a short account-risk notice before you sign in.
 
     steps:
       - name: Checkout repo
