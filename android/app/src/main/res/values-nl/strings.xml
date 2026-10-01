@@ -688,4 +688,13 @@
         <item quantity="one">%1$s van %2$s game weergegeven</item>
         <item quantity="other">%1$s van %2$s games weergegeven</item>
     </plurals>
+    <string name="clock_wrong_date_title">Onjuiste datum</string>
+    <string name="clock_wrong_date_message">Zet de datum terug naar de datum van vandaag en open de app opnieuw</string>
+    <string name="cloud_not_released_title">Nog niet uitgebracht</string>
+    <string name="cloud_not_released_message">%1$s is gepreorderd maar nog niet uitgebracht. Je kunt het spelen vanaf %2$s.</string>
+    <string name="cloud_not_released_no_date_message">%1$s is gepreorderd maar nog niet uitgebracht.</string>
+    <string name="preferences_audio_boost_title">Audioboost</string>
+    <string name="preferences_audio_boost_summary">Verdubbelt het volume van de stream als die zelfs met het apparaatvolume op maximaal te zacht is, met een limiter zodat luide scènes niet vervormen. Geldt voor Remote Play, Spelbibliotheek en Spelcatalogus.</string>
+    <string name="preferences_clear_voice_title">Heldere stemmen</string>
+    <string name="preferences_clear_voice_summary">Maakt dialogen beter te volgen: brengt het spraakbereik naar voren en zet muziek, omgevingsgeluid en effecten automatisch zachter terwijl personages praten, zonder de stream in zijn geheel luider te maken. Geldt voor Remote Play, Spelbibliotheek en Spelcatalogus.</string>
 </resources>

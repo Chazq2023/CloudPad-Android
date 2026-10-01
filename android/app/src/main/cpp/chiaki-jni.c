@@ -881,6 +881,16 @@ JNIEXPORT void JNICALL JNI_FCN(sessionSetVideoPacing)(JNIEnv *env, jobject obj, 
 	android_chiaki_video_decoder_set_smooth_pacing(&session->video_decoder, smooth);
 }
 
+JNIEXPORT void JNICALL JNI_FCN(setAudioVolumeBoost)(JNIEnv *env, jobject obj, jfloat gain)
+{
+	android_chiaki_audio_output_set_volume_boost((float)gain);
+}
+
+JNIEXPORT void JNICALL JNI_FCN(setAudioClearVoice)(JNIEnv *env, jobject obj, jboolean enabled)
+{
+	android_chiaki_audio_output_set_clear_voice(enabled ? true : false);
+}
+
 JNIEXPORT void JNICALL JNI_FCN(sessionSetPacketLossMax)(JNIEnv *env, jobject obj, jlong ptr, jfloat packet_loss_max)
 {
 	AndroidChiakiSession *session = (AndroidChiakiSession *)ptr;

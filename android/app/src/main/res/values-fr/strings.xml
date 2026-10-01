@@ -686,4 +686,13 @@
         <item quantity="one">%1$s sur %2$s jeu affiché</item>
         <item quantity="other">%1$s sur %2$s jeux affichés</item>
     </plurals>
+    <string name="clock_wrong_date_title">Date incorrecte</string>
+    <string name="clock_wrong_date_message">Veuillez remettre la date d\'aujourd\'hui et rouvrir l\'application</string>
+    <string name="cloud_not_released_title">Pas encore sorti</string>
+    <string name="cloud_not_released_message">%1$s est précommandé mais n\'est pas encore sorti. Vous pourrez y jouer à partir du %2$s.</string>
+    <string name="cloud_not_released_no_date_message">%1$s est précommandé mais n\'est pas encore sorti.</string>
+    <string name="preferences_audio_boost_title">Amplification audio</string>
+    <string name="preferences_audio_boost_summary">Double le volume du stream lorsqu\'il est trop faible même avec le volume de l\'appareil au maximum, avec un limiteur pour que les scènes bruyantes ne saturent pas. S\'applique à Remote Play, Bibliothèque de jeux et Catalogue de jeux.</string>
+    <string name="preferences_clear_voice_title">Voix claires</string>
+    <string name="preferences_clear_voice_summary">Rend les dialogues plus faciles à suivre : met en avant la plage vocale et baisse automatiquement la musique, l\'ambiance et les effets pendant que les personnages parlent, sans augmenter le volume global du stream. S\'applique à Remote Play, Bibliothèque de jeux et Catalogue de jeux.</string>
 </resources>

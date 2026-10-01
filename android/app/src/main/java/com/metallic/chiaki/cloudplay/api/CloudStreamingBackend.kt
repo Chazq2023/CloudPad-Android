@@ -70,6 +70,7 @@ class CloudStreamingBackend(
 		npssoToken: String,
 		ownedEntitlementId: String = "",
 		ownedPlatform: String = "",
+		availableFromMs: Long = 0L,
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
@@ -123,6 +124,19 @@ class CloudStreamingBackend(
 			}
 			
 			Log.i(TAG, "✓ Authorization check passed")
+
+			// Pre-order gate, checked against Sony's clock (the authorization check above just got
+			// a fresh Date header from Sony) so changing the device clock can't get around it. Runs
+			// before anything is asked of Gaikai, which would happily allocate a pre-ordered game.
+			if (availableFromMs > 0)
+			{
+				val sonyNow = TrustedClock.nowOrNull()
+				if (sonyNow == null || sonyNow < availableFromMs)
+				{
+					Log.w(TAG, "Blocking launch of unreleased game '$gameName': unlocks at $availableFromMs, Sony time $sonyNow")
+					return@withContext Result.failure(GameNotReleasedException(availableFromMs, "$gameName hasn't been released yet"))
+				}
+			}
 			
 			// Continue with cloud session setup
 			val result = continueCloudSessionAfterAuth(

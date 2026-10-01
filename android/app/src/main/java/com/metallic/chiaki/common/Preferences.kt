@@ -90,6 +90,11 @@ class Preferences(context: Context)
 		val codecDefault = Codec.CODEC_H265
 		val codecAll = Codec.values()
 
+		/** Gain applied to decoded stream audio while Audio Boost is on. Streams are mixed with
+		 *  plenty of headroom so they sound quiet next to other apps; the native side
+		 *  (audio-output.cpp) soft-limits the boosted signal so loud scenes don't clip. */
+		const val AUDIO_BOOST_GAIN = 2.0f
+
 		const val CLOUD_BITRATE_MIN_KBPS = 2000
 		// Kept well below what a 1Gbps line could carry: Sony's own clients never ask for anywhere
 		// near 200Mbps, and a request that far out of line risks drawing attention to accounts.
@@ -282,6 +287,18 @@ class Preferences(context: Context)
 	var congestionMode: CongestionMode
 		get() = CongestionMode.fromStored(sharedPreferences.getString(congestionModeKey, null))
 		set(value) { sharedPreferences.edit().putString(congestionModeKey, value.value).apply() }
+
+	// Applies to every session type — all stream audio goes through the same native output.
+	val audioBoostEnabledKey get() = resources.getString(R.string.preferences_audio_boost_enabled_key)
+	var audioBoostEnabled
+		get() = sharedPreferences.getBoolean(audioBoostEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(audioBoostEnabledKey, value).apply() }
+	val audioBoostGain get() = if(audioBoostEnabled) AUDIO_BOOST_GAIN else 1.0f
+
+	val clearVoiceEnabledKey get() = resources.getString(R.string.preferences_clear_voice_enabled_key)
+	var clearVoiceEnabled
+		get() = sharedPreferences.getBoolean(clearVoiceEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(clearVoiceEnabledKey, value).apply() }
 
 	val casSharpeningEnabledKey get() = resources.getString(R.string.preferences_cas_sharpening_enabled_key)
 	var casSharpeningEnabled

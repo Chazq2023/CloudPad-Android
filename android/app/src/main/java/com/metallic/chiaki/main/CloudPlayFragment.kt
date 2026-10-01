@@ -1359,6 +1359,14 @@ class CloudPlayFragment : Fragment() {
     }
 
     private fun onGameClicked(game: CloudGame) {
+        // Quick pre-check so the common case shows the dialog instantly; the authoritative check
+        // against Sony's clock happens in CloudStreamingBackend before anything is allocated.
+        val now = com.metallic.chiaki.cloudplay.api.TrustedClock.nowOrNull() ?: System.currentTimeMillis()
+        if (game.isOwned && !PsCloudOwnership.isReleased(game, now)) {
+            showNotReleasedDialog(game)
+            return
+        }
+
         val isPscloud = game.serviceType == "pscloud"
         val isAllGamesFilter = !viewModel.preferences.getPsCloudFilterOwned()
 
@@ -1369,6 +1377,22 @@ class CloudPlayFragment : Fragment() {
             // Start cloud streaming
             startCloudStreaming(game)
         }
+    }
+
+    /** A pre-ordered game whose entitlement hasn't unlocked yet — see PsCloudOwnership.isReleased. */
+    private fun showNotReleasedDialog(game: CloudGame) {
+        val message = if (game.availableFromMs == PsCloudOwnership.RELEASE_DATE_UNKNOWN) {
+            getString(R.string.cloud_not_released_no_date_message, game.name)
+        } else {
+            val unlocksAt = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.LONG, java.text.DateFormat.SHORT)
+                .format(java.util.Date(game.availableFromMs))
+            getString(R.string.cloud_not_released_message, game.name, unlocksAt)
+        }
+        requireContext().alertDialogBuilder()
+            .setTitle(R.string.cloud_not_released_title)
+            .setMessage(message)
+            .setPositiveButton(R.string.action_ok, null)
+            .show()
     }
 
     /**
@@ -1588,6 +1612,7 @@ class CloudPlayFragment : Fragment() {
                     npssoToken = npssoToken,
                     ownedEntitlementId = game.entitlementId,
                     ownedPlatform = PsCloudOwnership.streamPlatform(game),
+                    availableFromMs = if (game.isOwned) game.availableFromMs else 0L,
                     onProgress = { message ->
                         requireActivity().runOnUiThread {
                             allocationProgressTextView?.text = message
@@ -1619,6 +1644,10 @@ class CloudPlayFragment : Fragment() {
 
                     // Handle specific error types with appropriate dialogs
                     when (error) {
+                        is com.metallic.chiaki.cloudplay.api.GameNotReleasedException -> {
+                            showNotReleasedDialog(game)
+                        }
+
                         is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException,
                         is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
                             updateGameStreamability(game, streamable = false)

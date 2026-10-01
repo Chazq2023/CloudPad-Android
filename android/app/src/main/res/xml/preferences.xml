@@ -113,6 +113,20 @@
             app:icon="@drawable/ic_bitrate"/>
 
         <SwitchPreference
+            app:key="@string/preferences_audio_boost_enabled_key"
+            app:title="@string/preferences_audio_boost_title"
+            app:summary="@string/preferences_audio_boost_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_volume"/>
+
+        <SwitchPreference
+            app:key="@string/preferences_clear_voice_enabled_key"
+            app:title="@string/preferences_clear_voice_title"
+            app:summary="@string/preferences_clear_voice_summary"
+            app:defaultValue="false"
+            app:icon="@drawable/ic_voice"/>
+
+        <SwitchPreference
             app:key="@string/preferences_log_verbose_key"
             app:title="@string/preferences_log_verbose_title"
             app:summary="@string/preferences_log_verbose_summary"

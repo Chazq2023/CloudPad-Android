@@ -6,12 +6,21 @@ import android.util.Log
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import org.json.JSONObject
+import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 
 object PsCloudOwnership
 {
 	private const val TAG = "PsCloudOwnership"
 	const val PAGE_SIZE = 300
 	const val PAGE_COOLDOWN_MS = 100L
+
+	/** availableFromMs for a pre-order Sony sent without an active_date: there's no release time
+	 *  to wait for, so it stays locked until a Library refresh brings one. Released pre-orders keep
+	 *  preorder_flag=true but always carry their (past) release date, so they're unaffected. */
+	const val RELEASE_DATE_UNKNOWN = Long.MAX_VALUE
 
 	data class Entitlement(
 		val id: String,
@@ -22,7 +31,10 @@ object PsCloudOwnership
 		val conceptId: String,
 		val featureType: Int,   // PSN feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
 		val skuType: String = "",  // PSN sku_type: "GAME_TRIAL" for limited-play game trials
-		val iconUrl: String = ""  // game_meta.icon_url — box art straight from the entitlement itself
+		val iconUrl: String = "",  // game_meta.icon_url — box art straight from the entitlement itself
+		// active_date: when the entitlement unlocks (epoch ms, 0 if absent). The purchase time for
+		// an ordinary purchase; the release time for a pre-order.
+		val activeDateMs: Long = 0L
 	)
 
 	private data class CatalogIndex(
@@ -76,9 +88,41 @@ object PsCloudOwnership
 			conceptId = conceptId,
 			featureType = obj.optInt("feature_type", 0),
 			skuType = skuType,
-			iconUrl = gameMeta.optString("icon_url", "")
+			iconUrl = gameMeta.optString("icon_url", ""),
+			activeDateMs = parseSonyDate(obj.optString("active_date", "")).let { date ->
+				if (date == 0L && obj.optBoolean("preorder_flag", false)) RELEASE_DATE_UNKNOWN else date
+			}
 		)
 	}
+
+	/** Parses Sony's ISO-8601 UTC timestamps ("2026-10-05T23:00:00Z", optionally with millis);
+	 *  0 if absent or unparseable, which means "no release restriction". java.time isn't available
+	 *  at minSdk 24, hence SimpleDateFormat. */
+	fun parseSonyDate(value: String): Long
+	{
+		if (value.isEmpty()) return 0L
+		for (pattern in listOf("yyyy-MM-dd'T'HH:mm:ss.SSSX", "yyyy-MM-dd'T'HH:mm:ssX"))
+		{
+			try
+			{
+				val format = SimpleDateFormat(pattern, Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
+				return format.parse(value)?.time ?: continue
+			}
+			catch (e: ParseException) { }
+		}
+		return 0L
+	}
+
+	/** Whether an owned game can be launched yet. Sony entitles a pre-order immediately (so it
+	 *  shows in the Library) and Gaikai will authorize a cloud session for it ahead of release, but
+	 *  playing it early isn't something to let users stumble into — so the launch is held until
+	 *  the entitlement's own active_date. */
+	fun isReleased(game: CloudGame, nowMs: Long = System.currentTimeMillis()): Boolean =
+		game.availableFromMs <= nowMs
+
+	/** Earliest unlock time across entitlements that stand for the same game: if any of them is
+	 *  already active (e.g. an older edition alongside a pre-ordered one), the game is playable. */
+	fun earliestAvailability(a: Long, b: Long): Long = minOf(a, b)
 
 	/**
 	 * Builds the owned-games (Library) list directly from the user's entitlements — no public
@@ -124,6 +168,7 @@ object PsCloudOwnership
 
 		return resolved.groupBy { (_, streamId) -> streamId }.map { (streamId, group) ->
 			val best = group.map { it.first }.maxByOrNull { ownedStreamRank(it) } ?: group.first().first
+			val availableFromMs = group.map { it.first.activeDateMs }.reduce(::earliestAvailability)
 
 			CloudGame(
 				productId = streamId,
@@ -138,7 +183,8 @@ object PsCloudOwnership
 				entitlementId = best.id,
 				storeProductId = best.productId,
 				plusCatalog = best.featureType == 1,
-				featureType = best.featureType
+				featureType = best.featureType,
+				availableFromMs = availableFromMs
 			)
 		}
 	}
@@ -301,7 +347,8 @@ object PsCloudOwnership
 				isOwned = true,
 				entitlementId = ent.id,
 				storeProductId = ent.productId,
-				featureType = ent.featureType
+				featureType = ent.featureType,
+				availableFromMs = ent.activeDateMs
 			)
 			val key = ownedDedupeKey(meta, ent)
 			val candidateRank = ownedStreamRank(ent)
@@ -557,7 +604,10 @@ object PsCloudOwnership
 				games[catalogMatch] = existing.copy(
 					isOwned = true,
 					entitlementId = bestEntitlementId,
-					storeProductId = owned.storeProductId.ifEmpty { existing.storeProductId }
+					storeProductId = owned.storeProductId.ifEmpty { existing.storeProductId },
+					availableFromMs = if (existing.isOwned)
+						earliestAvailability(existing.availableFromMs, owned.availableFromMs)
+					else owned.availableFromMs
 				)
 				continue
 			}

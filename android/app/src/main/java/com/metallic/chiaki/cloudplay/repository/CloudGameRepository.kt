@@ -51,6 +51,15 @@ class CloudGameRepository(
 			cacheFileName == PSCLOUD_CACHE_FILE && cachedGames.length() > 0 &&
 				!cachedGames.getJSONObject(0).has("psCatalog")
 
+		/** A cache written before owned games carried their unlock time would make every
+		 *  pre-ordered game look released, letting it launch early (see PsCloudOwnership.isReleased)
+		 *  — so any owned entry without it means the whole cache must be rebuilt from Sony. */
+		internal fun lacksReleaseDates(cachedGames: JSONArray): Boolean =
+			(0 until cachedGames.length()).any { i ->
+				val obj = cachedGames.getJSONObject(i)
+				obj.optBoolean("isOwned", false) && !obj.has("availableFromMs")
+			}
+
 		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
 		private const val PS_PLUS_CACHE_FILE = "ps_plus_keys.json"
 		private const val PS_PLUS_FAILURE_FILE = "last_failure.txt"
@@ -309,6 +318,12 @@ class CloudGameRepository(
 				cacheFile.delete()
 				return null
 			}
+			if(lacksReleaseDates(jsonArray))
+			{
+				Log.i(TAG, "Discarding cache without release dates: $cacheFileName")
+				cacheFile.delete()
+				return null
+			}
 			val games = mutableListOf<CloudGame>()
 
 			for (i in 0 until jsonArray.length())
@@ -338,6 +353,7 @@ class CloudGameRepository(
 					psCatalog = obj.optBoolean("psCatalog", false),
 					freeToPlay = obj.optBoolean("freeToPlay", false),
 					featureType = obj.optInt("featureType", 0),
+					availableFromMs = obj.optLong("availableFromMs", 0L),
 					streamableStatus = try {
 						StreamableStatus.valueOf(obj.optString("streamableStatus", "UNKNOWN"))
 					} catch (e: IllegalArgumentException) {
@@ -381,6 +397,7 @@ class CloudGameRepository(
 				obj.put("psCatalog", game.psCatalog)
 				obj.put("freeToPlay", game.freeToPlay)
 				obj.put("featureType", game.featureType)
+				obj.put("availableFromMs", game.availableFromMs)
 				obj.put("streamableStatus", game.streamableStatus.name)
 				jsonArray.put(obj)
 			}

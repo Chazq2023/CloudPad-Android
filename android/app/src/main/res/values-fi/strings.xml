@@ -686,4 +686,13 @@
         <item quantity="one">%1$s / %2$s peli näytetään</item>
         <item quantity="other">%1$s / %2$s peliä näytetään</item>
     </plurals>
+    <string name="clock_wrong_date_title">Väärä päivämäärä</string>
+    <string name="clock_wrong_date_message">Vaihda päivämäärä takaisin tämän päivän päivämäärään ja avaa sovellus uudelleen</string>
+    <string name="cloud_not_released_title">Ei vielä julkaistu</string>
+    <string name="cloud_not_released_message">%1$s on ennakkotilattu, mutta sitä ei ole vielä julkaistu. Voit pelata sitä alkaen %2$s.</string>
+    <string name="cloud_not_released_no_date_message">%1$s on ennakkotilattu, mutta sitä ei ole vielä julkaistu.</string>
+    <string name="preferences_audio_boost_title">Äänenvahvistus</string>
+    <string name="preferences_audio_boost_summary">Kaksinkertaistaa striimin äänenvoimakkuuden, jos se on liian hiljainen laitteen täydelläkin äänenvoimakkuudella. Rajoitin estää kovaäänisiä kohtauksia säröytymästä. Koskee Etäpeliä, Pelikirjastoa ja Pelikatalogia.</string>
+    <string name="preferences_clear_voice_title">Selkeä puhe</string>
+    <string name="preferences_clear_voice_summary">Tekee dialogista helpommin seurattavaa: korostaa puheen taajuusaluetta ja hiljentää musiikkia, taustaääniä ja efektejä automaattisesti hahmojen puhuessa, nostamatta striimin kokonaisäänenvoimakkuutta. Koskee Etäpeliä, Pelikirjastoa ja Pelikatalogia.</string>
 </resources>

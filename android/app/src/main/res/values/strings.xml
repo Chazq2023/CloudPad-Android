@@ -37,6 +37,11 @@
     <string name="cloud_playtime_longest_session">Longest Session: %1$s</string>
     <string name="cloud_playtime_never">Never</string>
     <string name="cloud_add_to_library_title">Add to Library</string>
+    <string name="clock_wrong_date_title">Incorrect Date</string>
+    <string name="clock_wrong_date_message">Please change the date back to today\'s date and reopen the app</string>
+    <string name="cloud_not_released_title">Not Released Yet</string>
+    <string name="cloud_not_released_message">%1$s is pre-ordered but hasn\'t been released yet. You\'ll be able to play it from %2$s.</string>
+    <string name="cloud_not_released_no_date_message">%1$s is pre-ordered but hasn\'t been released yet.</string>
     <string name="cloud_add_to_library_no_url_message">Unable to add this game to your library. The game URL is not available.</string>
     <string name="cloud_add_to_library_message">This game needs to be added to your library before you can stream it.\n\nAfter adding the game, press the Refresh Games button to update your list.</string>
     <string name="cloud_add_to_library_add_now_button">Add Now</string>
@@ -266,6 +271,10 @@
     <string name="preferences_congestion_mode_summary">Adapt to network lets the console or cloud server briefly lower quality when packets are lost, so rough patches cause less stutter and freezing. Hold bitrate always reports a clean connection, keeping full quality but riding out rough patches worse. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_congestion_mode_adapt">Adapt to network</string>
     <string name="preferences_congestion_mode_hold">Hold bitrate</string>
+    <string name="preferences_audio_boost_title">Audio Boost</string>
+    <string name="preferences_audio_boost_summary">Doubles the stream\'s volume for when it\'s too quiet even at full device volume, with a limiter so loud scenes don\'t distort. Applies to Remote Play, Game Library and Game Catalog.</string>
+    <string name="preferences_clear_voice_title">Clear Voice Audio</string>
+    <string name="preferences_clear_voice_summary">Makes dialogue easier to follow: brings the speech range forward and automatically turns music, ambience and effects down while characters are talking, without making the stream louder overall. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_pip_enabled_summary">Enable PiP mode when minimizing during streaming (Android 8.0+)</string>
     <string name="preferences_swap_cross_moon_title">Swap Cross/Moon and Box/Pyramid Buttons</string>
     <string name="preferences_swap_cross_moon_summary">Swap face buttons if default mapping is incorrect (e.g. for 8BitDo controllers)</string>
@@ -658,6 +667,8 @@
     <string name="preferences_adaptive_frame_pacing_key">adaptive_frame_pacing_enabled</string>
     <string name="preferences_video_pacing_key">video_pacing</string>
     <string name="preferences_congestion_mode_key">congestion_mode</string>
+    <string name="preferences_audio_boost_enabled_key">audio_boost_enabled</string>
+    <string name="preferences_clear_voice_enabled_key">clear_voice_enabled</string>
     <string name="preferences_app_language_key">app_language</string>
     <string name="preferences_cas_sharpening_enabled_key">cas_sharpening_enabled</string>
     <string name="preferences_cas_sharpening_level_key">cas_sharpening_level</string>
