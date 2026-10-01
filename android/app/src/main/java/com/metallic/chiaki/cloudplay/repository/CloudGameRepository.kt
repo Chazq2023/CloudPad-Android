@@ -338,6 +338,7 @@ class CloudGameRepository(
 					psCatalog = obj.optBoolean("psCatalog", false),
 					freeToPlay = obj.optBoolean("freeToPlay", false),
 					featureType = obj.optInt("featureType", 0),
+					availableFromMs = obj.optLong("availableFromMs", 0L),
 					streamableStatus = try {
 						StreamableStatus.valueOf(obj.optString("streamableStatus", "UNKNOWN"))
 					} catch (e: IllegalArgumentException) {
@@ -381,6 +382,7 @@ class CloudGameRepository(
 				obj.put("psCatalog", game.psCatalog)
 				obj.put("freeToPlay", game.freeToPlay)
 				obj.put("featureType", game.featureType)
+				obj.put("availableFromMs", game.availableFromMs)
 				obj.put("streamableStatus", game.streamableStatus.name)
 				jsonArray.put(obj)
 			}

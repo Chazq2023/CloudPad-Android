@@ -37,6 +37,8 @@
     <string name="cloud_playtime_longest_session">Longest Session: %1$s</string>
     <string name="cloud_playtime_never">Never</string>
     <string name="cloud_add_to_library_title">Add to Library</string>
+    <string name="cloud_not_released_title">Not Released Yet</string>
+    <string name="cloud_not_released_message">%1$s is pre-ordered but hasn\'t been released yet. You\'ll be able to play it from %2$s.</string>
     <string name="cloud_add_to_library_no_url_message">Unable to add this game to your library. The game URL is not available.</string>
     <string name="cloud_add_to_library_message">This game needs to be added to your library before you can stream it.\n\nAfter adding the game, press the Refresh Games button to update your list.</string>
     <string name="cloud_add_to_library_add_now_button">Add Now</string>

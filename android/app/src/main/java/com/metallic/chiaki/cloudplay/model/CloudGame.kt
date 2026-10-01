@@ -38,7 +38,11 @@ data class CloudGame(
 	// PsStorePlusService / CloudGameRepository.loadPsPlusKeys.
 	val psPlus: Boolean = false,
 	val featureType: Int = 0, // PSN entitlement feature_type: 3=full game, 1=trial/free, 0=add-on/DLC
-	val streamableStatus: StreamableStatus = StreamableStatus.UNKNOWN // Library tile badge state
+	val streamableStatus: StreamableStatus = StreamableStatus.UNKNOWN, // Library tile badge state
+	// Owned games only: when Sony unlocks the entitlement (epoch ms, 0 = no restriction). A
+	// pre-ordered game is entitled — and Gaikai will even authorize a session for it — before its
+	// release, so launches are blocked client-side until this passes. See PsCloudOwnership.isReleased.
+	val availableFromMs: Long = 0L
 )
 
 /**

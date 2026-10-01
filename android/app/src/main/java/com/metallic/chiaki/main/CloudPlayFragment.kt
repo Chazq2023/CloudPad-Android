@@ -1359,6 +1359,11 @@ class CloudPlayFragment : Fragment() {
     }
 
     private fun onGameClicked(game: CloudGame) {
+        if (game.isOwned && !PsCloudOwnership.isReleased(game)) {
+            showNotReleasedDialog(game)
+            return
+        }
+
         val isPscloud = game.serviceType == "pscloud"
         val isAllGamesFilter = !viewModel.preferences.getPsCloudFilterOwned()
 
@@ -1369,6 +1374,17 @@ class CloudPlayFragment : Fragment() {
             // Start cloud streaming
             startCloudStreaming(game)
         }
+    }
+
+    /** A pre-ordered game whose entitlement hasn't unlocked yet — see PsCloudOwnership.isReleased. */
+    private fun showNotReleasedDialog(game: CloudGame) {
+        val unlocksAt = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.LONG, java.text.DateFormat.SHORT)
+            .format(java.util.Date(game.availableFromMs))
+        requireContext().alertDialogBuilder()
+            .setTitle(R.string.cloud_not_released_title)
+            .setMessage(getString(R.string.cloud_not_released_message, game.name, unlocksAt))
+            .setPositiveButton(R.string.action_ok, null)
+            .show()
     }
 
     /**
