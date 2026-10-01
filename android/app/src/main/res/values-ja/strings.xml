@@ -684,6 +684,9 @@
     <plurals name="add_game_count">
         <item quantity="other">%2$s 件中 %1$s 件のゲームを表示中</item>
     </plurals>
+    <string name="update_required_title">アップデートが必要です</string>
+    <string name="update_required_message">このバージョンの CloudPad はサポートが終了しました。引き続きご利用いただくには、最新バージョンにアップデートしてください。</string>
+    <string name="update_required_button">アップデート</string>
     <string name="clock_wrong_date_title">日付が正しくありません</string>
     <string name="clock_wrong_date_message">日付を今日の日付に戻して、アプリを再度開いてください</string>
     <string name="cloud_not_released_title">未発売</string>

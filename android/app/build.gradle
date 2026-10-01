@@ -63,6 +63,9 @@ def resolveAndroidVersionName(String fallback) {
     return fallback
 }
 def androidVersionName = resolveAndroidVersionName(chiakiVersion)
+// The CloudPad release version ("0.1.N") only when the release workflow supplied one; empty for
+// local/dev builds, whose versionName is Chiaki's own and means nothing to VersionGuard.
+def cloudpadReleaseVersion = androidVersionName == chiakiVersion ? "" : androidVersionName
 println("Android versionName: $androidVersionName")
 
 // Fastlane reads this via ./gradlew :app:printPyluxVersionCode — must not live only in afterEvaluate
@@ -88,6 +91,7 @@ android {
         targetSdk 35
         versionCode androidVersionCode
         versionName androidVersionName
+        buildConfigField "String", "CLOUDPAD_RELEASE_VERSION", "\"${cloudpadReleaseVersion}\""
         ndk {
             // For local development: arm64-v8a only
             // For production builds: include all ABIs (armeabi-v7a, arm64-v8a, x86, x86_64)

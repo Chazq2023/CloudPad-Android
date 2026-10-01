@@ -10,5 +10,6 @@ class CloudPadApplication : Application()
 	{
 		super.onCreate()
 		ClockGuard.install(this)
+		VersionGuard.install(this)
 	}
 }

@@ -686,6 +686,9 @@
         <item quantity="one">%1$s di %2$s gioco mostrato</item>
         <item quantity="other">%1$s di %2$s giochi mostrati</item>
     </plurals>
+    <string name="update_required_title">Aggiornamento richiesto</string>
+    <string name="update_required_message">Questa versione di CloudPad non è più supportata. Aggiorna all\'ultima versione per continuare a usare l\'app.</string>
+    <string name="update_required_button">Aggiorna</string>
     <string name="clock_wrong_date_title">Data errata</string>
     <string name="clock_wrong_date_message">Reimposta la data di oggi e riapri l\'app</string>
     <string name="cloud_not_released_title">Non ancora disponibile</string>
