@@ -684,4 +684,12 @@
     <plurals name="add_game_count">
         <item quantity="other">%2$s 件中 %1$s 件のゲームを表示中</item>
     </plurals>
+    <string name="clock_wrong_date_title">日付が正しくありません</string>
+    <string name="clock_wrong_date_message">日付を今日の日付に戻して、アプリを再度開いてください</string>
+    <string name="cloud_not_released_title">未発売</string>
+    <string name="cloud_not_released_message">%1$s は予約済みですが、まだ発売されていません。%2$s からプレイできます。</string>
+    <string name="preferences_audio_boost_title">オーディオブースト</string>
+    <string name="preferences_audio_boost_summary">デバイスの音量を最大にしてもストリームの音が小さい場合に、音量を2倍にします。リミッターにより大きな音の場面でも音割れしません。リモートプレイ、ゲームライブラリ、ゲームカタログに適用されます。</string>
+    <string name="preferences_clear_voice_title">クリアボイス</string>
+    <string name="preferences_clear_voice_summary">セリフを聞き取りやすくします。キャラクターが話している間、声の帯域を強調し、音楽・環境音・効果音を自動的に下げます。ストリーム全体の音量は上がりません。リモートプレイ、ゲームライブラリ、ゲームカタログに適用されます。</string>
 </resources>
