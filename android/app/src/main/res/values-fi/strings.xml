@@ -686,6 +686,10 @@
         <item quantity="one">%1$s / %2$s peli näytetään</item>
         <item quantity="other">%1$s / %2$s peliä näytetään</item>
     </plurals>
+    <string name="update_available_title">Päivitys saatavilla</string>
+    <string name="update_available_message">CloudPad %1$s on saatavilla. Käytössäsi on versio %2$s.</string>
+    <string name="update_available_whats_new">Uutta:</string>
+    <string name="update_available_later">Myöhemmin</string>
     <string name="update_required_title">Päivitys vaaditaan</string>
     <string name="update_required_message">Tätä CloudPadin versiota ei enää tueta. Päivitä uusimpaan versioon, jotta voit jatkaa sovelluksen käyttöä.</string>
     <string name="update_required_button">Päivitä</string>

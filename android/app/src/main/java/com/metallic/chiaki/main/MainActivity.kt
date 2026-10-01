@@ -31,6 +31,7 @@ import coil.load
 import com.pylux.stream.R
 import com.metallic.chiaki.common.AppIntegrityManager
 import com.metallic.chiaki.common.InAppReviewHelper
+import com.metallic.chiaki.common.UpdateNotifier
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.viewModelFactory
 import com.metallic.chiaki.common.getDatabase
@@ -153,7 +154,13 @@ class MainActivity : AppCompatActivity() {
             // waits until the disclaimer is acknowledged so the two dialogs don't stack.
             if (savedInstanceState == null) {
                 showDisclaimerDialog {
-                    InAppReviewHelper.tryPromptIfEligible(this, preferences)
+                    // Then a "new version available" prompt if there is one, then the review
+                    // prompt — each waits for the previous so they never stack.
+                    lifecycleScope.launch {
+                        UpdateNotifier.checkAndPrompt(this@MainActivity) {
+                            InAppReviewHelper.tryPromptIfEligible(this@MainActivity, preferences)
+                        }
+                    }
                 }
             }
         }

@@ -45,6 +45,9 @@ object VersionGuard
 	private var updateUrl = DEFAULT_UPDATE_URL
 	private var outdated = false
 
+	/** Whether the forced "Update Required" popup applies right now (UpdateNotifier stays out of its way). */
+	fun isUpdateRequired(): Boolean = outdated
+
 	/** Compares dotted numeric versions ("0.1.59" vs "0.1.60"); null if either isn't one. */
 	fun compareVersions(a: String, b: String): Int?
 	{

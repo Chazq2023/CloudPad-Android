@@ -687,6 +687,10 @@
         <item quantity="one">%1$s de %2$s jogo exibido</item>
         <item quantity="other">%1$s de %2$s jogos exibidos</item>
     </plurals>
+    <string name="update_available_title">Atualização disponível</string>
+    <string name="update_available_message">O CloudPad %1$s está disponível. Você está na versão %2$s.</string>
+    <string name="update_available_whats_new">Novidades:</string>
+    <string name="update_available_later">Mais tarde</string>
     <string name="update_required_title">Atualização necessária</string>
     <string name="update_required_message">Esta versão do CloudPad não é mais compatível. Atualize para a versão mais recente para continuar usando o app.</string>
     <string name="update_required_button">Atualizar</string>

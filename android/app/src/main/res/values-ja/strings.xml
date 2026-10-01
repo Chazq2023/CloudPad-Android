@@ -684,6 +684,10 @@
     <plurals name="add_game_count">
         <item quantity="other">%2$s 件中 %1$s 件のゲームを表示中</item>
     </plurals>
+    <string name="update_available_title">アップデートがあります</string>
+    <string name="update_available_message">CloudPad %1$s が利用可能です。現在のバージョンは %2$s です。</string>
+    <string name="update_available_whats_new">新機能：</string>
+    <string name="update_available_later">後で</string>
     <string name="update_required_title">アップデートが必要です</string>
     <string name="update_required_message">このバージョンの CloudPad はサポートが終了しました。引き続きご利用いただくには、最新バージョンにアップデートしてください。</string>
     <string name="update_required_button">アップデート</string>

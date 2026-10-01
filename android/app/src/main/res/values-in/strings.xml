@@ -637,6 +637,10 @@
     <plurals name="cloud_game_count">
         <item quantity="other">%1$d game</item>
     </plurals>
+    <string name="update_available_title">Pembaruan Tersedia</string>
+    <string name="update_available_message">CloudPad %1$s sudah tersedia. Anda menggunakan versi %2$s.</string>
+    <string name="update_available_whats_new">Yang baru:</string>
+    <string name="update_available_later">Nanti</string>
     <string name="update_required_title">Pembaruan Diperlukan</string>
     <string name="update_required_message">Versi CloudPad ini tidak lagi didukung. Perbarui ke versi terbaru untuk terus menggunakan aplikasi.</string>
     <string name="update_required_button">Perbarui</string>
