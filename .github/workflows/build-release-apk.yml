@@ -16,10 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - New Audio Boost toggle (Settings and the in-stream Quick Settings menu, off by default) doubles stream volume when it's too quiet even at full device volume, with a limiter so loud scenes don't distort. Turning it on or off mid-stream takes effect immediately.
-        - New Clear Voice Audio toggle (just below Audio Boost, off by default) makes in-game dialogue easier to follow: it brings the centre speech range forward and automatically turns music, ambience and effects down while characters are talking, without making the stream louder overall. It applies live mid-stream and stacks with Audio Boost without distorting.
-        - Pre-ordered games that show up in your PS5 Library before release day can no longer be started early. Tapping one explains it hasn't been released yet and shows when it unlocks, and it becomes playable automatically from that moment. The check uses Sony's clock, so changing the date or time on your device doesn't get around it, and it works without needing to refresh your Library. A pre-order that Sony hasn't given a release date yet stays locked too.
-        - If your device's date has been changed manually, CloudPad now asks you to set it back to today's date and closes, both when it opens and straight away if the date is changed while it's running.
+        - Older versions of CloudPad can now be retired: if your version is below the minimum supported release, CloudPad asks you to update and takes you to the latest release.
 
     steps:
       - name: Checkout repo
