@@ -37,6 +37,10 @@
     <string name="cloud_playtime_longest_session">Longest Session: %1$s</string>
     <string name="cloud_playtime_never">Never</string>
     <string name="cloud_add_to_library_title">Add to Library</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_available_message">CloudPad %1$s is available. You\'re on %2$s.</string>
+    <string name="update_available_whats_new">What\'s new:</string>
+    <string name="update_available_later">Later</string>
     <string name="update_required_title">Update Required</string>
     <string name="update_required_message">This version of CloudPad is no longer supported. Please update to the latest version to keep using the app.</string>
     <string name="update_required_button">Update</string>

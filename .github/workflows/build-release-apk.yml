@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - No changes to the app itself: this release only updates release settings, so there's no need to update if you're already on the previous version.
+        - CloudPad now tells you when a new version is out: after the disclaimer, it shows the new version and what's changed, with an Update button that opens the latest release. Choose Later and it reminds you the next time you open the app.
 
     steps:
       - name: Checkout repo

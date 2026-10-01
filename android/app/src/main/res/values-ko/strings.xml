@@ -721,6 +721,10 @@
     <plurals name="add_game_count">
         <item quantity="other">게임 %2$s개 중 %1$s개 표시</item>
     </plurals>
+    <string name="update_available_title">업데이트 가능</string>
+    <string name="update_available_message">CloudPad %1$s 버전을 사용할 수 있습니다. 현재 버전은 %2$s입니다.</string>
+    <string name="update_available_whats_new">새로운 기능:</string>
+    <string name="update_available_later">나중에</string>
     <string name="update_required_title">업데이트 필요</string>
     <string name="update_required_message">이 버전의 CloudPad는 더 이상 지원되지 않습니다. 앱을 계속 사용하려면 최신 버전으로 업데이트해 주세요.</string>
     <string name="update_required_button">업데이트</string>
