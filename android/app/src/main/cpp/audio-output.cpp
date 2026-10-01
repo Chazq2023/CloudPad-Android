@@ -56,12 +56,12 @@ static std::atomic<bool> audio_clear_voice(false);
 
 #define CLEAR_VOICE_BAND_LOW_HZ 250.0f
 #define CLEAR_VOICE_BAND_HIGH_HZ 4000.0f
-#define CLEAR_VOICE_SPEECH_GAIN 1.41f      // +3dB
-#define CLEAR_VOICE_REST_GAIN 0.63f        // -4dB
-#define CLEAR_VOICE_SIDE_GAIN 0.5f         // -6dB
-#define CLEAR_VOICE_DUCK_GAIN 0.4f         // extra -8dB on non-speech while dialogue plays
+#define CLEAR_VOICE_SPEECH_GAIN 1.68f      // +4.5dB
+#define CLEAR_VOICE_REST_GAIN 0.5f         // -6dB
+#define CLEAR_VOICE_SIDE_GAIN 0.4f         // -8dB
+#define CLEAR_VOICE_DUCK_GAIN 0.28f        // extra -11dB on non-speech while dialogue plays
 #define CLEAR_VOICE_DETECT_FLOOR 0.003f    // ~-50dBFS: quieter speech-band content never ducks
-#define CLEAR_VOICE_DETECT_RATIO 0.6f      // speech-band level vs everything else to count as dialogue
+#define CLEAR_VOICE_DETECT_RATIO 0.5f      // speech-band level vs everything else to count as dialogue
 #define CLEAR_VOICE_ENV_ATTACK_S 0.01f
 #define CLEAR_VOICE_ENV_RELEASE_S 0.25f
 #define CLEAR_VOICE_DUCK_ATTACK_S 0.05f
