@@ -74,4 +74,45 @@ class PreorderReleaseGateTest {
         val merged = PsCloudOwnership.mergeOwnedIntoBrowseCatalog(listOf(catalogEntry), listOf(owned))
         assertEquals(releaseMs, merged.single().availableFromMs)
     }
+
+    private fun entitlementJson(preorder: Boolean, activeDate: String?) = JSONObject().apply {
+        put("id", "UP0001-PPSA00001_00-GAME000000000000")
+        put("product_id", "UP0001-PPSA00001_00-GAME000000000000")
+        put("active_flag", true)
+        put("feature_type", 3)
+        put("preorder_flag", preorder)
+        if (activeDate != null) put("active_date", activeDate)
+        put("game_meta", JSONObject().put("name", "Game").put("package_type", "PSGD"))
+    }
+
+    @Test
+    fun `pre-order without a release date stays locked`() {
+        val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = true, activeDate = null))!!
+        assertEquals(PsCloudOwnership.RELEASE_DATE_UNKNOWN, ent.activeDateMs)
+        val game = PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(ent)).single()
+        assertFalse(PsCloudOwnership.isReleased(game, Long.MAX_VALUE - 1))
+    }
+
+    @Test
+    fun `released pre-order keeps its flag but is playable`() {
+        // Real shape from an account: FINAL FANTASY VII REBIRTH, preorder_flag still true years later.
+        val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = true, activeDate = "2024-02-29T00:00:00Z"))!!
+        val game = PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(ent)).single()
+        assertTrue(PsCloudOwnership.isReleased(game, releaseMs))
+    }
+
+    @Test
+    fun `ordinary purchase without a date is not locked`() {
+        val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = false, activeDate = null))!!
+        assertEquals(0L, ent.activeDateMs)
+    }
+
+    @Test
+    fun `an owned copy still wins over a dateless pre-order of the same game`() {
+        val games = PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(
+            entitlement("UP0001-PPSA00001_00-GAME000000000000", PsCloudOwnership.RELEASE_DATE_UNKNOWN),
+            entitlement("UP0001-PPSA00001_00-GAME000000000000", 1_000L)
+        ))
+        assertEquals(1_000L, games.single().availableFromMs)
+    }
 }

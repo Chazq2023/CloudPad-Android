@@ -1381,11 +1381,16 @@ class CloudPlayFragment : Fragment() {
 
     /** A pre-ordered game whose entitlement hasn't unlocked yet — see PsCloudOwnership.isReleased. */
     private fun showNotReleasedDialog(game: CloudGame) {
-        val unlocksAt = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.LONG, java.text.DateFormat.SHORT)
-            .format(java.util.Date(game.availableFromMs))
+        val message = if (game.availableFromMs == PsCloudOwnership.RELEASE_DATE_UNKNOWN) {
+            getString(R.string.cloud_not_released_no_date_message, game.name)
+        } else {
+            val unlocksAt = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.LONG, java.text.DateFormat.SHORT)
+                .format(java.util.Date(game.availableFromMs))
+            getString(R.string.cloud_not_released_message, game.name, unlocksAt)
+        }
         requireContext().alertDialogBuilder()
             .setTitle(R.string.cloud_not_released_title)
-            .setMessage(getString(R.string.cloud_not_released_message, game.name, unlocksAt))
+            .setMessage(message)
             .setPositiveButton(R.string.action_ok, null)
             .show()
     }

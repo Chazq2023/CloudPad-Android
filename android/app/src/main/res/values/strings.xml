@@ -41,6 +41,7 @@
     <string name="clock_wrong_date_message">Please change the date back to today\'s date and reopen the app</string>
     <string name="cloud_not_released_title">Not Released Yet</string>
     <string name="cloud_not_released_message">%1$s is pre-ordered but hasn\'t been released yet. You\'ll be able to play it from %2$s.</string>
+    <string name="cloud_not_released_no_date_message">%1$s is pre-ordered but hasn\'t been released yet.</string>
     <string name="cloud_add_to_library_no_url_message">Unable to add this game to your library. The game URL is not available.</string>
     <string name="cloud_add_to_library_message">This game needs to be added to your library before you can stream it.\n\nAfter adding the game, press the Refresh Games button to update your list.</string>
     <string name="cloud_add_to_library_add_now_button">Add Now</string>

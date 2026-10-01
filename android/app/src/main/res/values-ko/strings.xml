@@ -725,6 +725,7 @@
     <string name="clock_wrong_date_message">날짜를 오늘 날짜로 다시 바꾼 후 앱을 다시 열어 주세요</string>
     <string name="cloud_not_released_title">아직 출시되지 않음</string>
     <string name="cloud_not_released_message">%1$s은(는) 예약 구매했지만 아직 출시되지 않았습니다. %2$s부터 플레이할 수 있습니다.</string>
+    <string name="cloud_not_released_no_date_message">%1$s은(는) 예약 구매했지만 아직 출시되지 않았습니다.</string>
     <string name="preferences_audio_boost_title">오디오 부스트</string>
     <string name="preferences_audio_boost_summary">기기 볼륨을 최대로 해도 스트림 소리가 너무 작을 때 볼륨을 두 배로 높입니다. 리미터가 있어 큰 소리가 나는 장면에서도 소리가 찢어지지 않습니다. 리모트 플레이, 게임 라이브러리, 게임 카탈로그에 적용됩니다.</string>
     <string name="preferences_clear_voice_title">선명한 음성</string>

@@ -17,6 +17,11 @@ object PsCloudOwnership
 	const val PAGE_SIZE = 300
 	const val PAGE_COOLDOWN_MS = 100L
 
+	/** availableFromMs for a pre-order Sony sent without an active_date: there's no release time
+	 *  to wait for, so it stays locked until a Library refresh brings one. Released pre-orders keep
+	 *  preorder_flag=true but always carry their (past) release date, so they're unaffected. */
+	const val RELEASE_DATE_UNKNOWN = Long.MAX_VALUE
+
 	data class Entitlement(
 		val id: String,
 		val productId: String,
@@ -84,7 +89,9 @@ object PsCloudOwnership
 			featureType = obj.optInt("feature_type", 0),
 			skuType = skuType,
 			iconUrl = gameMeta.optString("icon_url", ""),
-			activeDateMs = parseSonyDate(obj.optString("active_date", ""))
+			activeDateMs = parseSonyDate(obj.optString("active_date", "")).let { date ->
+				if (date == 0L && obj.optBoolean("preorder_flag", false)) RELEASE_DATE_UNKNOWN else date
+			}
 		)
 	}
 
