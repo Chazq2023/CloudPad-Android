@@ -295,6 +295,11 @@ class Preferences(context: Context)
 		set(value) { sharedPreferences.edit().putBoolean(audioBoostEnabledKey, value).apply() }
 	val audioBoostGain get() = if(audioBoostEnabled) AUDIO_BOOST_GAIN else 1.0f
 
+	val clearVoiceEnabledKey get() = resources.getString(R.string.preferences_clear_voice_enabled_key)
+	var clearVoiceEnabled
+		get() = sharedPreferences.getBoolean(clearVoiceEnabledKey, false)
+		set(value) { sharedPreferences.edit().putBoolean(clearVoiceEnabledKey, value).apply() }
+
 	val casSharpeningEnabledKey get() = resources.getString(R.string.preferences_cas_sharpening_enabled_key)
 	var casSharpeningEnabled
 		get() = sharedPreferences.getBoolean(casSharpeningEnabledKey, false)

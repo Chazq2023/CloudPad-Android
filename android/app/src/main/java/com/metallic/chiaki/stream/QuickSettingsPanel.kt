@@ -496,6 +496,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_button_haptic_enabled_title)
 		panel.quickSettingsPipRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_pip_enabled_title)
 		panel.quickSettingsAudioBoostRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_audio_boost_title)
+		panel.quickSettingsClearVoiceRow.quickSettingsRowLabel.text = activity.getString(R.string.preferences_clear_voice_title)
 
 		// Every switch applies immediately — there's no Save button. On-Screen Controls /
 		// Touchpad Only additionally stay mutually exclusive with each other.
@@ -582,6 +583,10 @@ class QuickSettingsPanel(
 		panel.quickSettingsAudioBoostRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
 			preferences.audioBoostEnabled = isChecked
 			viewModel.session.setAudioBoost(preferences.audioBoostGain)
+		}
+		panel.quickSettingsClearVoiceRow.quickSettingsRowSwitch.setOnCheckedChangeListener { _, isChecked ->
+			preferences.clearVoiceEnabled = isChecked
+			viewModel.session.setClearVoice(isChecked)
 		}
 
 		panel.quickSettingsProcessingRow.quickSettingsDropdownLabel.text = activity.getString(R.string.preferences_image_processing_title)
@@ -791,6 +796,7 @@ class QuickSettingsPanel(
 			panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner,
 			panel.quickSettingsCongestionModeRow.quickSettingsDropdownSpinner,
 			panel.quickSettingsAudioBoostRow.quickSettingsRowSwitch,
+			panel.quickSettingsClearVoiceRow.quickSettingsRowSwitch,
 			panel.quickSettingsProcessingRow.quickSettingsDropdownSpinner, panel.quickSettingsFsrUpscalingRow.quickSettingsRowSwitch,
 			panel.quickSettingsFsrSharpeningRow.quickSettingsSeekBar,
 			panel.quickSettingsFriendsRefreshButton,
@@ -1506,6 +1512,7 @@ class QuickSettingsPanel(
 		panel.quickSettingsHapticsRow.quickSettingsRowSwitch.isChecked = preferences.buttonHapticEnabled
 		panel.quickSettingsPipRow.quickSettingsRowSwitch.isChecked = preferences.pipEnabled
 		panel.quickSettingsAudioBoostRow.quickSettingsRowSwitch.isChecked = preferences.audioBoostEnabled
+		panel.quickSettingsClearVoiceRow.quickSettingsRowSwitch.isChecked = preferences.clearVoiceEnabled
 		panel.quickSettingsVideoPacingRow.quickSettingsDropdownSpinner.setSelection(preferences.videoPacing.ordinal)
 		panel.quickSettingsCongestionModeRow.quickSettingsDropdownSpinner.setSelection(preferences.congestionMode.ordinal)
 

@@ -268,6 +268,8 @@
     <string name="preferences_congestion_mode_hold">Hold bitrate</string>
     <string name="preferences_audio_boost_title">Audio Boost</string>
     <string name="preferences_audio_boost_summary">Doubles the stream\'s volume for when it\'s too quiet even at full device volume, with a limiter so loud scenes don\'t distort. Applies to Remote Play, Game Library and Game Catalog.</string>
+    <string name="preferences_clear_voice_title">Clear Voice Audio</string>
+    <string name="preferences_clear_voice_summary">Brings in-game dialogue forward: boosts the speech range, lifts the centre channel where voices sit, and tucks music and ambience back a little. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_pip_enabled_summary">Enable PiP mode when minimizing during streaming (Android 8.0+)</string>
     <string name="preferences_swap_cross_moon_title">Swap Cross/Moon and Box/Pyramid Buttons</string>
     <string name="preferences_swap_cross_moon_summary">Swap face buttons if default mapping is incorrect (e.g. for 8BitDo controllers)</string>
@@ -661,6 +663,7 @@
     <string name="preferences_video_pacing_key">video_pacing</string>
     <string name="preferences_congestion_mode_key">congestion_mode</string>
     <string name="preferences_audio_boost_enabled_key">audio_boost_enabled</string>
+    <string name="preferences_clear_voice_enabled_key">clear_voice_enabled</string>
     <string name="preferences_app_language_key">app_language</string>
     <string name="preferences_cas_sharpening_enabled_key">cas_sharpening_enabled</string>
     <string name="preferences_cas_sharpening_level_key">cas_sharpening_level</string>

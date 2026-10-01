@@ -61,6 +61,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled
 		preferences.pipEnabledKey -> preferences.pipEnabled
 		preferences.audioBoostEnabledKey -> preferences.audioBoostEnabled
+		preferences.clearVoiceEnabledKey -> preferences.clearVoiceEnabled
 		preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled
 		preferences.fsrEnabledKey -> preferences.fsrEnabled
 		preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled
@@ -79,6 +80,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 			preferences.buttonHapticEnabledKey -> preferences.buttonHapticEnabled = value
 			preferences.pipEnabledKey -> preferences.pipEnabled = value
 			preferences.audioBoostEnabledKey -> preferences.audioBoostEnabled = value
+			preferences.clearVoiceEnabledKey -> preferences.clearVoiceEnabled = value
 			preferences.casSharpeningEnabledKey -> preferences.casSharpeningEnabled = value
 			preferences.fsrEnabledKey -> preferences.fsrEnabled = value
 			preferences.fsrUpscalingEnabledKey -> preferences.fsrUpscalingEnabled = value

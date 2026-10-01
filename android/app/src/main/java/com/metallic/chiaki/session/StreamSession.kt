@@ -64,9 +64,16 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		setAudioVolumeBoost(gain)
 	}
 
+	/** Clear Voice is process-wide native processing too, so like Audio Boost it's live. */
+	fun setClearVoice(enabled: Boolean)
+	{
+		setAudioClearVoice(enabled)
+	}
+
 	init
 	{
 		setAudioBoost(input.preferences.audioBoostGain)
+		setClearVoice(input.preferences.clearVoiceEnabled)
 	}
 
 	private val _state = MutableLiveData<StreamState>(StreamStateIdle)
