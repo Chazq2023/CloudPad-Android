@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - The launch disclaimer and README now also ask you not to use CloudPad to get around release-date restrictions, such as playing a pre-ordered game before it's released, in every supported language.
+        - The launch disclaimer and README now also ask you not to use CloudPad to get around release-date restrictions, such as attempting to play a pre-ordered game before it's released, in every supported language.
         - The disclaimer's checklist is clearer: cloud streaming needs PS Plus Premium, and it points you to the PlayStation Store or PlayStation App to check whether a game supports cloud streaming in your region.
         - The disclaimer now fits on landscape screens, such as handhelds and TVs, without scrolling.
 
