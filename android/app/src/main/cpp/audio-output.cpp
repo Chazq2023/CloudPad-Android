@@ -9,13 +9,42 @@
 
 #include <oboe/Oboe.h>
 
+#include <atomic>
 #include <chrono>
+#include <cmath>
 #include <thread>
 
 #define BUFFER_CHUNK_SIZE 1024
 #define BUFFER_CHUNKS_COUNT 32
 
 using AudioBuffer = CircularBuffer<BUFFER_CHUNKS_COUNT, BUFFER_CHUNK_SIZE>;
+
+// Software volume boost applied to every decoded frame. Sony's streams are mixed with a lot of
+// headroom, so even at full device volume they come out noticeably quieter than other apps.
+// Process-wide (only one session plays at a time) so it can be changed live from Quick Settings.
+static std::atomic<float> audio_volume_boost(1.0f);
+
+// Samples below this stay perfectly linear; above it they're compressed smoothly towards full
+// scale with tanh, so a boosted loud passage rounds off instead of hard-clipping into crackle.
+#define LIMITER_KNEE 0.7f
+
+static inline int16_t apply_boost(int16_t sample, float gain)
+{
+	float x = (static_cast<float>(sample) / 32768.0f) * gain;
+	float mag = std::fabs(x);
+	if(mag > LIMITER_KNEE)
+	{
+		float over = (mag - LIMITER_KNEE) / (1.0f - LIMITER_KNEE);
+		mag = LIMITER_KNEE + (1.0f - LIMITER_KNEE) * std::tanh(over);
+		x = x < 0.0f ? -mag : mag;
+	}
+	return static_cast<int16_t>(std::lrint(x * 32767.0f));
+}
+
+extern "C" void android_chiaki_audio_output_set_volume_boost(float gain)
+{
+	audio_volume_boost.store(gain < 1.0f ? 1.0f : gain, std::memory_order_relaxed);
+}
 
 class AudioOutput;
 
@@ -122,6 +151,13 @@ extern "C" void android_chiaki_audio_output_settings(uint32_t channels, uint32_t
 extern "C" void android_chiaki_audio_output_frame(int16_t *buf, size_t samples_count, void *audio_output)
 {
 	auto ao = reinterpret_cast<AudioOutput *>(audio_output);
+
+	float gain = audio_volume_boost.load(std::memory_order_relaxed);
+	if(gain > 1.0f)
+	{
+		for(size_t i = 0; i < samples_count; i++)
+			buf[i] = apply_boost(buf[i], gain);
+	}
 
 	size_t buf_size = samples_count * sizeof(int16_t);
 	size_t pushed = ao->buf.Push(reinterpret_cast<uint8_t *>(buf), buf_size);

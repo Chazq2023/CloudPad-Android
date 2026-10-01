@@ -57,6 +57,18 @@ class StreamSession(connectInfo: ConnectInfo, val logManager: LogManager, val lo
 		session?.setPacketLossMax(packetLossMax)
 	}
 
+	/** Audio Boost is a process-wide native gain, so it applies to the running stream immediately
+	 *  and to every later connect without needing to live in [connectInfo]. */
+	fun setAudioBoost(gain: Float)
+	{
+		setAudioVolumeBoost(gain)
+	}
+
+	init
+	{
+		setAudioBoost(input.preferences.audioBoostGain)
+	}
+
 	private val _state = MutableLiveData<StreamState>(StreamStateIdle)
 	val state: LiveData<StreamState> get() = _state
 

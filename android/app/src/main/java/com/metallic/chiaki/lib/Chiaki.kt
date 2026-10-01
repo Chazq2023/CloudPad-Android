@@ -172,6 +172,7 @@ private class ChiakiNative
 		@JvmStatic external fun sessionSetSurface(ptr: Long, surface: Surface?)
 		@JvmStatic external fun sessionSetVideoPacing(ptr: Long, smooth: Boolean)
 		@JvmStatic external fun sessionSetPacketLossMax(ptr: Long, packetLossMax: Float)
+		@JvmStatic external fun setAudioVolumeBoost(gain: Float)
 		@JvmStatic external fun sessionSetControllerState(ptr: Long, controllerState: ControllerState)
 		@JvmStatic external fun sessionSetLoginPin(ptr: Long, pin: String)
 			@JvmStatic external fun sessionConnectMicrophone(ptr: Long)
@@ -321,6 +322,9 @@ class HolepunchSession(token: String)
 
 /** Initialize native SSL CA bundle for curl+mbedTLS on Android. Call once at app startup. */
 fun initNativeSsl(cacheDir: String) = ChiakiNative.initNativeSsl(cacheDir)
+
+/** Process-wide gain on decoded stream audio (1.0 = unchanged); takes effect on the next audio frame. */
+fun setAudioVolumeBoost(gain: Float) = ChiakiNative.setAudioVolumeBoost(gain)
 
 class ErrorCode(val value: Int)
 {

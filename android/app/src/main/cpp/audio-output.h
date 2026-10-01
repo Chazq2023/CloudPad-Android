@@ -14,6 +14,7 @@ void *android_chiaki_audio_output_new(ChiakiLog *log);
 void android_chiaki_audio_output_free(void *audio_output);
 void android_chiaki_audio_output_settings(uint32_t channels, uint32_t rate, void *audio_output);
 void android_chiaki_audio_output_frame(int16_t *buf, size_t samples_count, void *audio_output);
+void android_chiaki_audio_output_set_volume_boost(float gain);
 
 #ifdef __cplusplus
 }

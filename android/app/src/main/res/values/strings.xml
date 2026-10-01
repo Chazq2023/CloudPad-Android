@@ -266,6 +266,8 @@
     <string name="preferences_congestion_mode_summary">Adapt to network lets the console or cloud server briefly lower quality when packets are lost, so rough patches cause less stutter and freezing. Hold bitrate always reports a clean connection, keeping full quality but riding out rough patches worse. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_congestion_mode_adapt">Adapt to network</string>
     <string name="preferences_congestion_mode_hold">Hold bitrate</string>
+    <string name="preferences_audio_boost_title">Audio Boost</string>
+    <string name="preferences_audio_boost_summary">Doubles the stream\'s volume for when it\'s too quiet even at full device volume, with a limiter so loud scenes don\'t distort. Applies to Remote Play, Game Library and Game Catalog.</string>
     <string name="preferences_pip_enabled_summary">Enable PiP mode when minimizing during streaming (Android 8.0+)</string>
     <string name="preferences_swap_cross_moon_title">Swap Cross/Moon and Box/Pyramid Buttons</string>
     <string name="preferences_swap_cross_moon_summary">Swap face buttons if default mapping is incorrect (e.g. for 8BitDo controllers)</string>
@@ -658,6 +660,7 @@
     <string name="preferences_adaptive_frame_pacing_key">adaptive_frame_pacing_enabled</string>
     <string name="preferences_video_pacing_key">video_pacing</string>
     <string name="preferences_congestion_mode_key">congestion_mode</string>
+    <string name="preferences_audio_boost_enabled_key">audio_boost_enabled</string>
     <string name="preferences_app_language_key">app_language</string>
     <string name="preferences_cas_sharpening_enabled_key">cas_sharpening_enabled</string>
     <string name="preferences_cas_sharpening_level_key">cas_sharpening_level</string>
