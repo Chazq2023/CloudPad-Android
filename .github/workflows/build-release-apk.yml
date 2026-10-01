@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Older versions of CloudPad can now be retired: if your version is below the minimum supported release, CloudPad asks you to update and takes you to the latest release.
+        - The launch disclaimer and README now also ask you not to use CloudPad to get around release-date restrictions, such as playing a pre-ordered game before it's released, in every supported language.
 
     steps:
       - name: Checkout repo

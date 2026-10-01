@@ -139,7 +139,9 @@ Users should check official store listings, subscription catalogues, subscriptio
 CloudPad is intended for use with games and content you own or are licensed to use, on hardware you own, with a valid account or subscription.
 
 * **Only use your own PSN account; don't share accounts or sign in with someone else's.**
-* **Don't use CloudPad to get around region or subscription restrictions.**
+* **Don't use CloudPad to get around region, subscription or release-date restrictions**, such as trying to play a pre-ordered game before it's released.
+
+CloudPad blocks games that haven't been released yet: a pre-ordered game can't be started until its release time, checked against Sony's clock rather than your device's.
 
 Using a VPN can make your connection appear to come from another country, which may add to your account's risk and usually increases latency.
 
