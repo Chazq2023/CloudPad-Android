@@ -46,19 +46,26 @@ extern "C" void android_chiaki_audio_output_set_volume_boost(float gain)
 }
 
 // Clear Voice: game dialogue is almost always mixed dead centre, while music and ambience are
-// spread wide. So in stereo the signal is split into mid (L+R) and side (L-R); the mid gets a
-// speech-presence lift and a gentle low cut (so rumble and score don't mask voices), the side is
-// pulled back, and the whole thing gets some makeup gain. Runs before Audio Boost and shares
-// its limiter, so the two stack without clipping.
+// spread wide. The signal is split into side (L-R), the speech band of the mid (L+R, 250Hz-4kHz)
+// and the rest of the mid. The speech band is lifted and everything else is lowered, and while
+// dialogue is detected (speech band clearly dominating everything else) the non-speech parts
+// are additionally ducked, then released between lines. Overall loudness stays about the same,
+// so it separates voices rather than just making the stream louder. Runs before Audio Boost and
+// shares its limiter, so the two stack without clipping.
 static std::atomic<bool> audio_clear_voice(false);
 
-#define CLEAR_VOICE_PRESENCE_HZ 2500.0f
-#define CLEAR_VOICE_PRESENCE_DB 6.0f
-#define CLEAR_VOICE_PRESENCE_Q 0.8f
-#define CLEAR_VOICE_LOW_SHELF_HZ 200.0f
-#define CLEAR_VOICE_LOW_SHELF_DB -4.0f
-#define CLEAR_VOICE_SIDE_GAIN 0.6f
-#define CLEAR_VOICE_MAKEUP_GAIN 1.4f
+#define CLEAR_VOICE_BAND_LOW_HZ 250.0f
+#define CLEAR_VOICE_BAND_HIGH_HZ 4000.0f
+#define CLEAR_VOICE_SPEECH_GAIN 1.41f      // +3dB
+#define CLEAR_VOICE_REST_GAIN 0.63f        // -4dB
+#define CLEAR_VOICE_SIDE_GAIN 0.5f         // -6dB
+#define CLEAR_VOICE_DUCK_GAIN 0.4f         // extra -8dB on non-speech while dialogue plays
+#define CLEAR_VOICE_DETECT_FLOOR 0.003f    // ~-50dBFS: quieter speech-band content never ducks
+#define CLEAR_VOICE_DETECT_RATIO 0.6f      // speech-band level vs everything else to count as dialogue
+#define CLEAR_VOICE_ENV_ATTACK_S 0.01f
+#define CLEAR_VOICE_ENV_RELEASE_S 0.25f
+#define CLEAR_VOICE_DUCK_ATTACK_S 0.05f
+#define CLEAR_VOICE_DUCK_RELEASE_S 0.4f
 
 struct Biquad
 {
@@ -81,31 +88,24 @@ struct Biquad
 		a1 = na1 / na0; a2 = na2 / na0;
 	}
 
-	// RBJ Audio EQ Cookbook peaking EQ
-	void SetPeaking(float rate, float freq, float q, float db)
+	// RBJ Audio EQ Cookbook high-pass, Butterworth Q
+	void SetHighPass(float rate, float freq)
 	{
-		float a = std::pow(10.0f, db / 40.0f);
 		float w0 = 2.0f * static_cast<float>(M_PI) * freq / rate;
-		float alpha = std::sin(w0) / (2.0f * q);
 		float cosw = std::cos(w0);
-		SetNormalized(1.0f + alpha * a, -2.0f * cosw, 1.0f - alpha * a,
-				1.0f + alpha / a, -2.0f * cosw, 1.0f - alpha / a);
+		float alpha = std::sin(w0) / (2.0f * static_cast<float>(M_SQRT1_2));
+		SetNormalized((1.0f + cosw) / 2.0f, -(1.0f + cosw), (1.0f + cosw) / 2.0f,
+				1.0f + alpha, -2.0f * cosw, 1.0f - alpha);
 	}
 
-	// RBJ Audio EQ Cookbook low shelf, shelf slope S = 1
-	void SetLowShelf(float rate, float freq, float db)
+	// RBJ Audio EQ Cookbook low-pass, Butterworth Q
+	void SetLowPass(float rate, float freq)
 	{
-		float a = std::pow(10.0f, db / 40.0f);
 		float w0 = 2.0f * static_cast<float>(M_PI) * freq / rate;
 		float cosw = std::cos(w0);
-		float alpha = std::sin(w0) / 2.0f * std::sqrt(2.0f);
-		float sqa = 2.0f * std::sqrt(a) * alpha;
-		SetNormalized(a * ((a + 1.0f) - (a - 1.0f) * cosw + sqa),
-				2.0f * a * ((a - 1.0f) - (a + 1.0f) * cosw),
-				a * ((a + 1.0f) - (a - 1.0f) * cosw - sqa),
-				(a + 1.0f) + (a - 1.0f) * cosw + sqa,
-				-2.0f * ((a - 1.0f) + (a + 1.0f) * cosw),
-				(a + 1.0f) + (a - 1.0f) * cosw - sqa);
+		float alpha = std::sin(w0) / (2.0f * static_cast<float>(M_SQRT1_2));
+		SetNormalized((1.0f - cosw) / 2.0f, 1.0f - cosw, (1.0f - cosw) / 2.0f,
+				1.0f + alpha, -2.0f * cosw, 1.0f - alpha);
 	}
 };
 
@@ -138,9 +138,20 @@ struct AudioOutput
 	// Only touched from the decoder thread that delivers frames (and the settings callback that
 	// precedes them), so no locking is needed.
 	uint32_t channels = 0;
-	Biquad voice_presence;
-	Biquad voice_low_shelf;
+	Biquad voice_high_pass;
+	Biquad voice_low_pass;
+	// One-pole smoothing coefficients (per sample) and state for the dialogue detector/ducker.
+	float env_attack = 0.0f, env_release = 0.0f, duck_attack = 0.0f, duck_release = 0.0f;
+	float speech_env = 0.0f, other_env = 0.0f, duck = 1.0f;
 	bool clear_voice_was_on = false;
+
+	void ResetClearVoice()
+	{
+		voice_high_pass.Reset();
+		voice_low_pass.Reset();
+		speech_env = other_env = 0.0f;
+		duck = 1.0f;
+	}
 
 	AudioOutput() : stream_callback(this) {}
 };
@@ -203,10 +214,15 @@ extern "C" void android_chiaki_audio_output_settings(uint32_t channels, uint32_t
 	ao->stream = nullptr;
 
 	ao->channels = channels;
-	ao->voice_presence.SetPeaking(static_cast<float>(rate), CLEAR_VOICE_PRESENCE_HZ, CLEAR_VOICE_PRESENCE_Q, CLEAR_VOICE_PRESENCE_DB);
-	ao->voice_low_shelf.SetLowShelf(static_cast<float>(rate), CLEAR_VOICE_LOW_SHELF_HZ, CLEAR_VOICE_LOW_SHELF_DB);
-	ao->voice_presence.Reset();
-	ao->voice_low_shelf.Reset();
+	float frate = static_cast<float>(rate);
+	ao->voice_high_pass.SetHighPass(frate, CLEAR_VOICE_BAND_LOW_HZ);
+	ao->voice_low_pass.SetLowPass(frate, CLEAR_VOICE_BAND_HIGH_HZ);
+	auto one_pole = [frate](float seconds) { return 1.0f - std::exp(-1.0f / (seconds * frate)); };
+	ao->env_attack = one_pole(CLEAR_VOICE_ENV_ATTACK_S);
+	ao->env_release = one_pole(CLEAR_VOICE_ENV_RELEASE_S);
+	ao->duck_attack = one_pole(CLEAR_VOICE_DUCK_ATTACK_S);
+	ao->duck_release = one_pole(CLEAR_VOICE_DUCK_RELEASE_S);
+	ao->ResetClearVoice();
 
 	// AAudio can transiently fail to open a stream right at session start (e.g. AAUDIO_ERROR_UNAVAILABLE
 	// while the audio server is still settling from the video decoder/surface setup happening at the same
@@ -238,41 +254,47 @@ extern "C" void android_chiaki_audio_output_frame(int16_t *buf, size_t samples_c
 
 	if(clear_voice && !ao->clear_voice_was_on)
 	{
-		// Don't let filter history from the last time it was on leak into the first samples.
-		ao->voice_presence.Reset();
-		ao->voice_low_shelf.Reset();
+		// Don't let filter/detector history from the last time it was on leak into the first samples.
+		ao->ResetClearVoice();
 	}
 	ao->clear_voice_was_on = clear_voice;
 
 	if(clear_voice)
 	{
 		constexpr float scale = 1.0f / 32768.0f;
-		float out_gain = gain * CLEAR_VOICE_MAKEUP_GAIN;
-		if(ao->channels >= 2)
+		// Interleaved; only the first two channels (front L/R) are processed, any extra
+		// channels just get the gain. Mono has no side, so it's speech band vs the rest only.
+		uint32_t ch = ao->channels;
+		bool stereo = ch >= 2;
+		for(size_t i = 0; i + ch <= samples_count; i += ch)
 		{
-			// Interleaved; only the first two channels (front L/R) are processed, any extra
-			// channels just get the gain.
-			uint32_t ch = ao->channels;
-			for(size_t i = 0; i + ch <= samples_count; i += ch)
+			float l = buf[i] * scale;
+			float r = stereo ? buf[i + 1] * scale : l;
+			float mid = (l + r) * 0.5f;
+			float side = (l - r) * 0.5f;
+			float speech = ao->voice_low_pass.Process(ao->voice_high_pass.Process(mid));
+			float rest = mid - speech;
+
+			float speech_mag = std::fabs(speech);
+			float other_mag = std::fabs(rest) + std::fabs(side);
+			ao->speech_env += (speech_mag - ao->speech_env) * (speech_mag > ao->speech_env ? ao->env_attack : ao->env_release);
+			ao->other_env += (other_mag - ao->other_env) * (other_mag > ao->other_env ? ao->env_attack : ao->env_release);
+			bool dialogue = ao->speech_env > CLEAR_VOICE_DETECT_FLOOR
+					&& ao->speech_env > CLEAR_VOICE_DETECT_RATIO * ao->other_env;
+			float duck_target = dialogue ? CLEAR_VOICE_DUCK_GAIN : 1.0f;
+			ao->duck += (duck_target - ao->duck) * (duck_target < ao->duck ? ao->duck_attack : ao->duck_release);
+
+			float mid_out = speech * CLEAR_VOICE_SPEECH_GAIN + rest * CLEAR_VOICE_REST_GAIN * ao->duck;
+			float side_out = side * CLEAR_VOICE_SIDE_GAIN * ao->duck;
+			if(stereo)
 			{
-				float l = buf[i] * scale;
-				float r = buf[i + 1] * scale;
-				float mid = (l + r) * 0.5f;
-				float side = (l - r) * 0.5f * CLEAR_VOICE_SIDE_GAIN;
-				mid = ao->voice_low_shelf.Process(ao->voice_presence.Process(mid));
-				buf[i] = limit_to_sample((mid + side) * out_gain);
-				buf[i + 1] = limit_to_sample((mid - side) * out_gain);
+				buf[i] = limit_to_sample((mid_out + side_out) * gain);
+				buf[i + 1] = limit_to_sample((mid_out - side_out) * gain);
 				for(uint32_t c = 2; c < ch; c++)
 					buf[i + c] = limit_to_sample(buf[i + c] * scale * gain);
 			}
-		}
-		else
-		{
-			for(size_t i = 0; i < samples_count; i++)
-			{
-				float x = ao->voice_low_shelf.Process(ao->voice_presence.Process(buf[i] * scale));
-				buf[i] = limit_to_sample(x * out_gain);
-			}
+			else
+				buf[i] = limit_to_sample(mid_out * gain);
 		}
 	}
 	else if(gain > 1.0f)

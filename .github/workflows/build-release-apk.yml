@@ -17,7 +17,7 @@ jobs:
     env:
       RELEASE_NOTES: |-
         - New Audio Boost toggle (Settings and the in-stream Quick Settings menu, off by default) doubles stream volume when it's too quiet even at full device volume, with a limiter so loud scenes don't distort. Turning it on or off mid-stream takes effect immediately.
-        - New Clear Voice Audio toggle (just below Audio Boost, off by default) brings in-game dialogue forward by lifting the speech range and centre channel and tucking music and ambience back. It also applies live mid-stream and stacks with Audio Boost without distorting.
+        - New Clear Voice Audio toggle (just below Audio Boost, off by default) makes in-game dialogue easier to follow: it brings the centre speech range forward and automatically turns music, ambience and effects down while characters are talking, without making the stream louder overall. It applies live mid-stream and stacks with Audio Boost without distorting.
 
     steps:
       - name: Checkout repo
