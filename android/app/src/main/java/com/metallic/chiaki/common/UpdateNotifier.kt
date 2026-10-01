@@ -25,9 +25,6 @@ object UpdateNotifier
 	private const val LATEST_RELEASE_API = "https://api.github.com/repos/Chazq2023/CloudPad-Android/releases/latest"
 	private const val DEFAULT_RELEASE_URL = "https://github.com/Chazq2023/CloudPad-Android/releases/latest"
 
-	/** Keeps the dialog a sensible length; the release page has the full notes. */
-	const val MAX_NOTES = 5
-
 	data class Release(val version: String, val url: String, val notes: List<String>)
 
 	/** The release's "### Updates" bullets as plain text (no markdown emphasis/links/code). */
@@ -103,8 +100,8 @@ object UpdateNotifier
 		if (release.notes.isNotEmpty())
 		{
 			message.append("\n\n").append(activity.getString(R.string.update_available_whats_new))
-			release.notes.take(MAX_NOTES).forEach { message.append("\n• ").append(it) }
-			if (release.notes.size > MAX_NOTES) message.append("\n• …")
+			// All of them: the dialog's message area scrolls when they don't fit, buttons stay put.
+			release.notes.forEach { message.append("\n• ").append(it) }
 		}
 
 		activity.alertDialogBuilder()
