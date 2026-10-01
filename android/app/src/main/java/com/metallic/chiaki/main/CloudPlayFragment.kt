@@ -1359,7 +1359,10 @@ class CloudPlayFragment : Fragment() {
     }
 
     private fun onGameClicked(game: CloudGame) {
-        if (game.isOwned && !PsCloudOwnership.isReleased(game)) {
+        // Quick pre-check so the common case shows the dialog instantly; the authoritative check
+        // against Sony's clock happens in CloudStreamingBackend before anything is allocated.
+        val now = com.metallic.chiaki.cloudplay.api.TrustedClock.nowOrNull() ?: System.currentTimeMillis()
+        if (game.isOwned && !PsCloudOwnership.isReleased(game, now)) {
             showNotReleasedDialog(game)
             return
         }
@@ -1604,6 +1607,7 @@ class CloudPlayFragment : Fragment() {
                     npssoToken = npssoToken,
                     ownedEntitlementId = game.entitlementId,
                     ownedPlatform = PsCloudOwnership.streamPlatform(game),
+                    availableFromMs = if (game.isOwned) game.availableFromMs else 0L,
                     onProgress = { message ->
                         requireActivity().runOnUiThread {
                             allocationProgressTextView?.text = message
@@ -1635,6 +1639,10 @@ class CloudPlayFragment : Fragment() {
 
                     // Handle specific error types with appropriate dialogs
                     when (error) {
+                        is com.metallic.chiaki.cloudplay.api.GameNotReleasedException -> {
+                            showNotReleasedDialog(game)
+                        }
+
                         is com.metallic.chiaki.cloudplay.api.PsPlusSubscriptionException,
                         is com.metallic.chiaki.cloudplay.api.GameNotStreamableException -> {
                             updateGameStreamability(game, streamable = false)

@@ -54,6 +54,7 @@ internal object HttpClient
 			
 			val statusCode = connection.responseCode
 			Log.d(TAG, "Response: $statusCode")
+			TrustedClock.recordResponse(connection.url.host, connection.headerFields)
 			
 			val body = try {
 				connection.inputStream.bufferedReader().use { it.readText() }
@@ -102,6 +103,7 @@ internal object HttpClient
 			
 			val statusCode = connection.responseCode
 			Log.d(TAG, "Response: $statusCode")
+			TrustedClock.recordResponse(connection.url.host, connection.headerFields)
 			
 			val responseBody = try {
 				connection.inputStream.bufferedReader().use { it.readText() }

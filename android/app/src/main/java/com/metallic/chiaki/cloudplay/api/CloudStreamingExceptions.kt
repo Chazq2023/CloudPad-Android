@@ -34,3 +34,5 @@ class GameNotStreamableException(message: String) : Exception(message)
 /** Kamaji session error */
 class KamajiSessionException(message: String) : Exception(message)
 
+/** A pre-ordered game whose unlock time (by Sony's clock, not the device's) hasn't passed yet. */
+class GameNotReleasedException(val availableFromMs: Long, message: String) : Exception(message)
