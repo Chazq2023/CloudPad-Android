@@ -15,9 +15,6 @@ jobs:
   build-release:
     runs-on: ubuntu-latest
     env:
-      # Shown on every release (GitHub and Discord), above the per-release notes. Don't clear it
-      # when resetting RELEASE_NOTES for a new branch.
-      UPDATE_NOTICE: "**Please update to this version.** Each release includes fixes that help keep your account safe, so always use the latest CloudPad."
       RELEASE_NOTES: |-
         - The launch disclaimer and README now also ask you not to use CloudPad to get around release-date restrictions, such as playing a pre-ordered game before it's released, in every supported language.
         - The disclaimer's checklist is clearer: cloud streaming needs PS Plus Premium, and it points you to the PlayStation Store or PlayStation App to check whether a game supports cloud streaming in your region.
@@ -140,8 +137,6 @@ jobs:
           body: |
             ## CloudPad Beta Release ${{ env.VERSION }}
 
-            ${{ env.UPDATE_NOTICE }}
-
             ### Updates
             ${{ env.RELEASE_NOTES }}
 
@@ -162,7 +157,7 @@ jobs:
         run: |
           jq -n \
             --arg version "$VERSION" \
-            --arg notes "$UPDATE_NOTICE"$'\n\n'"$RELEASE_NOTES" \
+            --arg notes "$RELEASE_NOTES" \
             --arg url "$RELEASE_URL" \
             '{
               username: "CloudPad Releases",
