@@ -172,6 +172,12 @@ class MainActivity : AppCompatActivity() {
             .setCancelable(false)
             .create()
         dialog.show()
+        // The standard dialog width is narrow on a wide landscape screen, so the text wraps into
+        // a tall column that has to scroll. Widen it so layout-land's two columns fit in one view.
+        if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.92f).toInt(),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
     }
 
     private var appliedThemeColour = "pink"
