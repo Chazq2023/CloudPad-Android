@@ -71,6 +71,7 @@ class CloudStreamingBackend(
 		ownedEntitlementId: String = "",
 		ownedPlatform: String = "",
 		availableFromMs: Long = 0L,
+		resumingSession: Boolean = false,
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
@@ -147,10 +148,11 @@ class CloudStreamingBackend(
 				sharedDuid = sharedDuid,
 				ownedEntitlementId = ownedEntitlementId,
 				ownedPlatform = ownedPlatform,
+				resumingSession = resumingSession,
 				onProgress = onProgress,
 				isCancelled = isCancelled
 			)
-			
+
 			result
 		}
 		catch (e: Exception)
@@ -216,7 +218,7 @@ class CloudStreamingBackend(
 		sharedDuid: String,
 		ownedEntitlementId: String = "",
 		ownedPlatform: String = "",
-		forceFullEntitlementFlow: Boolean = false,
+		resumingSession: Boolean = false,
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
 	): Result<CloudStreamSession> = withContext(Dispatchers.IO)
@@ -253,7 +255,6 @@ class CloudStreamingBackend(
 			var finalEntitlementId = gameIdentifier
 			var finalPlatform = initialPlatform
 			var kamajiDiag = ""
-			var usedFastPath = false
 
 			if (serviceType == "psnow")
 			{
@@ -270,25 +271,19 @@ class CloudStreamingBackend(
 				preferences = preferences
 			)
 
-			if (!forceFullEntitlementFlow && ownedEntitlementId.isNotEmpty())
+			// A new launch always runs the full check/claim flow (a known ID isn't a claimed one);
+			// the catalog's PSRSVD entitlement just pins which ID that flow uses. An in-stream
+			// restart reuses the entitlement Gaikai accepted for the running session.
+			if (ownedEntitlementId.isNotEmpty())
 			{
-				Log.i(
-					TAG,
-					"PSNOW owned fast-path: catalog entitlementId=$ownedEntitlementId platform=$ownedPlatform"
-				)
-				kamajiSession.setOwnedEntitlementFastPath(
-					ownedEntitlementId = ownedEntitlementId,
-					ownedPlatform = ownedPlatform
-				)
-			}
-			else if (forceFullEntitlementFlow)
-			{
-				Log.i(TAG, "PSNOW: forcing full entitlement flow (fast-path retry fallback)")
+				if (resumingSession)
+					kamajiSession.resumeWithEntitlement(ownedEntitlementId, ownedPlatform)
+				else
+					kamajiSession.setCatalogEntitlement(ownedEntitlementId, ownedPlatform)
 			}
 
 			// Start Kamaji session creation
 			val kamajiResult = kamajiSession.startSessionCreation(npssoToken)
-			usedFastPath = kamajiSession.usedEntitlementFastPath
 
 				if (!kamajiResult.success)
 				{
@@ -329,31 +324,6 @@ class CloudStreamingBackend(
 			{
 				Log.e(TAG, "Gaikai allocation failed: ${allocationResult.message}")
 
-				if (
-					usedFastPath &&
-					!forceFullEntitlementFlow &&
-					isEntitlementRejectedError(allocationResult.message)
-				)
-				{
-					Log.w(
-						TAG,
-						"Owned fast-path entitlement rejected by Gaikai; retrying once with the full entitlement flow"
-					)
-
-					return@withContext continueCloudSessionAfterAuth(
-						serviceType = serviceType,
-						gameIdentifier = gameIdentifier,
-						gameName = gameName,
-						npssoToken = npssoToken,
-						sharedDuid = sharedDuid,
-						ownedEntitlementId = "",
-						ownedPlatform = "",
-						forceFullEntitlementFlow = true,
-						onProgress = onProgress,
-						isCancelled = isCancelled
-					)
-				}
-
 				// PSCLOUD: retry with the raw ent.id if the catalog productId is rejected.
 				// Gaikai indexes games by the entitlement's id field, which can differ from
 				// the imagic catalog productId or the entitlement's product_id field.
@@ -371,7 +341,6 @@ class CloudStreamingBackend(
 						sharedDuid = sharedDuid,
 						ownedEntitlementId = "",
 						ownedPlatform = ownedPlatform,
-						forceFullEntitlementFlow = forceFullEntitlementFlow,
 						onProgress = onProgress,
 						isCancelled = isCancelled
 					)

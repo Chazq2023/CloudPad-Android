@@ -13,6 +13,7 @@ import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.cloudplay.model.excludingLibrary
 import com.metallic.chiaki.cloudplay.model.notInLibrary
+import com.metallic.chiaki.cloudplay.model.withoutSupersededClassics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -110,7 +111,7 @@ class CloudGameRepository(
 				if (cachedGames != null)
 				{
 					Log.i(TAG, "Returning ${cachedGames.size} PSNow games from cache")
-					return@withContext PsnResult.Success(cachedGames)
+					return@withContext PsnResult.Success(cachedGames.withoutSupersededClassics())
 				}
 			}
 
@@ -118,7 +119,10 @@ class CloudGameRepository(
 			val result = psnowCatalogService.fetchPsnowCatalog(npssoToken)
 
 			if (result is PsnResult.Success)
+			{
 				cacheGames(result.data, PSNOW_CACHE_FILE)
+				return@withContext PsnResult.Success(result.data.withoutSupersededClassics())
+			}
 
 			result
 		}

@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - The disclaimer now adjusts when you rotate your device while it's open, so it always fits the screen in both portrait and landscape.
-        - If CloudPad asks you to update, the message now shows the version you're on and the minimum version you need.
+        - Fixed a few PS3/PS4 Game Catalog games (including Dying Light 2, Marvel's Spider-Man and Forbidden Siren) failing with "Streaming Unavailable" the first time you played them.
+        - The Game Catalog now shows Forbidden Siren and War of the Monsters once each, keeping the newer version Sony offers.
 
     steps:
       - name: Checkout repo
