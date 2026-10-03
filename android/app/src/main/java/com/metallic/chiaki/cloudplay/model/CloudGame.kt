@@ -42,7 +42,10 @@ data class CloudGame(
 	// Owned games only: when Sony unlocks the entitlement (epoch ms, 0 = no restriction). A
 	// pre-ordered game is entitled — and Gaikai will even authorize a session for it — before its
 	// release, so launches are blocked client-side until this passes. See PsCloudOwnership.isReleased.
-	val availableFromMs: Long = 0L
+	val availableFromMs: Long = 0L,
+	// Owned games only: Sony's time when availableFromMs was last fetched from Sony. A saved copy
+	// fetched before the unlock time can't reveal the game — Sony may have moved the date since.
+	val releaseCheckedAtMs: Long = 0L
 )
 
 /**

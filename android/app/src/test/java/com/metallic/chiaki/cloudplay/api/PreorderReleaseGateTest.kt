@@ -45,9 +45,10 @@ class PreorderReleaseGateTest {
 
     @Test
     fun `pre-ordered game is blocked before release and allowed from release`() {
+        // Fetched from Sony a minute after release.
         val game = PsCloudOwnership.buildOwnedGamesFromEntitlements(
             listOf(PsCloudOwnership.parseEntitlement(JSONObject(preorderJson))!!)
-        ).single()
+        ).single().copy(releaseCheckedAtMs = releaseMs + 60_000)
         assertFalse(PsCloudOwnership.isReleased(game, releaseMs - 1))
         assertTrue(PsCloudOwnership.isReleased(game, releaseMs))
         assertTrue(PsCloudOwnership.isReleased(game, releaseMs + 60_000))
@@ -97,7 +98,9 @@ class PreorderReleaseGateTest {
     fun `released pre-order keeps its flag but is playable`() {
         // Real shape from an account: FINAL FANTASY VII REBIRTH, preorder_flag still true years later.
         val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = true, activeDate = "2024-02-29T00:00:00Z"))!!
-        val game = PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(ent)).single()
+        val game = PsCloudOwnership.stampReleaseChecked(
+            PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(ent)), releaseMs
+        ).single()
         assertTrue(PsCloudOwnership.isReleased(game, releaseMs))
     }
 
@@ -116,15 +119,52 @@ class PreorderReleaseGateTest {
         assertEquals(1_000L, games.single().availableFromMs)
     }
 
-    private fun owned(id: String, availableFromMs: Long) =
-        CloudGame(productId = id, name = id, imageUrl = "", isOwned = true, availableFromMs = availableFromMs)
+    private fun owned(id: String, availableFromMs: Long, checkedAtMs: Long = 0L) =
+        CloudGame(productId = id, name = id, imageUrl = "", isOwned = true,
+            availableFromMs = availableFromMs, releaseCheckedAtMs = checkedAtMs)
 
     @Test
-    fun `unreleased pre-order tile is hidden until its unlock time`() {
-        val games = listOf(owned("released", 0L), owned("preorder", releaseMs))
+    fun `unreleased pre-order tile is hidden until a refresh after its unlock time`() {
+        // Refreshed from Sony at the unlock time.
+        val games = listOf(owned("released", 0L), owned("preorder", releaseMs, checkedAtMs = releaseMs))
 
         assertEquals(listOf("released"), PsCloudOwnership.withoutUnreleased(games, releaseMs - 1).map { it.productId })
         assertEquals(listOf("released", "preorder"), PsCloudOwnership.withoutUnreleased(games, releaseMs).map { it.productId })
+    }
+
+    @Test
+    fun `a copy saved before the unlock time never reveals the game`() {
+        // Saved at 10:00 saying it unlocks at release; Sony may have moved the date since.
+        val savedEarly = owned("preorder", releaseMs, checkedAtMs = releaseMs - 7 * 3_600_000L)
+
+        assertFalse(PsCloudOwnership.isReleased(savedEarly, releaseMs + 3_600_000L))
+        assertTrue(PsCloudOwnership.withoutUnreleased(listOf(savedEarly), releaseMs + 3_600_000L).isEmpty())
+    }
+
+    @Test
+    fun `a refresh that brings a moved release date keeps the game hidden`() {
+        val movedRelease = releaseMs + 3 * 24 * 3_600_000L
+        // Refreshed an hour after the original time: Sony now says it unlocks three days later.
+        val refreshed = owned("preorder", movedRelease, checkedAtMs = releaseMs + 3_600_000L)
+
+        assertFalse(PsCloudOwnership.isReleased(refreshed, releaseMs + 3_600_000L))
+        assertTrue(PsCloudOwnership.isReleased(refreshed.copy(releaseCheckedAtMs = movedRelease + 60_000), movedRelease + 60_000))
+    }
+
+    @Test
+    fun `games released long ago show from any saved copy fetched after their date`() {
+        val oldGame = owned("old", 1_000L, checkedAtMs = releaseMs - 7 * 24 * 3_600_000L)
+
+        assertTrue(PsCloudOwnership.isReleased(oldGame, releaseMs))
+    }
+
+    @Test
+    fun `stamping only touches owned games`() {
+        val games = listOf(owned("mine", releaseMs), CloudGame(productId = "catalog", name = "c", imageUrl = ""))
+
+        val stamped = PsCloudOwnership.stampReleaseChecked(games, 42L)
+
+        assertEquals(listOf(42L, 0L), stamped.map { it.releaseCheckedAtMs })
     }
 
     @Test

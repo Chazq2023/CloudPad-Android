@@ -53,7 +53,7 @@ class CloudGameRepositoryTest {
               "landscapeImageUrl":"https://img.com/ds_land.jpg",
               "thumbnailUrl":"https://img.com/ds_thumb.jpg",
               "platform":"ps5","serviceType":"pscloud",
-              "conceptUrl":"","isOwned":true,"availableFromMs":0,"entitlementId":"ABCPSRSVD0000000000"}]
+              "conceptUrl":"","isOwned":true,"availableFromMs":0,"releaseCheckedAtMs":1,"entitlementId":"ABCPSRSVD0000000000"}]
         """.trimIndent()
 
         private val ROUND_TRIP_JSON = """
@@ -71,7 +71,7 @@ class CloudGameRepositoryTest {
               "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/returnal",
               "isOwned":false,"psCatalog":false},
              {"productId":"PPSA0001","name":"Demon's Souls","imageUrl":"https://img.com/ds.jpg",
-              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true,"availableFromMs":0,"psCatalog":false},
+              "platform":"ps5","serviceType":"pscloud","conceptUrl":"","isOwned":true,"availableFromMs":0,"releaseCheckedAtMs":1,"psCatalog":false},
              {"productId":"PPSA0002","name":"Astro Bot","imageUrl":"https://img.com/ab.jpg",
               "platform":"ps5","serviceType":"pscloud","conceptUrl":"https://www.playstation.com/games/astro-bot",
               "isOwned":false,"psCatalog":true,"freeToPlay":false}]
@@ -151,10 +151,10 @@ class CloudGameRepositoryTest {
         val json = """
             [{"productId":"A","name":"Game A","imageUrl":"","landscapeImageUrl":"",
               "thumbnailUrl":"","platform":"ps5","serviceType":"pscloud","conceptUrl":"",
-              "isOwned":true,"availableFromMs":0,"entitlementId":"TOKPSRSVD0000000000"},
+              "isOwned":true,"availableFromMs":0,"releaseCheckedAtMs":1,"entitlementId":"TOKPSRSVD0000000000"},
              {"productId":"B","name":"Game B","imageUrl":"","landscapeImageUrl":"",
               "thumbnailUrl":"","platform":"ps5","serviceType":"pscloud","conceptUrl":"",
-              "isOwned":true,"availableFromMs":0,"entitlementId":"PSNW01_OLD_FORMAT"}]
+              "isOwned":true,"availableFromMs":0,"releaseCheckedAtMs":1,"entitlementId":"PSNW01_OLD_FORMAT"}]
         """.trimIndent()
         writeCacheFile("pscloud_owned.json", json)
 
@@ -310,10 +310,12 @@ class CloudGameRepositoryTest {
     @Test
     fun `a cache with owned games but no release dates counts as stale`() {
         val old = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":true}]""")
-        val current = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":true,"availableFromMs":0}]""")
+        val noCheckTime = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":true,"availableFromMs":0}]""")
+        val current = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":true,"availableFromMs":0,"releaseCheckedAtMs":5}]""")
         val unowned = org.json.JSONArray("""[{"productId":"PPSA1","name":"A","imageUrl":"","isOwned":false}]""")
 
         assertTrue(CloudGameRepository.lacksReleaseDates(old))
+        assertTrue(CloudGameRepository.lacksReleaseDates(noCheckTime))
         assertTrue(!CloudGameRepository.lacksReleaseDates(current))
         assertTrue(!CloudGameRepository.lacksReleaseDates(unowned))
         assertTrue(!CloudGameRepository.lacksReleaseDates(org.json.JSONArray("[]")))

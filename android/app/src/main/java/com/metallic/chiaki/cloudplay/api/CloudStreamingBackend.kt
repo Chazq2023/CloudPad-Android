@@ -71,6 +71,7 @@ class CloudStreamingBackend(
 		ownedEntitlementId: String = "",
 		ownedPlatform: String = "",
 		availableFromMs: Long = 0L,
+		releaseCheckedAtMs: Long = 0L,
 		resumingSession: Boolean = false,
 		onProgress: ((String) -> Unit)? = null,
 		isCancelled: () -> Boolean = { false }
@@ -129,12 +130,14 @@ class CloudStreamingBackend(
 			// Pre-order gate, checked against Sony's clock (the authorization check above just got
 			// a fresh Date header from Sony) so changing the device clock can't get around it. Runs
 			// before anything is asked of Gaikai, which would happily allocate a pre-ordered game.
+			// The unlock time must also have been fetched from Sony after it passed — a saved copy
+			// from before then may predate Sony moving the release.
 			if (availableFromMs > 0)
 			{
 				val sonyNow = TrustedClock.nowOrNull()
-				if (sonyNow == null || sonyNow < availableFromMs)
+				if (sonyNow == null || sonyNow < availableFromMs || releaseCheckedAtMs < availableFromMs)
 				{
-					Log.w(TAG, "Blocking launch of unreleased game '$gameName': unlocks at $availableFromMs, Sony time $sonyNow")
+					Log.w(TAG, "Blocking launch of unreleased game '$gameName': unlocks at $availableFromMs, Sony time $sonyNow, unlock time checked at $releaseCheckedAtMs")
 					return@withContext Result.failure(GameNotReleasedException(availableFromMs, "$gameName hasn't been released yet"))
 				}
 			}
