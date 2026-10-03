@@ -32,6 +32,17 @@ class PSKamajiSession(
 	companion object
 	{
 		private const val TAG = "PSKamajiSession"
+
+		/**
+		 * Whether a checkout preview cart is free, i.e. safe to complete with buynow. Fails closed:
+		 * only a total_price_value that is present and numerically 0 counts — a missing, renamed or
+		 * non-numeric field must never be read as £0.00 (optInt would default it to 0).
+		 */
+		internal fun isFreeCart(cart: JSONObject): Boolean
+		{
+			val value = cart.opt("total_price_value")
+			return value is Number && value.toDouble() == 0.0
+		}
 	}
 	
 	// Configuration
@@ -1385,15 +1396,15 @@ class PSKamajiSession(
 			val data = json.getJSONObject("data")
 			// Qt lines 988-991: Parse cart.total_price_value (integer)
 			val cart = data.getJSONObject("cart")
-			val totalPriceValue = cart.optInt("total_price_value")
+			val totalPriceValue = cart.opt("total_price_value")
 			val totalPrice = cart.optString("total_price")
-			
+
 			Log.i(TAG, "  Total Price Value: $totalPriceValue")
 			Log.i(TAG, "  Total Price: $totalPrice")
-			
-			if (totalPriceValue != 0)
+
+			if (!isFreeCart(cart))
 			{
-				Log.e(TAG, "Game is not free! Price: $totalPrice")
+				Log.e(TAG, "Game is not confirmed free (total_price_value=$totalPriceValue, total_price=$totalPrice) - not checking out")
 				return false
 			}
 				
