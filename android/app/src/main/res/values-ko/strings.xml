@@ -726,7 +726,7 @@
     <string name="update_available_whats_new">새로운 기능:</string>
     <string name="update_available_later">나중에</string>
     <string name="update_required_title">업데이트 필요</string>
-    <string name="update_required_message">이 버전의 CloudPad는 더 이상 지원되지 않습니다. 앱을 계속 사용하려면 최신 버전으로 업데이트해 주세요.</string>
+    <string name="update_required_message">이 버전의 CloudPad(%1$s)는 더 이상 지원되지 않습니다. 앱을 계속 사용하려면 %2$s 이상으로 업데이트해 주세요.</string>
     <string name="update_required_button">업데이트</string>
     <string name="clock_wrong_date_title">잘못된 날짜</string>
     <string name="clock_wrong_date_message">날짜를 오늘 날짜로 다시 바꾼 후 앱을 다시 열어 주세요</string>

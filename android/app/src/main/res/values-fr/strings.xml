@@ -691,7 +691,7 @@
     <string name="update_available_whats_new">Nouveautés :</string>
     <string name="update_available_later">Plus tard</string>
     <string name="update_required_title">Mise à jour requise</string>
-    <string name="update_required_message">Cette version de CloudPad n\'est plus prise en charge. Veuillez installer la dernière version pour continuer à utiliser l\'application.</string>
+    <string name="update_required_message">Cette version de CloudPad (%1$s) n\'est plus prise en charge. Veuillez installer la version %2$s ou une version ultérieure pour continuer à utiliser l\'application.</string>
     <string name="update_required_button">Mettre à jour</string>
     <string name="clock_wrong_date_title">Date incorrecte</string>
     <string name="clock_wrong_date_message">Veuillez remettre la date d\'aujourd\'hui et rouvrir l\'application</string>

@@ -642,7 +642,7 @@
     <string name="update_available_whats_new">Yang baru:</string>
     <string name="update_available_later">Nanti</string>
     <string name="update_required_title">Pembaruan Diperlukan</string>
-    <string name="update_required_message">Versi CloudPad ini tidak lagi didukung. Perbarui ke versi terbaru untuk terus menggunakan aplikasi.</string>
+    <string name="update_required_message">Versi CloudPad ini (%1$s) tidak lagi didukung. Perbarui ke versi %2$s atau yang lebih baru untuk terus menggunakan aplikasi.</string>
     <string name="update_required_button">Perbarui</string>
     <string name="clock_wrong_date_title">Tanggal Salah</string>
     <string name="clock_wrong_date_message">Ubah kembali tanggal ke tanggal hari ini dan buka ulang aplikasi</string>

@@ -42,7 +42,7 @@
     <string name="update_available_whats_new">What\'s new:</string>
     <string name="update_available_later">Later</string>
     <string name="update_required_title">Update Required</string>
-    <string name="update_required_message">This version of CloudPad is no longer supported. Please update to the latest version to keep using the app.</string>
+    <string name="update_required_message">This version of CloudPad (%1$s) is no longer supported. Please update to %2$s or later to keep using the app.</string>
     <string name="update_required_button">Update</string>
     <string name="clock_wrong_date_title">Incorrect Date</string>
     <string name="clock_wrong_date_message">Please change the date back to today\'s date and reopen the app</string>

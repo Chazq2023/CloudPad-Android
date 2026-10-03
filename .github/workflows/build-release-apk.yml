@@ -19,6 +19,7 @@ jobs:
     env:
       RELEASE_NOTES: |-
         - The disclaimer now adjusts when you rotate your device while it's open, so it always fits the screen in both portrait and landscape.
+        - If CloudPad asks you to update, the message now shows the version you're on and the minimum version you need.
 
     steps:
       - name: Checkout repo
