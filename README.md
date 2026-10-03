@@ -68,7 +68,7 @@ CloudPad streams your PlayStation games to Android, either straight from Sony's 
 * Custom controller button remapping
 * Custom on-screen touch control layout, sizing, and opacity
 * Theme colours
-* Touch-friendly, Android-focused UI for handhelds, tablets, and TV-style devices
+* Touch-friendly, Android-focused UI for phones, tablets, and handhelds
 
 ### Settings & diagnostics
 * Import/export settings as JSON
@@ -89,7 +89,7 @@ Please support the official release. This fork contains Android-specific fixes, 
 
 # About this fork
 
-This fork focuses on the Android version of Pylux, including Android handhelds and Android TV-style devices.
+This fork focuses on the Android version of Pylux, built for Android phones, tablets, and handheld gaming devices.
 
 Changes in this fork may include:
 
