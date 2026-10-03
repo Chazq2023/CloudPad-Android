@@ -116,9 +116,23 @@ object PsCloudOwnership
 	/** Whether an owned game can be launched yet. Sony entitles a pre-order immediately (so it
 	 *  shows in the Library) and Gaikai will authorize a cloud session for it ahead of release, but
 	 *  playing it early isn't something to let users stumble into — so the launch is held until
-	 *  the entitlement's own active_date. */
+	 *  the entitlement's own active_date.
+	 *  A dated game also needs its unlock time to have been fetched from Sony at or after that time:
+	 *  a copy saved earlier may predate Sony moving the release, so only a refresh can reveal it. */
 	fun isReleased(game: CloudGame, nowMs: Long = System.currentTimeMillis()): Boolean =
-		game.availableFromMs <= nowMs
+		game.availableFromMs <= nowMs &&
+			(game.availableFromMs <= 0L || game.releaseCheckedAtMs >= game.availableFromMs)
+
+	/** The list without owned pre-orders that haven't unlocked yet, so their tiles don't show at
+	 *  all. Applied whenever the list is (re)loaded; per isReleased, a game appears on the first
+	 *  refresh from Sony after its unlock time — never from a copy saved before it. The tap dialog and the launch gate (Sony's clock only) stay as
+	 *  backstops. */
+	fun withoutUnreleased(games: List<CloudGame>, nowMs: Long): List<CloudGame> =
+		games.filter { !it.isOwned || isReleased(it, nowMs) }
+
+	/** Stamps owned games with the time their unlock dates were just fetched from Sony. */
+	fun stampReleaseChecked(games: List<CloudGame>, checkedAtMs: Long): List<CloudGame> =
+		games.map { if (it.isOwned) it.copy(releaseCheckedAtMs = checkedAtMs) else it }
 
 	/** Earliest unlock time across entitlements that stand for the same game: if any of them is
 	 *  already active (e.g. an older edition alongside a pre-ordered one), the game is playable. */

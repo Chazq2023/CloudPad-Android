@@ -26,13 +26,23 @@ class PSKamajiSession(
 	private val accountBaseUrl: String,
 	private val redirectUri: String,
 	private val userAgent: String,
-	private val preferences: com.metallic.chiaki.common.Preferences,
-	private val preKnownEntitlementId: String = ""
+	private val preferences: com.metallic.chiaki.common.Preferences
 )
 {
 	companion object
 	{
 		private const val TAG = "PSKamajiSession"
+
+		/**
+		 * Whether a checkout preview cart is free, i.e. safe to complete with buynow. Fails closed:
+		 * only a total_price_value that is present and numerically 0 counts — a missing, renamed or
+		 * non-numeric field must never be read as £0.00 (optInt would default it to 0).
+		 */
+		internal fun isFreeCart(cart: JSONObject): Boolean
+		{
+			val value = cart.opt("total_price_value")
+			return value is Number && value.toDouble() == 0.0
+		}
 	}
 	
 	// Configuration
@@ -53,18 +63,29 @@ class PSKamajiSession(
 	private var isEntitlementDerived = false      // True when entitlement ID was guessed via IV0000 prefix
 	private var commerceSearchDiag: String = ""  // Result of step0_5e.1b search, for error surfacing
 
-	// Owned-PSNOW fast-path: the catalog already resolved the streaming entitlement.
-	// When set, startSessionCreation skips 0.5b/0.5d/0.5e and goes straight to step 5/6.
-	private var fastPathEntitlementId: String = ""
-	private var fastPathPlatform: String = ""
+	// Streaming entitlement the catalog listing carried (license_type==4 PSRSVD). Knowing the ID
+	// doesn't mean the account holds it — it's only claimed by the free checkout in step 0.5e —
+	// so it's used just to identify the game when step 0.5d can't (container products such as
+	// Bloodborne return a facets page), never to skip the check/claim.
+	private var catalogEntitlementId: String = ""
+	private var catalogPlatform: String = ""
+	private var catalogEntitlementSku: String = "" // The store SKU carrying catalogEntitlementId, found by step 0.5d
 
-	var usedEntitlementFastPath = false
-		private set
-
-	fun setOwnedEntitlementFastPath(ownedEntitlementId: String, ownedPlatform: String)
+	fun setCatalogEntitlement(entitlementId: String, platform: String)
 	{
-		fastPathEntitlementId = ownedEntitlementId
-		fastPathPlatform = ownedPlatform
+		catalogEntitlementId = entitlementId
+		catalogPlatform = platform
+	}
+
+	// In-stream restart only: the entitlement the running session was allocated with, which
+	// Gaikai accepted moments ago, so the lookup/check/claim (0.5b-0.5e) is skipped.
+	private var resumeEntitlementId: String = ""
+	private var resumePlatform: String = ""
+
+	fun resumeWithEntitlement(entitlementId: String, platform: String)
+	{
+		resumeEntitlementId = entitlementId
+		resumePlatform = platform
 	}
 	
 	/**
@@ -94,39 +115,18 @@ class PSKamajiSession(
 				return@withContext SessionResult(false, "NPSSO token is empty")
 			}
 
-			if (fastPathEntitlementId.isNotEmpty())
+			if (resumeEntitlementId.isNotEmpty())
 			{
-				entitlementId = fastPathEntitlementId
-				platform = if (fastPathPlatform.isEmpty()) "ps4" else fastPathPlatform
-
-				scopesStr = if (platform == "ps3")
-				{
-					"kamaji:commerce_native"
-				}
-				else
-				{
-					PsnApiConstants.PS4_SCOPES
-				}
-
-				usedEntitlementFastPath = true
-
-				Log.i(
-					TAG,
-					"Kamaji fast-path: owned entitlementId=$entitlementId platform=$platform - skipping 0.5b/0.5d/0.5e"
-				)
+				entitlementId = resumeEntitlementId
+				platform = resumePlatform.ifEmpty { "ps4" }
+				scopesStr = if (platform == "ps3") "kamaji:commerce_native" else PsnApiConstants.PS4_SCOPES
+				Log.i(TAG, "Kamaji resume: reusing session entitlementId=$entitlementId platform=$platform - skipping 0.5b-0.5e")
 
 				val authCode = step5_GetAuthCode(npssoToken)
 					?: return@withContext SessionResult(false, "Failed to get auth code")
-
 				authorizationCode = authCode
-
 				step6_CreateAuthSession(authCode)
 					?: return@withContext SessionResult(false, "Failed to create authenticated session")
-
-				Log.i(
-					TAG,
-					"=== Kamaji Session Complete (fast-path) === Entitlement ID: $entitlementId, Platform: $platform"
-				)
 
 				return@withContext SessionResult(true, "Success", entitlementId!!, platform)
 			}
@@ -144,8 +144,24 @@ class PSKamajiSession(
 			Log.i(TAG, "✓ Step 0.5c complete - Got JSESSIONID: ${sessionId.take(10)}...")
 			
 			// Step 0.5d: Convert Product ID to Entitlement ID
-			val conversionResult = step0_5d_ConvertProductId(sessionId)
-				?: return@withContext SessionResult(false, "Failed to convert product ID: $productLookupDiag".take(200))
+			var conversionResult = step0_5d_ConvertProductId(sessionId)
+			// The catalog's PSRSVD entitlement is the one Gaikai accepts; the store lookup takes the
+			// first license_type==4 it finds, which can be an old PSNow PSNW one, or only a guess for
+			// container products. Keep the catalog ID, with the store SKU that carries it for the
+			// claim. Step 0.5e still checks/claims it.
+			if (catalogEntitlementId.isNotEmpty() && (conversionResult?.first != catalogEntitlementId || isEntitlementDerived))
+			{
+				Log.i(TAG, "Step 0.5d: Using catalog streaming entitlement $catalogEntitlementId instead of " +
+					"${conversionResult?.first ?: "failed lookup"}, SKU '${catalogEntitlementSku.ifEmpty { "not found" }}'")
+				isEntitlementDerived = false
+				conversionResult = Triple(
+					catalogEntitlementId,
+					catalogPlatform.ifEmpty { conversionResult?.second ?: "ps4" },
+					catalogEntitlementSku
+				)
+			}
+			if (conversionResult == null)
+				return@withContext SessionResult(false, "Failed to convert product ID: $productLookupDiag".take(200))
 		entitlementId = conversionResult.first
 		platform = conversionResult.second
 		streamingSku = conversionResult.third
@@ -414,6 +430,9 @@ class PSKamajiSession(
 			}
 			
 			val json = JSONObject(response.body)
+
+			if (catalogEntitlementId.isNotEmpty())
+				catalogEntitlementSku = findSkuForEntitlement(json, catalogEntitlementId, 0) ?: ""
 
 			val topLevelKeys = json.keys().asSequence().toList()
 			val linksCount = json.optJSONArray("links")?.length() ?: 0
@@ -1006,16 +1025,6 @@ class PSKamajiSession(
 			return true
 		}
 
-		// Pre-known entitlements are catalog-extracted license_type==4 SKUs — they are
-		// confirmed streaming entitlements. A 404 from commerce means the game is included
-		// via PS Plus Premium subscription (no individual purchase record), not that the
-		// entitlement is wrong. Skip checkout and proceed directly to streaming.
-		if (preKnownEntitlementId.isNotEmpty())
-		{
-			Log.i(TAG, "Step 0.5e: Pre-known entitlement not in commerce (subscription access), skipping acquisition")
-			return true
-		}
-
 		// Step 0.5e.3: Checkout preview
 		// Throws PsPlusSubscriptionException if user doesn't have required subscription
 		val previewOk = step0_5e3_CheckoutPreview(sessionId)
@@ -1387,15 +1396,15 @@ class PSKamajiSession(
 			val data = json.getJSONObject("data")
 			// Qt lines 988-991: Parse cart.total_price_value (integer)
 			val cart = data.getJSONObject("cart")
-			val totalPriceValue = cart.optInt("total_price_value")
+			val totalPriceValue = cart.opt("total_price_value")
 			val totalPrice = cart.optString("total_price")
-			
+
 			Log.i(TAG, "  Total Price Value: $totalPriceValue")
 			Log.i(TAG, "  Total Price: $totalPrice")
-			
-			if (totalPriceValue != 0)
+
+			if (!isFreeCart(cart))
 			{
-				Log.e(TAG, "Game is not free! Price: $totalPrice")
+				Log.e(TAG, "Game is not confirmed free (total_price_value=$totalPriceValue, total_price=$totalPrice) - not checking out")
 				return false
 			}
 				
@@ -1524,6 +1533,41 @@ class PSKamajiSession(
 	{
 		// Same as step0_5c but using the authenticated auth code
 		return step0_5c_CreateAnonymousSession(authCode)
+	}
+
+	// Recursively search a store response for the SKU whose entitlements include [entitlementId].
+	// Returns the SKU id, or null. Depth-limited like findEntitlementRecursive.
+	private fun findSkuForEntitlement(obj: JSONObject, entitlementId: String, depth: Int): String?
+	{
+		if (depth > 12) return null
+
+		val entitlements = obj.optJSONArray("entitlements")
+		if (entitlements != null)
+		{
+			for (i in 0 until entitlements.length())
+			{
+				if (entitlements.optJSONObject(i)?.optString("id") == entitlementId)
+					return obj.optString("id", "").ifEmpty { null }
+			}
+		}
+
+		val keys = obj.keys()
+		while (keys.hasNext())
+		{
+			when (val value = obj.opt(keys.next()))
+			{
+				is JSONObject -> findSkuForEntitlement(value, entitlementId, depth + 1)?.let { return it }
+				is JSONArray ->
+				{
+					for (i in 0 until value.length())
+					{
+						val item = value.optJSONObject(i) ?: continue
+						findSkuForEntitlement(item, entitlementId, depth + 1)?.let { return it }
+					}
+				}
+			}
+		}
+		return null
 	}
 
 	// Recursively search a JSONObject tree for any entitlement with license_type == 4.

@@ -1613,6 +1613,7 @@ class CloudPlayFragment : Fragment() {
                     ownedEntitlementId = game.entitlementId,
                     ownedPlatform = PsCloudOwnership.streamPlatform(game),
                     availableFromMs = if (game.isOwned) game.availableFromMs else 0L,
+                    releaseCheckedAtMs = game.releaseCheckedAtMs,
                     onProgress = { message ->
                         requireActivity().runOnUiThread {
                             allocationProgressTextView?.text = message

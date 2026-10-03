@@ -5,14 +5,17 @@ package com.metallic.chiaki.cloudplay.repository
 import android.content.Context
 import android.util.Log
 import com.metallic.chiaki.cloudplay.api.PsCloudCatalogService
+import com.metallic.chiaki.cloudplay.api.PsCloudOwnership
 import com.metallic.chiaki.cloudplay.api.PsPlusCache
 import com.metallic.chiaki.cloudplay.api.PsStorePlusService
 import com.metallic.chiaki.cloudplay.api.PsnCatalogService
+import com.metallic.chiaki.cloudplay.api.TrustedClock
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.cloudplay.model.excludingLibrary
 import com.metallic.chiaki.cloudplay.model.notInLibrary
+import com.metallic.chiaki.cloudplay.model.withoutSupersededClassics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -51,13 +54,15 @@ class CloudGameRepository(
 			cacheFileName == PSCLOUD_CACHE_FILE && cachedGames.length() > 0 &&
 				!cachedGames.getJSONObject(0).has("psCatalog")
 
-		/** A cache written before owned games carried their unlock time would make every
-		 *  pre-ordered game look released, letting it launch early (see PsCloudOwnership.isReleased)
-		 *  — so any owned entry without it means the whole cache must be rebuilt from Sony. */
+		/** A cache written before owned games carried their unlock time (and when it was fetched)
+		 *  would make every pre-ordered game look released, or hide every dated game until a refresh
+		 *  (see PsCloudOwnership.isReleased) — so any owned entry without them means the whole cache
+		 *  must be rebuilt from Sony. */
 		internal fun lacksReleaseDates(cachedGames: JSONArray): Boolean =
 			(0 until cachedGames.length()).any { i ->
 				val obj = cachedGames.getJSONObject(i)
-				obj.optBoolean("isOwned", false) && !obj.has("availableFromMs")
+				obj.optBoolean("isOwned", false) &&
+					(!obj.has("availableFromMs") || !obj.has("releaseCheckedAtMs"))
 			}
 
 		private const val PS_PLUS_CACHE_DIR = "ps_plus_cache"
@@ -94,6 +99,9 @@ class CloudGameRepository(
 		}
 	}
 
+	// Sony's time right after a fetch from Sony (which records it), for stamping release checks.
+	private fun sonyNowAfterFetch(): Long = TrustedClock.nowOrNull() ?: System.currentTimeMillis()
+
 	private val psnowCatalogService = PsnCatalogService(preferences)
 	private val pscloudCatalogService = PsCloudCatalogService()
 	private val cacheDir: File by lazy {
@@ -110,7 +118,7 @@ class CloudGameRepository(
 				if (cachedGames != null)
 				{
 					Log.i(TAG, "Returning ${cachedGames.size} PSNow games from cache")
-					return@withContext PsnResult.Success(cachedGames)
+					return@withContext PsnResult.Success(cachedGames.withoutSupersededClassics())
 				}
 			}
 
@@ -118,7 +126,10 @@ class CloudGameRepository(
 			val result = psnowCatalogService.fetchPsnowCatalog(npssoToken)
 
 			if (result is PsnResult.Success)
+			{
 				cacheGames(result.data, PSNOW_CACHE_FILE)
+				return@withContext PsnResult.Success(result.data.withoutSupersededClassics())
+			}
 
 			result
 		}
@@ -150,10 +161,13 @@ class CloudGameRepository(
 				val catalogResult = pscloudCatalogService.fetchPs5CloudCatalog(locale)
 				val browseGames = catalogResult.browseGames
 
-				val gamesWithOwnership = pscloudCatalogService.crossReferenceOwnedGamesForCatalog(
-					npssoToken = npssoToken,
-					locale = locale,
-					publicCatalog = browseGames
+				val gamesWithOwnership = PsCloudOwnership.stampReleaseChecked(
+					pscloudCatalogService.crossReferenceOwnedGamesForCatalog(
+						npssoToken = npssoToken,
+						locale = locale,
+						publicCatalog = browseGames
+					),
+					sonyNowAfterFetch()
 				)
 
 				cacheGames(gamesWithOwnership, PSCLOUD_CACHE_FILE)
@@ -270,7 +284,10 @@ class CloudGameRepository(
 			{
 				val locale = preferences.getCloudStoreLocale().lowercase()
 				val overrides = preferences.getConfirmedStreamableOverrides()
-				val games = pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale, overrides)
+				val games = PsCloudOwnership.stampReleaseChecked(
+					pscloudCatalogService.fetchOwnedPs5Games(npssoToken, locale, overrides),
+					sonyNowAfterFetch()
+				)
 				cacheGames(games, OWNED_CACHE_FILE)
 				// Ownership just changed (e.g. a game was added on Sony's site), so the full-catalog
 				// cache's isOwned flags are stale — drop it so the add-a-game list rebuilds from
@@ -354,6 +371,7 @@ class CloudGameRepository(
 					freeToPlay = obj.optBoolean("freeToPlay", false),
 					featureType = obj.optInt("featureType", 0),
 					availableFromMs = obj.optLong("availableFromMs", 0L),
+					releaseCheckedAtMs = obj.optLong("releaseCheckedAtMs", 0L),
 					streamableStatus = try {
 						StreamableStatus.valueOf(obj.optString("streamableStatus", "UNKNOWN"))
 					} catch (e: IllegalArgumentException) {
@@ -398,6 +416,7 @@ class CloudGameRepository(
 				obj.put("freeToPlay", game.freeToPlay)
 				obj.put("featureType", game.featureType)
 				obj.put("availableFromMs", game.availableFromMs)
+				obj.put("releaseCheckedAtMs", game.releaseCheckedAtMs)
 				obj.put("streamableStatus", game.streamableStatus.name)
 				jsonArray.put(obj)
 			}

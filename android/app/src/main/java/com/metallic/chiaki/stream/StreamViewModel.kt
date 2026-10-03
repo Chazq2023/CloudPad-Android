@@ -263,6 +263,7 @@ class StreamViewModel(
 				npssoToken = preferences.getNpssoToken(),
 				ownedEntitlementId = connectInfo.cloudOwnedEntitlementId ?: "",
 				ownedPlatform = connectInfo.cloudGamePlatform ?: "",
+				resumingSession = true,
 				onProgress = { message -> _sessionRestartState.postValue(SessionRestartState.InProgress(message)) }
 			)
 			result.onSuccess { cloudStreamSession ->

@@ -18,8 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - The disclaimer now adjusts when you rotate your device while it's open, so it always fits the screen in both portrait and landscape.
-        - If CloudPad asks you to update, the message now shows the version you're on and the minimum version you need.
+        - Fixed a few PS3/PS4 Game Catalog games (including Dying Light 2, Marvel's Spider-Man and Forbidden Siren) failing with "Streaming Unavailable" the first time you played them.
+        - The Game Catalog now shows Forbidden Siren and War of the Monsters once each, keeping the newer version Sony offers.
+        - Safer free-game claiming: CloudPad now only adds a PS3/PS4 game to your account when Sony clearly confirms it costs £0.00, and otherwise stops before checkout.
+        - Pre-ordered games are now hidden from your PS5 Library until their release time passes, then appear the first time you refresh the Library after release, so a delayed release can't show up early.
 
     steps:
       - name: Checkout repo

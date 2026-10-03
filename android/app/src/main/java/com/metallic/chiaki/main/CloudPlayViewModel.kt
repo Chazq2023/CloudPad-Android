@@ -8,6 +8,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.metallic.chiaki.cloudplay.api.PsCloudOwnership
+import com.metallic.chiaki.cloudplay.api.TrustedClock
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.PsnResult
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
@@ -132,7 +134,7 @@ class CloudPlayViewModel(
 					{
 						is PsnResult.Success ->
 						{
-							allGames = result.data
+							allGames = withoutUnreleased(result.data)
 							Log.i(TAG, "Successfully loaded ${allGames.size} owned PS5 games")
 							applySearchFilter()
 						}
@@ -151,7 +153,7 @@ class CloudPlayViewModel(
 					{
 						is PsnResult.Success ->
 						{
-							allGames = result.data
+							allGames = withoutUnreleased(result.data)
 							Log.i(TAG, "Successfully loaded ${allGames.size} PS5 games")
 							applySearchFilter()
 						}
@@ -175,6 +177,16 @@ class CloudPlayViewModel(
 		}
 	}
 	
+	/** Drops owned pre-orders that haven't unlocked yet, by Sony's clock when a Sony response has
+	 *  been seen, else the device's (as the tap check does). Launch stays gated on Sony's clock. */
+	private fun withoutUnreleased(games: List<CloudGame>): List<CloudGame>
+	{
+		val visible = PsCloudOwnership.withoutUnreleased(games, TrustedClock.nowOrNull() ?: System.currentTimeMillis())
+		if (visible.size != games.size)
+			Log.i(TAG, "Hiding ${games.size - visible.size} unreleased pre-order(s) until they unlock")
+		return visible
+	}
+
 	/**
 	 * Get current section
 	 */
