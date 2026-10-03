@@ -43,6 +43,8 @@ object VersionGuard
 	private var resumedActivity: Activity? = null
 	private var dialog: AlertDialog? = null
 	private var updateUrl = DEFAULT_UPDATE_URL
+	private var currentVersion = ""
+	private var minimumVersion = ""
 	private var outdated = false
 
 	/** Whether the forced "Update Required" popup applies right now (UpdateNotifier stays out of its way). */
@@ -120,6 +122,8 @@ object VersionGuard
 	private fun apply(current: String, minimum: String?, url: String?)
 	{
 		outdated = isOutdated(current, minimum)
+		currentVersion = current
+		minimumVersion = minimum.orEmpty()
 		updateUrl = url ?: DEFAULT_UPDATE_URL
 		Log.i(TAG, "Version $current, minimum $minimum -> ${if (outdated) "update required" else "ok"}")
 		if (outdated) showUpdateDialog()
@@ -131,7 +135,7 @@ object VersionGuard
 		if (dialog?.isShowing == true || activity.isFinishing) return
 		dialog = activity.alertDialogBuilder()
 			.setTitle(R.string.update_required_title)
-			.setMessage(R.string.update_required_message)
+			.setMessage(activity.getString(R.string.update_required_message, currentVersion, minimumVersion))
 			.setCancelable(false)
 			.setPositiveButton(R.string.update_required_button) { _, _ ->
 				try

@@ -691,7 +691,7 @@
     <string name="update_available_whats_new">Uutta:</string>
     <string name="update_available_later">Myöhemmin</string>
     <string name="update_required_title">Päivitys vaaditaan</string>
-    <string name="update_required_message">Tätä CloudPadin versiota ei enää tueta. Päivitä uusimpaan versioon, jotta voit jatkaa sovelluksen käyttöä.</string>
+    <string name="update_required_message">Tätä CloudPadin versiota (%1$s) ei enää tueta. Päivitä versioon %2$s tai uudempaan, jotta voit jatkaa sovelluksen käyttöä.</string>
     <string name="update_required_button">Päivitä</string>
     <string name="clock_wrong_date_title">Väärä päivämäärä</string>
     <string name="clock_wrong_date_message">Vaihda päivämäärä takaisin tämän päivän päivämäärään ja avaa sovellus uudelleen</string>

@@ -689,7 +689,7 @@
     <string name="update_available_whats_new">新機能：</string>
     <string name="update_available_later">後で</string>
     <string name="update_required_title">アップデートが必要です</string>
-    <string name="update_required_message">このバージョンの CloudPad はサポートが終了しました。引き続きご利用いただくには、最新バージョンにアップデートしてください。</string>
+    <string name="update_required_message">このバージョンの CloudPad（%1$s）はサポートが終了しました。引き続きご利用いただくには、%2$s 以降にアップデートしてください。</string>
     <string name="update_required_button">アップデート</string>
     <string name="clock_wrong_date_title">日付が正しくありません</string>
     <string name="clock_wrong_date_message">日付を今日の日付に戻して、アプリを再度開いてください</string>

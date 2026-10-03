@@ -18,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - CloudPad now tells you when a new version is out: after the disclaimer, it shows the new version and what's changed, with an Update button that opens the latest release. Choose Later and it reminds you the next time you open the app.
+        - The disclaimer now adjusts when you rotate your device while it's open, so it always fits the screen in both portrait and landscape.
+        - If CloudPad asks you to update, the message now shows the version you're on and the minimum version you need.
 
     steps:
       - name: Checkout repo
