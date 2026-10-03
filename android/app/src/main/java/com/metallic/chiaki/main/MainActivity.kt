@@ -171,19 +171,41 @@ class MainActivity : AppCompatActivity() {
      * region/subscription availability for cloud streaming can change under us, so this is a
      * repeating reminder rather than a one-time acknowledgement.
      */
+    // Kept so a rotation can rebuild the open disclaimer: this activity handles orientation
+    // changes itself (configChanges), so the dialog would otherwise keep the layout and width
+    // it was opened with — landscape's two wide columns overflow a portrait screen.
+    private var disclaimerDialog: androidx.appcompat.app.AlertDialog? = null
+    private var disclaimerOnAcknowledged: (() -> Unit)? = null
+
     private fun showDisclaimerDialog(onAcknowledged: () -> Unit) {
+        disclaimerOnAcknowledged = onAcknowledged
         val view = layoutInflater.inflate(R.layout.dialog_disclaimer, null)
         val dialog = alertDialogBuilder()
             .setView(view)
-            .setPositiveButton(R.string.main_disclaimer_acknowledge_button) { _, _ -> onAcknowledged() }
+            .setPositiveButton(R.string.main_disclaimer_acknowledge_button) { _, _ ->
+                disclaimerDialog = null
+                disclaimerOnAcknowledged = null
+                onAcknowledged()
+            }
             .setCancelable(false)
             .create()
+        disclaimerDialog = dialog
         dialog.show()
         // The standard dialog width is narrow on a wide landscape screen, so the text wraps into
         // a tall column that has to scroll. Widen it so layout-land's two columns fit in one view.
         if (resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
             dialog.window?.setLayout((resources.displayMetrics.widthPixels * 0.92f).toInt(),
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT)
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val dialog = disclaimerDialog
+        val onAcknowledged = disclaimerOnAcknowledged
+        if (dialog != null && dialog.isShowing && onAcknowledged != null) {
+            dialog.dismiss()
+            showDisclaimerDialog(onAcknowledged)
         }
     }
 
