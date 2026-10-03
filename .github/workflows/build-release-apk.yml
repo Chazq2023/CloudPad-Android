@@ -21,6 +21,7 @@ jobs:
         - Fixed a few PS3/PS4 Game Catalog games (including Dying Light 2, Marvel's Spider-Man and Forbidden Siren) failing with "Streaming Unavailable" the first time you played them.
         - The Game Catalog now shows Forbidden Siren and War of the Monsters once each, keeping the newer version Sony offers.
         - Safer free-game claiming: CloudPad now only adds a PS3/PS4 game to your account when Sony clearly confirms it costs £0.00, and otherwise stops before checkout.
+        - Pre-ordered games are now hidden from your PS5 Library until their release time passes, then appear the next time the Library loads.
 
     steps:
       - name: Checkout repo

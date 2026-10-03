@@ -120,6 +120,13 @@ object PsCloudOwnership
 	fun isReleased(game: CloudGame, nowMs: Long = System.currentTimeMillis()): Boolean =
 		game.availableFromMs <= nowMs
 
+	/** The list without owned pre-orders that haven't unlocked yet, so their tiles don't show at
+	 *  all. Applied whenever the list is (re)loaded, so a game appears on the first load after its
+	 *  unlock time rather than live. The tap dialog and the launch gate (Sony's clock only) stay as
+	 *  backstops. */
+	fun withoutUnreleased(games: List<CloudGame>, nowMs: Long): List<CloudGame> =
+		games.filter { !it.isOwned || isReleased(it, nowMs) }
+
 	/** Earliest unlock time across entitlements that stand for the same game: if any of them is
 	 *  already active (e.g. an older edition alongside a pre-ordered one), the game is playable. */
 	fun earliestAvailability(a: Long, b: Long): Long = minOf(a, b)

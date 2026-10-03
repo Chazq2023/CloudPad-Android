@@ -115,4 +115,30 @@ class PreorderReleaseGateTest {
         ))
         assertEquals(1_000L, games.single().availableFromMs)
     }
+
+    private fun owned(id: String, availableFromMs: Long) =
+        CloudGame(productId = id, name = id, imageUrl = "", isOwned = true, availableFromMs = availableFromMs)
+
+    @Test
+    fun `unreleased pre-order tile is hidden until its unlock time`() {
+        val games = listOf(owned("released", 0L), owned("preorder", releaseMs))
+
+        assertEquals(listOf("released"), PsCloudOwnership.withoutUnreleased(games, releaseMs - 1).map { it.productId })
+        assertEquals(listOf("released", "preorder"), PsCloudOwnership.withoutUnreleased(games, releaseMs).map { it.productId })
+    }
+
+    @Test
+    fun `dateless pre-order stays hidden`() {
+        val games = listOf(owned("dateless", PsCloudOwnership.RELEASE_DATE_UNKNOWN))
+
+        assertTrue(PsCloudOwnership.withoutUnreleased(games, Long.MAX_VALUE - 1).isEmpty())
+    }
+
+    @Test
+    fun `games not owned are never hidden`() {
+        // Browse-catalog entries the user doesn't own carry no release lock.
+        val games = listOf(CloudGame(productId = "catalog", name = "catalog", imageUrl = "", availableFromMs = releaseMs))
+
+        assertEquals(games, PsCloudOwnership.withoutUnreleased(games, 0L))
+    }
 }
