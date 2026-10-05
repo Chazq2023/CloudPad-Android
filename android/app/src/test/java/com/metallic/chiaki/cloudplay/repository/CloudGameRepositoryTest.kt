@@ -87,6 +87,7 @@ class CloudGameRepositoryTest {
         every { context.cacheDir } returns tempDir
         every { preferences.getNpssoToken() } returns ""
         every { preferences.getCloudStoreLocale() } returns "en-US"
+        every { preferences.hasAccountLocale() } returns true
         repository = CloudGameRepository(context, preferences)
     }
 
@@ -336,6 +337,41 @@ class CloudGameRepositoryTest {
         var calls = 0
         val locales = mutableListOf<String>()
         suspend fun fetch(locale: String): Set<String> { calls++; locales += locale; return result() }
+    }
+
+    @Test
+    fun `no streamable catalog is shown until the account's region is confirmed`() = runTest {
+        // A saved catalog from another region must not be served either.
+        writeCacheFile("pscloud_catalog.json", OWNED_PS5_CACHE_JSON.replace("\"isOwned\":true", "\"isOwned\":true,\"psCatalog\":false"))
+        every { preferences.hasAccountLocale() } returns false
+
+        val catalog = repository.fetchPs5CloudCatalog("", forceRefresh = false)
+        val addable = repository.fetchPs5GamesNotInLibrary("", forceRefresh = false)
+
+        assertTrue(catalog is PsnResult.Error)
+        assertTrue(addable is PsnResult.Error)
+    }
+
+    @Test
+    fun `no PS Plus lookup until the account's region is confirmed`() = runTest {
+        writePlusCache("en-US", ageMs = 0L, keys = setOf("PPSA1"))
+        every { preferences.hasAccountLocale() } returns false
+
+        val result = plusRepo(FakeFetcher { error("must not fetch for an unconfirmed region") }).loadPsPlusKeys()
+
+        assertTrue(result is PsPlusResult.Failed)
+    }
+
+    @Test
+    fun `signing in forgets the previous account's region before looking it up`() = runTest {
+        var accountLocaleKnown = true
+        every { preferences.hasAccountLocale() } answers { accountLocaleKnown }
+        every { preferences.clearAccountLocale() } answers { accountLocaleKnown = false }
+
+        // No token, so the lookup can't run: the old region must not survive it.
+        val confirmed = repository.ensureAccountLocale("", force = true)
+
+        assertTrue(!confirmed)
     }
 
     private fun plusRepo(fetcher: FakeFetcher) = CloudGameRepository(context, preferences, fetcher::fetch)

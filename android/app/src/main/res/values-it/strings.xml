@@ -301,8 +301,9 @@
     <string name="preferences_psn_logout_success">Disconnessione avvenuta con successo</string>
     <string name="preferences_psn_login_row_title">Accedi</string>
     <string name="preferences_psn_login_row_summary">Tocca per accedere</string>
-    <string name="preferences_locale_title">Lingua</string>
-    <string name="preferences_locale_summary_not_set">Non impostata - Accedi per ottenere la lingua</string>
+    <string name="preferences_game_language_title">Lingua del gioco</string>
+    <string name="preferences_game_language_follow_account">Lingua dell\'account PSN</string>
+    <string name="cloud_region_unconfirmed">Impossibile confermare la regione del tuo account PSN, quindi questo elenco non può ancora essere mostrato. Riprova tra poco.</string>
     <string name="preferences_cached_locale_title">Lingua memorizzata</string>
     <string name="preferences_cached_locale_summary_not_set">Nessuna lingua memorizzata nella cache</string>
 

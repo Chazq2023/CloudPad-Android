@@ -56,9 +56,8 @@
             app:icon="@drawable/ic_psn_id_white"/>
 
         <ListPreference
-            app:key="locale_display"
-            app:title="@string/preferences_locale_title"
-            app:summary="@string/preferences_locale_summary_not_set"
+            app:key="cloud_game_language_display"
+            app:title="@string/preferences_game_language_title"
             app:icon="@drawable/ic_locale"/>
 
         <Preference

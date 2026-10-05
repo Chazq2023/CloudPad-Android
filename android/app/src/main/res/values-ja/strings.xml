@@ -301,8 +301,9 @@
     <string name="preferences_psn_logout_success">正常にログアウトしました</string>
     <string name="preferences_psn_login_row_title">ログイン</string>
     <string name="preferences_psn_login_row_summary">タップしてサインイン</string>
-    <string name="preferences_locale_title">ロケール</string>
-    <string name="preferences_locale_summary_not_set">未設定 - ロケールを取得するにはサインインしてください</string>
+    <string name="preferences_game_language_title">ゲームの言語</string>
+    <string name="preferences_game_language_follow_account">PSNアカウントの言語</string>
+    <string name="cloud_region_unconfirmed">PSNアカウントの地域を確認できなかったため、このリストはまだ表示できません。しばらくしてからもう一度お試しください。</string>
     <string name="preferences_cached_locale_title">キャッシュされたロケール</string>
     <string name="preferences_cached_locale_summary_not_set">キャッシュされたロケールはありません</string>
 

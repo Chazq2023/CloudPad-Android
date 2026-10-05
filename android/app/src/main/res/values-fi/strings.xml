@@ -301,8 +301,9 @@
     <string name="preferences_psn_logout_success">Uloskirjautuminen onnistui</string>
     <string name="preferences_psn_login_row_title">Kirjaudu sisään</string>
     <string name="preferences_psn_login_row_summary">Napauta kirjautuaksesi sisään</string>
-    <string name="preferences_locale_title">Kieliasetus</string>
-    <string name="preferences_locale_summary_not_set">Ei asetettu - kirjaudu sisään saadaksesi kieliasetuksen</string>
+    <string name="preferences_game_language_title">Pelin kieli</string>
+    <string name="preferences_game_language_follow_account">PSN-tilin kieli</string>
+    <string name="cloud_region_unconfirmed">PSN-tilisi aluetta ei voitu vahvistaa, joten tätä luetteloa ei voi vielä näyttää. Yritä hetken kuluttua uudelleen.</string>
     <string name="preferences_cached_locale_title">Välimuistiin tallennettu kieliasetus</string>
     <string name="preferences_cached_locale_summary_not_set">Ei välimuistiin tallennettua kieliasetusta</string>
 

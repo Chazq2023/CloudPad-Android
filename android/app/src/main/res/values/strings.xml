@@ -432,8 +432,9 @@
     <string name="preferences_psn_logout_success">Logged out successfully</string>
     <string name="preferences_psn_login_row_title">Log In</string>
     <string name="preferences_psn_login_row_summary">Tap to sign in</string>
-    <string name="preferences_locale_title">Locale</string>
-    <string name="preferences_locale_summary_not_set">Not set - Please sign in to obtain locale</string>
+    <string name="preferences_game_language_title">Game language</string>
+    <string name="preferences_game_language_follow_account">PSN account language</string>
+    <string name="cloud_region_unconfirmed">Couldn\'t confirm your PSN account\'s region, so this list can\'t be shown yet. Please try again shortly.</string>
     <string name="preferences_cached_locale_title">Cached Locale</string>
     <string name="preferences_cached_locale_summary_not_set">No cached locale stored</string>
     

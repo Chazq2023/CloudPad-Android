@@ -4,6 +4,7 @@ package com.metallic.chiaki.cloudplay.repository
 
 import android.content.Context
 import android.util.Log
+import com.pylux.stream.R
 import com.metallic.chiaki.cloudplay.api.PsCloudCatalogService
 import com.metallic.chiaki.cloudplay.api.PsCloudOwnership
 import com.metallic.chiaki.cloudplay.api.PsPlusCache
@@ -136,12 +137,39 @@ class CloudGameRepository(
 	}
 
 	/**
+	 * Makes sure the store locale is the account's: reads it from a PS Now session unless it's
+	 * already known. [force] (at sign-in, where the account may have changed) forgets the stored
+	 * one first, so a failed lookup can't leave a previous account's region in place. The PS5
+	 * catalog has no session of its own to learn the country from, so without this a user who
+	 * never opens the PS3/PS4 catalog would stay on the phone's region.
+	 * Returns whether the account's region is now confirmed.
+	 */
+	suspend fun ensureAccountLocale(npssoToken: String, force: Boolean = false): Boolean
+	{
+		if (force) preferences.clearAccountLocale()
+		if (npssoToken.isNotEmpty() && !preferences.hasAccountLocale())
+		{
+			val ok = try { psnowCatalogService.fetchAccountLocale(npssoToken) } catch (e: Exception) { false }
+			Log.i(TAG, if (ok) "Account locale: ${preferences.getCloudStoreLocale()}" else "Couldn't read the account locale")
+		}
+		return preferences.hasAccountLocale()
+	}
+
+	/** Shown instead of a region-specific list (streamable catalog, Add Game) when the account's
+	 *  region couldn't be confirmed — one from another region could show games as streamable
+	 *  that can't stream for this account, and lead to buying them. */
+	private fun regionUnconfirmedMessage(): String = context.getString(R.string.cloud_region_unconfirmed)
+
+	/**
 	 * Fetch PS5 Cloud catalog (all games view) with ownership cross-reference.
 	 */
 	suspend fun fetchPs5CloudCatalog(npssoToken: String, forceRefresh: Boolean = false): PsnResult<List<CloudGame>>
 	{
 		return withContext(Dispatchers.IO)
 		{
+			if (!ensureAccountLocale(npssoToken))
+				return@withContext PsnResult.Error(regionUnconfirmedMessage())
+
 			if (!forceRefresh)
 			{
 				val cachedGames = loadCachedGames(PSCLOUD_CACHE_FILE)
@@ -216,6 +244,9 @@ class CloudGameRepository(
 	 */
 	suspend fun loadPsPlusKeys(forceRefresh: Boolean = false): PsPlusResult = withContext(Dispatchers.IO)
 	{
+		// Which games are included with PS Plus differs by region, like streamability.
+		if (!preferences.hasAccountLocale())
+			return@withContext PsPlusResult.Failed(regionUnconfirmedMessage())
 		val storeLocale = preferences.getCloudStoreLocale()
 		val cacheFile = File(File(context.cacheDir, PS_PLUS_CACHE_DIR).apply { mkdirs() }, PS_PLUS_CACHE_FILE)
 		val cached = try { PsPlusCache.decode(cacheFile.readText()) } catch (e: Exception) { null }
@@ -260,6 +291,8 @@ class CloudGameRepository(
 		return withContext(Dispatchers.IO)
 		{
 			val OWNED_CACHE_FILE = "pscloud_owned.json"
+
+			ensureAccountLocale(npssoToken)
 
 			if (!forceRefresh)
 			{

@@ -301,8 +301,9 @@
     <string name="preferences_psn_logout_success">Succesvol uitgelogd</string>
     <string name="preferences_psn_login_row_title">Inloggen</string>
     <string name="preferences_psn_login_row_summary">Tik om in te loggen</string>
-    <string name="preferences_locale_title">Regio</string>
-    <string name="preferences_locale_summary_not_set">Niet ingesteld - Log in om de regio te verkrijgen</string>
+    <string name="preferences_game_language_title">Speltaal</string>
+    <string name="preferences_game_language_follow_account">Taal van PSN-account</string>
+    <string name="cloud_region_unconfirmed">De regio van je PSN-account kon niet worden bevestigd, dus deze lijst kan nog niet worden weergegeven. Probeer het zo meteen opnieuw.</string>
     <string name="preferences_cached_locale_title">Gecachte regio</string>
     <string name="preferences_cached_locale_summary_not_set">Geen gecachte regio opgeslagen</string>
 

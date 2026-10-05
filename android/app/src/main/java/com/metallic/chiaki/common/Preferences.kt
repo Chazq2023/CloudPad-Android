@@ -120,6 +120,17 @@ class Preferences(context: Context)
 		private const val CLOUD_GAME_LANGUAGE_KEY = "cloud_game_language"
 		private const val LEGACY_CLOUD_STREAM_LANGUAGE_KEY = "cloud_stream_language"
 
+		/** The game language to keep when a locale picked under the old "Locale" setting gives
+		 *  way to the account's: its language, if it differs from the account's and no game
+		 *  language is set yet; otherwise null (nothing to carry over). */
+		internal fun gameLanguageCarriedOver(chosenLocale: String, accountLocale: String, currentGameLanguage: String): String?
+		{
+			if (currentGameLanguage.isNotEmpty()) return null
+			val chosen = com.metallic.chiaki.cloudplay.CloudLocale.gaikaiLanguageForLocale(chosenLocale)
+			val account = com.metallic.chiaki.cloudplay.CloudLocale.gaikaiLanguageForLocale(accountLocale)
+			return chosen.takeIf { it != account }
+		}
+
 		private const val CLOUD_RESOLVED_STORE_COUNTRY_KEY = "cloud_resolved_store_country"
 		private const val CLOUD_RESOLVED_STORE_LANG_KEY = "cloud_resolved_store_lang"
 		private const val LEGACY_CLOUD_FALLBACK_REGION_KEY = "cloud_fallback_region"
@@ -417,6 +428,9 @@ class Preferences(context: Context)
 	fun clearNpssoToken()
 	{
 		tokenManager.clearNpssoToken()
+		// The next account may be in another region; it must be read again before region-specific
+		// lists are shown (see CloudGameRepository.ensureAccountLocale).
+		clearAccountLocale()
 	}
 
 	// ==========================================================================
@@ -653,14 +667,6 @@ class Preferences(context: Context)
 		CloudGameRepository.invalidateCatalogCache(appContext, "locale change")
 	}
 
-	fun setUserSelectedCloudStoreLocale(value: String)
-	{
-		sharedPreferences.edit()
-			.putBoolean(CLOUD_STORE_LOCALE_USER_SELECTED_KEY, true)
-			.apply()
-		setCloudStoreLocale(value)
-	}
-
 	fun noteCloudStoreLocaleSettled(value: String)
 	{
 		if (value.isEmpty()) return
@@ -683,31 +689,27 @@ class Preferences(context: Context)
 			.putString(CLOUD_ACCOUNT_LOCALE_KEY, locale)
 			.apply()
 
+		// The store country always follows the account. A locale picked under the old "Locale"
+		// setting is dropped, but its language carries over as the game language so games keep
+		// streaming in the language the user chose.
 		if (sharedPreferences.getBoolean(CLOUD_STORE_LOCALE_USER_SELECTED_KEY, false))
 		{
-			Log.i("Preferences", "Keeping user-selected store locale ${getCloudStoreLocale()}")
-			return
+			val carried = gameLanguageCarriedOver(getCloudStoreLocale(), locale, getCloudGameLanguage())
+			if (carried != null)
+				setCloudGameLanguage(carried)
+			sharedPreferences.edit().remove(CLOUD_STORE_LOCALE_USER_SELECTED_KEY).apply()
+			Log.i("Preferences", "Dropped user-selected store locale ${getCloudStoreLocale()} for account $locale; game language ${getCloudGameLanguage().ifEmpty { "follows account" }}")
 		}
 
-		if (isCloudStoreLocaleConfigured())
-		{
-			val storedCountry =
-				com.metallic.chiaki.cloudplay.CloudLocale.parseStorePath(getCloudStoreLocale()).first
+		if (!isCloudStoreLocaleConfigured() || getCloudStoreLocale() != locale)
+			setCloudStoreLocale(locale)
+	}
 
-			val sessionCountry =
-				com.metallic.chiaki.cloudplay.CloudLocale.parseStorePath(locale).first
+	fun hasAccountLocale(): Boolean = sharedPreferences.contains(CLOUD_ACCOUNT_LOCALE_KEY)
 
-			if (storedCountry == sessionCountry)
-			{
-				Log.i(
-					"Preferences",
-					"Kamaji session country unchanged ($sessionCountry), keeping ${getCloudStoreLocale()}"
-				)
-				return
-			}
-		}
-
-		setCloudStoreLocale(locale)
+	fun clearAccountLocale()
+	{
+		sharedPreferences.edit().remove(CLOUD_ACCOUNT_LOCALE_KEY).apply()
 	}
 
 	private fun migrateCloudGameLanguageIfNeeded(): String
