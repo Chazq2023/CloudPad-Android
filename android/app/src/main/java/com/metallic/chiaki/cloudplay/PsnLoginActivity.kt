@@ -19,6 +19,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
+import com.metallic.chiaki.cloudplay.repository.CloudGameRepository
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.PsnTokenManager
 import com.metallic.chiaki.common.SecureTokenManager
@@ -245,7 +246,11 @@ class PsnLoginActivity : AppCompatActivity() {
 			try {
 				val exchangeSuccess = withContext(Dispatchers.IO) {
 					tokenManager.saveNpssoToken(npsso)
-					psnTokenManager.exchangeNpssoForTokens(npsso)
+					psnTokenManager.exchangeNpssoForTokens(npsso).also {
+						// The store follows this account's country from the start (a new account
+						// may be in a different region). If this fails, the first catalog load retries.
+						CloudGameRepository(applicationContext, preferences).ensureAccountLocale(npsso, force = true)
+					}
 				}
 
 				if (exchangeSuccess) {

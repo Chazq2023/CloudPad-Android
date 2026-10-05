@@ -2,6 +2,8 @@
 
 > [!WARNING]
 > **Use at your own risk: your PSN account could be affected.** CloudPad is an unofficial client, not made or approved by Sony. To stream, it signs in to Sony's services with your PSN account and presents itself as an official PlayStation client. Sony can tell these sessions apart from its own apps, and its terms of service forbid unauthorised software. Sony could therefore restrict, suspend or ban an account that uses CloudPad, or stop the app from working at any time. If losing your account would be a serious problem, don't use CloudPad with it; use Sony's official apps or devices instead. By continuing to use CloudPad, you acknowledge these risks and accept that you use it at your own risk.
+>
+> **Don't try to play games before they're released.** CloudPad keeps pre-ordered games hidden and locked until their release time. An official PlayStation console or PlayStation Portal would never let you play a game early, so trying to get around this could put your PSN account at serious risk. CloudPad won't help with this.
 
 Join our discord for all of the latest CloudPad news and updates!  
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/KvFaS4f8pk)
@@ -15,7 +17,7 @@ CloudPad streams your PlayStation games to Android, either straight from Sony's 
 > **Supported devices:** CloudPad officially supports Android phones, tablets, and handheld gaming devices only. **Android TV is not supported**, and there are no plans to support it. If it happens to work on your TV device right now, consider that a bonus, but be aware that future updates may break it without notice.
 
 > [!IMPORTANT]
-> **Supported versions:** Only **v0.1.65 and newer** are supported. Issues or questions raised for older versions won't be looked into, so please update to the [latest release](https://github.com/Chazq2023/CloudPad-Android/releases/latest) before reporting a problem.
+> **Supported versions:** Only **v0.1.65 and newer** are supported. Older versions are missing safety protections that help keep your PSN account safe, and **v0.1.60 or older can't tell you when an update is needed**, so check your version and update manually. Issues or questions raised for older versions won't be looked into, so please update to the [latest release](https://github.com/Chazq2023/CloudPad-Android/releases/latest) before reporting a problem.
 
 <video src="https://github.com/user-attachments/assets/a61e061c-3658-4bf9-84ce-a7ad82f64578" controls width="600"></video>
 
@@ -43,7 +45,7 @@ CloudPad streams your PlayStation games to Android, either straight from Sony's 
 * **Background streaming** — minimize the app (home button, app switch, or the Quick Settings Minimize button) and the stream keeps running in the background, resuming exactly where you left off when you return
 * **Customizable Performance Overlay** — Full or Minimal live stats view showing real network ping/RTT, FPS, and bitrate, with drag-to-reposition and adjustable opacity
 * Configurable video profiles per streaming mode (Remote Play, Game Library, Game Catalog)
-* Selectable Cloud Play datacenter/locale in Settings
+* Selectable Cloud Play datacenter and game language in Settings; the store region always follows your PSN account
 
 ### Console management
 * Automatic local console discovery, PSN-based discovery, and registration
@@ -147,7 +149,7 @@ CloudPad is intended for use with games and content you own or are licensed to u
 * **Only use your own PSN account; don't share accounts or sign in with someone else's.**
 * **Don't use CloudPad to get around region, subscription or release-date restrictions**, such as trying to play a pre-ordered game before it's released.
 
-CloudPad blocks games that haven't been released yet: a pre-ordered game can't be started until its release time, checked against Sony's clock rather than your device's.
+CloudPad blocks games that haven't been released yet: a pre-ordered game stays hidden from your PS5 Library and can't be started until its release time, checked against Sony's clock rather than your device's. It appears the first time you refresh your Library after release, so a release Sony pushes back won't show up early.
 
 Using a VPN can make your connection appear to come from another country, which may add to your account's risk and usually increases latency.
 
@@ -155,7 +157,7 @@ This project does not circumvent copy protection and does not facilitate piracy.
 
 This project is not endorsed, sponsored, approved, or certified by Sony Interactive Entertainment, PlayStation, or any console manufacturer.
 
-PlayStation, PS4, PS5, and related names are trademarks of their respective owners. All trademarks belong to their respective owners.
+PlayStation, PlayStation Network (PSN), PlayStation Plus, PS4, PS5, and related names are trademarks of their respective owners. All trademarks belong to their respective owners.
 
 # Licence
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)

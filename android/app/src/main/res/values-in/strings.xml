@@ -390,8 +390,9 @@
     <string name="preferences_psn_logout_success">Berhasil keluar</string>
     <string name="preferences_psn_login_row_title">Masuk</string>
     <string name="preferences_psn_login_row_summary">Ketuk untuk masuk</string>
-    <string name="preferences_locale_title">Lokal</string>
-    <string name="preferences_locale_summary_not_set">Belum diatur - Silakan masuk untuk mendapatkan lokal</string>
+    <string name="preferences_game_language_title">Bahasa game</string>
+    <string name="preferences_game_language_follow_account">Bahasa akun PSN</string>
+    <string name="cloud_region_unconfirmed">Tidak dapat mengonfirmasi wilayah akun PSN Anda, jadi daftar ini belum dapat ditampilkan. Silakan coba lagi sebentar lagi.</string>
     <string name="preferences_cached_locale_title">Lokal Tersimpan</string>
     <string name="preferences_cached_locale_summary_not_set">Tidak ada lokal tersimpan</string>
     <string name="preferences_category_title_game_library">Pustaka Game</string>

@@ -85,6 +85,17 @@ class PsnCatalogService(
 	}
 	
 	/**
+	 * Reads the account's country and language from a PS Now session — steps 1-2 of a catalog
+	 * load — and saves them as the store locale (see createKamajiSession). Returns whether the
+	 * session was created.
+	 */
+	suspend fun fetchAccountLocale(npssoToken: String): Boolean = withContext(Dispatchers.IO)
+	{
+		val code = fetchOAuthCode(npssoToken) ?: return@withContext false
+		createKamajiSession(code) != null
+	}
+
+	/**
 	 * Step 1: OAuth authentication with NPSSO token
 	 * Matches: CloudCatalogBackend::fetchPsnowOAuthToken()
 	 */

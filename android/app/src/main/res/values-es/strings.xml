@@ -301,8 +301,9 @@
     <string name="preferences_psn_logout_success">Sesión cerrada correctamente</string>
     <string name="preferences_psn_login_row_title">Iniciar sesión</string>
     <string name="preferences_psn_login_row_summary">Toca para iniciar sesión</string>
-    <string name="preferences_locale_title">Configuración regional</string>
-    <string name="preferences_locale_summary_not_set">No configurada - Inicia sesión para obtener la configuración regional</string>
+    <string name="preferences_game_language_title">Idioma del juego</string>
+    <string name="preferences_game_language_follow_account">Idioma de la cuenta PSN</string>
+    <string name="cloud_region_unconfirmed">No se pudo confirmar la región de tu cuenta PSN, así que esta lista aún no se puede mostrar. Inténtalo de nuevo en un momento.</string>
     <string name="preferences_cached_locale_title">Configuración regional en caché</string>
     <string name="preferences_cached_locale_summary_not_set">No hay ninguna configuración regional en caché</string>
 

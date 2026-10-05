@@ -300,8 +300,9 @@
     <string name="preferences_psn_logout_success">Erfolgreich abgemeldet</string>
     <string name="preferences_psn_login_row_title">Anmelden</string>
     <string name="preferences_psn_login_row_summary">Zum Anmelden tippen</string>
-    <string name="preferences_locale_title">Gebietsschema</string>
-    <string name="preferences_locale_summary_not_set">Nicht festgelegt - Bitte melde dich an, um das Gebietsschema zu erhalten</string>
+    <string name="preferences_game_language_title">Spielsprache</string>
+    <string name="preferences_game_language_follow_account">Sprache des PSN-Kontos</string>
+    <string name="cloud_region_unconfirmed">Die Region deines PSN-Kontos konnte nicht bestätigt werden, daher kann diese Liste noch nicht angezeigt werden. Bitte versuche es gleich noch einmal.</string>
     <string name="preferences_cached_locale_title">Zwischengespeichertes Gebietsschema</string>
     <string name="preferences_cached_locale_summary_not_set">Kein zwischengespeichertes Gebietsschema vorhanden</string>
 

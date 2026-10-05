@@ -18,10 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed a few PS3/PS4 Game Catalog games (including Dying Light 2, Marvel's Spider-Man and Forbidden Siren) failing with "Streaming Unavailable" the first time you played them.
-        - The Game Catalog now shows Forbidden Siren and War of the Monsters once each, keeping the newer version Sony offers.
-        - Safer free-game claiming: CloudPad now only adds a PS3/PS4 game to your account when Sony clearly confirms it costs £0.00, and otherwise stops before checkout.
-        - Pre-ordered games are now hidden from your PS5 Library until their release time passes, then appear the first time you refresh the Library after release, so a delayed release can't show up early.
+        - The PS5 and PS3/PS4 catalogs now always match your PSN account's region, set automatically when you sign in, so Add Game only shows games that can stream for your account. If your region can't be confirmed, the list waits rather than showing another region's games.
+        - Settings: "Locale" is replaced by "Game language", which chooses the language your cloud games run in (or follows your account). If you'd picked a different language before, it's kept.
+        - Extra pre-order protection: a game Sony sends without a release date now stays hidden until Sony provides one, rather than appearing early.
 
     steps:
       - name: Checkout repo

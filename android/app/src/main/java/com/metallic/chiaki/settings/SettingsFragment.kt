@@ -103,7 +103,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 		preferences.themeColourKey -> preferences.getThemeColour()
 		preferences.imageProcessingKey -> preferences.imageProcessing
 		preferences.appLanguageKey -> AppCompatDelegate.getApplicationLocales().get(0)?.toLanguageTag() ?: "system"
-		"locale_display" -> preferences.getCloudStoreLocale()
+		"cloud_game_language_display" -> preferences.getCloudGameLanguage()
 		else -> defValue
 	}
 
@@ -146,7 +146,7 @@ class DataStore(val preferences: Preferences): PreferenceDataStore()
 				AppCompatDelegate.setApplicationLocales(locales)
 			}
 			preferences.imageProcessingKey -> preferences.imageProcessing = value ?: "off"
-			"locale_display" -> value?.let(preferences::setUserSelectedCloudStoreLocale)
+			"cloud_game_language_display" -> preferences.setCloudGameLanguage(value ?: "")
 		}
 	}
 
@@ -173,18 +173,19 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 	companion object
 	{
 		private const val PICK_SETTINGS_JSON_REQUEST = 1
-		private val CLOUD_LOCALES = listOf(
-			"en-US" to "English",
-			"en-GB" to "English (UK)",
-			"de-DE" to "Deutsch",
-			"fr-FR" to "Français",
-			"fi-FI" to "Suomi",
-			"it-IT" to "Italiano",
-			"es-ES" to "Español",
-			"nl-NL" to "Nederlands",
-			"pt-BR" to "Português (BR)",
-			"ja-JP" to "日本語",
-			"ko-KR" to "한국어"
+		// Languages a cloud game can be asked to run in (the language code is what Gaikai is
+		// sent). The store/catalog country isn't selectable — it always follows the account.
+		private val GAME_LANGUAGES = listOf(
+			"en" to "English",
+			"de" to "Deutsch",
+			"fr" to "Français",
+			"fi" to "Suomi",
+			"it" to "Italiano",
+			"es" to "Español",
+			"nl" to "Nederlands",
+			"pt" to "Português",
+			"ja" to "日本語",
+			"ko" to "한국어"
 		)
 	}
 
@@ -373,10 +374,6 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		updatePsnAccountPreference()
 		updateLocalePreference()
 
-		val cachedLocalePreference = preferenceScreen.findPreference<Preference>("cached_locale_display")
-		val rawStored = preferences.getRawStoredLocale()
-		cachedLocalePreference?.summary = rawStored ?: getString(R.string.preferences_cached_locale_summary_not_set)
-
 		// Static, non-selectable — just reports whatever version was actually installed, read
 		// straight from the APK's own manifest rather than duplicated as a preference value.
 		preferenceScreen.findPreference<Preference>("app_version")?.summary = BuildConfig.VERSION_NAME
@@ -472,30 +469,20 @@ class SettingsFragment: PreferenceFragmentCompat(), TitleFragment
 		}
 	}
 
-	/** Cloud store locale only makes sense once logged in — re-called alongside
-	 *  [updatePsnAccountPreference] so it flips enabled/disabled in step with the account row
-	 *  rather than only being correct the next time Settings is freshly opened. */
+	/** Game language picker ("Follow account" or a language) and the account-locale row beneath
+	 *  it — re-called alongside [updatePsnAccountPreference] so the account locale shown updates
+	 *  after signing in or out without reopening Settings. */
 	private fun updateLocalePreference()
 	{
 		val preferences = Preferences(requireContext())
-		val localePreference = preferenceScreen?.findPreference<ListPreference>("locale_display") ?: return
-		if (preferences.hasNpssoToken())
-		{
-			localePreference.entries = CLOUD_LOCALES.map { "${it.second} (${it.first})" }.toTypedArray()
-			localePreference.entryValues = CLOUD_LOCALES.map { it.first }.toTypedArray()
-			localePreference.value = preferences.getCloudStoreLocale()
-			localePreference.summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
-			localePreference.isEnabled = true
+		preferenceScreen?.findPreference<ListPreference>("cloud_game_language_display")?.apply {
+			entries = (listOf(getString(R.string.preferences_game_language_follow_account)) + GAME_LANGUAGES.map { it.second }).toTypedArray()
+			entryValues = (listOf("") + GAME_LANGUAGES.map { it.first }).toTypedArray()
+			value = preferences.getCloudGameLanguage()
+			if (summaryProvider == null) summaryProvider = ListPreference.SimpleSummaryProvider.getInstance()
 		}
-		else
-		{
-			// The logged-in branch above sets a SummaryProvider, which Preference.setSummary()
-			// refuses to run alongside once set — has to be cleared first or this throws
-			// IllegalStateException the moment a user logs out with the locale already loaded.
-			localePreference.summaryProvider = null
-			localePreference.isEnabled = false
-			localePreference.summary = getString(R.string.preferences_locale_summary_not_set)
-		}
+		preferenceScreen?.findPreference<Preference>("cached_locale_display")?.summary =
+			preferences.getRawStoredLocale() ?: getString(R.string.preferences_cached_locale_summary_not_set)
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
