@@ -32,7 +32,7 @@ class PreorderReleaseGateTest {
     }
 
     @Test
-    fun `missing or garbage dates mean no restriction`() {
+    fun `missing or garbage dates parse as zero`() {
         assertEquals(0L, PsCloudOwnership.parseSonyDate(""))
         assertEquals(0L, PsCloudOwnership.parseSonyDate("not a date"))
     }
@@ -105,9 +105,27 @@ class PreorderReleaseGateTest {
     }
 
     @Test
-    fun `ordinary purchase without a date is not locked`() {
+    fun `a game with no date stays locked even without the pre-order flag`() {
+        // Sony dates every entitlement; one arriving without a date might be an unreleased
+        // pre-order Sony forgot to flag, so it stays hidden until a date arrives.
         val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = false, activeDate = null))!!
-        assertEquals(0L, ent.activeDateMs)
+        assertEquals(PsCloudOwnership.RELEASE_DATE_UNKNOWN, ent.activeDateMs)
+        val game = PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(ent)).single()
+        assertTrue(PsCloudOwnership.withoutUnreleased(listOf(game), Long.MAX_VALUE - 1).isEmpty())
+    }
+
+    @Test
+    fun `a game with an unreadable date stays locked`() {
+        val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = false, activeDate = "not a date"))!!
+        assertEquals(PsCloudOwnership.RELEASE_DATE_UNKNOWN, ent.activeDateMs)
+    }
+
+    @Test
+    fun `an ordinary purchase is dated by when it was added and plays normally`() {
+        // Real shape: Ghost of Tsushima's active_date is when it was added to the account.
+        val ent = PsCloudOwnership.parseEntitlement(entitlementJson(preorder = false, activeDate = "2025-01-11T22:23:17Z"))!!
+        val game = PsCloudOwnership.stampReleaseChecked(PsCloudOwnership.buildOwnedGamesFromEntitlements(listOf(ent)), releaseMs).single()
+        assertTrue(PsCloudOwnership.isReleased(game, releaseMs))
     }
 
     @Test

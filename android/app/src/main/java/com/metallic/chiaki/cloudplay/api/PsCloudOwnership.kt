@@ -89,15 +89,25 @@ object PsCloudOwnership
 			featureType = obj.optInt("feature_type", 0),
 			skuType = skuType,
 			iconUrl = gameMeta.optString("icon_url", ""),
+			// Sony dates every entitlement (an ordinary purchase gets the time it was added; a
+			// pre-order its release time), so one with no usable date is treated as not yet
+			// released — whether or not it's flagged as a pre-order. Better to hide a game whose
+			// date Sony left off than to show an unreleased one that Gaikai would stream.
 			activeDateMs = parseSonyDate(obj.optString("active_date", "")).let { date ->
-				if (date == 0L && obj.optBoolean("preorder_flag", false)) RELEASE_DATE_UNKNOWN else date
+				if (date != 0L) date
+				else
+				{
+					if (obj.optInt("feature_type", 0) != 0)
+						Log.i(TAG, "No release date from Sony for '$name' ($id, preorder_flag=${obj.optBoolean("preorder_flag", false)}); hiding it until one arrives")
+					RELEASE_DATE_UNKNOWN
+				}
 			}
 		)
 	}
 
 	/** Parses Sony's ISO-8601 UTC timestamps ("2026-10-05T23:00:00Z", optionally with millis);
-	 *  0 if absent or unparseable, which means "no release restriction". java.time isn't available
-	 *  at minSdk 24, hence SimpleDateFormat. */
+	 *  0 if absent or unparseable (an owned entitlement then counts as RELEASE_DATE_UNKNOWN, see
+	 *  parseEntitlement). java.time isn't available at minSdk 24, hence SimpleDateFormat. */
 	fun parseSonyDate(value: String): Long
 	{
 		if (value.isEmpty()) return 0L

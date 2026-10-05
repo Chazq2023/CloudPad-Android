@@ -20,6 +20,7 @@ jobs:
       RELEASE_NOTES: |-
         - The PS5 and PS3/PS4 catalogs now always match your PSN account's region, set automatically when you sign in, so Add Game only shows games that can stream for your account. If your region can't be confirmed, the list waits rather than showing another region's games.
         - Settings: "Locale" is replaced by "Game language", which chooses the language your cloud games run in (or follows your account). If you'd picked a different language before, it's kept.
+        - Extra pre-order protection: a game Sony sends without a release date now stays hidden until Sony provides one, rather than appearing early.
 
     steps:
       - name: Checkout repo
