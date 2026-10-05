@@ -694,6 +694,8 @@
     <string name="update_required_title">Päivitys vaaditaan</string>
     <string name="update_required_message">Tätä CloudPadin versiota (%1$s) ei enää tueta. Päivitä versioon %2$s tai uudempaan, jotta voit jatkaa sovelluksen käyttöä.</string>
     <string name="update_required_button">Päivitä</string>
+    <string name="version_check_failed_title">Päivitysten tarkistus epäonnistui</string>
+    <string name="version_check_failed_message">CloudPad ei voinut tarkistaa uusinta päivitystä. Tarkista internetyhteytesi ja yritä uudelleen. Jos ongelma jatkuu, GitHub voi olla poissa käytöstä, joten yritä myöhemmin uudelleen.</string>
     <string name="clock_wrong_date_title">Väärä päivämäärä</string>
     <string name="clock_wrong_date_message">Vaihda päivämäärä takaisin tämän päivän päivämäärään ja avaa sovellus uudelleen</string>
     <string name="cloud_not_released_title">Ei vielä julkaistu</string>

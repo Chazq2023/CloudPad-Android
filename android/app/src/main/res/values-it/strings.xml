@@ -694,6 +694,8 @@
     <string name="update_required_title">Aggiornamento richiesto</string>
     <string name="update_required_message">Questa versione di CloudPad (%1$s) non è più supportata. Aggiorna alla versione %2$s o successiva per continuare a usare l\'app.</string>
     <string name="update_required_button">Aggiorna</string>
+    <string name="version_check_failed_title">Impossibile verificare gli aggiornamenti</string>
+    <string name="version_check_failed_message">CloudPad non è riuscito a verificare l\'ultimo aggiornamento. Controlla la connessione a Internet e riprova. Se il problema persiste, GitHub potrebbe non essere disponibile: riprova più tardi.</string>
     <string name="clock_wrong_date_title">Data errata</string>
     <string name="clock_wrong_date_message">Reimposta la data di oggi e riapri l\'app</string>
     <string name="cloud_not_released_title">Non ancora disponibile</string>
