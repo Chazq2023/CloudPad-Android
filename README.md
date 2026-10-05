@@ -2,6 +2,8 @@
 
 > [!WARNING]
 > **Use at your own risk: your PSN account could be affected.** CloudPad is an unofficial client, not made or approved by Sony. To stream, it signs in to Sony's services with your PSN account and presents itself as an official PlayStation client. Sony can tell these sessions apart from its own apps, and its terms of service forbid unauthorised software. Sony could therefore restrict, suspend or ban an account that uses CloudPad, or stop the app from working at any time. If losing your account would be a serious problem, don't use CloudPad with it; use Sony's official apps or devices instead. By continuing to use CloudPad, you acknowledge these risks and accept that you use it at your own risk.
+>
+> **Don't try to play games before they're released.** CloudPad keeps pre-ordered games hidden and locked until their release time. An official PlayStation console or PlayStation Portal would never let you play a game early, so trying to get around this could put your PSN account at serious risk. CloudPad won't help with this.
 
 Join our discord for all of the latest CloudPad news and updates!  
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/KvFaS4f8pk)
@@ -147,7 +149,7 @@ CloudPad is intended for use with games and content you own or are licensed to u
 * **Only use your own PSN account; don't share accounts or sign in with someone else's.**
 * **Don't use CloudPad to get around region, subscription or release-date restrictions**, such as trying to play a pre-ordered game before it's released.
 
-CloudPad blocks games that haven't been released yet: a pre-ordered game can't be started until its release time, checked against Sony's clock rather than your device's.
+CloudPad blocks games that haven't been released yet: a pre-ordered game stays hidden from your PS5 Library and can't be started until its release time, checked against Sony's clock rather than your device's. It appears the first time you refresh your Library after release, so a release Sony pushes back won't show up early.
 
 Using a VPN can make your connection appear to come from another country, which may add to your account's risk and usually increases latency.
 
