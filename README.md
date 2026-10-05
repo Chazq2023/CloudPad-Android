@@ -17,7 +17,7 @@ CloudPad streams your PlayStation games to Android, either straight from Sony's 
 > **Supported devices:** CloudPad officially supports Android phones, tablets, and handheld gaming devices only. **Android TV is not supported**, and there are no plans to support it. If it happens to work on your TV device right now, consider that a bonus, but be aware that future updates may break it without notice.
 
 > [!IMPORTANT]
-> **Supported versions:** Only **v0.1.65 and newer** are supported. Issues or questions raised for older versions won't be looked into, so please update to the [latest release](https://github.com/Chazq2023/CloudPad-Android/releases/latest) before reporting a problem.
+> **Supported versions:** Only **v0.1.65 and newer** are supported. Older versions are missing safety protections that help keep your PSN account safe, and **v0.1.60 or older can't tell you when an update is needed**, so check your version and update manually. Issues or questions raised for older versions won't be looked into, so please update to the [latest release](https://github.com/Chazq2023/CloudPad-Android/releases/latest) before reporting a problem.
 
 <video src="https://github.com/user-attachments/assets/a61e061c-3658-4bf9-84ce-a7ad82f64578" controls width="600"></video>
 
