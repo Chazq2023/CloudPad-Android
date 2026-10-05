@@ -45,7 +45,7 @@ CloudPad streams your PlayStation games to Android, either straight from Sony's 
 * **Background streaming** — minimize the app (home button, app switch, or the Quick Settings Minimize button) and the stream keeps running in the background, resuming exactly where you left off when you return
 * **Customizable Performance Overlay** — Full or Minimal live stats view showing real network ping/RTT, FPS, and bitrate, with drag-to-reposition and adjustable opacity
 * Configurable video profiles per streaming mode (Remote Play, Game Library, Game Catalog)
-* Selectable Cloud Play datacenter/locale in Settings
+* Selectable Cloud Play datacenter and game language in Settings; the store region always follows your PSN account
 
 ### Console management
 * Automatic local console discovery, PSN-based discovery, and registration
@@ -157,7 +157,7 @@ This project does not circumvent copy protection and does not facilitate piracy.
 
 This project is not endorsed, sponsored, approved, or certified by Sony Interactive Entertainment, PlayStation, or any console manufacturer.
 
-PlayStation, PS4, PS5, and related names are trademarks of their respective owners. All trademarks belong to their respective owners.
+PlayStation, PlayStation Network (PSN), PlayStation Plus, PS4, PS5, and related names are trademarks of their respective owners. All trademarks belong to their respective owners.
 
 # Licence
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/ForWard-Technologies-LLC/Pylux/blob/master/LICENSES/AGPL-3.0-only-OpenSSL.txt)
