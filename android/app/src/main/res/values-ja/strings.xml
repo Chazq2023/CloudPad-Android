@@ -692,6 +692,8 @@
     <string name="update_required_title">アップデートが必要です</string>
     <string name="update_required_message">このバージョンの CloudPad（%1$s）はサポートが終了しました。引き続きご利用いただくには、%2$s 以降にアップデートしてください。</string>
     <string name="update_required_button">アップデート</string>
+    <string name="version_check_failed_title">アップデートを確認できません</string>
+    <string name="version_check_failed_message">CloudPadは最新のアップデートを確認できませんでした。インターネット接続を確認して、もう一度お試しください。問題が続く場合はGitHubが利用できない可能性があるため、しばらくしてからもう一度お試しください。</string>
     <string name="clock_wrong_date_title">日付が正しくありません</string>
     <string name="clock_wrong_date_message">日付を今日の日付に戻して、アプリを再度開いてください</string>
     <string name="cloud_not_released_title">未発売</string>

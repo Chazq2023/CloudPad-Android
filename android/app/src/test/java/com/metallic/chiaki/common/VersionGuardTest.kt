@@ -37,4 +37,27 @@ class VersionGuardTest {
         assertFalse(VersionGuard.isOutdated("", "0.1.59"))
         assertFalse(VersionGuard.isOutdated("0.1.10", "garbage"))
     }
+
+    @Test
+    fun `a valid config reply is a successful check`() {
+        val config = VersionGuard.parseConfig(200, """{"minVersion":"0.1.66","updateUrl":"https://example.com/latest"}""")
+        assertEquals("0.1.66", config?.minVersion)
+        assertEquals("https://example.com/latest", config?.updateUrl)
+    }
+
+    @Test
+    fun `a config without an update link still counts, using the releases page`() {
+        assertEquals("0.1.66", VersionGuard.parseConfig(200, """{"minVersion":"0.1.66"}""")?.minVersion)
+    }
+
+    @Test
+    fun `an error reply or unreadable config counts as a failed check`() {
+        // Each of these must block rather than let the app run unchecked.
+        assertNull(VersionGuard.parseConfig(404, """{"minVersion":"0.1.66"}"""))
+        assertNull(VersionGuard.parseConfig(500, ""))
+        assertNull(VersionGuard.parseConfig(200, "<html>blocked</html>"))
+        assertNull(VersionGuard.parseConfig(200, "{}"))
+        assertNull(VersionGuard.parseConfig(200, """{"minVersion":""}"""))
+        assertNull(VersionGuard.parseConfig(200, """{"minVersion":"latest"}"""))
+    }
 }
