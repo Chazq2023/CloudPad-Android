@@ -18,10 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - The PS5 and PS3/PS4 catalogs now always match your PSN account's region, set automatically when you sign in, so Add Game only shows games that can stream for your account. If your region can't be confirmed, the list waits rather than showing another region's games.
-        - Settings: "Locale" is replaced by "Game language", which chooses the language your cloud games run in (or follows your account). If you'd picked a different language before, it's kept.
-        - Extra pre-order protection: a game Sony sends without a release date now stays hidden until Sony provides one, rather than appearing early.
-        - CloudPad now needs to check for required updates each time it opens. If it can't (for example, no internet connection), it shows a message and closes; try again once you're back online.
+        - Logging out now clears your saved game lists, so the next account to sign in on the device only ever sees its own games.
 
     steps:
       - name: Checkout repo
