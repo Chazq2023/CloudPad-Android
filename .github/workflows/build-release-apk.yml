@@ -19,6 +19,7 @@ jobs:
     env:
       RELEASE_NOTES: |-
         - Logging out now clears your saved game lists, so the next account to sign in on the device only ever sees its own games.
+        - Fixed Settings > License Agreement crashing the app; its disclaimer now links to CloudPad's own source code and includes the account-risk warning.
 
     steps:
       - name: Checkout repo
