@@ -86,18 +86,6 @@
     <string name="action_add_manual_save">저장</string>
     <string name="hint_add_manual_regist_host">등록된 콘솔</string>
     <string name="add_manual_regist_on_connect">최초 연결 시 등록</string>
-    <string name="preferences_category_title_support">후원</string>
-    <string name="preferences_donate_title">CloudPad 후원</string>
-    <string name="preferences_donate_summary">개발을 지원하려면 후원해 주세요. CloudPad를 이용해 주셔서 감사합니다.</string>
-    <string name="preferences_donate_no_products">이 빌드에서는 후원 옵션을 사용할 수 없습니다.</string>
-    <string name="preferences_donate_billing_unavailable">이 기기에서는 Google Play 결제를 사용할 수 없습니다. Play 스토어를 설치하거나 업데이트하거나, Google Play(예: 내부 테스트)에서 CloudPad를 설치하면 후원 구매를 이용할 수 있습니다.</string>
-    <string name="donation_paywall_external_title">PayPal로 후원</string>
-    <string name="donation_paywall_external_hint">여기서는 Google Play 결제를 사용할 수 없습니다. 휴대폰으로 QR 코드를 스캔해 PayPal을 열거나, 아래의 링크 열기를 사용하세요.</string>
-    <string name="donation_paywall_external_open_link">PayPal 링크 열기</string>
-    <string name="donation_paywall_external_no_browser">이 기기에서 링크를 열 수 있는 앱이 없습니다.</string>
-    <string name="donation_paywall_qr_content_description">PayPal 후원 페이지로 연결되는 QR 코드</string>
-    <string name="donation_paywall_trust_paypal">브라우저에서 PayPal로 후원하세요.</string>
-    <string name="preferences_donate_already_supporting">이 계정에는 이미 후원 구매 내역이 있습니다. 감사합니다!</string>
 
     <!-- Theme colour preference -->
     <string name="preferences_category_title_appearance">모양</string>
@@ -384,44 +372,8 @@
     <string name="overlay_configure_restore_defaults">기본값으로 복원</string>
     <string name="overlay_move_done">완료</string>
     <string name="action_save">저장</string>
-    <string name="donation_dialog_title">CloudPad 후원</string>
-    <string name="donation_dialog_body">CloudPad는 커뮤니티가 만들었습니다. 이 앱이 마음에 드신다면 개발 지원을 고려해 주세요. 여러분의 기여는 지속적인 업데이트를 지원하고 프로젝트를 유지하는 데 도움이 됩니다.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
-    <string name="donation_tier_button_label">%1$s · %2$s</string>
-    <string name="donation_action_not_now">나중에</string>
 
-    <string name="bullet_dot">•</string>
-
-    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
-    <string name="donation_paywall_headline">CloudPad를 계속 이어가 주세요</string>
-    <string name="donation_paywall_tagline">오픈 소스이며 커뮤니티가 유지 관리합니다.</string>
-    <string name="donation_paywall_story_title">CloudPad를 즐기고 계신가요?</string>
-    <string name="donation_paywall_story_lead">이 앱은 오픈 소스이며 커뮤니티가 유지 관리합니다. 프로젝트 후원을 고려해 주세요. 후원금은 프로젝트를 유지 관리하는 개발자들에게 전달됩니다.</string>
-    <string name="donation_paywall_bullet_1">후원금은 CloudPad를 만들고 유지 관리하는 사람들에게 전달됩니다.</string>
-    <string name="donation_paywall_bullet_2">Google Play에서 한 번만 결제합니다. 구독이 아닙니다.</string>
-    <string name="donation_paywall_bullet_3">선택 사항입니다. 후원 여부와 관계없이 전체 앱을 이용할 수 있습니다.</string>
-    <string name="donation_paywall_pick_title">금액 선택</string>
-    <string name="donation_paywall_pick_hint">아래에서 등급을 선택하세요. 한 번만 결제합니다.</string>
-    <string name="donation_paywall_maybe_later">나중에 할게요</string>
-    <string name="donation_paywall_trust">Google Play에서 한 번만 결제합니다. 구독이 아닙니다.</string>
-    <!-- Accessibility: tier name + localized price from Play -->
-    <string name="donation_tier_content_description">%1$s, %2$s. Google Play로 한 번 후원하려면 두 번 탭하세요.</string>
-    <string name="donation_tier_bronze">브론즈 후원</string>
-    <string name="donation_tier_silver">실버 후원</string>
-    <string name="donation_tier_gold">골드 후원</string>
-    <string name="donation_tier_platinum">플래티넘 후원</string>
-    <string name="donation_tier_blurb_bronze">모든 후원이 소중합니다.</string>
-    <string name="donation_tier_blurb_silver">조금 더 많은 후원입니다.</string>
-    <string name="donation_tier_blurb_gold">더 많이 후원하고 싶을 때.</string>
-    <string name="donation_tier_blurb_platinum">가장 많이 후원하고 싶을 때.</string>
-    <string name="donation_tier_blurb_default">CloudPad를 후원해 주셔서 감사합니다.</string>
-    <string name="donation_paywall_close">닫기</string>
-    <string name="donation_paywall_logo_content_description">CloudPad</string>
-    <string name="donation_paywall_restore_purchases">구매 복원</string>
-    <string name="donation_paywall_restore_none">이 Google 계정에 대한 후원 구매 내역이 없습니다.</string>
-    <string name="donation_paywall_restore_already">이미 이 기기에 후원 구매 내역이 있습니다.</string>
-    <string name="donation_paywall_restore_success">구매가 복원되었습니다. CloudPad를 후원해 주셔서 감사합니다!</string>
-    <string name="donation_paywall_restore_unavailable">Google Play에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.</string>
     <string name="preferences_cloud_bitrate_pscloud_title">비트레이트</string>
     <string name="preferences_cloud_bitrate_pscloud_summary">게임 라이브러리 스트리밍의 경우 %d Mbps</string>
 
@@ -439,9 +391,6 @@
     <string name="action_manual">수동</string>
     <string name="action_no">아니요</string>
     <string name="action_yes">예</string>
-
-    <string name="app_integrity_verification_required_title">확인 필요</string>
-    <string name="app_integrity_verification_required_message">애플리케이션 출처를 확인할 수 없습니다. 인터넷에 연결되어 있는지, 그리고 앱이 공식 소스에서 설치되었는지 확인해 주세요.</string>
 
     <string name="cloud_account_settings_update_title">계정 설정 업데이트 필요</string>
     <string name="cloud_account_settings_update_message">클라우드 스트리밍을 사용하려면 계정 개인정보 설정을 업데이트해야 합니다.\n\n업데이트 URL: %1$s</string>

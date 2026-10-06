@@ -11,9 +11,6 @@
     <attr name="pyluxAccentA70" format="color"/>
     <attr name="pyluxAccentA80" format="color"/>
     <attr name="pyluxToolbarBg" format="color"/>
-    <attr name="pyluxSupportTierCardBg" format="color"/>
-    <attr name="pyluxSupportTextSecondary" format="color"/>
-    <attr name="pyluxSupportBadgeBg" format="color"/>
     <attr name="pyluxToolbarTheme" format="reference"/>
 
     <attr name="drawableIdle" format="reference" />

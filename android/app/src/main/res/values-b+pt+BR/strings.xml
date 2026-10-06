@@ -86,18 +86,6 @@
     <string name="action_add_manual_save">Salvar</string>
     <string name="hint_add_manual_regist_host">Console Registrado</string>
     <string name="add_manual_regist_on_connect">Registrar na primeira conexão</string>
-    <string name="preferences_category_title_support">Suporte</string>
-    <string name="preferences_donate_title">Apoiar o CloudPad</string>
-    <string name="preferences_donate_summary">Faça uma doação para apoiar o desenvolvimento. Obrigado por usar o CloudPad.</string>
-    <string name="preferences_donate_no_products">As opções de apoio não estão disponíveis nesta versão.</string>
-    <string name="preferences_donate_billing_unavailable">O faturamento do Google Play não está disponível neste dispositivo. Instale ou atualize a Play Store, ou instale o CloudPad pelo Google Play (por exemplo, teste interno) para que as compras de apoio funcionem.</string>
-    <string name="donation_paywall_external_title">Apoiar via PayPal</string>
-    <string name="donation_paywall_external_hint">O faturamento do Google Play não está disponível aqui. Escaneie o código QR com seu celular para abrir o PayPal, ou use o botão Abrir link abaixo.</string>
-    <string name="donation_paywall_external_open_link">Abrir link do PayPal</string>
-    <string name="donation_paywall_external_no_browser">Nenhum aplicativo neste dispositivo pode abrir o link.</string>
-    <string name="donation_paywall_qr_content_description">Código QR com link para a página de apoio do PayPal</string>
-    <string name="donation_paywall_trust_paypal">Doe pelo PayPal no seu navegador.</string>
-    <string name="preferences_donate_already_supporting">Você já possui uma compra de apoio nesta conta. Obrigado!</string>
 
     <!-- Theme colour preference -->
     <string name="preferences_category_title_appearance">Aparência</string>
@@ -384,44 +372,8 @@
     <string name="overlay_configure_restore_defaults">Restaurar padrões</string>
     <string name="overlay_move_done">Concluído</string>
     <string name="action_save">Salvar</string>
-    <string name="donation_dialog_title">Apoiar o CloudPad</string>
-    <string name="donation_dialog_body">O CloudPad é desenvolvido pela comunidade. Se você gosta de usá-lo, considere apoiar seu desenvolvimento. Sua contribuição ajuda a financiar futuras atualizações e a manter o projeto vivo.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
-    <string name="donation_tier_button_label">%1$s · %2$s</string>
-    <string name="donation_action_not_now">Agora não</string>
 
-    <string name="bullet_dot">•</string>
-
-    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
-    <string name="donation_paywall_headline">Mantenha o CloudPad vivo</string>
-    <string name="donation_paywall_tagline">Código aberto e mantido pela comunidade.</string>
-    <string name="donation_paywall_story_title">Está gostando do CloudPad?</string>
-    <string name="donation_paywall_story_lead">É um projeto de código aberto, mantido pela comunidade. Considere apoiar o projeto. As doações vão para os desenvolvedores que o mantêm.</string>
-    <string name="donation_paywall_bullet_1">Sua doação vai para as pessoas que criam e mantêm o CloudPad.</string>
-    <string name="donation_paywall_bullet_2">Pagamento único pelo Google Play. Sem assinatura.</string>
-    <string name="donation_paywall_bullet_3">Opcional. Você tem acesso ao aplicativo completo de qualquer forma.</string>
-    <string name="donation_paywall_pick_title">Escolha um valor</string>
-    <string name="donation_paywall_pick_hint">Escolha um nível abaixo. Você paga apenas uma vez.</string>
-    <string name="donation_paywall_maybe_later">Talvez mais tarde</string>
-    <string name="donation_paywall_trust">Pagamento único pelo Google Play. Sem assinatura.</string>
-    <!-- Accessibility: tier name + localized price from Play -->
-    <string name="donation_tier_content_description">%1$s, %2$s. Toque duas vezes para doar uma vez com o Google Play.</string>
-    <string name="donation_tier_bronze">Doação Bronze</string>
-    <string name="donation_tier_silver">Doação Prata</string>
-    <string name="donation_tier_gold">Doação Ouro</string>
-    <string name="donation_tier_platinum">Doação Platina</string>
-    <string name="donation_tier_blurb_bronze">Cada doação conta.</string>
-    <string name="donation_tier_blurb_silver">Um pouco mais de apoio.</string>
-    <string name="donation_tier_blurb_gold">Quando você quer contribuir mais.</string>
-    <string name="donation_tier_blurb_platinum">Se você quer contribuir ao máximo.</string>
-    <string name="donation_tier_blurb_default">Obrigado por apoiar o CloudPad.</string>
-    <string name="donation_paywall_close">Fechar</string>
-    <string name="donation_paywall_logo_content_description">CloudPad</string>
-    <string name="donation_paywall_restore_purchases">Restaurar compras</string>
-    <string name="donation_paywall_restore_none">Nenhuma compra de apoio encontrada para esta conta Google.</string>
-    <string name="donation_paywall_restore_already">Sua compra de apoio já está presente neste dispositivo.</string>
-    <string name="donation_paywall_restore_success">Compras restauradas. Obrigado por apoiar o CloudPad!</string>
-    <string name="donation_paywall_restore_unavailable">Não foi possível acessar o Google Play. Tente novamente em instantes.</string>
     <string name="preferences_cloud_bitrate_pscloud_title">Taxa de Bits</string>
     <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps para a transmissão da Biblioteca de Jogos</string>
 
@@ -439,8 +391,6 @@
     <string name="action_manual">Manual</string>
     <string name="action_no">Não</string>
     <string name="action_yes">Sim</string>
-    <string name="app_integrity_verification_required_title">Verificação Necessária</string>
-    <string name="app_integrity_verification_required_message">Não foi possível verificar a origem do aplicativo. Certifique-se de ter uma conexão ativa com a internet e de que o aplicativo foi instalado de uma fonte oficial.</string>
     <string name="cloud_account_settings_update_title">Atualização das Configurações da Conta Necessária</string>
     <string name="cloud_account_settings_update_message">As configurações de privacidade da sua conta precisam ser atualizadas para usar a transmissão na nuvem.\n\nURL de atualização: %1$s</string>
     <string name="cloud_add_to_home_confirm_message">Gostaria de adicionar %1$s à sua tela inicial?</string>
@@ -575,7 +525,6 @@
     <string name="trophy_hidden_description">Complete este troféu para revelar seus detalhes</string>
     <string name="trophy_hidden_name">Troféu Oculto</string>
     <string name="trophy_progress_percent_complete">%1$d%% Completo</string>
-
 
     <string name="cloud_tab_ps3_catalog">Catálogo PS3</string>
     <string name="cloud_tab_ps4_catalog">Catálogo PS4</string>

@@ -20,6 +20,7 @@ jobs:
       RELEASE_NOTES: |-
         - Logging out now clears your saved game lists, so the next account to sign in on the device only ever sees its own games.
         - Fixed Settings > License Agreement crashing the app; its disclaimer now links to CloudPad's own source code and includes the account-risk warning.
+        - CloudPad no longer uses Google Play services: the "unable to verify application source" check, in-app review prompt and unused donation screens are gone, so it now runs on devices without the Play Store, and the app is smaller.
 
     steps:
       - name: Checkout repo

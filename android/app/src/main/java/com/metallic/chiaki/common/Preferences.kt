@@ -930,24 +930,7 @@ class Preferences(context: Context)
 	private val PSNOW_FILTER_FAVORITES_KEY = "psnow_filter_favorites"
 	private val PSCLOUD_FILTER_FAVORITES_KEY = "pscloud_filter_favorites"
 	private val LICENSE_AGREED_KEY = "license_agreed"
-	private val TOTAL_STREAM_TIME_MS_KEY = "total_stream_time_ms"
 	private val GAME_PLAYTIME_KEY = "game_playtime_stats"
-	/** Migrated from one-time flag; removed after [lastDonationPromptWallClockMs] is seeded. */
-	private val DONATION_STREAM_AUTO_PROMPT_SHOWN_KEY = "donation_stream_auto_prompt_shown"
-	private val LAST_DONATION_PROMPT_WALL_MS_KEY = "last_donation_prompt_wall_ms"
-	private val DONATION_PAYWALL_SHOW_COUNT_KEY = "donation_paywall_show_count"
-
-	/** Total times the support paywall was opened (1-based after [incrementDonationPaywallShowCount]). */
-	val donationPaywallShowCount: Int
-		get() = sharedPreferences.getInt(DONATION_PAYWALL_SHOW_COUNT_KEY, 0)
-
-	/** @return New total paywall open count after increment. */
-	fun incrementDonationPaywallShowCount(): Int
-	{
-		val next = donationPaywallShowCount + 1
-		sharedPreferences.edit().putInt(DONATION_PAYWALL_SHOW_COUNT_KEY, next).apply()
-		return next
-	}
 
 	fun getLastCloudSection(): String
 	{
@@ -1200,42 +1183,4 @@ class Preferences(context: Context)
 	{
 		sharedPreferences.edit().remove(CONTROLLER_MAPPING_KEY).apply()
 	}
-
-	/** Cumulative time spent in connected remote play sessions (client-side estimate). */
-	val totalStreamTimeMs: Long
-		get() = sharedPreferences.getLong(TOTAL_STREAM_TIME_MS_KEY, 0L)
-
-	fun addTotalStreamTimeMs(deltaMs: Long)
-	{
-		if (deltaMs <= 0L) return
-		val sum = totalStreamTimeMs + deltaMs
-		sharedPreferences.edit().putLong(TOTAL_STREAM_TIME_MS_KEY, sum).apply()
-	}
-
-	/**
-	 * Wall clock: last time the in-stream auto donation prompt ran (dialog or “already supporting” toast).
-	 * Used to enforce at most one such prompt per hour; 0 means none yet.
-	 */
-	var lastDonationPromptWallClockMs: Long
-		get()
-		{
-			var wall = sharedPreferences.getLong(LAST_DONATION_PROMPT_WALL_MS_KEY, 0L)
-			if (wall == 0L && sharedPreferences.getBoolean(DONATION_STREAM_AUTO_PROMPT_SHOWN_KEY, false))
-			{
-				wall = System.currentTimeMillis()
-				sharedPreferences.edit()
-					.putLong(LAST_DONATION_PROMPT_WALL_MS_KEY, wall)
-					.remove(DONATION_STREAM_AUTO_PROMPT_SHOWN_KEY)
-					.apply()
-				return wall
-			}
-			return wall
-		}
-		set(value)
-		{
-			sharedPreferences.edit()
-				.putLong(LAST_DONATION_PROMPT_WALL_MS_KEY, value)
-				.remove(DONATION_STREAM_AUTO_PROMPT_SHOWN_KEY)
-				.apply()
-		}
 }

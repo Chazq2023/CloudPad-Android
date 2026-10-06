@@ -37,9 +37,6 @@
         <item name="pyluxAccentA80">@color/accent_pink_a80</item>
         <item name="pyluxToolbarBg">@color/toolbar_bg</item>
         <item name="pyluxToolbarTheme">@style/AppTheme.Toolbar</item>
-        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg</item>
-        <item name="pyluxSupportTextSecondary">@color/support_text_secondary</item>
-        <item name="pyluxSupportBadgeBg">@color/support_badge_bg</item>
         <!-- Governs BOTH AlertDialog single-choice rows (also set on AppTheme.AlertDialog.NonMaterial,
              needed there separately since that's a nested theme AlertDialog resolves independently
              of this one) AND, critically, every plain Spinner's dropdown list — confirmed on-device
@@ -68,9 +65,6 @@
         <item name="pyluxAccentA80">@color/accent_blue_a80</item>
         <item name="pyluxToolbarBg">@color/toolbar_bg_blue</item>
         <item name="pyluxToolbarTheme">@style/AppTheme.Blue.Toolbar</item>
-        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_blue</item>
-        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_blue</item>
-        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_blue</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Blue</item>
     </style>
 
@@ -102,9 +96,6 @@
         <item name="pyluxAccentA80">@color/accent_green_a80</item>
         <item name="pyluxToolbarBg">@color/toolbar_bg_green</item>
         <item name="pyluxToolbarTheme">@style/AppTheme.Green.Toolbar</item>
-        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_green</item>
-        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_green</item>
-        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_green</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Green</item>
     </style>
     <style name="AppTheme.Green.Toolbar" parent="AppTheme.Green">
@@ -129,9 +120,6 @@
         <item name="pyluxAccentA80">@color/accent_yellow_a80</item>
         <item name="pyluxToolbarBg">@color/toolbar_bg_yellow</item>
         <item name="pyluxToolbarTheme">@style/AppTheme.Yellow.Toolbar</item>
-        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_yellow</item>
-        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_yellow</item>
-        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_yellow</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Yellow</item>
     </style>
     <style name="AppTheme.Yellow.Toolbar" parent="AppTheme.Yellow">
@@ -156,9 +144,6 @@
         <item name="pyluxAccentA80">@color/accent_orange_a80</item>
         <item name="pyluxToolbarBg">@color/toolbar_bg_orange</item>
         <item name="pyluxToolbarTheme">@style/AppTheme.Orange.Toolbar</item>
-        <item name="pyluxSupportTierCardBg">@color/support_tier_card_bg_orange</item>
-        <item name="pyluxSupportTextSecondary">@color/support_text_secondary_orange</item>
-        <item name="pyluxSupportBadgeBg">@color/support_badge_bg_orange</item>
         <item name="materialAlertDialogTheme">@style/AppTheme.AlertDialog.Orange</item>
     </style>
     <style name="AppTheme.Orange.Toolbar" parent="AppTheme.Orange">
@@ -478,25 +463,6 @@
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
-    </style>
-
-    <!-- Full-width custom support paywall (bottom sheet, not AlertDialog) -->
-    <style name="SupportPaywallBottomSheet" parent="ThemeOverlay.MaterialComponents.BottomSheetDialog">
-        <item name="bottomSheetStyle">@style/SupportPaywallBottomSheet.Modal</item>
-        <item name="android:windowIsFloating">false</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@color/primary_dark</item>
-    </style>
-
-    <style name="SupportPaywallBottomSheet.Modal" parent="Widget.MaterialComponents.BottomSheet.Modal">
-        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.SupportPaywall.Rect</item>
-        <item name="backgroundTint">@color/primary_dark</item>
-        <item name="elevation">16dp</item>
-    </style>
-
-    <style name="ShapeAppearanceOverlay.SupportPaywall.Rect" parent="">
-        <item name="cornerFamily">rounded</item>
-        <item name="cornerSize">0dp</item>
     </style>
 
     <style name="QuickSettingsSectionLabel">

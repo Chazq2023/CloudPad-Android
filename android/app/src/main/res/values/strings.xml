@@ -108,8 +108,6 @@
     <string name="main_exit_app_message">Exit app?</string>
     <string name="action_exit">Exit</string>
     <string name="stream_disconnect_confirm_message">Disconnect from stream?</string>
-    <string name="app_integrity_verification_required_title">Verification Required</string>
-    <string name="app_integrity_verification_required_message">Unable to verify application source. Please ensure you have an active internet connection and the app was installed from an official source.</string>
     <string name="trophy_group_fallback_header">Trophies</string>
     <string name="trophy_hidden_name">Hidden Trophy</string>
     <string name="trophy_hidden_description">Complete this trophy to reveal its details</string>
@@ -192,19 +190,6 @@
     <string name="action_add_manual_save">Save</string>
     <string name="hint_add_manual_regist_host">Registered Console</string>
     <string name="add_manual_regist_on_connect">Register on first Connection</string>
-    <string name="preferences_category_title_support">Support</string>
-    <string name="preferences_donate_title">Support CloudPad</string>
-    <string name="preferences_donate_summary">Donate to support development. Thank you for using CloudPad.</string>
-    <string name="preferences_donate_no_products">Support options are not available in this build.</string>
-    <string name="preferences_donate_billing_unavailable">Google Play billing is not available on this device. Install or update the Play Store, or install CloudPad from Google Play (e.g. internal testing) so support purchases work.</string>
-    <string name="donation_paypal_fallback_url" translatable="false">https://www.paypal.com/ncp/payment/AGV5G9KZAPJX6</string>
-    <string name="donation_paywall_external_title">Support via PayPal</string>
-    <string name="donation_paywall_external_hint">Google Play billing is not available here. Scan the QR code with your phone to open PayPal, or use Open link below.</string>
-    <string name="donation_paywall_external_open_link">Open PayPal link</string>
-    <string name="donation_paywall_external_no_browser">No app on this device can open the link.</string>
-    <string name="donation_paywall_qr_content_description">QR code linking to PayPal support page</string>
-    <string name="donation_paywall_trust_paypal">Donate via PayPal in your browser.</string>
-    <string name="preferences_donate_already_supporting">You already have a support purchase on this account. Thank you!</string>
 
     <!-- Theme colour preference -->
     <string name="preferences_category_title_appearance">Appearance</string>
@@ -686,44 +671,8 @@
     <string name="preferences_fsr_upscaling_enabled_key">fsr_upscaling_enabled</string>
     <string name="preferences_fsr_sharpening_key">fsr_sharpening</string>
     <string name="preferences_image_processing_key">image_processing</string>
-    <string name="donation_dialog_title">Support CloudPad</string>
-    <string name="donation_dialog_body">CloudPad is built by the community. If you enjoy using it, please consider supporting its development. Your contribution helps fund continued updates and keeps the project alive.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
-    <string name="donation_tier_button_label">%1$s · %2$s</string>
-    <string name="donation_action_not_now">Not now</string>
 
-    <string name="bullet_dot">\u2022</string>
-
-    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
-    <string name="donation_paywall_headline">Keep CloudPad alive</string>
-    <string name="donation_paywall_tagline">Open source and community-maintained.</string>
-    <string name="donation_paywall_story_title">Enjoying CloudPad?</string>
-    <string name="donation_paywall_story_lead">It\'s open source and maintained by the community. Please consider supporting the project. Donations go to the developers who maintain it.</string>
-    <string name="donation_paywall_bullet_1">Your donation goes to the people who build and maintain CloudPad.</string>
-    <string name="donation_paywall_bullet_2">Single payment in Google Play. No subscription.</string>
-    <string name="donation_paywall_bullet_3">Optional. You get the full app either way.</string>
-    <string name="donation_paywall_pick_title">Choose an amount</string>
-    <string name="donation_paywall_pick_hint">Pick a tier below. You only pay once.</string>
-    <string name="donation_paywall_maybe_later">Maybe later</string>
-    <string name="donation_paywall_trust">One payment in Google Play. No subscription.</string>
-    <!-- Accessibility: tier name + localized price from Play -->
-    <string name="donation_tier_content_description">%1$s, %2$s. Double-tap to donate once with Google Play.</string>
-    <string name="donation_tier_bronze">Bronze donation</string>
-    <string name="donation_tier_silver">Silver donation</string>
-    <string name="donation_tier_gold">Gold donation</string>
-    <string name="donation_tier_platinum">Platinum donation</string>
-    <string name="donation_tier_blurb_bronze">Every donation counts.</string>
-    <string name="donation_tier_blurb_silver">A bit more support.</string>
-    <string name="donation_tier_blurb_gold">When you want to give more.</string>
-    <string name="donation_tier_blurb_platinum">If you want to give the most.</string>
-    <string name="donation_tier_blurb_default">Thank you for supporting CloudPad.</string>
-    <string name="donation_paywall_close">Close</string>
-    <string name="donation_paywall_logo_content_description">CloudPad</string>
-    <string name="donation_paywall_restore_purchases">Restore purchases</string>
-    <string name="donation_paywall_restore_none">No support purchases found for this Google account.</string>
-    <string name="donation_paywall_restore_already">Your support purchase is already on this device.</string>
-    <string name="donation_paywall_restore_success">Purchases restored. Thank you for supporting CloudPad!</string>
-    <string name="donation_paywall_restore_unavailable">Couldn\'t reach Google Play. Try again in a moment.</string>
     <string name="preferences_cloud_bitrate_pscloud_key">cloud_bitrate_pscloud</string>
     <string name="preferences_cloud_bitrate_pscloud_title">Bitrate</string>
     <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps for Game Library streaming</string>

@@ -29,8 +29,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import coil.load
 import com.pylux.stream.R
-import com.metallic.chiaki.common.AppIntegrityManager
-import com.metallic.chiaki.common.InAppReviewHelper
 import com.metallic.chiaki.common.UpdateNotifier
 import com.metallic.chiaki.common.Preferences
 import com.metallic.chiaki.common.ext.viewModelFactory
@@ -64,7 +62,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var preferences: Preferences
     private var currentPage = 0
-    private var integrityManager: AppIntegrityManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefsEarly = Preferences(this)
@@ -97,21 +94,6 @@ class MainActivity : AppCompatActivity() {
 
         preferences = Preferences(this)
         preferences.migrateLocaleIfNeeded()
-
-        integrityManager = AppIntegrityManager(this)
-        integrityManager?.validateAppState(this) { isValid ->
-            if (isValid) {
-                android.util.Log.w(
-                    "MainActivity",
-                    "✓ Application integrity verified - proceeding with launch"
-                )
-            } else {
-                android.util.Log.e(
-                    "MainActivity",
-                    "✗ Application integrity check FAILED - blocking launch"
-                )
-            }
-        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -149,17 +131,13 @@ class MainActivity : AppCompatActivity() {
 
             handleCloudGameShortcutIntent(intent)
 
-            // Disclaimer + in-app review: once per *new* Main instance (not every resume), so this
-            // covers both a fresh app launch and the first launch after an update. Review prompt
-            // waits until the disclaimer is acknowledged so the two dialogs don't stack.
+            // Disclaimer: once per *new* Main instance (not every resume), so this covers both a
+            // fresh app launch and the first launch after an update. The "new version available"
+            // prompt waits until the disclaimer is acknowledged so the two dialogs don't stack.
             if (savedInstanceState == null) {
                 showDisclaimerDialog {
-                    // Then a "new version available" prompt if there is one, then the review
-                    // prompt — each waits for the previous so they never stack.
                     lifecycleScope.launch {
-                        UpdateNotifier.checkAndPrompt(this@MainActivity) {
-                            InAppReviewHelper.tryPromptIfEligible(this@MainActivity, preferences)
-                        }
+                        UpdateNotifier.checkAndPrompt(this@MainActivity) {}
                     }
                 }
             }
@@ -762,11 +740,6 @@ class MainActivity : AppCompatActivity() {
     private fun updateActionIcons() {
         // Pylux logo and shared actions remain visible on both main pages.
         binding.appTitle.visibility = View.VISIBLE
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        integrityManager?.release()
     }
 
     private fun isDescendantOf(descendant: View, ancestor: View): Boolean {
