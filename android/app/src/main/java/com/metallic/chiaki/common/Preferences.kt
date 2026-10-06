@@ -431,6 +431,8 @@ class Preferences(context: Context)
 		// The next account may be in another region; it must be read again before region-specific
 		// lists are shown (see CloudGameRepository.ensureAccountLocale).
 		clearAccountLocale()
+		// The saved lists hold this account's owned games; the next account must not see them.
+		CloudGameRepository.invalidateCatalogCache(appContext, "signed out")
 	}
 
 	// ==========================================================================
