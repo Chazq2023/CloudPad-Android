@@ -86,18 +86,6 @@
     <string name="action_add_manual_save">Tallenna</string>
     <string name="hint_add_manual_regist_host">Rekisteröity konsoli</string>
     <string name="add_manual_regist_on_connect">Rekisteröi ensimmäisellä yhteydellä</string>
-    <string name="preferences_category_title_support">Tuki</string>
-    <string name="preferences_donate_title">Tue CloudPadia</string>
-    <string name="preferences_donate_summary">Lahjoita tukeaksesi kehitystä. Kiitos, että käytät CloudPadia.</string>
-    <string name="preferences_donate_no_products">Tukivaihtoehdot eivät ole käytettävissä tässä versiossa.</string>
-    <string name="preferences_donate_billing_unavailable">Google Play -laskutus ei ole käytettävissä tällä laitteella. Asenna tai päivitä Play Kauppa, tai asenna CloudPad Google Playsta (esim. sisäinen testaus), jotta tukiostot toimivat.</string>
-    <string name="donation_paywall_external_title">Tue PayPalin kautta</string>
-    <string name="donation_paywall_external_hint">Google Play -laskutus ei ole käytettävissä täällä. Skannaa QR-koodi puhelimellasi avataksesi PayPalin, tai käytä alla olevaa Avaa linkki -painiketta.</string>
-    <string name="donation_paywall_external_open_link">Avaa PayPal-linkki</string>
-    <string name="donation_paywall_external_no_browser">Mikään sovellus tällä laitteella ei voi avata linkkiä.</string>
-    <string name="donation_paywall_qr_content_description">QR-koodi, joka linkittää PayPalin tukisivulle</string>
-    <string name="donation_paywall_trust_paypal">Lahjoita PayPalin kautta selaimessasi.</string>
-    <string name="preferences_donate_already_supporting">Sinulla on jo tukiosto tällä tilillä. Kiitos!</string>
 
     <!-- Theme colour preference -->
     <string name="preferences_category_title_appearance">Ulkoasu</string>
@@ -384,44 +372,8 @@
     <string name="overlay_configure_restore_defaults">Palauta oletuksiin</string>
     <string name="overlay_move_done">Valmis</string>
     <string name="action_save">Tallenna</string>
-    <string name="donation_dialog_title">Tue CloudPadia</string>
-    <string name="donation_dialog_body">CloudPadin on rakentanut yhteisö. Jos pidät sen käytöstä, harkitse sen kehityksen tukemista. Panoksesi auttaa rahoittamaan jatkuvia päivityksiä ja pitää projektin elossa.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
-    <string name="donation_tier_button_label">%1$s · %2$s</string>
-    <string name="donation_action_not_now">Ei nyt</string>
 
-    <string name="bullet_dot">•</string>
-
-    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
-    <string name="donation_paywall_headline">Pidä CloudPad elossa</string>
-    <string name="donation_paywall_tagline">Avoimen lähdekoodin ja yhteisön ylläpitämä.</string>
-    <string name="donation_paywall_story_title">Pidätkö CloudPadista?</string>
-    <string name="donation_paywall_story_lead">Se on avointa lähdekoodia ja yhteisön ylläpitämä. Harkitse projektin tukemista. Lahjoitukset menevät sitä ylläpitäville kehittäjille.</string>
-    <string name="donation_paywall_bullet_1">Lahjoituksesi menee ihmisille, jotka rakentavat ja ylläpitävät CloudPadia.</string>
-    <string name="donation_paywall_bullet_2">Kertamaksu Google Playssa. Ei tilausta.</string>
-    <string name="donation_paywall_bullet_3">Valinnainen. Saat koko sovelluksen joka tapauksessa.</string>
-    <string name="donation_paywall_pick_title">Valitse summa</string>
-    <string name="donation_paywall_pick_hint">Valitse taso alta. Maksat vain kerran.</string>
-    <string name="donation_paywall_maybe_later">Ehkä myöhemmin</string>
-    <string name="donation_paywall_trust">Kertamaksu Google Playssa. Ei tilausta.</string>
-    <!-- Accessibility: tier name + localized price from Play -->
-    <string name="donation_tier_content_description">%1$s, %2$s. Kaksoisnapauta lahjoittaaksesi kerran Google Playn kautta.</string>
-    <string name="donation_tier_bronze">Pronssilahjoitus</string>
-    <string name="donation_tier_silver">Hopealahjoitus</string>
-    <string name="donation_tier_gold">Kultalahjoitus</string>
-    <string name="donation_tier_platinum">Platinalahjoitus</string>
-    <string name="donation_tier_blurb_bronze">Jokainen lahjoitus on tärkeä.</string>
-    <string name="donation_tier_blurb_silver">Hieman enemmän tukea.</string>
-    <string name="donation_tier_blurb_gold">Kun haluat antaa enemmän.</string>
-    <string name="donation_tier_blurb_platinum">Jos haluat antaa eniten.</string>
-    <string name="donation_tier_blurb_default">Kiitos, että tuet CloudPadia.</string>
-    <string name="donation_paywall_close">Sulje</string>
-    <string name="donation_paywall_logo_content_description">CloudPad</string>
-    <string name="donation_paywall_restore_purchases">Palauta ostokset</string>
-    <string name="donation_paywall_restore_none">Tälle Google-tilille ei löytynyt tukiostoja.</string>
-    <string name="donation_paywall_restore_already">Tukiostosi on jo tällä laitteella.</string>
-    <string name="donation_paywall_restore_success">Ostot palautettu. Kiitos, että tuet CloudPadia!</string>
-    <string name="donation_paywall_restore_unavailable">Google Playhin ei saatu yhteyttä. Yritä uudelleen hetken kuluttua.</string>
     <string name="preferences_cloud_bitrate_pscloud_title">Bittinopeus</string>
     <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps pelikirjaston suoratoistolle</string>
 
@@ -439,8 +391,6 @@
     <string name="action_manual">Manuaalinen</string>
     <string name="action_no">Ei</string>
     <string name="action_yes">Kyllä</string>
-    <string name="app_integrity_verification_required_title">Vahvistus vaaditaan</string>
-    <string name="app_integrity_verification_required_message">Sovelluksen alkuperää ei voitu vahvistaa. Varmista, että sinulla on toimiva internetyhteys ja että sovellus on asennettu virallisesta lähteestä.</string>
     <string name="cloud_account_settings_update_title">Tilin asetukset vaativat päivityksen</string>
     <string name="cloud_account_settings_update_message">Tilisi tietosuoja-asetukset on päivitettävä, jotta voit käyttää pilvisuoratoistoa.\n\nPäivitysosoite: %1$s</string>
     <string name="cloud_add_to_home_confirm_message">Haluatko lisätä pelin %1$s aloitusnäytölle?</string>

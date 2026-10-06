@@ -245,10 +245,6 @@ dependencies {
     // the actual system Chrome, sharing its cookies/JS engine/fingerprint.
     implementation 'androidx.browser:browser:1.7.0'
 
-    // Play In-App Review (uses existing [Preferences.totalStreamTimeMs] from stream sessions; no extra timers)
-    implementation 'com.google.android.play:review-ktx:2.0.2'
-    // Play Billing 8.x Java API (no billing-ktx: that artifact targets Kotlin 2.2+ and forces a full Kotlin/Room/Moshi upgrade chain)
-    implementation 'com.android.billingclient:billing:8.1.0'
     implementation 'com.google.zxing:core:3.5.3'
 
     testImplementation 'junit:junit:4.13.2'

@@ -707,7 +707,6 @@ class StreamActivity : AppCompatActivity(), View.OnSystemUiVisibilityChangeListe
 		val delta = SystemClock.elapsedRealtime() - connectedAtElapsedRealtime
 		if (delta > 0L)
 		{
-			viewModel.preferences.addTotalStreamTimeMs(delta)
 			viewModel.connectInfo.cloudGameProductId?.let { productId ->
 				viewModel.preferences.recordPlaySession(productId, delta, connectedAtWallClockMs)
 			}

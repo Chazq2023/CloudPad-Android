@@ -3,8 +3,13 @@
 DISCLAIMER
 ═══════════════════════════════════════════════════════════
 
-This application is NOT affiliated with, endorsed by, sponsored by, or approved by Sony Interactive Entertainment Inc. or any of its subsidiaries.
+Copyright © CloudPad and Pylux contributors. Licensed under the GNU AGPL-3.0 (with the OpenSSL exception) shown above.
 
-All trademarks including PlayStation, PS5, PS4, PSN, and related marks are the property of their respective owners.
+CloudPad is an unofficial fork of Pylux. It is NOT affiliated with, endorsed by, sponsored by, or approved by Sony Interactive Entertainment Inc. or any of its subsidiaries.
 
-Source code: https://github.com/ForWard-Technologies-LLC/Pylux
+Use at your own risk. CloudPad signs in to Sony's services with your PSN account. Sony's terms of service forbid unauthorised software, so Sony could restrict, suspend or ban an account that uses CloudPad. Don't try to play games before they're released.
+
+PlayStation, PlayStation Network (PSN), PlayStation Plus, PS4, PS5, and related names are trademarks of their respective owners.
+
+CloudPad source code: https://github.com/Chazq2023/CloudPad-Android
+Based on Pylux: https://github.com/ForWard-Technologies-LLC/Pylux

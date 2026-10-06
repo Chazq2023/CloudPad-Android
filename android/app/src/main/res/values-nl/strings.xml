@@ -86,18 +86,6 @@
     <string name="action_add_manual_save">Opslaan</string>
     <string name="hint_add_manual_regist_host">Geregistreerde console</string>
     <string name="add_manual_regist_on_connect">Registreren bij eerste verbinding</string>
-    <string name="preferences_category_title_support">Ondersteuning</string>
-    <string name="preferences_donate_title">CloudPad ondersteunen</string>
-    <string name="preferences_donate_summary">Doneer om de ontwikkeling te steunen. Bedankt voor het gebruik van CloudPad.</string>
-    <string name="preferences_donate_no_products">Ondersteuningsopties zijn niet beschikbaar in deze build.</string>
-    <string name="preferences_donate_billing_unavailable">Google Play-facturering is niet beschikbaar op dit apparaat. Installeer of update de Play Store, of installeer CloudPad via Google Play (bijv. interne test), zodat steunaankopen werken.</string>
-    <string name="donation_paywall_external_title">Ondersteunen via PayPal</string>
-    <string name="donation_paywall_external_hint">Google Play-facturering is hier niet beschikbaar. Scan de QR-code met je telefoon om PayPal te openen, of gebruik hieronder Link openen.</string>
-    <string name="donation_paywall_external_open_link">PayPal-link openen</string>
-    <string name="donation_paywall_external_no_browser">Geen enkele app op dit apparaat kan de link openen.</string>
-    <string name="donation_paywall_qr_content_description">QR-code die naar de PayPal-ondersteuningspagina linkt</string>
-    <string name="donation_paywall_trust_paypal">Doneer via PayPal in je browser.</string>
-    <string name="preferences_donate_already_supporting">Je hebt al een steunaankoop op dit account. Bedankt!</string>
 
     <!-- Theme colour preference -->
     <string name="preferences_category_title_appearance">Weergave</string>
@@ -385,44 +373,8 @@
     <string name="overlay_configure_restore_defaults">Standaardwaarden herstellen</string>
     <string name="overlay_move_done">Klaar</string>
     <string name="action_save">Opslaan</string>
-    <string name="donation_dialog_title">CloudPad ondersteunen</string>
-    <string name="donation_dialog_body">CloudPad wordt gebouwd door de community. Als je de app graag gebruikt, overweeg dan de ontwikkeling ervan te steunen. Jouw bijdrage helpt doorlopende updates te financieren en houdt het project levend.</string>
     <!-- Play Console product title and localized price, shown on each tier button -->
-    <string name="donation_tier_button_label">%1$s · %2$s</string>
-    <string name="donation_action_not_now">Niet nu</string>
 
-    <string name="bullet_dot">•</string>
-
-    <!-- Custom paywall sheet (friendly names; not raw Play product titles) -->
-    <string name="donation_paywall_headline">Houd CloudPad in leven</string>
-    <string name="donation_paywall_tagline">Open source en onderhouden door de community.</string>
-    <string name="donation_paywall_story_title">Geniet je van CloudPad?</string>
-    <string name="donation_paywall_story_lead">De app is open source en wordt onderhouden door de community. Overweeg het project te steunen. Donaties gaan naar de ontwikkelaars die de app onderhouden.</string>
-    <string name="donation_paywall_bullet_1">Jouw donatie gaat naar de mensen die CloudPad bouwen en onderhouden.</string>
-    <string name="donation_paywall_bullet_2">Eenmalige betaling via Google Play. Geen abonnement.</string>
-    <string name="donation_paywall_bullet_3">Optioneel. Je krijgt hoe dan ook de volledige app.</string>
-    <string name="donation_paywall_pick_title">Kies een bedrag</string>
-    <string name="donation_paywall_pick_hint">Kies hieronder een niveau. Je betaalt maar één keer.</string>
-    <string name="donation_paywall_maybe_later">Misschien later</string>
-    <string name="donation_paywall_trust">Eenmalige betaling via Google Play. Geen abonnement.</string>
-    <!-- Accessibility: tier name + localized price from Play -->
-    <string name="donation_tier_content_description">%1$s, %2$s. Dubbeltik om eenmalig te doneren via Google Play.</string>
-    <string name="donation_tier_bronze">Bronzen donatie</string>
-    <string name="donation_tier_silver">Zilveren donatie</string>
-    <string name="donation_tier_gold">Gouden donatie</string>
-    <string name="donation_tier_platinum">Platina donatie</string>
-    <string name="donation_tier_blurb_bronze">Elke donatie telt.</string>
-    <string name="donation_tier_blurb_silver">Een beetje meer steun.</string>
-    <string name="donation_tier_blurb_gold">Als je meer wilt geven.</string>
-    <string name="donation_tier_blurb_platinum">Als je het meeste wilt geven.</string>
-    <string name="donation_tier_blurb_default">Bedankt voor het steunen van CloudPad.</string>
-    <string name="donation_paywall_close">Sluiten</string>
-    <string name="donation_paywall_logo_content_description">CloudPad</string>
-    <string name="donation_paywall_restore_purchases">Aankopen herstellen</string>
-    <string name="donation_paywall_restore_none">Geen steunaankopen gevonden voor dit Google-account.</string>
-    <string name="donation_paywall_restore_already">Je steunaankoop staat al op dit apparaat.</string>
-    <string name="donation_paywall_restore_success">Aankopen hersteld. Bedankt voor het steunen van CloudPad!</string>
-    <string name="donation_paywall_restore_unavailable">Kon Google Play niet bereiken. Probeer het straks opnieuw.</string>
     <string name="preferences_cloud_bitrate_pscloud_title">Bitrate</string>
     <string name="preferences_cloud_bitrate_pscloud_summary">%d Mbps voor Spelbibliotheek-streaming</string>
 
@@ -441,8 +393,6 @@
     <string name="action_manual">Handmatig</string>
     <string name="action_no">Nee</string>
     <string name="action_yes">Ja</string>
-    <string name="app_integrity_verification_required_title">Verificatie vereist</string>
-    <string name="app_integrity_verification_required_message">Kan de bron van de app niet verifiëren. Zorg ervoor dat je een actieve internetverbinding hebt en dat de app is geïnstalleerd vanuit een officiële bron.</string>
     <string name="cloud_account_settings_update_title">Accountinstellingen moeten worden bijgewerkt</string>
     <string name="cloud_account_settings_update_message">Je privacyinstellingen moeten worden bijgewerkt om cloudstreaming te gebruiken.\n\nUpgrade-URL: %1$s</string>
     <string name="cloud_add_to_home_confirm_message">Wil je %1$s toevoegen aan je startscherm?</string>

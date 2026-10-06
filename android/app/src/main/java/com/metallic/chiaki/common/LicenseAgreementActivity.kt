@@ -2,8 +2,10 @@
 
 package com.metallic.chiaki.common
 
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
+import android.view.ContextThemeWrapper
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
@@ -30,6 +32,17 @@ class LicenseAgreementActivity : AppCompatActivity()
 		licenseTextView.text = getLicenseText()
 		
 		closeButton.setOnClickListener { finish() }
+
+		// The dialog theme only carries the default accent; match the user's chosen theme colour.
+		closeButton.backgroundTintList = ColorStateList.valueOf(themeAccent())
+	}
+
+	private fun themeAccent(): Int
+	{
+		val themed = ContextThemeWrapper(this, Preferences(this).getThemeStyleRes())
+		val attrs = themed.obtainStyledAttributes(intArrayOf(R.attr.pyluxAccent))
+		try { return attrs.getColor(0, getColor(R.color.accent)) }
+		finally { attrs.recycle() }
 	}
 	
 	private fun getLicenseText(): String
