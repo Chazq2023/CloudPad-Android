@@ -140,6 +140,9 @@ class MainActivity : AppCompatActivity() {
                         UpdateNotifier.checkAndPrompt(this@MainActivity) {}
                     }
                 }
+            } else {
+                // No prompt this time; game launches waiting on its answer can go ahead.
+                UpdateNotifier.skipPrompt()
             }
         }
     }

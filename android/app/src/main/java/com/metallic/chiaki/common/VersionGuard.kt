@@ -9,12 +9,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Process
+import android.os.SystemClock
 import android.util.Log
 import androidx.appcompat.app.AlertDialog
 import com.metallic.chiaki.cloudplay.api.HttpClient
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.pylux.stream.BuildConfig
 import com.pylux.stream.R
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -49,6 +51,12 @@ object VersionGuard
 	private var minimumVersion = ""
 	private var outdated = false
 	private var checkFailed = false
+	// Completes once this launch's check has a result (or there's no check, on dev builds), so the
+	// optional "Update available" prompt can wait instead of racing it (see UpdateNotifier).
+	private val checkDone = CompletableDeferred<Unit>()
+
+	/** Suspends until this launch's minimum-version check has finished (fetched or failed). */
+	suspend fun awaitCheck() = checkDone.await()
 
 	/** Whether a blocking popup ("Update Required" or "Unable to Check for Updates") applies right
 	 *  now (UpdateNotifier stays out of its way). */
@@ -93,6 +101,7 @@ object VersionGuard
 		if (current.isBlank())
 		{
 			Log.i(TAG, "Not a release build, skipping version check")
+			checkDone.complete(Unit)
 			return
 		}
 
@@ -116,11 +125,16 @@ object VersionGuard
 		// Last known minimum applies straight away, before (or without) the network fetch.
 		apply(current, prefs.getString(KEY_MIN_VERSION, null), prefs.getString(KEY_UPDATE_URL, null))
 
+		val installedAt = SystemClock.elapsedRealtime()
 		scope.launch {
+			val startedAt = SystemClock.elapsedRealtime()
 			val config = try
 			{
 				withContext(Dispatchers.IO) {
+					val fetchStart = SystemClock.elapsedRealtime()
 					val response = HttpClient.get(CONFIG_URL, timeoutMs = 10_000)
+					Log.i(TAG, "Fetched minimum version in ${SystemClock.elapsedRealtime() - fetchStart} ms " +
+						"(HTTP ${response.statusCode}; started ${startedAt - installedAt} ms after launch)")
 					parseConfig(response.statusCode, response.body)
 				}
 			}
@@ -135,11 +149,13 @@ object VersionGuard
 				Log.w(TAG, "Minimum version check failed; blocking until it succeeds")
 				checkFailed = true
 				if (!outdated) showCheckFailedDialog()
+				checkDone.complete(Unit)
 				return@launch
 			}
 
 			prefs.edit().putString(KEY_MIN_VERSION, config.minVersion).putString(KEY_UPDATE_URL, config.updateUrl).apply()
 			apply(current, config.minVersion, config.updateUrl)
+			checkDone.complete(Unit)
 		}
 	}
 

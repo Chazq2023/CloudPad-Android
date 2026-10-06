@@ -10,6 +10,10 @@ package com.metallic.chiaki.cloudplay.api
 /** PS Plus subscription required error (eventCode 002.2001) */
 class PsPlusSubscriptionException(message: String) : Exception(message)
 
+/** A required CloudPad update is pending (VersionGuard), so no stream may be started. Its own
+ *  blocking popup tells the user; launch callers show nothing extra for this. */
+class UpdateRequiredException : Exception("A required CloudPad update must be installed first")
+
 /** Account privacy settings need to be updated */
 class AccountPrivacySettingsException(val upgradeUrl: String, message: String) : Exception(message)
 
