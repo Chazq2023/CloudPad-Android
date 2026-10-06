@@ -43,6 +43,8 @@ import com.metallic.chiaki.cloudplay.model.CloudError
 import com.metallic.chiaki.cloudplay.model.CloudGame
 import com.metallic.chiaki.cloudplay.model.StreamableStatus
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.UpdateNotifier
+import com.metallic.chiaki.common.VersionGuard
 import com.metallic.chiaki.common.ext.viewModelFactory
 import com.pylux.stream.databinding.FragmentCloudPlayBinding
 import kotlinx.coroutines.launch
@@ -1358,7 +1360,30 @@ class CloudPlayFragment : Fragment() {
             .show()
     }
 
+    /** Every game launch — a tile tap or a home-screen shortcut — starts here. Waits for this
+     *  launch's required-update check first: if an update is required (or the check failed),
+     *  nothing is started, no loading screen and no request to Sony; VersionGuard's own popup
+     *  tells the user why. CloudStreamingBackend repeats the check as a backstop.
+     *  Then waits for the optional "Update available" prompt: a launch requested while it was
+     *  still unanswered is dropped if the user chose Update (they left for GitHub), and goes ahead
+     *  on Later. Launches requested after it was answered aren't affected. */
     private fun onGameClicked(game: CloudGame) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            VersionGuard.awaitCheck()
+            if (VersionGuard.isUpdateRequired()) {
+                Log.w(TAG, "Required update pending; not launching ${game.name}")
+                return@launch
+            }
+            val promptWasOpen = !UpdateNotifier.isDecided()
+            if (promptWasOpen && UpdateNotifier.awaitDecision() == UpdateNotifier.Decision.UPDATE) {
+                Log.i(TAG, "User chose to update; not launching ${game.name}")
+                return@launch
+            }
+            launchGame(game)
+        }
+    }
+
+    private fun launchGame(game: CloudGame) {
         // Quick pre-check so the common case shows the dialog instantly; the authoritative check
         // against Sony's clock happens in CloudStreamingBackend before anything is allocated.
         val now = com.metallic.chiaki.cloudplay.api.TrustedClock.nowOrNull() ?: System.currentTimeMillis()
@@ -1663,6 +1688,8 @@ class CloudPlayFragment : Fragment() {
                             showPingTimeoutErrorDialog(serviceType)
                         }
 
+                        // VersionGuard's own popup explains it; not a streaming error.
+                        is com.metallic.chiaki.cloudplay.api.UpdateRequiredException -> {}
                         is com.metallic.chiaki.cloudplay.api.AuthorizationFailedException -> {
                             showAuthorizationFailedDialog()
                         }
@@ -1705,6 +1732,8 @@ class CloudPlayFragment : Fragment() {
                         showPingTimeoutErrorDialog(serviceType)
                     }
 
+                    // VersionGuard's own popup explains it; not a streaming error.
+                    is com.metallic.chiaki.cloudplay.api.UpdateRequiredException -> {}
                     is com.metallic.chiaki.cloudplay.api.AuthorizationFailedException -> {
                         showAuthorizationFailedDialog()
                     }

@@ -10,6 +10,7 @@ import com.metallic.chiaki.cloudplay.api.HttpClient
 import com.metallic.chiaki.common.ext.alertDialogBuilder
 import com.pylux.stream.BuildConfig
 import com.pylux.stream.R
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
@@ -26,6 +27,21 @@ object UpdateNotifier
 	private const val DEFAULT_RELEASE_URL = "https://github.com/Chazq2023/CloudPad-Android/releases/latest"
 
 	data class Release(val version: String, val url: String, val notes: List<String>)
+
+	/** What came of this launch's prompt: none shown, "Later", or "Update" (left for GitHub). */
+	enum class Decision { NONE, LATER, UPDATE }
+
+	private val decision = CompletableDeferred<Decision>()
+
+	/** Whether this launch's prompt has been answered (or skipped) yet. */
+	fun isDecided(): Boolean = decision.isCompleted
+
+	/** Suspends until this launch's prompt is answered or found unnecessary. Game launches wait
+	 *  on this so a stream doesn't start behind the prompt (see CloudPlayFragment.onGameClicked). */
+	suspend fun awaitDecision(): Decision = decision.await()
+
+	/** No prompt this launch (e.g. Main restored after process death skips the disclaimer flow). */
+	fun skipPrompt() { decision.complete(Decision.NONE) }
 
 	/** The release's "### Updates" bullets as plain text (no markdown emphasis/links/code). */
 	fun parseUpdateNotes(body: String): List<String>
@@ -83,14 +99,20 @@ object UpdateNotifier
 	suspend fun checkAndPrompt(activity: Activity, onDone: () -> Unit)
 	{
 		val current = BuildConfig.CLOUDPAD_RELEASE_VERSION
+		// Wait for this launch's required-update check first: with an out-of-date saved minimum
+		// (fresh install, or just after it was raised) it can still be in flight, and showing
+		// "Update available" before "Update Required" replaces it is confusing.
+		VersionGuard.awaitCheck()
 		if (current.isBlank() || VersionGuard.isUpdateRequired())
 		{
+			decision.complete(Decision.NONE)
 			onDone()
 			return
 		}
 		val release = newerRelease(current, fetchLatest())
 		if (release == null || activity.isFinishing || activity.isDestroyed)
 		{
+			decision.complete(Decision.NONE)
 			onDone()
 			return
 		}
@@ -109,11 +131,15 @@ object UpdateNotifier
 			.setMessage(message)
 			.setCancelable(false)
 			.setPositiveButton(R.string.update_required_button) { _, _ ->
+				decision.complete(Decision.UPDATE)
 				try { activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(release.url))) }
 				catch (e: Exception) { Log.w(TAG, "Couldn't open release page", e) }
 				onDone()
 			}
-			.setNegativeButton(R.string.update_available_later) { _, _ -> onDone() }
+			.setNegativeButton(R.string.update_available_later) { _, _ ->
+				decision.complete(Decision.LATER)
+				onDone()
+			}
 			.show()
 	}
 }

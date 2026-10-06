@@ -18,8 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RELEASE_NOTES: |-
-        - Fixed Settings > License Agreement crashing the app; its disclaimer now links to CloudPad's own source code and includes the account-risk warning.
-        - CloudPad no longer uses Google Play services: the "unable to verify application source" check, in-app review prompt and unused donation screens are gone, so it now runs on devices without the Play Store, and the app is smaller.
+        - When a required update is pending, games (including home-screen shortcuts) no longer start launching behind the "Update Required" message, and the optional "Update available" message no longer appears first.
+        - Opening a game from a home-screen shortcut now waits for the "Update available" message: choosing Update cancels the launch, choosing Later starts the game.
 
     steps:
       - name: Checkout repo
@@ -120,12 +120,12 @@ jobs:
         working-directory: android
         env:
           ANDROID_VERSION_NAME: ${{ env.VERSION }}
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleRelease
 
       - name: Prepare APK
         run: |
           mkdir -p release
-          cp android/app/build/outputs/apk/debug/app-debug.apk release/cloudpad-android.apk
+          cp android/app/build/outputs/apk/release/app-release.apk release/cloudpad-android.apk
           cp "frontend assets/cloudpad-hero.png" release/cloudpad-hero.png
           cp "frontend assets/cloudpad-icon.png" release/cloudpad-icon.png
           cp "frontend assets/cloudpad-logo.png" release/cloudpad-logo.png

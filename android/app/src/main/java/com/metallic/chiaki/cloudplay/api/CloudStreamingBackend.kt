@@ -9,6 +9,7 @@ import com.metallic.chiaki.cloudplay.DuidUtil
 import com.metallic.chiaki.cloudplay.PsnApiConstants
 import com.metallic.chiaki.cloudplay.model.CloudStreamSession
 import com.metallic.chiaki.common.Preferences
+import com.metallic.chiaki.common.VersionGuard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -83,7 +84,17 @@ class CloudStreamingBackend(
 			Log.i(TAG, "Service Type: $serviceType")
 			Log.i(TAG, "Game Identifier: $gameIdentifier")
 			Log.i(TAG, "Game Name: $gameName")
-			
+
+			// Nothing is asked of Sony while a required update is pending — every launch path
+			// (tile, shortcut, in-stream restart) goes through here. Waits for this launch's check
+			// so a saved minimum that's out of date can't let one slip through.
+			VersionGuard.awaitCheck()
+			if (VersionGuard.isUpdateRequired())
+			{
+				Log.w(TAG, "Required update pending; not starting a session for '$gameName'")
+				return@withContext Result.failure(UpdateRequiredException())
+			}
+
 			// Normalize service type to lowercase
 			val normalizedServiceType = serviceType.lowercase()
 			

@@ -191,6 +191,9 @@ android {
         signingConfigs.release.keyPassword = properties.get("chiakiKeyPW")
     } else {
         println("Signing not enabled")
+        // Local release builds have no release key; sign them with the debug key so they can be
+        // installed and tested. CI always configures the real keystore above.
+        buildTypes.release.signingConfig = signingConfigs.debug
     }
 }
 
